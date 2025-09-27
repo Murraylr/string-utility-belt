@@ -26,19 +26,7 @@ export const b64decode = (b64: string) => {
 };
 
 // Case helpers
-const splitWords = (s: string) => (s ?? '').toString().trim()
-  .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-  .replace(/[^A-Za-z0-9]+/g, ' ')
-  .toLowerCase()
-  .split(' ')
-  .filter(Boolean);
-export const toCamel = (s: string) => {
-  const words = splitWords(s);
-  return words.map((w,i)=> i? (w[0].toUpperCase()+w.slice(1)) : w).join('');
-};
-export const toPascal = (s: string) => splitWords(s).map(w=>w[0].toUpperCase()+w.slice(1)).join('');
-export const toSnake = (s: string) => splitWords(s).join('_');
-export const toKebab = (s: string) => splitWords(s).join('-');
+
 export const normalizeCase = (s: string, mode: 'upper'|'lower'|'title'='lower') => {
   if (mode === 'upper') return s.toUpperCase();
   if (mode === 'lower') return s.toLowerCase();
