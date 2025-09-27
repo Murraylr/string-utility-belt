@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body { @apply bg-ink-50 text-ink-900 font-sans; }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/60 backdrop-blur-md border border-white/40 shadow-soft;
+  }
+  .card {
+    @apply rounded-2xl border bg-white shadow-soft;
+  }
+  .cta {
+    @apply px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition shadow-glow;
+  }
+  .muted {
+    @apply text-sm text-gray-500;
+  }
+  .mono {
+    @apply font-mono;
+  }
+}
+
+/* fancy background gradient helpers */
+.bg-grid {
+  background-image: linear-gradient(to right, rgba(0,0,0,.04) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0,0,0,.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
