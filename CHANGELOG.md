@@ -1,4 +1,4 @@
 # Changelog
 
-## [1.3.9] - 2025-09-26
-- Utilities: add `src/utilities/case/index.ts` (id: `case`) that maps to upper/lower/title using `normalizeCase`. Fixes chain test expecting a `case` utility.
+## [1.4.2] - 2025-09-27
+- md5 utility: force usage of helpers.md5 with strict string/bytes handling and output normalization.

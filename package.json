@@ -10,12 +10,17 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "crypto": "^1.0.1",
         "framer-motion": "^11.0.0",
         "lucide-react": "^0.424.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
     "devDependencies": {
+        "@testing-library/jest-dom": "^6.4.8",
+        "@testing-library/react": "^16.0.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^24.5.2",
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@vitejs/plugin-react": "^4.3.0",
@@ -25,9 +30,6 @@
         "tailwindcss": "^3.4.13",
         "typescript": "^5.5.4",
         "vite": "^5.4.2",
-        "vitest": "^2.0.5",
-        "@testing-library/react": "^16.0.0",
-        "@testing-library/user-event": "^14.5.2",
-        "@testing-library/jest-dom": "^6.4.8"
+        "vitest": "^2.0.5"
     }
 }
