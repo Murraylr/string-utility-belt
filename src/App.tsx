@@ -11,7 +11,7 @@ import { getRoute, onRouteChange } from '@/lib/router';
 import BlogIndex from '@/components/BlogIndex';
 import BlogPost from '@/components/BlogPost';
 import BackgroundFX from '@/components/BackgroundFX';
-import { loadState, saveState, CURRENT_KEY, stableStringify } from '@/lib/persist';
+import { loadState, saveState, CURRENT_KEY } from '@/lib/persist';
 
 const INSTANCE_ID = Math.random().toString(36).slice(2);
 const KEY = CURRENT_KEY;
@@ -30,11 +30,11 @@ export default function App() {
   const [previews, setPreviews] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const lastSavedRef = useRef(stableStringify({ steps, showPreviews }));
+  const lastSavedRef = useRef(JSON.stringify({ steps, showPreviews }));
   const lastSeenTsRef = useRef(persisted._ts || 0);
 
   useEffect(() => {
-    const snapshot = stableStringify({ steps, showPreviews });
+    const snapshot = JSON.stringify({ steps, showPreviews });
     if (snapshot === lastSavedRef.current) return;
     lastSavedRef.current = snapshot;
     saveState({ steps, showPreviews, _origin: INSTANCE_ID });
@@ -48,7 +48,7 @@ export default function App() {
         if (data._origin === INSTANCE_ID) return;
         if (typeof data._ts === 'number' && data._ts <= lastSeenTsRef.current) return;
         lastSeenTsRef.current = data._ts || Date.now();
-        const snapshot = stableStringify({ steps: data.steps, showPreviews: data.showPreviews });
+        const snapshot = JSON.stringify({ steps: data.steps, showPreviews: data.showPreviews });
         if (snapshot === lastSavedRef.current) return;
         if (Array.isArray(data.steps)) setSteps(data.steps);
         if (typeof data.showPreviews === 'boolean') setShowPreviews(data.showPreviews);
@@ -185,7 +185,7 @@ export default function App() {
                 onMoveDown={()=>setSteps(prev=>{const arr=[...prev]; if(i<arr.length-1){const [it]=arr.splice(i,1); arr.splice(i+1,0,it)}; return arr})}
                 onDelete={()=>setSteps(prev=>prev.filter((_, idx)=> idx!==i))}
                 onToggle={(v)=>setSteps(prev=>prev.map((s,idx)=> idx===i?{...s, enabled:v}:s))}
-                onChangeUtil={(utilId)=>setSteps(prev=>prev.map((s,idx)=> idx===i?{...s, utilityId:utilId, params:{}}:s))}
+                onChangeUtil={(utilId: string)=>setSteps(prev=>prev.map((s,idx)=> idx===i?{...s, utilityId:utilId, params:{}}:s))}
                 onChangeParams={(p)=>setSteps(prev=>prev.map((s,idx)=> idx===i?{...s, params:p}:s))}
                 preview={previews[step.id]}
                 error={errors[step.id]}

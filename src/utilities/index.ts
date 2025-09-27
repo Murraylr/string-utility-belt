@@ -72,14 +72,16 @@ function coerceInputFor(util: Utility, value: Value): Value {
     if (want === 'bytes' && have === 'json') { try { return textToUint8Array(JSON.stringify(value)); } catch {} }
     if (want === 'json' && have === 'bytes') { try { return JSON.parse(new TextDecoder().decode(value as Uint8Array)); } catch {} }
   }
-  return value;
+  return value;``
 }
 export function formatForDisplay(v: Value): string {
   const t = valueType(v);
   if (t === 'bytes') {
-    const arr = Array.from(v as Uint8Array).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    const arr = Array.from(v as Uint8Array);
+    const byteArray = arr.map(b => b.toString().padStart(2,'0')).join(', ');
+    const hexArray = arr.map(b => b.toString(16).padStart(2,'0')).join(', ');
     let utf8 = ''; try { utf8 = new TextDecoder().decode(v as Uint8Array); } catch {}
-    return `bytes[${(v as Uint8Array).length}]\nhex: ${arr}${utf8 ? `\nutf8: ${utf8}` : ''}`;
+    return `bytes[${byteArray}]\nhex: [${hexArray}]${utf8 ? `\nutf8: ${utf8}` : ''}`;
   }
   if (t === 'json') { try { return JSON.stringify(v, null, 2); } catch { return String(v); } }
   return String(v ?? '');

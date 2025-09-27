@@ -1,25 +1,26 @@
-
 import type { Utility } from '@/types/utility'
-import {  isBytes } from '@/utilities/helpers'
+import { isBytes } from '@/utilities/helpers'
 
+/**
+ * md5
+ * - If input is string -> returns 32-char lowercase hex string
+ * - If input is bytes  -> returns 16-byte Uint8Array digest
+ */
 const util: Utility = {
   id: 'md5',
   name: 'md5 hash',
   category: 'Hashing',
-  description: 'Compute the MD5 of the input (string or bytes). Returns 32‑char lowercase hex.',
+  description: 'Compute the MD5 of the input. Strings -> hex, Bytes -> raw 16-byte digest.',
   accepts: ['string','bytes'],
-  produces: 'string',
+  produces: ['string','bytes'],
   params: {},
   apply: (input: unknown) => {
-    let s: string
     if (isBytes(input)) {
-      try { s = new TextDecoder().decode(input as Uint8Array) }
-      catch { s = Array.from(input as Uint8Array).map(b=>String.fromCharCode(b)).join('') }
-    } else {
-      s = String(input ?? '')
+      // Bytes in, bytes out
+      return md5Bytes(input as Uint8Array)
     }
-    const out = md5(s)
-    // guard: if md5 is tampered, ensure canonical length
+    const s = String(input ?? '')
+    const out = md5Hex(s)
     if (typeof out !== 'string' || out.length !== 32) {
       throw new Error('md5 internal error')
     }
@@ -27,21 +28,27 @@ const util: Utility = {
   }
 }
 
-
-function md5(input: string | Uint8Array): string {
+function md5Hex(input: string | Uint8Array): string {
   const bytes = typeof input === 'string' ? utf8Encode(input) : input;
   const state = md51Bytes(bytes);
   return hex(state);
+}
+
+function md5Bytes(input: Uint8Array): Uint8Array {
+  const state = md51Bytes(input);
+  return stateToBytes(state);
 }
 
 function utf8Encode(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }
 
-function md51Bytes(bytes: Uint8Array): [number, number, number, number] {
+type State = [number, number, number, number];
+
+function md51Bytes(bytes: Uint8Array): State {
   let i = 0;
   const n = bytes.length;
-  let state: [number, number, number, number] = [1732584193, -271733879, -1732584194, 271733878];
+  let state: State = [1732584193, -271733879, -1732584194, 271733878];
 
   // Process in 64-byte chunks
   for (; i + 63 < n; i += 64) {
@@ -78,7 +85,7 @@ function md5blkBytes(bytes: Uint8Array, offset: number): number[] {
   return md5blks;
 }
 
-function md5cycle(x: [number, number, number, number], k: number[]): void {
+function md5cycle(x: State, k: number[]): void {
   let a = x[0], b = x[1], c = x[2], d = x[3];
 
   a = ff(a, b, c, d, k[0], 7, -680876936);
@@ -181,8 +188,21 @@ function rhex(n: number): string {
   }
   return s;
 }
-function hex(x: [number, number, number, number]): string {
+function hex(x: State): string {
   return x.map(rhex).join('');
+}
+
+function stateToBytes(x: State): Uint8Array {
+  const out = new Uint8Array(16);
+  let o = 0;
+  for (let i = 0; i < 4; i++) {
+    const n = x[i] >>> 0; // force unsigned
+    out[o++] = n & 0xff;
+    out[o++] = (n >>> 8) & 0xff;
+    out[o++] = (n >>> 16) & 0xff;
+    out[o++] = (n >>> 24) & 0xff;
+  }
+  return out;
 }
 
 function add32(a: number, b: number): number {

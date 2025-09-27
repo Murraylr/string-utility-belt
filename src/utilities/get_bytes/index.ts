@@ -1,0 +1,67 @@
+import { Utility } from "@/types/utility";
+
+type Mode = "utf8" | "hex" | "base64";
+
+function fromUtf8(s: string): Uint8Array {
+  return new TextEncoder().encode(s);
+}
+
+function fromHex(s: string): Uint8Array {
+  const clean = s.replace(/\s+/g, "");
+  if (clean.length % 2 !== 0) throw new Error("hex input must have even length");
+  const out = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < clean.length; i += 2) {
+    const byte = Number.parseInt(clean.slice(i, i + 2), 16);
+    if (Number.isNaN(byte)) throw new Error("invalid hex");
+    out[i / 2] = byte;
+  }
+  return out;
+}
+
+function fromBase64(s: string): Uint8Array {
+  const bin =
+    typeof atob === "function"
+      ? atob(s)
+      : Buffer.from(s, "base64").toString("binary");
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+  return out;
+}
+
+const util: Utility = {
+  id: "get_bytes",
+  name: "Get bytes",
+  description: "Convert a string into bytes. Modes: utf8 (default), hex, base64.",
+  category: "Encoding",
+  accepts: ["string"],
+  produces: "bytes",
+  params: {
+    mode: {
+      kind: 'select',
+      label: 'Mode',
+      options: [
+        'utf8',
+        'hex',
+        'base64'
+      ],
+      default: 'utf8',
+    }
+  },
+  async apply(input: string, params?: { mode?: Mode }): Promise<Uint8Array> {
+    const mode: Mode = params?.mode ?? "utf8";
+    if (typeof input !== "string") throw new Error("get_bytes expects string");
+    switch (mode) {
+      case "utf8":
+        return fromUtf8(input);
+      case "hex":
+        return fromHex(input);
+      case "base64":
+        return fromBase64(input);
+      default:
+        const _never: never = mode;
+        throw new Error(`unsupported mode: ${_never as string}`);
+    }
+  }
+};
+
+export default util;
