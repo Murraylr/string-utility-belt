@@ -59,20 +59,43 @@ function acceptsType(accepts: Accepts | undefined, t: ValueType) {
   if (!accepts) return t === 'string';
   return Array.isArray(accepts) ? accepts.includes(t) : accepts === t;
 }
-function coerceInputFor(util: Utility, value: Value): Value {
+function coerceInputFor(value: Value, want: ValueType): Value {
   const have = valueType(value);
-  const accepts = util.accepts ?? 'string';
-  if (acceptsType(accepts, have)) return value;
-  const targets: ValueType[] = Array.isArray(accepts) ? accepts : [accepts];
-  for (const want of targets) {
-    if (want === 'string' && have === 'bytes') return new TextDecoder().decode(value as Uint8Array);
-    if (want === 'string' && have === 'json') { try { return JSON.stringify(value); } catch { return String(value); } }
-    if (want === 'bytes' && have === 'string') return textToUint8Array(value as string);
-    if (want === 'json' && have === 'string') { try { return JSON.parse(value as string); } catch {} }
-    if (want === 'bytes' && have === 'json') { try { return textToUint8Array(JSON.stringify(value)); } catch {} }
-    if (want === 'json' && have === 'bytes') { try { return JSON.parse(new TextDecoder().decode(value as Uint8Array)); } catch {} }
+
+  if (have === want) return value;
+
+  // string -> bytes
+  if (want === 'bytes' && have === 'string') {
+    return textToUint8Array(value as string);
   }
-  return value;``
+
+  // bytes -> string
+  if (want === 'string' && have === 'bytes') {
+    return new TextDecoder().decode(value as Uint8Array);
+  }
+
+  // string -> json
+  if (want === 'json' && have === 'string') {
+    try { return JSON.parse(value as string); } catch { return value; }
+  }
+
+  // bytes -> json (assume UTF-8 text JSON)
+  if (want === 'json' && have === 'bytes') {
+    try {
+      const s = new TextDecoder().decode(value as Uint8Array);
+      return JSON.parse(s);
+    } catch {
+      return value;
+    }
+  }
+
+  // json -> string
+  if (want === 'string' && have === 'json') {
+    try { return JSON.stringify(value); } catch { return String(value); }
+  }
+
+  // Fallback: don’t coerce
+  return value;
 }
 export function formatForDisplay(v: Value): string {
   const t = valueType(v);
