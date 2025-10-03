@@ -1,5 +1,4 @@
 import type { Utility } from '@/types/utility'
-import { slugify, toCamel, toPascal, toSnake, toKebab } from '../helpers'
 const util: Utility = {
   id: 'slug',
   name: 'slug',
@@ -8,6 +7,10 @@ const util: Utility = {
   accepts: 'string',
   produces: 'string',
   params: {},
-  apply: (input: any) => slugify(String(input))
+  apply: (s: string) => (s ?? '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
 }
 export default util

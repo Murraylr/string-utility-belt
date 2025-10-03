@@ -15,7 +15,7 @@ const util: Utility = {
     const s = String(input);
     const L = Number(length) || 0;
     if (L <= 0 || s.length <= L) return s;
-    const reserve = 3; // historical behavior per tests
+    const reserve = ellipsis.length;
     if (L <= reserve) return s.slice(0, L);
     const e = (ellipsis ?? '…');
     return s.slice(0, L - reserve) + e;

@@ -1,10 +1,6 @@
 import type { Utility, Value, ValueType, Accepts } from '@/types/utility';
 import { textToUint8Array } from '@/utilities/helpers';
 
-const modulesTs  = import.meta.glob('./**/index.ts',  { eager: true }) as Record<string, { default?: Utility }>;
-const modulesTsx = import.meta.glob('./**/index.tsx', { eager: true }) as Record<string, { default?: Utility }>;
-const allModules = { ...modulesTs, ...modulesTsx };
-
 function pickUtilities(records: Record<string, { default?: Utility }>): Utility[] {
   const arr: Utility[] = [];
   for (const [key, mod] of Object.entries(records)) {
@@ -53,34 +49,30 @@ export function valueType(v: Value): ValueType {
 type Step = { id: string; utilityId: string; enabled?: boolean; params?: Record<string, unknown> };
 function isEnabled(step: Step) { return step.enabled !== false; }
 
-import type { Accepts as _A } from '@/types/utility';
-type Accepts = _A;
-function acceptsType(accepts: Accepts | undefined, t: ValueType) {
-  if (!accepts) return t === 'string';
-  return Array.isArray(accepts) ? accepts.includes(t) : accepts === t;
-}
-function coerceInputFor(value: Value, want: ValueType): Value {
+
+
+function coerceInputFor(value: Value, want: Accepts): Value {
   const have = valueType(value);
 
-  if (have === want) return value;
+  if (want.includes(have)) return value;
 
   // string -> bytes
-  if (want === 'bytes' && have === 'string') {
+  if (want.includes('bytes') && have === 'string') {
     return textToUint8Array(value as string);
   }
 
   // bytes -> string
-  if (want === 'string' && have === 'bytes') {
+  if (want.includes('string') && have === 'bytes') {
     return new TextDecoder().decode(value as Uint8Array);
   }
 
   // string -> json
-  if (want === 'json' && have === 'string') {
+  if (want.includes('json') && have === 'string') {
     try { return JSON.parse(value as string); } catch { return value; }
   }
 
   // bytes -> json (assume UTF-8 text JSON)
-  if (want === 'json' && have === 'bytes') {
+  if (want.includes('json') && have === 'bytes') {
     try {
       const s = new TextDecoder().decode(value as Uint8Array);
       return JSON.parse(s);
@@ -90,7 +82,7 @@ function coerceInputFor(value: Value, want: ValueType): Value {
   }
 
   // json -> string
-  if (want === 'string' && have === 'json') {
+  if (want.includes('string') && have === 'json') {
     try { return JSON.stringify(value); } catch { return String(value); }
   }
 
@@ -118,7 +110,7 @@ export async function runPipeline(source: Value, steps: Step[], wantPreviews = f
     const util = UTIL_MAP[step.utilityId];
     if (!util) { err[step.id] = 'unknown utility'; continue; }
     try {
-      const coerced = coerceInputFor(util, out);
+      const coerced = coerceInputFor(out, util.accepts);
       const result = await util.apply(coerced, step.params ?? {});
       out = result;
       if (wantPreviews) previews[step.id] = out;

@@ -1,35 +1,27 @@
-const escapeHtml = (s) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
-export function mdToHtml(md){
-  let out = ''
-  const lines = md.replace(/\r\n?/g, '\n').split('\n')
-  let inCode = false, lang = ''
-  for (let i=0;i<lines.length;i++){
-    const line = lines[i]
-    const fence = line.match(/^```(.*)$/)
-    if (fence) {
-      if (!inCode) { inCode = true; lang = (fence[1]||'').trim(); out += `<pre><code class="language-${lang}">` }
-      else { inCode = false; out += `</code></pre>` }
-      continue
-    }
-    if (inCode) { out += escapeHtml(line) + '\n'; continue }
-    if (/^\s*$/.test(line)) { out += '\n'; continue }
-    const h = line.match(/^(#{1,6})\s+(.*)$/)
-    if (h) { out += `<h${h[1].length}>${inline(h[2])}</h${h[1].length}>\n`; continue }
-    const ul = line.match(/^\s*[-*]\s+(.*)$/)
-    if (ul) {
-      const items = [ul[1]]
-      while (i+1<lines.length && /^\s*[-*]\s+/.test(lines[i+1])) items.push(lines[++i].replace(/^\s*[-*]\s+/,''))
-      out += '<ul>' + items.map(it=>`<li>${inline(it)}</li>`).join('') + '</ul>\n'
-      continue
-    }
-    out += `<p>${inline(line)}</p>\n`
-  }
-  return out
-}
-function inline(s){
-  s = s.replace(/`([^`]+)`/g, (_,c)=>`<code>${c.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}</code>`)
-  s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
-  s = s.replace(/\*([^*]+)\*/g,'<em>$1</em>')
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+export function escapeHtml(s) {
   return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export function mdToHtml(md = '') {
+  // code fences ```
+  md = md.replace(/```([\s\S]*?)```/g, (_, code) => {
+    return `<pre class="whitespace-pre overflow-x-auto p-3 rounded-lg bg-black/40 border border-white/10"><code>${escapeHtml(code.trim())}</code></pre>`;
+  });
+  // headings
+  md = md.replace(/^###\s+(.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-2">$1</h3>');
+  md = md.replace(/^##\s+(.+)$/gm, '<h2 class="text-xl font-bold mt-8 mb-3">$1</h2>');
+  md = md.replace(/^#\s+(.+)$/gm, '<h1 class="text-2xl font-bold mt-10 mb-4">$1</h1>');
+  // inline code
+  md = md.replace(/`([^`]+)`/g, (_, code) => `<code class="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">${escapeHtml(code)}</code>`);
+  // bold/italic (lightweight)
+  md = md.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  md = md.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // paragraphs
+  md = md.split(/\n{2,}/).map(p => `<p class="mb-4 leading-7">${p}</p>`).join('\n');
+  return md;
 }

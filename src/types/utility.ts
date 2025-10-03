@@ -1,4 +1,4 @@
-export type ValueType = 'string' | 'bytes' | 'json';
+export type ValueType = String | Uint8Array;
 export type Produces = ValueType | ValueType[];
 export type Accepts = ValueType | ValueType[];
 
@@ -8,7 +8,8 @@ export type ParamSpec =
   | { kind: 'string'; label: string; default?: string; placeholder?: string }
   | { kind: 'number'; label: string; default?: number }
   | { kind: 'boolean'; label: string; default?: boolean }
-  | { kind: 'select'; label: string; options: string[]; default?: string };
+  | { kind: 'select'; label: string; options: string[]; default?: string }
+  | { kind: 'code'; label: string; default?: string;   placeholder?: string  };
 
 export type Params = Record<string, unknown>;
 

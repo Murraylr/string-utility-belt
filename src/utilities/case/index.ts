@@ -9,7 +9,7 @@ const util: Utility = {
   accepts: 'string',
   produces: 'string',
   params: {
-    mode: { kind: 'select', label: 'Mode', options: ['upper','lower','title'], default: 'upper' }
+    mode: { kind: 'select', label: 'Mode', options: ['upper','lower','title', 'sentence'], default: 'upper' }
   },
   apply: (input: unknown, params: { mode?: 'upper'|'lower'|'title' } = {}) => {
     const mode = params.mode ?? 'upper'

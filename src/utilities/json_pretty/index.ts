@@ -5,11 +5,11 @@ const util: Utility = {
   name: 'json pretty',
   category: 'URL & JSON',
   description: 'Parse input as JSON and pretty-print.',
-  accepts: ['string','json'],
+  accepts: ['string'],
   produces: 'string',
   params: { indent: { kind: 'number', label: 'indent', default: 2 } },
   apply: (input: any, { indent }: any) => {
-    const val = typeof input === 'string' ? JSON.parse(input) : input
+    const val = JSON.parse(input)
     return JSON.stringify(val, null, Math.max(0, Number(indent)||0))
   }
 }

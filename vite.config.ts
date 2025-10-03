@@ -1,7 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { cloudflare } from '@cloudflare/vite-plugin';
+import path from 'node:path'
 
-export default defineConfig(async ({ mode, command }) => {
+export default defineConfig(async ({ mode }) => {
   const plugins = [react()];
 
   // Enable CF plugin only when not testing, and only when you actually want Workers
@@ -11,7 +13,6 @@ export default defineConfig(async ({ mode, command }) => {
     (process.env.CF_PAGES || process.env.CF_WORKER); // opt-in via env
 
   if (enableCloudflare) {
-    const cloudflare = (await import('@cloudflare/vite-plugin')).default;
     plugins.push(cloudflare());
   }
 
@@ -25,7 +26,7 @@ export default defineConfig(async ({ mode, command }) => {
     },
     resolve: {
       alias: {
-        '@': '/src',
+        '@': path.resolve(__dirname, 'src'),
       },
     },
   };

@@ -1,6 +1,6 @@
 import { Utility } from "@/types/utility";
 
-type Mode = "utf8" | "hex" | "base64";
+type Mode = "utf8" | "hex" | "unicode";
 
 function fromUtf8(s: string): Uint8Array {
   return new TextEncoder().encode(s);
@@ -18,15 +18,16 @@ function fromHex(s: string): Uint8Array {
   return out;
 }
 
-function fromBase64(s: string): Uint8Array {
-  const bin =
-    typeof atob === "function"
-      ? atob(s)
-      : Buffer.from(s, "base64").toString("binary");
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i) & 0xff;
+function fromUnicode(s: string): Uint8Array {
+  const out = new Uint8Array(s.length * 2);
+  for (let i = 0; i < s.length; i++) {
+    const code = s.charCodeAt(i);
+    out[i * 2] = (code >> 8) & 0xff;
+    out[i * 2 + 1] = code & 0xff;
+  }
   return out;
 }
+
 
 const util: Utility = {
   id: "get_bytes",
@@ -42,7 +43,7 @@ const util: Utility = {
       options: [
         'utf8',
         'hex',
-        'base64'
+        'unicode'
       ],
       default: 'utf8',
     }
@@ -55,8 +56,9 @@ const util: Utility = {
         return fromUtf8(input);
       case "hex":
         return fromHex(input);
-      case "base64":
-        return fromBase64(input);
+      case "unicode":
+        return fromUnicode(input);
+
       default:
         const _never: never = mode;
         throw new Error(`unsupported mode: ${_never as string}`);

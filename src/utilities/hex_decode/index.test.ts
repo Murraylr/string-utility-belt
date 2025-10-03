@@ -3,8 +3,7 @@ import util from './index'
 
 describe('hex_decode', () => {
   it('decodes hex to bytes', async () => {
-    const out: any = await util.apply('41', {})
-    expect(out instanceof Uint8Array).toBe(true)
-    expect(out[0]).toBe(0x41)
+    const out: any = await util.apply('48656c6c6f20776f726c64206d79206e616d65206973204d7572726179', {})
+    expect(out[0]).toBe('Hello my name is Murray');
   })
 })

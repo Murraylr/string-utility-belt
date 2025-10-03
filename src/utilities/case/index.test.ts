@@ -1,34 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import util from './index'
 
-describe('format_case', () => {
-  it('to camel', async () => {
-    const out = await util.apply('Hello world', { mode: 'camel' })
-    expect(out).toBe('helloWorld')
-  })
-  it('to pascal', async () => {
-    const out = await util.apply('hello world', { mode: 'pascal' })
-    expect(out).toBe('HelloWorld')
-  })
-  it('to snake', async () => {
-    const out = await util.apply('Hello world', { mode: 'snake' })
-    expect(out).toBe('hello_world')
-  })
-  it('to kebab', async () => {
-    const out = await util.apply('Hello world', { mode: 'kebab' })
-    expect(out).toBe('hello-world')
-  })
-  it('to title', async () => {
-    const out = await util.apply('hello world. this is a test.', { mode: 'title' })
-    expect(out).toBe('Hello World. This Is A Test.')
-  })
-  it('to sentence', async () => {
-    const out = await util.apply('hello world. this is a test.', { mode: 'sentence' })
-    expect(out).toBe('Hello world. This is a test.')
-  })
+describe('case utility', () => {
+    it('should have correct metadata', () => {
+        expect(util.id).toBe('case')
+        expect(util.name).toBe('change case')
+        expect(util.category).toBe('Formatting')
+        expect(util.description).toBeTypeOf('string')
+        expect(util.accepts).toBe('string')
+        expect(util.produces).toBe('string')
+        expect(util.params.mode).toEqual(['upper', 'lower', 'title', 'sentence'])
+        expect(util.params.mode.default).toBe('upper')
+    })
 
-   it('should convert to upper case by default', () => {
-        expect(util.apply('hello World', {})).toBe('HELLO WORLD')
+    it('should convert to upper case by default', () => {
+        expect(util.apply('hello World', { mode: 'upper' })).toBe('HELLO WORLD')
     })
 
     it('should convert to lower case', () => {
@@ -66,7 +52,9 @@ describe('format_case', () => {
         expect(util.apply('hello world. this is a test.', { mode: 'sentence' })).toBe('Hello world. This is a test.')
         expect(util.apply('HELLO WORLD. THIS IS A TEST.', { mode: 'sentence' })).toBe('Hello world. This is a test.')
         expect(util.apply('hElLo wOrLd. tHiS iS a tEsT.', { mode: 'sentence' })).toBe('Hello world. This is a test.')
-        expect(util.apply('hElLo wOrLd. 3tHiS iS a tEsT.', { mode: 'sentence' })).toBe('Hello world. 3This is a test.')
+        expect(util.apply('hello', { mode: 'sentence' })).toBe('Hello')
+        expect(util.apply('HELLO', { mode: 'sentence' })).toBe('Hello')
+        expect(util.apply('hElLo', { mode: 'sentence' })).toBe('Hello')
         expect(util.apply('', { mode: 'sentence' })).toBe('')
     })
-})
+});

@@ -8,13 +8,10 @@ import UtilityPicker from '@/components/UtilityPicker';
 import Select from '@/components/Select';
 import { uid } from '@/utilities/helpers';
 import { getRoute, onRouteChange } from '@/lib/router';
-import BlogIndex from '@/components/BlogIndex';
-import BlogPost from '@/components/BlogPost';
 import BackgroundFX from '@/components/BackgroundFX';
-import { loadState, saveState, CURRENT_KEY } from '@/lib/persist';
+import { loadState, saveState } from '@/lib/persist';
 
 const INSTANCE_ID = Math.random().toString(36).slice(2);
-const KEY = CURRENT_KEY;
 
 export default function App() {
   const [route, setRoute] = useState(getRoute());
@@ -40,25 +37,6 @@ export default function App() {
     saveState({ steps, showPreviews, _origin: INSTANCE_ID });
   }, [steps, showPreviews]);
 
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key !== KEY || typeof e.newValue !== 'string') return;
-      try {
-        const data = JSON.parse(e.newValue);
-        if (data._origin === INSTANCE_ID) return;
-        if (typeof data._ts === 'number' && data._ts <= lastSeenTsRef.current) return;
-        lastSeenTsRef.current = data._ts || Date.now();
-        const snapshot = JSON.stringify({ steps: data.steps, showPreviews: data.showPreviews });
-        if (snapshot === lastSavedRef.current) return;
-        if (Array.isArray(data.steps)) setSteps(data.steps);
-        if (typeof data.showPreviews === 'boolean') setShowPreviews(data.showPreviews);
-        lastSavedRef.current = snapshot;
-      } catch {}
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
   const addStep = useCallback((utilityId = UTILITIES[0]?.id) => {
     const util = UTILITIES.find((u) => u.id === utilityId) || UTILITIES[0];
     if (!util) return;
@@ -66,7 +44,7 @@ export default function App() {
     Object.entries(util.params || {}).forEach(([k, spec]) => {
       if (Object.prototype.hasOwnProperty.call(spec, 'default')) (step.params as any)[k] = (spec as any).default;
     });
-    setSteps((prev) => [...prev, step]); setShowPicker(false);
+    setSteps((prev: any) => [...prev, step]); setShowPicker(false);
   }, []);
 
   useEffect(() => {
@@ -123,7 +101,7 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-2xl bg-primary-600 text-white grid place-content-center font-bold shadow-glow">S</div>
             <div>
-              <div className="font-semibold leading-tight">string pipeline workshop</div>
+              <div className="font-semibold leading-tight">String Utility Belt</div>
               <div className="text-xs text-gray-500">build a chain of string utilities</div>
             </div>
           </div>
@@ -135,8 +113,8 @@ export default function App() {
         <section className="glass rounded-[28px] p-6 md:p-8 shadow-glow">
           <div className="grid md:grid-cols-2 gap-6 items-center">
             <div className="space-y-3">
-              <h1 className="text-2xl md:text-3xl font-semibold">Design‑grade String Toolkit</h1>
-              <p className="muted">Chain elegant utilities, preview every step, and export/share your pipeline.</p>
+              <h1 className="text-2xl md:text-3xl font-semibold">String Utility Belt</h1>
+              <p className="muted">Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
               <div className="flex gap-2">
                 <button className="cta" onClick={()=>setShowPicker(true)}>Add utility</button>
                 <a className="px-4 py-2 rounded-xl border bg-white hover:bg-gray-50" href="#/blog">Read blog</a>
