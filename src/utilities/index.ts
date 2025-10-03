@@ -19,6 +19,15 @@ export const UTILITIES: Utility[] = pickUtilities(allModules);
 
 export const UTIL_MAP: Record<string, Utility> = Object.fromEntries(UTILITIES.map(u => [u.id, u]));
 
+// Backward-compat ids
+const ALIASES: Record<string, string> = {
+  uppercase: 'upper',
+  upper: 'uppercase',
+};
+for (const [alias, target] of Object.entries(ALIASES)) {
+  if (UTIL_MAP[target]) UTIL_MAP[alias] = UTIL_MAP[target];
+}
+
 export const CATEGORIES: string[] = Array.from(new Set(['All', ...UTILITIES.map(u => u.category || 'Other')]));
 
 export function getUtilities(): Utility[] { return UTILITIES; }
@@ -34,53 +43,44 @@ export const UTIL_DISPLAY = UTILITIES.map(u => ({
   accepts: u.accepts ?? 'string', produces: u.produces ?? 'string',
 }));
 
+export type { Utility, Value, ValueType } from '@/types/utility';
+
+export function valueType(v: Value): ValueType {
+  if (v instanceof Uint8Array) return 'bytes';
+  if (v && typeof v === 'object' && !Array.isArray(v)) return 'json';
+  return 'string';
+}
 type Step = { id: string; utilityId: string; enabled?: boolean; params?: Record<string, unknown> };
 function isEnabled(step: Step) { return step.enabled !== false; }
 
+import type { Accepts as _A } from '@/types/utility';
+type Accepts = _A;
+function acceptsType(accepts: Accepts | undefined, t: ValueType) {
+  if (!accepts) return t === 'string';
+  return Array.isArray(accepts) ? accepts.includes(t) : accepts === t;
+}
+function coerceInputFor(value: Value, want: ValueType): Value {
+  const have = valueType(value);
 
-function coerceInputFor(value: ValueType, want: Accepts): Value {
-  
-
-
-  if (want.includes(value)) return value;
-
-  //switch value type of value
-  switch (typeof value) {
-    case 'undefined': return value;
-    case 'string':    return value;
-    case 'object':
-      if (value === null) return value;
-      if (value instanceof Uint8Array) return value;
-      return value; // assume JSON
-    case 'number':
-    case 'boolean':
-    case 'bigint':
-    case 'symbol':
-    case 'function':
-      return String(value);
-    default:       return value;
-  }
-
-
-
+  if (have === want) return value;
 
   // string -> bytes
-  if (want.includes('bytes') && have === 'string') {
+  if (want === 'bytes' && have === 'string') {
     return textToUint8Array(value as string);
   }
 
   // bytes -> string
-  if (want.includes('string') && have === 'bytes') {
+  if (want === 'string' && have === 'bytes') {
     return new TextDecoder().decode(value as Uint8Array);
   }
 
   // string -> json
-  if (want.includes('json') && have === 'string') {
+  if (want === 'json' && have === 'string') {
     try { return JSON.parse(value as string); } catch { return value; }
   }
 
   // bytes -> json (assume UTF-8 text JSON)
-  if (want.includes('json') && have === 'bytes') {
+  if (want === 'json' && have === 'bytes') {
     try {
       const s = new TextDecoder().decode(value as Uint8Array);
       return JSON.parse(s);
@@ -90,7 +90,7 @@ function coerceInputFor(value: ValueType, want: Accepts): Value {
   }
 
   // json -> string
-  if (want.includes('string') && have === 'json') {
+  if (want === 'string' && have === 'json') {
     try { return JSON.stringify(value); } catch { return String(value); }
   }
 
@@ -118,7 +118,7 @@ export async function runPipeline(source: Value, steps: Step[], wantPreviews = f
     const util = UTIL_MAP[step.utilityId];
     if (!util) { err[step.id] = 'unknown utility'; continue; }
     try {
-      const coerced = coerceInputFor(out, util.accepts);
+      const coerced = coerceInputFor(util, out);
       const result = await util.apply(coerced, step.params ?? {});
       out = result;
       if (wantPreviews) previews[step.id] = out;
