@@ -1,5 +1,5 @@
 export type ValueType = String | Uint8Array;
-export type Produces = ValueType | ValueType[];
+export type Produces = ValueType[];
 export type Accepts = ValueType | ValueType[];
 
 export type Value = string | Uint8Array | Record<string, unknown>;
