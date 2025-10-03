@@ -118,7 +118,7 @@ export async function runPipeline(source: Value, steps: Step[], wantPreviews = f
     const util = UTIL_MAP[step.utilityId];
     if (!util) { err[step.id] = 'unknown utility'; continue; }
     try {
-      const coerced = coerceInputFor(util, out);
+      const coerced = coerceInputFor(out, util.accepts);
       const result = await util.apply(coerced, step.params ?? {});
       out = result;
       if (wantPreviews) previews[step.id] = out;
