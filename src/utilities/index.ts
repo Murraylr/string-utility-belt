@@ -1,6 +1,10 @@
 import type { Utility, Value, ValueType, Accepts } from '@/types/utility';
 import { textToUint8Array } from '@/utilities/helpers';
 
+const modulesTs  = import.meta.glob('./**/index.ts',  { eager: true }) as Record<string, { default?: Utility }>;
+const modulesTsx = import.meta.glob('./**/index.tsx', { eager: true }) as Record<string, { default?: Utility }>;
+const allModules = { ...modulesTs, ...modulesTsx };
+
 function pickUtilities(records: Record<string, { default?: Utility }>): Utility[] {
   const arr: Utility[] = [];
   for (const [key, mod] of Object.entries(records)) {
@@ -14,15 +18,6 @@ function pickUtilities(records: Record<string, { default?: Utility }>): Utility[
 export const UTILITIES: Utility[] = pickUtilities(allModules);
 
 export const UTIL_MAP: Record<string, Utility> = Object.fromEntries(UTILITIES.map(u => [u.id, u]));
-
-// Backward-compat ids
-const ALIASES: Record<string, string> = {
-  uppercase: 'upper',
-  upper: 'uppercase',
-};
-for (const [alias, target] of Object.entries(ALIASES)) {
-  if (UTIL_MAP[target]) UTIL_MAP[alias] = UTIL_MAP[target];
-}
 
 export const CATEGORIES: string[] = Array.from(new Set(['All', ...UTILITIES.map(u => u.category || 'Other')]));
 
@@ -39,22 +34,35 @@ export const UTIL_DISPLAY = UTILITIES.map(u => ({
   accepts: u.accepts ?? 'string', produces: u.produces ?? 'string',
 }));
 
-export type { Utility, Value, ValueType } from '@/types/utility';
-
-export function valueType(v: Value): ValueType {
-  if (v instanceof Uint8Array) return 'bytes';
-  if (v && typeof v === 'object' && !Array.isArray(v)) return 'json';
-  return 'string';
-}
 type Step = { id: string; utilityId: string; enabled?: boolean; params?: Record<string, unknown> };
 function isEnabled(step: Step) { return step.enabled !== false; }
 
 
+function coerceInputFor(value: ValueType, want: Accepts): Value {
+  
 
-function coerceInputFor(value: Value, want: Accepts): Value {
-  const have = valueType(value);
 
-  if (want.includes(have)) return value;
+  if (want.includes(value)) return value;
+
+  //switch value type of value
+  switch (typeof value) {
+    case 'undefined': return value;
+    case 'string':    return value;
+    case 'object':
+      if (value === null) return value;
+      if (value instanceof Uint8Array) return value;
+      return value; // assume JSON
+    case 'number':
+    case 'boolean':
+    case 'bigint':
+    case 'symbol':
+    case 'function':
+      return String(value);
+    default:       return value;
+  }
+
+
+
 
   // string -> bytes
   if (want.includes('bytes') && have === 'string') {
