@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
-import { UTIL_MAP, formatForDisplay, valueType } from '@/utilities';
+import { BookOpen, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { UTIL_MAP, docsHref, formatForDisplay, valueType } from '@/utilities';
 import ParamsEditor from './ParamsEditor';
 import Select from './Select';
 
@@ -29,6 +29,11 @@ export default function StepCard({ index, step, total, onMoveUp, onMoveDown, onD
           <label className="muted">utility</label>
           <Select value={step.utilityId} onChange={onChangeUtil} options={Object.keys(UTIL_MAP)} />
           <div className="text-xs text-gray-500 mt-1">{util?.description}</div>
+          {util && (
+            <a href={docsHref(util.id)} className="text-xs text-primary-600 hover:underline inline-flex items-center gap-1 mt-1">
+              <BookOpen size={12}/> {util.name} docs
+            </a>
+          )}
         </div>
         <div className="md:col-span-2">{util && <ParamsEditor spec={util.params || {}} params={step.params} onChange={onChangeParams} />}</div>
       </div>

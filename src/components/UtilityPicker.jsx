@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
-import { CATEGORIES, getUtilitiesByCategory } from '@/utilities'
-import { Search, Plus } from 'lucide-react'
+import { CATEGORIES, docsHref, getUtilitiesByCategory } from '@/utilities'
+import { BookOpen, Search, Plus } from 'lucide-react'
 
 export default function UtilityPicker({ onPick }) {
   const [category, setCategory] = useState('All')
@@ -41,7 +41,7 @@ export default function UtilityPicker({ onPick }) {
       </div>
       <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map(u => (
-          <li key={u.id}>
+          <li key={u.id} className="relative">
             <button
               onClick={() => onPick(u.id)}
               className="w-full h-full text-left p-4 rounded-2xl border bg-white hover:border-primary-600 hover:shadow-glow transition"
@@ -60,6 +60,13 @@ export default function UtilityPicker({ onPick }) {
                 <Plus size={14}/> add
               </div>
             </button>
+            <a
+              href={docsHref(u.id)}
+              aria-label={`${u.name} docs`}
+              className="absolute bottom-4 right-4 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-primary-600 hover:underline"
+            >
+              <BookOpen size={12}/> docs
+            </a>
           </li>
         ))}
         {list.length === 0 && <li className="text-sm text-gray-500">No utilities match your search.</li>}

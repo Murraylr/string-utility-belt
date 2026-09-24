@@ -9,6 +9,7 @@ import Select from '@/components/Select';
 import { uid } from '@/utilities/helpers';
 import { getRoute, onRouteChange } from '@/lib/router';
 import BackgroundFX from '@/components/BackgroundFX';
+import UtilityDoc, { DocsIndex } from '@/components/UtilityDoc';
 import { loadState, saveState } from '@/lib/persist';
 
 const INSTANCE_ID = Math.random().toString(36).slice(2);
@@ -89,6 +90,7 @@ export default function App() {
   const Nav = () => (
     <nav className="flex items-center gap-4 text-sm">
       <a href="#/" className="hover:underline">Tool</a>
+      <a href="#/docs" className="hover:underline">Docs</a>
       <a href="#/blog" className="hover:underline">Blog</a>
     </nav>
   );
@@ -109,6 +111,11 @@ export default function App() {
         </div>
       </header>
 
+      {route.name === 'docs' || route.name === 'docsIndex' ? (
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {route.name === 'docs' ? <UtilityDoc id={route.params.id} /> : <DocsIndex />}
+      </main>
+      ) : (
       <main className="max-w-7xl mx-auto px-4 py-8 grid gap-8">
         <section className="glass rounded-[28px] p-6 md:p-8 shadow-glow">
           <div className="grid md:grid-cols-2 gap-6 items-center">
@@ -172,6 +179,7 @@ export default function App() {
           </AnimatePresence>
         </section>
       </main>
+      )}
       <input type="file" ref={importRef} onChange={onImportFile} accept="application/json" className="hidden" />
     </div>
   );

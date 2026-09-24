@@ -30,6 +30,8 @@ for (const [alias, target] of Object.entries(ALIASES)) {
 
 export const CATEGORIES: string[] = Array.from(new Set(['All', ...UTILITIES.map(u => u.category || 'Other')]));
 
+export function docsHref(id: string): string { return `#/docs/${encodeURIComponent(id)}`; }
+
 export function getUtilities(): Utility[] { return UTILITIES; }
 export function getCategories(): string[] { return CATEGORIES; }
 export function getUtilitiesByCategory(category?: string): Utility[] {
