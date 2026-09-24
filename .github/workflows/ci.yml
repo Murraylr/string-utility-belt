@@ -67,6 +67,9 @@ jobs:
       - run: npm run check:bundle
       # pre-rendered pages, sitemap and RSS (OG images are rendered at deploy time)
       - run: npm run build:seo:fast
+      # prove the Worker bundles with wrangler's esbuild (no deploy); it needs the
+      # site in dist/ because wrangler.jsonc serves it as the assets directory
+      - run: npx wrangler deploy --dry-run --outdir worker-dry
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -85,8 +88,6 @@ jobs:
       - run: npm run build:tools
       # the package tests that exercise the built bundles skip until dist/ exists
       - run: npx vitest run packages --minWorkers=1 --maxWorkers=2
-      # prove the Worker bundles with wrangler's esbuild (no deploy)
-      - run: npx wrangler deploy --dry-run --outdir worker-dry
 
   e2e:
     needs: build

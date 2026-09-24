@@ -31,7 +31,14 @@ const padRight = (s: string, width: number) => s + ' '.repeat(Math.max(0, width 
 type SegmenterCtor = new (
   locale?: string,
   options?: { granularity?: string }
-) => { segment(input: string): Iterable<unknown> }
+) => { segment(input: string): Iterable<{ index: number }> }
+
+/**
+ * Segmenting a long string in one go blows the heap on Node 20 (V8 11): 160k chars
+ * exhausted a 2 GB worker in seconds. Segment fixed-size windows instead, counting
+ * without keeping segments alive.
+ */
+const GRAPHEME_CHUNK = 8192
 
 /** Grapheme clusters via Intl.Segmenter when present, else code points. */
 const countGraphemes = (s: string): number => {
@@ -39,7 +46,24 @@ const countGraphemes = (s: string): number => {
   const Segmenter = (Intl as unknown as { Segmenter?: SegmenterCtor }).Segmenter
   if (typeof Segmenter === 'function') {
     try {
-      return Array.from(new Segmenter(undefined, { granularity: 'grapheme' }).segment(s)).length
+      const segmenter = new Segmenter(undefined, { granularity: 'grapheme' })
+      let count = 0
+      let start = 0
+      let size = GRAPHEME_CHUNK
+      while (start < s.length) {
+        const end = Math.min(s.length, start + size)
+        let n = 0
+        let lastIndex = 0
+        for (const { index } of segmenter.segment(s.slice(start, end))) { n++; lastIndex = index }
+        if (end === s.length) return count + n
+        // the window's last cluster may run past the cut: re-segment it with the next window
+        // (a cluster start is a clean boundary, so regional-indicator pairing restarts correctly)
+        if (lastIndex === 0) { size *= 2; continue } // one cluster fills the window: widen it
+        count += n - 1
+        start += lastIndex
+        size = GRAPHEME_CHUNK
+      }
+      return count
     } catch {
       // fall through to the code-point count
     }
