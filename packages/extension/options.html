@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="color-scheme" content="light dark" />
+<title>String Utility Belt — Options</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #6b7280; --line: #d9dce1; --accent: #4f46e5; --accent-fg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17181c; --fg: #f2f3f5; --muted: #9aa0ac; --line: #33353c; --accent: #8b8ff9; --accent-fg: #14151a; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0 auto; max-width: 560px; padding: 24px 20px 60px;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--fg);
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.muted { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+  label.field-label { display: block; font-size: 12px; color: var(--muted); margin: 16px 0 4px; }
+  input[type="text"], input[type="search"] {
+    width: 100%; font: inherit; color: inherit; background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+  }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 8px 0 0; }
+  fieldset legend { padding: 0 6px; font-size: 12px; color: var(--muted); }
+  .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 4px; }
+  .category:first-of-type { margin-top: 2px; }
+  .option-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+  button {
+    font: inherit; border: 1px solid var(--line); border-radius: 6px;
+    padding: 8px 14px; background: var(--accent); color: var(--accent-fg); cursor: pointer;
+  }
+  button.secondary { background: transparent; color: var(--fg); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  input[aria-invalid="true"] { border-color: #dc2626; }
+  #status { margin-top: 10px; font-size: 12px; color: var(--muted); min-height: 16px; }
+</style>
+</head>
+<body>
+  <h1>String Utility Belt</h1>
+  <p class="muted">Choose which utilities appear in the right-click menu, and where "Open in app" links to.</p>
+
+  <label class="field-label" for="base-url">App base URL</label>
+  <input id="base-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="base-url-hint" />
+  <p id="base-url-hint" class="hint">An http(s) address; the selection is sent to it as <code>?text=</code>.</p>
+
+  <label class="field-label" for="search">Search utilities</label>
+  <input id="search" type="search" placeholder="Filter by name, id or tag&hellip;" autocomplete="off" />
+
+  <fieldset id="utility-list">
+    <legend>Context menu utilities</legend>
+  </fieldset>
+
+  <div class="actions">
+    <button id="save" type="button">Save</button>
+    <button id="reset" type="button" class="secondary">Reset to defaults</button>
+  </div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <script type="module" src="./src/options.ts"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# the HTTP API and the fetch proxy are not pages
+Disallow: /api/
+
+Sitemap: https://stringutilitybelt.com/sitemap.xml

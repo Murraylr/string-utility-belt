@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
+const token = name => `rgb(var(--c-${name}) / <alpha-value>)`
+
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
+  // `.dark` on <html> switches the token set; see src/index.css
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -8,6 +12,16 @@ export default {
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular'],
       },
       colors: {
+        // semantic tokens — prefer these over raw palette colours in new UI
+        canvas: token('canvas'),        // page background
+        surface: token('surface'),      // cards, inputs
+        'surface-2': token('surface-2'),// subtle panels, previews
+        fg: token('fg'),                // primary text
+        muted: token('muted'),          // secondary text
+        line: token('line'),            // borders, dividers
+        danger: token('danger'),
+        success: token('success'),
+        warn: token('warn'),
         ink: {
           50: '#f8fafc',
           100: '#eef2f7',
@@ -21,6 +35,9 @@ export default {
           600: '#5458ee',
           700: '#4338ca',
         }
+      },
+      borderColor: {
+        DEFAULT: token('line'),
       },
       boxShadow: {
         'soft': '0 10px 25px -10px rgba(0,0,0,0.15)',

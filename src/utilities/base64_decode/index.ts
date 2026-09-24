@@ -1,5 +1,5 @@
 import type { Utility } from '@/types/utility'
-import { textToUint8Array, bytesToHex, hexToBytes, b64encode, b64decode, hashString, md5 } from '../helpers'
+import { b64decode } from '../helpers'
 const util: Utility = {
   id: 'base64_decode',
   name: 'base64 decode',
@@ -8,6 +8,15 @@ const util: Utility = {
   accepts: 'string',
   produces: 'string',
   params: {},
+  tags: ['base64', 'decode', 'atob', 'mime', 'binary', 'text'],
+  aliases: ['atob'],
+  examples: [
+    {
+      title: 'decode to text',
+      input: 'aGVsbG8gd29ybGQ=',
+      output: 'hello world'
+    }
+  ],
   apply: (input: any) => b64decode(String(input))
 }
 export default util

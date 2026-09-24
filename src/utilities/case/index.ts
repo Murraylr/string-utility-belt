@@ -1,5 +1,5 @@
 import type { Utility } from '@/types/utility'
-import { normalizeCase } from '@/utilities/helpers'
+import { normalizeCase } from '../helpers'
 
 const util: Utility = {
   id: 'case',
@@ -8,6 +8,12 @@ const util: Utility = {
   description: 'Change letter casing to upper, lower, or title case.',
   accepts: 'string',
   produces: 'string',
+  tags: ['uppercase', 'lowercase', 'titlecase', 'sentence case', 'caps', 'capitalize'],
+  aliases: ['toUpperCase', 'toLowerCase'],
+  examples: [
+    { title: 'upper', input: 'hello world', params: { mode: 'upper' }, output: 'HELLO WORLD' },
+    { title: 'title', input: 'hello world', params: { mode: 'title' }, output: 'Hello World' }
+  ],
   params: {
     mode: { kind: 'select', label: 'Mode', options: ['upper','lower','title', 'sentence'], default: 'upper' }
   },

@@ -6,6 +6,9 @@ const util: Utility = {
   description: 'Convert to a URL-friendly slug (ASCII kebab-case).',
   accepts: 'string',
   produces: 'string',
+  tags: ['url slug', 'kebab-case', 'slugify', 'permalink', 'ascii'],
+  aliases: ['slugify'],
+  examples: [{ title: 'accents and punctuation', input: 'Héllo, World!  Ünïcode', output: 'hello-world-unicode' }],
   params: {},
   apply: (s: string) => (s ?? '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')

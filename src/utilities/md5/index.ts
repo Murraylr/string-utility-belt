@@ -1,5 +1,5 @@
 import type { Utility } from '@/types/utility'
-import { isBytes } from '@/utilities/helpers'
+import { isBytes } from '../helpers'
 
 /**
  * md5
@@ -13,6 +13,12 @@ const util: Utility = {
   description: 'Compute the MD5 of the input. Strings -> hex, Bytes -> raw 16-byte digest.',
   accepts: ['string','bytes'],
   produces: ['string','bytes'],
+  tags: ['md5sum', 'checksum', 'digest', 'hash', 'legacy hash', 'fingerprint'],
+  aliases: ['md5sum'],
+  examples: [
+    { title: 'text', input: 'hello', output: '5d41402abc4b2a76b9719d911017c592' },
+    { title: 'unicode', input: 'café', output: '07117fe4a1ebd544965dc19573183da2' }
+  ],
   params: {},
   apply: (input: unknown) => {
     if (isBytes(input)) {
@@ -48,7 +54,7 @@ type State = [number, number, number, number];
 function md51Bytes(bytes: Uint8Array): State {
   let i = 0;
   const n = bytes.length;
-  let state: State = [1732584193, -271733879, -1732584194, 271733878];
+  const state: State = [1732584193, -271733879, -1732584194, 271733878];
 
   // Process in 64-byte chunks
   for (; i + 63 < n; i += 64) {
@@ -213,7 +219,7 @@ function add32(a: number, b: number): number {
 (function selfCheck() {
   if (hashAscii('hello') !== '5d41402abc4b2a76b9719d911017c592') {
     // Replace add32 with carry-safe variant
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const add32safe = (x: number, y: number): number => {
       const lsw = (x & 0xffff) + (y & 0xffff);
       const msw = (x >>> 16) + (y >>> 16) + (lsw >>> 16);

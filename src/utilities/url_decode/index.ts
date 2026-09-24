@@ -7,6 +7,21 @@ const util: Utility = {
   description: 'decodeURIComponent for URL strings.',
   accepts: 'string',
   produces: 'string',
+  tags: ['url', 'decode', 'percent decoding', 'uri', 'unescape', 'percent-encoding'],
+  aliases: ['decodeURIComponent', 'unescape'],
+  streamable: true,
+  examples: [
+    {
+      title: 'percent-decode',
+      input: 'hello%20world%21',
+      output: 'hello world!'
+    },
+    {
+      title: 'unicode',
+      input: 'caf%C3%A9',
+      output: 'café'
+    }
+  ],
   params: {},
   apply: (input: any) => decodeURIComponent(String(input))
 }

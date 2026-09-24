@@ -1,19 +1,46 @@
-const CURRENT_KEY = 'string-utility-belt';
+import type { PipelineStep } from '@/types/utility'
+import { migratePipeline, SCHEMA_VERSION } from '@/core/serialize'
 
-export function saveState(state: { steps: any; showPreviews: any; }) {
-  // Only persist pipeline config
-  const safe = { steps: state?.steps ?? [], showPreviews: !!state?.showPreviews };
-  localStorage.setItem(CURRENT_KEY, JSON.stringify(safe));
+const CURRENT_KEY = 'string-utility-belt'
+
+export interface PersistedState {
+  steps: PipelineStep[]
+  showPreviews: boolean
+  /** Name of the pipeline being edited (library entry), if any. */
+  name?: string
+  libraryId?: string
 }
 
-export function loadState() {
-  let raw = localStorage.getItem(CURRENT_KEY);
-  if (!raw) return { steps: [], showPreviews: true };
+export function saveState(state: Partial<PersistedState>) {
+  const safe = {
+    v: SCHEMA_VERSION,
+    steps: state?.steps ?? [],
+    showPreviews: !!state?.showPreviews,
+    ...(state?.name ? { name: state.name } : {}),
+    ...(state?.libraryId ? { libraryId: state.libraryId } : {}),
+  }
+  try { localStorage.setItem(CURRENT_KEY, JSON.stringify(safe)) } catch { /* quota or disabled storage */ }
+}
+
+/**
+ * Load the working pipeline. Accepts every stored shape (v1 `{steps, showPreviews}`
+ * and v2), and drops entries that would crash the render — anything else, e.g. an
+ * unknown utilityId, degrades gracefully to a step error.
+ */
+export function loadState(): PersistedState {
+  let raw: string | null = null
+  try { raw = localStorage.getItem(CURRENT_KEY) } catch { /* storage disabled */ }
+  if (!raw) return { steps: [], showPreviews: true }
   try {
-    const parsed = JSON.parse(raw);
-    const steps = Array.isArray(parsed.steps) ? parsed.steps : [];
-    return { steps, showPreviews: !!parsed.showPreviews };
+    const parsed = JSON.parse(raw)
+    const doc = migratePipeline(parsed)
+    return {
+      steps: doc.steps,
+      showPreviews: parsed && typeof parsed === 'object' && 'showPreviews' in parsed ? !!parsed.showPreviews : true,
+      ...(typeof parsed?.name === 'string' ? { name: parsed.name } : {}),
+      ...(typeof parsed?.libraryId === 'string' ? { libraryId: parsed.libraryId } : {}),
+    }
   } catch {
-    return { steps: [], showPreviews: true };
+    return { steps: [], showPreviews: true }
   }
 }
