@@ -4,7 +4,7 @@ const util: Utility = {
   id: 'truncate',
   name: 'truncate',
   category: 'String Ops',
-  description: 'Trim to a max visible length, reserving 3 for ellipsis (“…”) when truncating.',
+  description: 'Trim to a max visible length, counting the ellipsis (“…”) when truncating.',
   accepts: 'string',
   produces: 'string',
   params: {
@@ -15,10 +15,9 @@ const util: Utility = {
     const s = String(input);
     const L = Number(length) || 0;
     if (L <= 0 || s.length <= L) return s;
-    const reserve = ellipsis.length;
-    if (L <= reserve) return s.slice(0, L);
-    const e = (ellipsis ?? '…');
-    return s.slice(0, L - reserve) + e;
+    const e = ellipsis ?? '…';
+    if (L <= e.length) return s.slice(0, L);
+    return s.slice(0, L - e.length) + e;
   }
 }
 export default util

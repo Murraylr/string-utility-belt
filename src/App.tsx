@@ -9,6 +9,7 @@ import Select from '@/components/Select';
 import { uid } from '@/utilities/helpers';
 import { getRoute, onRouteChange } from '@/lib/router';
 import BackgroundFX from '@/components/BackgroundFX';
+import Docs from '@/components/Docs';
 import { loadState, saveState } from '@/lib/persist';
 
 const INSTANCE_ID = Math.random().toString(36).slice(2);
@@ -89,6 +90,7 @@ export default function App() {
   const Nav = () => (
     <nav className="flex items-center gap-4 text-sm">
       <a href="#/" className="hover:underline">Tool</a>
+      <a href="#/docs" className="hover:underline">Docs</a>
       <a href="#/blog" className="hover:underline">Blog</a>
     </nav>
   );
@@ -109,6 +111,11 @@ export default function App() {
         </div>
       </header>
 
+      {route.name === 'docs' ? (
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        <Docs />
+      </main>
+      ) : (
       <main className="max-w-7xl mx-auto px-4 py-8 grid gap-8">
         <section className="glass rounded-[28px] p-6 md:p-8 shadow-glow">
           <div className="grid md:grid-cols-2 gap-6 items-center">
@@ -117,6 +124,7 @@ export default function App() {
               <p className="muted">Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
               <div className="flex gap-2">
                 <button className="cta" onClick={()=>setShowPicker(true)}>Add utility</button>
+                <a className="px-4 py-2 rounded-xl border bg-white hover:bg-gray-50" href="#/docs">How it works</a>
                 <a className="px-4 py-2 rounded-xl border bg-white hover:bg-gray-50" href="#/blog">Read blog</a>
               </div>
             </div>
@@ -172,6 +180,7 @@ export default function App() {
           </AnimatePresence>
         </section>
       </main>
+      )}
       <input type="file" ref={importRef} onChange={onImportFile} accept="application/json" className="hidden" />
     </div>
   );

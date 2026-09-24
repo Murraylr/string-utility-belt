@@ -1,12 +1,11 @@
 
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import App from './App.jsx'
+import App from './App'
 
 describe('<App />', () => {
   it('renders heading', () => {
     render(<App />)
-    const text = screen.getByText(/string pipeline workshop/i)
-    expect(text).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'String Utility Belt' })).toBeInTheDocument()
   })
 })

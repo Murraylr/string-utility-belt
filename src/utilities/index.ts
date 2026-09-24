@@ -109,6 +109,12 @@ export function formatForDisplay(v: Value): string {
   if (t === 'json') { try { return JSON.stringify(v, null, 2); } catch { return String(v); } }
   return String(v ?? '');
 }
+// Steps whose utility was swapped have empty params; fill them from the spec defaults the editor displays.
+function paramDefaults(util: Utility): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, spec] of Object.entries(util.params || {})) if ('default' in spec) out[k] = spec.default;
+  return out;
+}
 export async function runPipeline(source: Value, steps: Step[], wantPreviews = false) {
   let out: Value = source;
   const previews: Record<string, Value> = {};
@@ -119,7 +125,7 @@ export async function runPipeline(source: Value, steps: Step[], wantPreviews = f
     if (!util) { err[step.id] = 'unknown utility'; continue; }
     try {
       const coerced = coerceInputFor(out, util.accepts);
-      const result = await util.apply(coerced, step.params ?? {});
+      const result = await util.apply(coerced, { ...paramDefaults(util), ...step.params });
       out = result;
       if (wantPreviews) previews[step.id] = out;
     } catch (e: any) { err[step.id] = e?.message || String(e); }

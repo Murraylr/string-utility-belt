@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { slugify } from '@/utilities/helpers'
 const util: Utility = {
   id: 'slug',
   name: 'slug',
@@ -7,10 +8,6 @@ const util: Utility = {
   accepts: 'string',
   produces: 'string',
   params: {},
-  apply: (s: string) => (s ?? '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Za-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase()
+  apply: (s: string) => slugify(s)
 }
 export default util

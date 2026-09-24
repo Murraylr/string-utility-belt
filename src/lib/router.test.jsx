@@ -7,3 +7,11 @@ describe('router', () => {
     expect(r.name).toBe('home')
   })
 })
+
+describe('router docs route', () => {
+  it('matches #/docs', () => {
+    location.hash = '#/docs'
+    expect(getRoute().name).toBe('docs')
+    location.hash = ''
+  })
+})

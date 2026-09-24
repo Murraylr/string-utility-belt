@@ -4,6 +4,7 @@ export function getRoute(){
   const parts = hash.split('/').filter(Boolean)
   const head = parts[0] || ''
   if (!head) return { name: 'home', params: {} }
+  if (head === 'docs') return { name: 'docs', params: {} }
   if (head === 'blog' && parts.length === 1) return { name: 'blogIndex', params: {} }
   if (head === 'blog' && parts.length >= 2) return { name: 'blogPost', params: { slug: parts.slice(1).join('/') } }
   return { name: 'notFound', params: { hash } }

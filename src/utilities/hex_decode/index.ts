@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { hexToBytes } from '@/utilities/helpers'
 const util: Utility = {
   id: 'hex_decode',
   name: 'hex decode',
@@ -7,11 +8,6 @@ const util: Utility = {
   accepts: 'string',
   produces: 'bytes',
   params: {},
-  apply: (input: string) => {
-    return input.split(/(\w\w)/g)
-      .filter((p) => !!p)
-      .map(c => String.fromCharCode(parseInt(c, 16)))
-      .join("")
-  }
+  apply: (input: string) => hexToBytes(String(input))
 }
 export default util

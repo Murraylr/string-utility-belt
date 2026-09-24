@@ -1,8 +1,9 @@
-export type Route = { name: 'home'|'blogIndex'|'blogPost'|'notFound'; params: Record<string,string> }
+export type Route = { name: 'home'|'docs'|'blogIndex'|'blogPost'|'notFound'; params: Record<string,string> }
 export function getRoute(): Route {
   const hash = (location.hash || '#/').slice(1)
   const [path] = hash.split('?')
   if (path === '/' || path === '') return { name: 'home', params: {} }
+  if (path === '/docs') return { name: 'docs', params: {} }
   if (path === '/blog') return { name: 'blogIndex', params: {} }
   if (path.startsWith('/blog/')) return { name: 'blogPost', params: { slug: path.slice('/blog/'.length) } }
   return { name: 'notFound', params: {} }
