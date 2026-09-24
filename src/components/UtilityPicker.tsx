@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Search, Plus, Star, Clock } from 'lucide-react'
+import { BookOpen, Search, Plus, Star, Clock } from 'lucide-react'
 import { registry } from '@/app/registry'
 import type { UtilityMeta } from '@/core/registry'
 import { compatibility } from '@/core/coerce'
@@ -94,8 +94,18 @@ const PickerCard = memo(function PickerCard({
           <span key={k} className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border">{k}</span>
         ))}
       </div>
-      <div className="mt-3 flex items-center gap-2 text-primary-600 text-sm">
-        <Plus size={14} aria-hidden /> add
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <span className="flex items-center gap-2 text-primary-600"><Plus size={14} aria-hidden /> add</span>
+        <a
+          href={`#/util/${encodeURIComponent(meta.id)}`}
+          aria-label={`${meta.name} docs`}
+          // same single Tab stop as the favorite toggle
+          tabIndex={active ? 0 : -1}
+          className="inline-flex items-center gap-1 text-xs text-muted hover:text-primary-600 hover:underline"
+          onClick={e => e.stopPropagation()}
+        >
+          <BookOpen size={12} aria-hidden /> docs
+        </a>
       </div>
     </div>
   )

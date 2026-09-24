@@ -28,6 +28,16 @@ describe('StepCard', () => {
     expect(screen.getByText('step 1')).toBeTruthy()
   })
 
+  it('links to the utility docs page', () => {
+    render(<StepCard {...baseProps} />)
+    expect(screen.getByRole('link', { name: /docs$/ })).toHaveAttribute('href', '#/util/trim')
+  })
+
+  it('shows no docs link for an unknown utility', () => {
+    render(<StepCard {...baseProps} step={{ ...baseProps.step, utilityId: 'nope' }} />)
+    expect(screen.queryByRole('link', { name: /docs$/ })).toBeNull()
+  })
+
   it('shows no condition/error/skip chips for a plain step', () => {
     render(<StepCard {...baseProps} />)
     expect(screen.queryByTitle('run condition')).toBeNull()

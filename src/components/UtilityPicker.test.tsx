@@ -37,6 +37,15 @@ describe('UtilityPicker', () => {
     expect(onPick).toHaveBeenCalledWith('base64_encode')
   })
 
+  it('links each card to its docs page without picking it', () => {
+    const onPick = vi.fn()
+    render(<UtilityPicker onPick={onPick} />)
+    const link = screen.getByRole('link', { name: 'base64 encode docs' })
+    expect(link).toHaveAttribute('href', '#/util/base64_encode')
+    fireEvent.click(link)
+    expect(onPick).not.toHaveBeenCalled()
+  })
+
   it('highlights matched name characters while searching', () => {
     render(<UtilityPicker onPick={vi.fn()} />)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'case' } })

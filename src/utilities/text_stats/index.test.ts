@@ -114,4 +114,23 @@ describe('text_stats', () => {
       /unknown format/
     )
   })
+
+  it('counts graphemes across segmentation windows exactly like one pass', async () => {
+    const seg = new (Intl as any).Segmenter(undefined, { granularity: 'grapheme' })
+    const onePass = (t: string) => [...seg.segment(t)].length
+    const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}'
+    const inputs = [
+      // clusters of 1-8 code units at every offset relative to the 8192-unit windows
+      Array.from({ length: 6000 }, (_, i) => ['a', 'e\u0301', '\u{1F1FA}\u{1F1F8}', family, '\u{1F600}'][i % 5]).join(''),
+      // a long run of flags: regional-indicator pairing must survive the cuts
+      '\u{1F1FA}'.repeat(20001),
+      // one cluster longer than a window
+      'a' + '\u0301'.repeat(20000) + 'b',
+      'x'.repeat(8191) + family + 'y',
+    ]
+    for (const input of inputs) {
+      const res = (await util.apply(input, {})) as any
+      expect(res.graphemes).toBe(onePass(input))
+    }
+  })
 })
