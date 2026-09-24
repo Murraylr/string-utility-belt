@@ -1,0 +1,51 @@
+import type { UtilityMeta } from '../src/core/registry'
+import type { Utility, UtilityExample } from '../src/types/utility'
+
+/**
+ * Bindings and vars the Worker reads. Declared here rather than merged into the
+ * generated `Cloudflare.Env`, so re-running `wrangler types` (which emits a required
+ * `ASSETS`) cannot conflict; both are optional because tests and a bare
+ * `wrangler dev` run without them.
+ */
+export interface ApiEnv {
+  /** `off` disables `/api/fetch` (503). Set with `wrangler secret`/`vars` or the dashboard. */
+  FETCH_PROXY?: string
+  /** The built SPA in ./dist; only consulted for non-API paths. */
+  ASSETS?: Fetcher
+}
+
+/** The slice of a utility registry the API needs (the static registry in production). */
+export interface ApiRegistry {
+  list(): UtilityMeta[]
+  get(id: string): UtilityMeta | undefined
+  load(id: string): Promise<Utility> | Utility
+}
+
+export type UpstreamFetch = (url: string, init: RequestInit) => Promise<Response>
+
+/** Every limit and dependency is injectable so tests can shrink or fake them. */
+export interface ApiOptions {
+  registry?: ApiRegistry
+  examples?: Record<string, UtilityExample[]>
+  /** POST /api/run */
+  maxBodyBytes?: number
+  maxSteps?: number
+  /** Ceiling on a decompressed `share` payload, in characters. */
+  maxShareChars?: number
+  /** Ceiling on any step's output and on the final output (string length or byte length). */
+  maxValueSize?: number
+  /** PBKDF2 work one request may ask for, in HMAC blocks (iterations × blocks per key). */
+  pbkdf2Budget?: number
+  runTimeoutMs?: number
+  /** Step-timing clock handed to the runner. */
+  clock?: () => number
+  /** GET /api/fetch */
+  fetchTimeoutMs?: number
+  maxFetchBytes?: number
+  maxRedirects?: number
+  rateLimit?: { limit: number; windowMs: number }
+  /** Rate-limiter clock. */
+  now?: () => number
+  /** Defaults to the global `fetch`, looked up per call so tests can stub it. */
+  upstreamFetch?: UpstreamFetch
+}

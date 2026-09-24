@@ -6,18 +6,22 @@ import tseslint from 'typescript-eslint'
 import { globalIgnores } from 'eslint/config'
 
 export default tseslint.config([
-  globalIgnores(['dist']),
+  globalIgnores(['**/dist', 'worker-configuration.d.ts', 'test-results', 'playwright-report', 'blob-report', '.wrangler', 'worker-dry']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
+      reactHooks.configs.flat['recommended-latest'],
       reactRefresh.configs.vite,
     ],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+    },
+    rules: {
+      // utilities intentionally use (input: any, params: any) — see CLAUDE.md conventions
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 ])

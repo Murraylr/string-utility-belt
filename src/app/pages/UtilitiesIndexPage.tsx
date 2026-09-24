@@ -1,0 +1,74 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { registry } from '@/app/registry'
+
+/** Case-insensitive substring match over name, description, tags and aliases. */
+function matches(u: ReturnType<typeof registry.list>[number], needle: string): boolean {
+  if (!needle) return true
+  const n = needle.toLowerCase()
+  return (
+    u.name.toLowerCase().includes(n) ||
+    u.id.toLowerCase().includes(n) ||
+    u.description.toLowerCase().includes(n) ||
+    u.tags.some(t => t.toLowerCase().includes(n)) ||
+    u.aliases.some(a => a.toLowerCase().includes(n))
+  )
+}
+
+/** Every utility, filterable and grouped by category, linking to its doc page. */
+export default function UtilitiesIndexPage() {
+  const [q, setQ] = useState('')
+
+  // restored on leaving: pages that set no title of their own would otherwise keep this one
+  useEffect(() => {
+    const prev = document.title
+    document.title = 'All utilities — String Utility Belt'
+    return () => { document.title = prev }
+  }, [])
+
+  const groups = useMemo(() => {
+    const needle = q.trim()
+    return registry.categories()
+      .map(cat => ({ category: cat, items: registry.byCategory(cat).filter(u => matches(u, needle)) }))
+      .filter(g => g.items.length > 0)
+  }, [q])
+
+  const total = useMemo(() => groups.reduce((n, g) => n + g.items.length, 0), [groups])
+
+  return (
+    <div className="max-w-5xl mx-auto grid gap-6">
+      <header className="grid gap-3">
+        <h1 className="text-2xl font-semibold">All utilities</h1>
+        <label className="grid gap-1 max-w-md">
+          <span className="sr-only">Filter utilities</span>
+          <input
+            className="field"
+            type="search"
+            placeholder="Filter by name, description or tag…"
+            aria-label="Filter utilities"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+          />
+        </label>
+        <p role="status" aria-live="polite" className="muted text-sm">{total} of {registry.list().length} utilities</p>
+      </header>
+
+      {groups.length === 0 && <p className="muted">No utilities match "{q}".</p>}
+
+      {groups.map(({ category, items }) => (
+        <section key={category} className="grid gap-2">
+          <h2 className="text-lg font-medium">{category} <span className="muted text-sm font-normal">({items.length})</span></h2>
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {items.map(u => (
+              <li key={u.id}>
+                <a className="block p-3 rounded-xl border bg-surface hover:border-primary-600 hover:shadow-glow transition" href={`#/util/${encodeURIComponent(u.id)}`}>
+                  <div className="font-medium">{u.name}</div>
+                  <div className="text-xs text-muted">{u.description}</div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  )
+}

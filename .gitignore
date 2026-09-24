@@ -29,3 +29,8 @@ dist-ssr
 !.dev.vars.example
 .env*
 !.env.example
+
+# test output
+test-results/
+playwright-report/
+blob-report/

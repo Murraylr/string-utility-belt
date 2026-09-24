@@ -1,93 +1,73 @@
+# String Utility Belt
 
-# String Pipeline Workshop Pro
+Chain string transformations into visual pipelines with live, per-step previews. 246 utilities —
+encodings, hashes, ciphers, compression, data formats (JSON/YAML/TOML/CSV/XML), line and text
+operations, analysis, generators, web/dev helpers, numbers, dates and colours — all running
+client-side, with the same engine available as a CLI, an HTTP API, an MCP server, a browser
+extension and a VS Code extension.
 
-Production-grade React app for chaining string utilities, with per-step previews, local storage, colocated tests, MD5, and a custom function utility.
+## Features
 
-## Quickstart
-```bash
-npm i
-npm run dev
-```
-open http://localhost:5173
+- **Pipelines** — add, reorder (drag and drop), duplicate, disable/solo steps; undo/redo; per-step
+  previews, diffs, timings and error policies (pass through / stop / empty); conditional steps;
+  parallel branches with concat/zip/json/pick merges; macros (collapse a sub-chain into one step).
+- **Share and save** — pipelines (and optionally the input) as compressed `#/p/…` links, a named
+  pipeline library with JSON import/export, a preset gallery, an embeddable `#/embed/…` widget.
+- **Magic** — detects the input's format (base64, JWT, gzip, JSON, …) and suggests or appends the
+  decoding step; "decode until stable" mode.
+- **Input/output** — file upload (text and binary), fetch-a-URL via the Worker proxy, input history,
+  side-by-side and diff views, hex view for bytes, syntax highlighting, stats bar, smart download
+  names, copy-as (raw / JSON literal / hex / base64).
+- **Engine** — runs in a Web Worker with cancellation, adaptive debounce, a chunked mode for
+  multi-MB inputs and a preview-first-64 KB option; custom JavaScript steps run in a sandboxed,
+  network-less iframe + worker, and are quarantined when they arrive from someone else's link.
+- **App** — command palette (Ctrl+K), keyboard shortcuts (`?`), fuzzy utility search with
+  favourites/recents and type-aware badges, light/dark themes, per-utility doc pages with a live
+  playground, installable PWA with offline support and an OS share target, i18n scaffold.
 
 ## Using the app
 
-These docs are also in the app itself: click **Docs** in the header, or go to `#/docs`.
+The how-to guide lives in the app itself: click **Docs** in the header, or go to `#/docs`
+([`src/components/Docs.tsx`](src/components/Docs.tsx)). Each utility's settings and examples are on
+its own page under `#/utilities`.
 
-String Utility Belt runs your text through a **pipeline**: an ordered list of steps. Each step applies one utility to the output of the step before it. The **result** panel shows the output of the last step.
+## Development
 
-### Build a pipeline
-1. Type or paste text into the **input** box.
-2. Add steps in either of these ways:
-   - **Add utility** opens a browser of every utility. Filter it by category or search by name, then click a utility to add it.
-   - The **quick add** dropdown adds a utility straight from the list.
-3. New steps go to the end of the pipeline. The result updates as you type. You don't need to run anything.
-
-### Work with steps
-Each step card has these controls:
-
-| Control | What it does |
-|---|---|
-| Checkbox (top left) | Turns the step on or off. A disabled step passes its input through unchanged. |
-| ▲ / ▼ | Moves the step up or down. Order matters. |
-| 🗑 | Removes the step. |
-| **utility** dropdown | Swaps the step to a different utility. The step's parameters reset. |
-| Parameter fields | Settings for the utility, such as case mode, regex pattern or max length. Each field starts at a sensible default. |
-
-The badges next to the step number show the step's category and, when a preview is showing, the type of value it produced (`string`, `bytes` or `json`).
-
-### Previews and errors
-- Tick **show intermediate previews** to see each step's output below its card. This helps you find where a chain goes wrong.
-- If a step fails, for example because of an invalid regex or bad hex, its card shows the error in red. The pipeline skips that step and keeps going with the previous value.
-
-### Strings, bytes and JSON
-Some utilities work on raw bytes instead of text (for example **Get bytes**, **hex decode** and **md5 hash**). The pipeline converts between types for you: text becomes UTF‑8 bytes when a step needs bytes, and the other way round. When the result is bytes, it's shown as decimal values, hex and, where possible, decoded UTF‑8 text.
-
-### Get the result out
-Under the result panel, **copy** puts the output on your clipboard and **download** saves it as `result.txt`.
-
-### What's saved
-Your steps, their settings and the preview toggle are saved in the browser's `localStorage`, so the pipeline is still there after you reload. The input text **is not** saved. To start over, delete the steps.
-
-### Example: title to URL slug
-Input: `  Crème Brûlée: A Guide!  `
-
-| Step | Utility | Settings | Output |
-|---|---|---|---|
-| 1 | trim | — | `Crème Brûlée: A Guide!` |
-| 2 | remove diacritics | — | `Creme Brulee: A Guide!` |
-| 3 | slug | — | `creme-brulee-a-guide` |
-| 4 | truncate | max length `12`, ellipsis cleared | `creme-brulee` |
-
-### Available utilities
-| Category | Utilities |
-|---|---|
-| String Ops | trim, slice, truncate, replace (plain text or regex with flags), normalize (NFC/NFD/NFKC/NFKD), remove diacritics |
-| Formatting | change case (upper/lower/title/sentence), format case (camel/Pascal/snake/kebab and more), slug |
-| Encoding | base64 encode, hex encode, Get bytes (utf8/hex/base64/unicode) |
-| Decoding | base64 decode, hex decode |
-| Hashing | hash (SHA‑256/SHA‑384), md5 hash |
-| URL & JSON | url encode, url decode, json pretty |
-
-## Tests
 ```bash
-npm test
+npm install
+npm run dev          # generates the utility manifest, then starts Vite
+npm test             # Vitest (unit, component, golden-example and property tests)
+npm run lint
+npm run typecheck
 ```
 
-## Add a utility
-Create `src/utilities/reverse/index.ts`:
-```ts
-import type { Utility } from '@/types/utility'
-const util: Utility = {
-  id: 'reverse',
-  name: 'reverse',
-  category: 'String Ops',
-  description: 'Reverse the characters.',
-  accepts: 'string',
-  produces: 'string',
-  params: {},
-  apply: (input: any) => String(input).split('').reverse().join('')
-}
-export default util
-```
-Every `src/utilities/*/index.ts` is picked up automatically, so you don't need to register it anywhere else.
+| Command | What it does |
+| --- | --- |
+| `npm run gen` | Regenerate `src/utilities/_generated/*` (run automatically before `dev`/`build`) |
+| `npm run build` | Production build of the web app |
+| `npm run check:bundle` | Enforce the entry-chunk budget in `bundle-budget.json` |
+| `npm run build:seo` | Pre-render utility pages, sitemap, RSS and OG images into `dist/` (`build:seo:fast` skips OG images) |
+| `npm run build:site` | `build` + `build:seo` |
+| `npm run build:tools` | Build `packages/*` (core, CLI, MCP server, browser extension, VS Code extension) |
+| `npm run test:e2e` | Playwright end-to-end tests against a production build |
+| `npm run bench` | Large-input benchmarks (`vitest bench`) |
+| `npm run deploy` | `build:site`, then `wrangler deploy` (Cloudflare Workers: static assets + `/api/*`) |
+
+## Other surfaces
+
+| Surface | Where | Notes |
+| --- | --- | --- |
+| Core library | [`packages/core`](packages/core/README.md) | Framework-free engine + all utilities |
+| CLI | [`packages/cli`](packages/cli/README.md) | `echo -n hello \| subelt base64_encode` |
+| MCP server | [`packages/mcp`](packages/mcp/README.md) | Utilities and pipelines as agent tools over stdio |
+| HTTP API | [`worker/`](worker/api.ts) | `POST /api/run`, `GET /api/utilities[/:id]` (CORS, rate-limited) |
+| Browser extension | [`packages/extension`](packages/extension/README.md) | MV3; context menu "run on selection" |
+| VS Code extension | [`packages/vscode`](packages/vscode/README.md) | Transform selection, run a share link |
+
+## Adding a utility
+
+Create `src/utilities/<id>/index.ts` with a default-exported `Utility` (see
+[`src/types/utility.ts`](src/types/utility.ts)) and a colocated `index.test.ts`, then run
+`npm run gen`. Every utility needs a description, at least three lowercase `tags` and at least one
+worked `example` (examples run as tests and render on the doc page). See [CLAUDE.md](CLAUDE.md) for
+the conventions.

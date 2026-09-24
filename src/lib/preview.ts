@@ -20,7 +20,7 @@ export function formatForDisplay(v: Value, hint: PreviewHint = 'auto'): string {
     // Precompute small string representations; do not expose/return the raw array.
     const hex = Array.from(v).map(b => b.toString(16).padStart(2, '0')).join(' ');
     let utf8 = '';
-    try { utf8 = new TextDecoder().decode(v); } catch {}
+    try { utf8 = new TextDecoder().decode(v); } catch { /* non-UTF-8 bytes: omit utf8 line */ }
     return `bytes[${v.length}]\nhex: ${hex}${utf8 ? `\nutf8: ${utf8}` : ''}`;
   }
 

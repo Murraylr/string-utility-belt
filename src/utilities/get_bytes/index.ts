@@ -11,9 +11,9 @@ function fromHex(s: string): Uint8Array {
   if (clean.length % 2 !== 0) throw new Error("hex input must have even length");
   const out = new Uint8Array(clean.length / 2);
   for (let i = 0; i < clean.length; i += 2) {
-    const byte = Number.parseInt(clean.slice(i, i + 2), 16);
-    if (Number.isNaN(byte)) throw new Error("invalid hex");
-    out[i / 2] = byte;
+    const pair = clean.slice(i, i + 2);
+    if (!/^[0-9a-fA-F]{2}$/.test(pair)) throw new Error("invalid hex");
+    out[i / 2] = Number.parseInt(pair, 16);
   }
   return out;
 }
@@ -41,6 +41,12 @@ const util: Utility = {
   category: "Encoding",
   accepts: ["string"],
   produces: "bytes",
+  tags: ['bytes', 'utf8', 'hex', 'unicode', 'encode', 'binary'],
+  examples: [
+    { title: 'utf8 mode', input: 'Hi', params: { mode: 'utf8' }, output: 'bytes[72, 105]\nhex: [48, 69]\nutf8: Hi' },
+    { title: 'hex mode', input: '48 69', params: { mode: 'hex' }, output: 'bytes[72, 105]\nhex: [48, 69]\nutf8: Hi' },
+    { title: 'unicode mode (UTF-16 code units)', input: 'Hi', params: { mode: 'unicode' }, output: 'bytes[00, 72, 00, 105]\nhex: [00, 48, 00, 69]\nutf8: \u0000H\u0000i' }
+  ],
   params: {
     mode: {
       kind: 'select',
@@ -67,9 +73,10 @@ const util: Utility = {
       case "unicode":
         return fromUnicode(input);
 
-      default:
+      default: {
         const _never: never = mode;
         throw new Error(`unsupported mode: ${_never as string}`);
+      }
     }
   }
 };

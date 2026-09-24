@@ -1,8 +1,4 @@
 import type { Utility } from '@/types/utility'
-
-// Stroked letters have no NFD decomposition, so map them directly.
-const STROKED: Record<string, string> = { Ø: 'O', ø: 'o', Ł: 'L', ł: 'l', Đ: 'D', đ: 'd' }
-
 const util: Utility = {
   id: 'diacritics',
   name: 'remove diacritics',
@@ -10,9 +6,13 @@ const util: Utility = {
   description: 'Strip accents/diacritics via NFD.',
   accepts: 'string',
   produces: 'string',
+  tags: ['accents', 'diacritics', 'unicode', 'nfd', 'strip accents', 'ascii fold'],
+  streamable: true,
+  examples: [
+    { title: 'accented characters', input: 'caf\u00e9 d\u00e9j\u00e0 vu', output: 'cafe deja vu' },
+    { title: 'mixed diacritics', input: 'na\u00efve Z\u00fcrich', output: 'naive Zurich' }
+  ],
   params: {},
-  apply: (input: any) => String(input ?? '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\u00d8\u00f8\u0141\u0142\u0110\u0111]/g, c => STROKED[c])
+  apply: (input: any) => String(input ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 export default util

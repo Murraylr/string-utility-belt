@@ -1,12 +1,9 @@
-export default {
-  fetch(request) {
-    const url = new URL(request.url);
+import { createApi } from './api'
+import type { ApiEnv } from './env'
 
-    if (url.pathname.startsWith("/api/")) {
-      return Response.json({
-        name: "Cloudflare",
-      });
-    }
-		return new Response(null, { status: 404 });
-  },
-} satisfies ExportedHandler<Env>;
+const api = createApi()
+
+/** Cloudflare Worker entry: the HTTP API, falling back to the static SPA. Routes: ./api.ts */
+export default {
+  fetch: (request, env, ctx) => api.fetch(request, env, ctx),
+} satisfies ExportedHandler<ApiEnv>

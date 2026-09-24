@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "String Utility Belt",
+  "version": "1.3.0",
+  "description": "Run String Utility Belt transformations on selected text from the right-click menu, or from the toolbar popup.",
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting", "clipboardWrite"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "String Utility Belt",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

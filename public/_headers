@@ -1,0 +1,7 @@
+# Workers Static Assets response headers (the /api/* Worker sets its own).
+# No X-Frame-Options / frame-ancestors: #/embed shares this document and must stay
+# frameable; AppShell refuses to render anything else inside a frame.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()

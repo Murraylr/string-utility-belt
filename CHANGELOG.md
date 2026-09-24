@@ -1,0 +1,68 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Added
+
+- **210 new utilities**, bringing the registry to 246 across 16 categories (counts from
+  `src/utilities/_generated/manifest.ts`): Data Formats (37), String Ops (29), Encoding (25),
+  Formatting (25), Decoding (23), Analysis (21), Web & Dev (15), Generators (13), Ciphers (12),
+  Hashing (11), Lines (10), Numbers (8), Compression (7), Date & Time (4), URL & JSON (4), Color (2).
+  Every utility ships colocated tests, `tags`, `aliases` and worked `examples`.
+- **Pipeline & engine** — lazy per-utility code loading (one chunk per utility instead of one bundle),
+  execution in a Web Worker off the main thread, cooperative cancellation via `AbortSignal`, per-step
+  conditions (`always` / `nonEmpty` / `regex` / `type`, with negation), per-step error policies
+  (`passthrough` / `stop` / `empty`), branching steps that fork a pipeline and merge the results
+  (`concat` / `zip` / `json` / `pick`), and named macros that collapse a sub-chain into one reusable step.
+- **Share links & embed** — pipelines (and optionally their input) compress into a shareable `#/p/…` URL,
+  plus a minimal iframe-able `#/embed/…` view for dropping a pipeline into a blog post or wiki page.
+- **Library & presets** — a named pipeline/macro library (save, rename, delete, export/import as JSON) and
+  a shipped preset gallery for common chains.
+- **Magic decode** — inspects the input or the pipeline's output, guesses the encoding, and suggests
+  matching decode steps; picking one appends it to the pipeline.
+- **New param kinds** — `textarea`, `regex` (with a linked flags param), `keyvalue`, `file`, `color`,
+  `date`, `multiselect` and `range`, each with declarative validation (`required`, `min`/`max`, `step`,
+  `integer`, `pattern`, `maxLength`).
+- **Discoverability** — a fuzzy command palette (Ctrl+K) with keyboard shortcuts, per-utility
+  documentation pages (`/util/:id/`) with a live playground and related-utility links, an all-utilities
+  index page, and a light/dark theme toggle.
+- **Quality & infra** — fast-check round-trip property tests, a golden test that runs every utility's
+  documented examples, a Playwright end-to-end smoke suite, a bundle-size budget check, `tsc --noEmit`
+  and lint in CI, this changelog, an RSS feed, and pre-rendered per-utility pages with a sitemap and
+  generated Open Graph images.
+- **Platform** — an installable PWA, a framework-free core package, a `subelt` CLI, an HTTP API and fetch
+  proxy on the existing Cloudflare Worker, an MCP server exposing utilities/pipelines as agent tools, and
+  browser + VS Code extensions, all built on the same utility core.
+
+### Fixed
+
+- The blog now ships from `public/blog/` instead of `./blog/`, which Vite never copied into `dist/` — in
+  production, `/blog/_manifest.json` and every `/blog/<slug>.md` returned a 404.
+- **Accessibility & mobile** — no horizontal page scroll at 375 px on any screen, 40 px tap targets, AA text
+  contrast in both themes (danger/success/warn tokens and placeholders darkened), named controls, visible
+  focus everywhere, `aria-current` nav, a Tab-friendly utility picker, and landmarks/headings on the embed view.
+
+### Security
+
+- Share links, embeds and imports: select params naming an `Object.prototype` member are refused (a
+  `base58_encode` alphabet of `constructor` looped until the tab died); 27 utilities' quadratic regexes
+  rewritten to linear forms; a pipeline that crashes the background worker is no longer replayed on the
+  main thread; shared pipelines that can only run on the main thread wait for an explicit Run.
+- HTTP API: input caps for utilities with superlinear worst cases (`sql_format`, `markdown_to_html`,
+  base58/base62). SSRF classifier now also refuses hostnames embedding private/metadata IPs.
+- CLI: `--allow-custom-js` is refused together with `--share`. Static assets send `nosniff`,
+  `Referrer-Policy` and `Permissions-Policy` headers.
+
+## [1.3.0]
+
+### Added
+
+- The baseline this changelog starts from: 36 string utilities chained into visual pipelines with live
+  previews — base64 encode/decode, case, count, diacritics, escape_html/unescape_html, format_case,
+  get_bytes, hash (SHA-256/384), hex_encode/decode, json_escape/unescape/minify/pretty, length,
+  line_dedupe, line_sort, md5, normalize, number_lines, pad, regex_extract, remove_blank_lines, repeat,
+  replace, reverse, rot13, slice, slug, split_join, trim, truncate, url_encode/decode.
