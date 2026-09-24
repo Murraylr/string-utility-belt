@@ -33,11 +33,20 @@ export const b64decode = (b64: string) => {
 };
 
 // Case helpers
+export const slugify = (s: string) => (s ?? '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^A-Za-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '')
+  .toLowerCase();
+
+// Lowercase everything, then capitalize the first letter of each sentence.
+export const toSentenceCase = (s: string) => s.toLowerCase()
+  .replace(/(^\s*|[.!?]\s+)([^\p{L}]*?)(\p{L})/gu, (_, lead, gap, ch) => lead + gap + ch.toUpperCase());
 
 export const normalizeCase = (s: string, mode: 'upper'|'lower'|'title'|'sentence'='lower') => {
   if (mode === 'upper') return s.toUpperCase();
   if (mode === 'lower') return s.toLowerCase();
-  if (mode === 'sentence') return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  if (mode === 'sentence') return toSentenceCase(s);
   return s.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 };
 

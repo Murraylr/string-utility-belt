@@ -1,5 +1,4 @@
 import type { Utility } from '@/types/utility'
-import { } from '../helpers'
 const util: Utility = {
   id: 'diacritics',
   name: 'remove diacritics',
@@ -14,6 +13,6 @@ const util: Utility = {
     { title: 'mixed diacritics', input: 'na\u00efve Z\u00fcrich', output: 'naive Zurich' }
   ],
   params: {},
-  apply: (input: any) => String(input).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  apply: (input: any) => String(input ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 export default util

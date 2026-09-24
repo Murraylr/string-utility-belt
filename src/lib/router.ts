@@ -4,6 +4,8 @@ export type RouteName =
   | 'pipeline'
   /** Minimal iframe view of a shared pipeline: `#/embed/<payload>` */
   | 'embed'
+  /** How to use the tool: `#/docs` */
+  | 'docs'
   | 'blogIndex'
   | 'blogPost'
   /** Index of every utility: `#/utilities` */
@@ -69,6 +71,7 @@ export function getRoute(): Route {
     if (!payload) return head === 'p' ? { name: 'home', params: {} } : { name: 'notFound', params: {} }
     return { name: head === 'p' ? 'pipeline' : 'embed', params: { payload } }
   }
+  if (head === 'docs' && parts.length === 1) return { name: 'docs', params: {} }
   if (head === 'blog' && parts.length === 1) return { name: 'blogIndex', params: {} }
   if (head === 'blog') return blogRoute(parts.slice(1))
   if (head === 'utilities' && parts.length === 1) return { name: 'utilities', params: {} }

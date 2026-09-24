@@ -13,6 +13,7 @@ export const en = {
   },
   nav: {
     tool: 'Tool',
+    docs: 'Docs',
     utilities: 'Utilities',
     blog: 'Blog',
     changelog: 'Changelog',

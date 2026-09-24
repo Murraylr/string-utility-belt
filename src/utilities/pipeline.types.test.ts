@@ -14,6 +14,16 @@ describe('pipeline types', () => {
     expect(out).toBe('616263') // hex of [97, 98, 99]
   });
 
+  it('string → get_bytes → md5(bytes) → hex string', async () => {
+    const steps = [
+      { id: 's1', utilityId: 'get_bytes', enabled: true, params: {} },
+      { id: 's2', utilityId: 'md5', enabled: true, params: {} },
+      { id: 's3', utilityId: 'hex_encode', enabled: true, params: {} },
+    ];
+    const { out } = await runPipeline('abc', steps);
+    expect(out).toBe('900150983cd24fb0d6963f7d28e17f72'); // md5('abc')
+  });
+
   it('get_bytes returns Uint8Array("abc")', async () => {
     const steps = [{ id: 's1', utilityId: 'get_bytes', enabled: true, params: {} }];
     const { out } = await runPipeline('abc', steps);

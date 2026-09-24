@@ -21,11 +21,13 @@ const UtilitiesIndexPage = lazy(() => import('./pages/UtilitiesIndexPage'))
 const UtilityDocPage = lazy(() => import('./pages/UtilityDocPage'))
 const EmbedPage = lazy(() => import('./pages/EmbedPage'))
 const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
+const Docs = lazy(() => import('@/components/Docs'))
 
 const PageLoading = () => <div className="muted" role="status">Loading…</div>
 
 const NAV = [
   { href: '/#/', key: 'nav.tool', routes: ['home', 'pipeline', 'notFound'] },
+  { href: '/#/docs', key: 'nav.docs', routes: ['docs'] },
   { href: '/#/utilities', key: 'nav.utilities', routes: ['utilities', 'utility'] },
   { href: '/#/blog', key: 'nav.blog', routes: ['blogIndex', 'blogPost'] },
   { href: '/#/changelog', key: 'nav.changelog', routes: ['changelog'] },
@@ -117,6 +119,7 @@ export default function AppShell() {
           {route.name === 'utilities' && <UtilitiesIndexPage />}
           {route.name === 'utility' && <UtilityDocPage id={route.params.id} />}
           {route.name === 'changelog' && <ChangelogPage />}
+          {route.name === 'docs' && <Docs />}
         </Suspense>
         {route.name === 'pipeline' && <SharedPipeline payload={route.params.payload} />}
         {(route.name === 'home' || route.name === 'notFound') && (

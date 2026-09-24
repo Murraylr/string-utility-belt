@@ -9,7 +9,7 @@ describe('get_bytes', () => {
     expect(util.category).toBe('Encoding')
     expect(util.accepts).toEqual(['string'])
     expect(util.produces).toBe('bytes')
-    expect(util.params.mode).toMatchObject({ options: ['utf8', 'hex', 'unicode'] })
+    expect(util.params.mode).toMatchObject({ options: ['utf8', 'hex', 'base64', 'unicode'] })
     expect(util.params.mode.default).toBe('utf8')
   })
 
@@ -46,6 +46,11 @@ describe('get_bytes', () => {
     expect(isBytes(out)).toBe(true)
     // 'A' = U+0041 -> [0x00, 0x41]
     expect(Array.from(out as Uint8Array)).toEqual([0x00, 0x41])
+  })
+
+  it('base64: decodes base64 to bytes', async () => {
+    const out = await util.apply('b2s=', { mode: 'base64' })
+    expect(new TextDecoder().decode(out as Uint8Array)).toBe('ok')
   })
 
   it('defaults to utf8 when mode is omitted', async () => {

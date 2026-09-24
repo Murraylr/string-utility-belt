@@ -25,6 +25,12 @@ extension and a VS Code extension.
   favourites/recents and type-aware badges, light/dark themes, per-utility doc pages with a live
   playground, installable PWA with offline support and an OS share target, i18n scaffold.
 
+## Using the app
+
+The how-to guide lives in the app itself: click **Docs** in the header, or go to `#/docs`
+([`src/components/Docs.tsx`](src/components/Docs.tsx)). Each utility's settings and examples are on
+its own page under `#/utilities`.
+
 ## Development
 
 ```bash

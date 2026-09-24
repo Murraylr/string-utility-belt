@@ -56,10 +56,12 @@ describe('format_case', () => {
     expect(util.apply('hello world. this is a test.', { mode: 'title' })).toBe('Hello World. This Is A Test.')
   })
 
-  it('converts to sentence case (capitalizes first char only)', () => {
-    // toSentenceCase only uppercases first char, does not lowercase rest
+  it('converts to sentence case (capitalizes each sentence, lowercases the rest)', () => {
     expect(util.apply('hello world', { mode: 'sentence' })).toBe('Hello world')
-    expect(util.apply('HELLO WORLD', { mode: 'sentence' })).toBe('HELLO WORLD')
+    expect(util.apply('HELLO WORLD', { mode: 'sentence' })).toBe('Hello world')
+    expect(util.apply('hello world. this is a test.', { mode: 'sentence' })).toBe('Hello world. This is a test.')
+    expect(util.apply('hElLo wOrLd. 3tHiS iS a tEsT.', { mode: 'sentence' })).toBe('Hello world. 3This is a test.')
+    expect(util.apply('', { mode: 'sentence' })).toBe('')
   })
 
   it('defaults to camel when mode is omitted', () => {
