@@ -116,8 +116,8 @@ describe('text_stats', () => {
   })
 
   it('counts graphemes across segmentation windows exactly like one pass', async () => {
-    const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
-    const onePass = (t: string) => { let n = 0; for (const _ of seg.segment(t)) n++; return n }
+    const seg = new (Intl as any).Segmenter(undefined, { granularity: 'grapheme' })
+    const onePass = (t: string) => [...seg.segment(t)].length
     const family = '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}'
     const inputs = [
       // clusters of 1-8 code units at every offset relative to the 8192-unit windows
