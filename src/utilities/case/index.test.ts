@@ -9,7 +9,7 @@ describe('case utility', () => {
         expect(util.description).toBeTypeOf('string')
         expect(util.accepts).toBe('string')
         expect(util.produces).toBe('string')
-        expect(util.params.mode).toEqual(['upper', 'lower', 'title', 'sentence'])
+        expect(util.params.mode.options).toEqual(['upper', 'lower', 'title', 'sentence'])
         expect(util.params.mode.default).toBe('upper')
     })
 
@@ -43,7 +43,7 @@ describe('case utility', () => {
     })
 
     it('should handle string with a mixture of alphanumeric characters', () => {
-        expect(util.apply('Hello 3v1l World!', { mode: 'upper' })).toBe('HELLO 3v1L WORLD!')
+        expect(util.apply('Hello 3v1l World!', { mode: 'upper' })).toBe('HELLO 3V1L WORLD!')
         expect(util.apply('Hello 3v1l World!', { mode: 'lower' })).toBe('hello 3v1l world!')
         expect(util.apply('Hello 3v1l World!', { mode: 'title' })).toBe('Hello 3v1l World!')
         expect(util.apply('hElLo 3v1l wOrLd!', { mode: 'title' })).toBe('Hello 3v1l World!')

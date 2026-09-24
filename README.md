@@ -64,7 +64,7 @@ Input: `  Crème Brûlée: A Guide!  `
 |---|---|
 | String Ops | trim, slice, truncate, replace (plain text or regex with flags), normalize (NFC/NFD/NFKC/NFKD), remove diacritics |
 | Formatting | change case (upper/lower/title/sentence), format case (camel/Pascal/snake/kebab and more), slug |
-| Encoding | base64 encode, hex encode, Get bytes (utf8/hex/unicode) |
+| Encoding | base64 encode, hex encode, Get bytes (utf8/hex/base64/unicode) |
 | Decoding | base64 decode, hex decode |
 | Hashing | hash (SHA‑256/SHA‑384), md5 hash |
 | URL & JSON | url encode, url decode, json pretty |

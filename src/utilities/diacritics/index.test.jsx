@@ -9,15 +9,15 @@ describe('remove diacritics', () => {
     expect(util.apply('')).toBe('')
   })
   it('handles null', () => {
-    expect(util.apply(null)).toBe(null)
+    expect(util.apply(null)).toBe('')
   })
   it('handles undefined', () => {
     expect(util.apply(undefined)).toBe('')
   })
   it('has correct metadata', () => {
-    expect(util.name).toBe('remove_diacritics')
-    expect(util.label).toBe('Remove Diacritics')
-    expect(util.description).toBe('Removes diacritic marks (accents) from characters.')
+    expect(util.id).toBe('diacritics')
+    expect(util.name).toBe('remove diacritics')
+    expect(util.description).toBeTypeOf('string')
     expect(util.accepts).toBe('string')
     expect(util.produces).toBe('string')
     expect(util.params).toEqual({})

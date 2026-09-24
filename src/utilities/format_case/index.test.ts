@@ -27,8 +27,8 @@ describe('format_case', () => {
     expect(out).toBe('Hello world. This is a test.')
   })
 
-   it('should convert to upper case by default', () => {
-        expect(util.apply('hello World', {})).toBe('HELLO WORLD')
+   it('should convert to camel case by default', () => {
+        expect(util.apply('hello World', {})).toBe('helloWorld')
     })
 
     it('should convert to lower case', () => {
@@ -47,7 +47,7 @@ describe('format_case', () => {
     })
 
     it('should use default mode if params is missing', () => {
-        expect(util.apply('abc', {})).toBe('ABC')
+        expect(util.apply('abc def', {})).toBe('abcDef')
     })
 
     it('should handle strings with no alphabetic characters', () => {
@@ -57,7 +57,7 @@ describe('format_case', () => {
     })
 
     it('should handle string with a mixture of alphanumeric characters', () => {
-        expect(util.apply('Hello 3v1l World!', { mode: 'upper' })).toBe('HELLO 3v1L WORLD!')
+        expect(util.apply('Hello 3v1l World!', { mode: 'upper' })).toBe('HELLO 3V1L WORLD!')
         expect(util.apply('Hello 3v1l World!', { mode: 'lower' })).toBe('hello 3v1l world!')
         expect(util.apply('Hello 3v1l World!', { mode: 'title' })).toBe('Hello 3v1l World!')
         expect(util.apply('hElLo 3v1l wOrLd!', { mode: 'title' })).toBe('Hello 3v1l World!')

@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { bytesToHex, isBytes, textToUint8Array } from '@/utilities/helpers'
 const util: Utility = {
   id: 'hex_encode',
   name: 'hex encode',
@@ -7,10 +8,6 @@ const util: Utility = {
   accepts: ['string','bytes'],
   produces: 'string',
   params: {},
-  apply: (input: string): string => {
-    return input.split("")
-     .map(c => c.charCodeAt(0).toString(16).padStart(2, "0"))
-     .join("");
-}
+  apply: (input: any): string => bytesToHex(isBytes(input) ? input : textToUint8Array(String(input)))
 }
 export default util
