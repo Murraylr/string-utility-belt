@@ -1,0 +1,49 @@
+{
+  "name": "string-utility-belt",
+  "displayName": "String Utility Belt",
+  "description": "Run 240+ string transforms — encoding, hashing, ciphers, formatting and more — on your selections, or a whole saved pipeline, without leaving the editor.",
+  "publisher": "stringutilitybelt",
+  "version": "1.3.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Formatters"
+  ],
+  "main": "./dist/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "subelt.transform",
+        "title": "String Utility Belt: Transform Selection…"
+      },
+      {
+        "command": "subelt.repeatLast",
+        "title": "String Utility Belt: Repeat Last Transform"
+      },
+      {
+        "command": "subelt.runPipeline",
+        "title": "String Utility Belt: Run Pipeline (share link or JSON)…"
+      },
+      {
+        "command": "subelt.describe",
+        "title": "String Utility Belt: Describe Utility…"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "subelt.transform",
+        "key": "ctrl+alt+u",
+        "mac": "cmd+alt+u",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "vite build --config vite.config.ts",
+    "test": "vitest run"
+  }
+}

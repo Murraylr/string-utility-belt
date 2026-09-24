@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fixture: modulepreload</title>
+  <!-- data-src must not be mistaken for src -->
+  <script type="module" crossorigin data-src="/assets/lazy-repetitive.js" src="/assets/main.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor.js">
+  <link rel="stylesheet" crossorigin href="/assets/main.css">
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>

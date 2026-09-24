@@ -9,7 +9,11 @@
 	"compatibility_date": "2025-09-27",
 	"assets": {
 		"not_found_handling": "single-page-application",
-		"directory": "./dist"
+		"directory": "./dist",
+		"binding": "ASSETS",
+		// the HTTP API (worker/api.ts) must win over the SPA fallback for these paths
+		// ("/api/*" does not match the bare "/api", which would otherwise get index.html)
+		"run_worker_first": ["/api", "/api/*"]
 	},
 	"observability": {
 		"enabled": true
@@ -36,6 +40,8 @@
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 */
 	// "vars": { "MY_VARIABLE": "production_value" }
+	// FETCH_PROXY = "off" disables GET /api/fetch (503) without a redeploy of code:
+	// set it in the dashboard, or here as "vars": { "FETCH_PROXY": "off" }
 	/**
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/

@@ -2,31 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokens (space-separated RGB so Tailwind can apply alpha). `.dark` swaps them. */
 @layer base {
-  html, body { @apply bg-ink-50 text-ink-900 font-sans; }
+  :root {
+    --c-canvas: 248 250 252;
+    --c-surface: 255 255 255;
+    --c-surface-2: 249 250 251;
+    --c-fg: 11 19 42;
+    --c-muted: 100 116 139;
+    --c-line: 226 232 240;
+    /* Tailwind 700s rather than the 600s these started as: the status tokens are used
+       at text-xs/sm for real copy (step errors, decode warnings, diff highlights,
+       timing), often on their own `/10` tint — and the 600s only reach ~3.1-4.1:1
+       there (AA-large, not AA-normal). */
+    --c-danger: 185 28 28;
+    --c-success: 21 128 61;
+    --c-warn: 180 83 9;
+    /* BackgroundFX gradient hues — kept separate from the semantic tokens above
+       so re-theming the UI doesn't accidentally wash out the decorative FX. */
+    --c-fx-spot: 99 102 241;
+    --c-fx-ribbon-a: 236 72 153;
+    --c-fx-ribbon-b: 59 130 246;
+    color-scheme: light;
+  }
+  .dark {
+    --c-canvas: 11 15 25;
+    --c-surface: 19 25 39;
+    --c-surface-2: 27 34 52;
+    --c-fg: 226 232 240;
+    --c-muted: 148 163 184;
+    --c-line: 45 55 76;
+    --c-danger: 248 113 113;
+    --c-success: 74 222 128;
+    --c-warn: 251 191 36;
+    /* brighter/cooler than the light-mode hues so the same gradients read as
+       accents against a dark canvas instead of muddying into it */
+    --c-fx-spot: 129 140 248;
+    --c-fx-ribbon-a: 244 114 182;
+    --c-fx-ribbon-b: 96 165 250;
+    color-scheme: dark;
+  }
+  /* The page colour lives on <html> only: a <body> background would paint above
+     negative-z-index layers (BackgroundFX is `fixed -z-10`) and hide them. */
+  html { @apply bg-canvas; }
+  html, body { @apply text-fg font-sans transition-colors duration-200; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  /* Scrollbars follow the theme tokens instead of the OS default, so a dark
+     page doesn't keep a stark light-grey scrollbar. */
+  html { scrollbar-color: rgb(var(--c-line)) transparent; scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  /* transparent border + padding-box clip insets the thumb on any surface colour */
+  ::-webkit-scrollbar-thumb { background-color: rgb(var(--c-line)); background-clip: padding-box; border-radius: 9999px; border: 2px solid transparent; }
+  ::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--c-muted)); }
+  ::-webkit-scrollbar-corner { background: transparent; }
+
+  /* Fallback focus ring for interactive elements that don't opt into one of the
+     component classes below (e.g. plain nav links). No border-radius here: it
+     would outrank `rounded-*` utilities and reshape the element on focus, and
+     outlines already follow the element's own radius. `tabindex="-1"` targets
+     (skip-link destinations, dialogs focused on open) aren't keyboard stops. */
+  a:focus-visible, button:focus-visible, summary:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid rgb(var(--c-fx-spot));
+    outline-offset: 2px;
+  }
+
+  ::selection { background-color: rgb(var(--c-fx-spot) / .25); }
+
+  /* Preflight's gray-400 placeholder is ~2.5:1 on a light surface; the muted token
+     clears 4.5:1 in both themes. */
+  input::placeholder, textarea::placeholder { color: rgb(var(--c-muted)); opacity: 1; }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/60 backdrop-blur-md border border-white/40 shadow-soft;
+    @apply bg-surface/60 backdrop-blur-md border border-surface/40 shadow-soft;
   }
   .card {
-    @apply rounded-2xl border bg-white shadow-soft;
+    @apply rounded-2xl border bg-surface shadow-soft;
   }
   .cta {
-    @apply px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition shadow-glow;
+    @apply px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition shadow-glow disabled:opacity-50;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border hover:bg-surface-2 disabled:opacity-50 shadow-soft text-sm;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+  .icon-btn {
+    /* min-w/min-h (not fixed padding) floor the tap target at ~40px (WCAG 2.5.8)
+       while still growing for a bigger icon, and letting a full-width text menu
+       item (StepMenu) override with its own `w-full`/`justify-start`. */
+    @apply inline-flex items-center justify-center min-w-10 min-h-10 p-2 rounded-xl hover:bg-surface-2 disabled:opacity-40;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+  .field {
+    @apply border rounded-xl px-3 py-2 bg-surface text-fg shadow-soft outline-none focus:ring focus:ring-primary-500/30;
+    @apply focus-visible:ring-2 focus-visible:ring-primary-500;
+  }
+  .chip {
+    @apply text-[11px] px-2 py-0.5 rounded-full border bg-surface-2;
   }
   .muted {
-    @apply text-sm text-gray-500;
+    @apply text-sm text-muted;
   }
   .mono {
     @apply font-mono;
   }
+  .sr-only-focusable:not(:focus) {
+    @apply sr-only;
+  }
+
+  /* Scoped styling for markdown rendered by src/lib/markdown.js. There's no
+     @tailwindcss/typography plugin installed, so the classes it emits
+     (`md-h1`, `md-p`, `md-code`, ...) are styled here directly with the
+     semantic tokens, which makes them theme-aware for free. */
+  .md { @apply leading-7 text-fg; }
+  .md .md-h1 { @apply text-2xl font-bold mt-10 mb-4; }
+  .md .md-h2 { @apply text-xl font-bold mt-8 mb-3; }
+  .md .md-h3 { @apply text-lg font-semibold mt-6 mb-2; }
+  .md .md-p { @apply mb-4; }
+  .md .md-code { @apply px-1.5 py-0.5 rounded bg-surface-2 border text-[0.9em] font-mono; }
+  .md .md-pre { @apply overflow-x-auto p-3 rounded-lg bg-surface-2 border my-4; }
+  .md .md-pre .md-code-block { @apply font-mono text-sm bg-transparent border-0 p-0; }
+  .md .md-link { @apply text-primary-600 dark:text-primary-100 underline underline-offset-2 hover:no-underline; }
 }
 
 /* fancy background gradient helpers */
 .bg-grid {
-  background-image: linear-gradient(to right, rgba(0,0,0,.04) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0,0,0,.04) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgb(var(--c-fg) / .04) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgb(var(--c-fg) / .04) 1px, transparent 1px);
   background-size: 20px 20px;
 }

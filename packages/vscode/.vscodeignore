@@ -1,0 +1,12 @@
+# Allowlist, not a denylist: `dist/` is a shared build output directory in a monorepo
+# under active development, so anything unexpected that lands in it (from an unrelated
+# build run with a stray working directory) must never end up in the .vsix by accident.
+# Only what the extension actually needs ships.
+**
+!dist
+!dist/extension.cjs
+!dist/extension.cjs.map
+!package.json
+!README.md
+!CHANGELOG.md
+!LICENSE*

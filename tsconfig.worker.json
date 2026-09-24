@@ -1,8 +1,17 @@
 {
-  "extends": "./tsconfig.node.json",
+  // The worker bundles the app's engine and utilities (../src/core, ../src/utilities),
+  // so it is checked with the app's own settings (./tsconfig.json). The generated
+  // Workers types (worker-configuration.d.ts) are not part of this program: checking
+  // the app code under them fails on lib differences that do not matter at runtime
+  // (e.g. TextDecoder's options), so worker/cloudflare.d.ts declares the few Cloudflare
+  // types the worker names.
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
-    "types": ["./worker-configuration.d.ts", "vite/client"],
+    "incremental": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
   },
-  "include": ["./worker-configuration.d.ts", "./worker"],
+  "include": ["./worker"],
 }

@@ -1,43 +1,76 @@
 import React, { useEffect, useState } from 'react'
-import { mdToHtml } from '@/lib/markdown'
+import { mdToHtml, parseFrontmatter } from '@/lib/markdown'
+import { useT } from '@/app/i18n/useT'
+
 type BlogPostProps = { slug: string }
+type Frontmatter = Record<string, string>
+type Loaded =
+  | { slug: string; status: 'ok'; meta: Frontmatter; html: string }
+  | { slug: string; status: 'missing' }
+
+const SITE_NAME = 'String Utility Belt'
+
+/** Posts open with `# <title>`, which the header already renders — don't show it twice. */
+function dropRepeatedTitle(body: string, title: string | undefined): string {
+  const first = /^\s*#[ \t]+(.+?)[ \t]*(?:\r?\n|$)/.exec(body)
+  return title && first && first[1] === title ? body.slice(first[0].length) : body
+}
+
+// exact match only: `md-code-block` (fenced blocks; already scrollable via its `.md-pre`
+// ancestor) must not pick this up — only bare inline `` `code` `` spans. Unlike a fenced
+// block, an inline span sits inside ordinary wrapping text, where a long unbroken token
+// (a file path, an identifier) would otherwise force this narrow article wider than the
+// viewport.
+const withWrappableInlineCode = (html: string) => html.replace(/class="md-code"/g, 'class="md-code break-words"')
 
 export default function BlogPost({ slug }: BlogPostProps) {
-  const [html, setHtml] = useState('')
-  const [meta, setMeta] = useState(null)
-  const [err, setErr] = useState('')
+  const { t, formatDate } = useT()
+  // tagged with its slug so a stale result (or error) from the previous post
+  // is never shown while the next one loads
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const post = loaded?.slug === slug ? loaded : null
+
   useEffect(() => {
     let active = true
     fetch(`/blog/${slug}.md`)
-      .then(r => { if (!r.ok) throw new Error('not found'); return r.text() })
+      .then(r => {
+        // a dev server / SPA fallback answers a missing .md with index.html
+        const type = r.headers?.get?.('content-type') ?? ''
+        if (!r.ok || type.includes('text/html')) throw new Error('not found')
+        return r.text()
+      })
       .then(txt => {
         if (!active) return
-        const { frontmatter, body } = parseFrontmatter(txt)
-        setMeta(frontmatter); setHtml(mdToHtml(body))
-        if (frontmatter?.title) document.title = `${frontmatter.title} | String Pipeline Workshop`
-        if (frontmatter?.description) {
+        const { frontmatter, body } = parseFrontmatter(txt) as { frontmatter: Frontmatter; body: string }
+        const html = withWrappableInlineCode(mdToHtml(dropRepeatedTitle(body, frontmatter.title)))
+        setLoaded({ slug, status: 'ok', meta: frontmatter, html })
+        if (frontmatter.title) document.title = `${frontmatter.title} — ${SITE_NAME}`
+        if (frontmatter.description) {
           let metaDesc = document.querySelector('meta[name="description"]')
           if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.setAttribute('name', 'description'); document.head.appendChild(metaDesc) }
           metaDesc.setAttribute('content', frontmatter.description)
         }
       })
-      .catch(e => setErr(String(e)))
+      .catch(() => { if (active) setLoaded({ slug, status: 'missing' }) })
     return () => { active = false }
   }, [slug])
+
+  const meta = post?.status === 'ok' ? post.meta : null
   return (
-    <article className="prose prose-sm sm:prose lg:prose-lg max-w-3xl mx-auto bg-white border rounded-xl p-6 prose-pre:bg-gray-100 prose-pre:p-3">
-      {meta && (<header className="mb-4"><h1 className="!mt-0">{meta.title}</h1><p className="text-gray-500">{meta.date}</p></header>)}
-      {err ? <div className="text-red-600">Post not found.</div> : <div dangerouslySetInnerHTML={{ __html: html }} />}
+    // w-full + min-w-0: `max-w-3xl mx-auto` alone leaves this grid item's width "auto",
+    // which — with a non-wrapping code block inside (.md-pre already scrolls itself) —
+    // grid sizes via shrink-to-fit up to the block's min-content width, blowing the article
+    // (and the page) wider than the viewport instead of clipping to the grid track
+    <article className="md w-full max-w-3xl mx-auto card p-6 min-w-0" aria-busy={post ? undefined : true}>
+      {!post && <p className="muted" role="status">{t('common.loading')}</p>}
+      {post?.status === 'missing' && <p className="text-danger" role="alert">{t('blog.notFound')}</p>}
+      {meta && (
+        <header className="mb-4">
+          {meta.title && <h1 className="!mt-0 text-2xl font-semibold">{meta.title}</h1>}
+          {meta.date && <p className="muted"><time dateTime={meta.date}>{formatDate(meta.date, { dateStyle: 'long' })}</time></p>}
+        </header>
+      )}
+      {post?.status === 'ok' && <div dangerouslySetInnerHTML={{ __html: post.html }} />}
     </article>
   )
-}
-function parseFrontmatter(txt) {
-  const m = txt.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-  if (!m) return { frontmatter: {}, body: txt }
-  const fm = Object.create(null)
-  for (const line of m[1].split(/\n/)) {
-    const k = line.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/)
-    if (k) fm[k[1]] = k[2]
-  }
-  return { frontmatter: fm, body: m[2] }
 }

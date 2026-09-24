@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { toSentenceCase } from '@/utilities/helpers'
 const util: Utility = {
   id: 'format_case',
   name: 'format case',
@@ -6,6 +7,12 @@ const util: Utility = {
   description: 'Convert to camelCase, PascalCase, snake_case, or kebab-case.',
   accepts: 'string',
   produces: 'string',
+  tags: ['camelcase', 'pascalcase', 'snake_case', 'kebab-case', 'identifier', 'variable name'],
+  aliases: ['camelCase', 'snake_case', 'kebab-case'],
+  examples: [
+    { title: 'camelCase', input: 'hello world example', params: { mode: 'camel' }, output: 'helloWorldExample' },
+    { title: 'snake_case', input: 'Hello World Example', params: { mode: 'snake' }, output: 'hello_world_example' }
+  ],
   params: {
     mode: {
       kind: 'select',
@@ -14,8 +21,9 @@ const util: Utility = {
       default: 'camel'
     }
   },
-  apply: (input: any, { mode }: any) => {
+  apply: (input: any, { mode: _mode }: any) => {
     const s = String(input)
+    const mode = _mode || 'camel'
     switch (mode) {
       case 'camel':
         return toCamel(s)
@@ -40,8 +48,8 @@ const util: Utility = {
 }
 
 const splitWords = (s: string) => (s ?? '').toString().trim()
-  .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-  .replace(/[^A-Za-z0-9]+/g, ' ')
+  .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, '$1 $2')
+  .replace(/[^\p{L}\p{N}]+/gu, ' ')
   .toLowerCase()
   .split(' ')
   .filter(Boolean);
@@ -59,12 +67,6 @@ function toTitleCase(s: string): string {
   return s.replace(/\w\S*/g, (word) => {
     return word[0].toUpperCase() + word.slice(1).toLowerCase()
   })
-}
-
-function toSentenceCase(s: string): string {
-  if (!s) return s
-  const trimmed = s.trim()
-  return trimmed[0].toUpperCase() + trimmed.slice(1)
 }
 
 export default util

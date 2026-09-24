@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { slugify } from '@/utilities/helpers'
 const util: Utility = {
   id: 'slug',
   name: 'slug',
@@ -6,11 +7,10 @@ const util: Utility = {
   description: 'Convert to a URL-friendly slug (ASCII kebab-case).',
   accepts: 'string',
   produces: 'string',
+  tags: ['url slug', 'kebab-case', 'slugify', 'permalink', 'ascii'],
+  aliases: ['slugify'],
+  examples: [{ title: 'accents and punctuation', input: 'Héllo, World!  Ünïcode', output: 'hello-world-unicode' }],
   params: {},
-  apply: (s: string) => (s ?? '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Za-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase()
+  apply: (s: string) => slugify(s)
 }
 export default util

@@ -1,12 +1,49 @@
-
 name: CI
 on:
   push:
     branches: [ main, feature/** ]
   pull_request:
     branches: [ main ]
+
+# least privilege for GITHUB_TOKEN: every job only reads the repo
+permissions:
+  contents: read
+
+# a newer push to the same branch/PR supersedes the run in progress (every main commit still gets a full run)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
-  build-test:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # the root tsconfig covers src/ and scripts/ only; these carry their own
+      - run: npx tsc --noEmit -p e2e/tsconfig.json
+      - run: npx tsc --noEmit -p bench/tsconfig.json
+      # the Cloudflare Worker and each package type-check against their own configs
+      - run: npx tsc --noEmit -p tsconfig.worker.json
+      - run: for p in core cli mcp extension vscode; do npx tsc --noEmit -p packages/$p/tsconfig.json || exit 1; done
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,4 +53,60 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
       - run: npm run build
+      - run: npm run check:bundle
+      # pre-rendered pages, sitemap and RSS (OG images are rendered at deploy time)
+      - run: npm run build:seo:fast
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build:tools
+      # the package tests that exercise the built bundles skip until dist/ exists
+      - run: npx vitest run packages --minWorkers=1 --maxWorkers=2
+      # prove the Worker bundles with wrangler's esbuild (no deploy)
+      - run: npx wrangler deploy --dry-run --outdir worker-dry
+
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
