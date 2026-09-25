@@ -10,7 +10,8 @@ const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' |
 
 const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`
 
-// the app's header nav and footer (src/app/AppShell.tsx), as plain links
+// the app's header nav and footer (src/app/AppShell.tsx), as plain links — minus the
+// #/docs route, which has no pre-rendered page to link to yet
 const NAV_LINKS = [['/', 'Tool'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
   ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'],

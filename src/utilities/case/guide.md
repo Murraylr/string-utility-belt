@@ -13,7 +13,7 @@ Each mode applies one rule to the whole input:
 - **upper** uppercases every letter and leaves everything else — digits, punctuation, spacing — untouched.
 - **lower** lowercases every letter the same way.
 - **title** capitalizes the first letter of every word and lowercases the rest of that word, where a "word" is a run of non-space characters starting with an ASCII letter, digit, or underscore. Hyphenated words count as one word (`hello-world` becomes `Hello-world`), and mixed-case words are flattened (`iPhone` becomes `Iphone`).
-- **sentence** uppercases only the very first character of the whole input and lowercases everything after it, regardless of how many sentences or line breaks follow. If the input starts with a space, quote or digit, nothing ends up capitalized.
+- **sentence** lowercases everything, then capitalizes the first letter of each sentence: the first letter of the input (skipping any leading spaces, quotes or digits) and the first letter after every `.`, `!` or `?` that is followed by a space or a line break.
 
 ```example
 title: uppercase
@@ -36,13 +36,22 @@ input: hello world
 output: Hello World
 ```
 
-Sentence case only touches the first character — it does not detect sentence boundaries, so a multi-sentence string still gets a single capital at the very start and everything else is lowercased:
+Each sentence gets its own capital, and every other letter is lowercased:
 
 ```example
-title: sentence case only capitalizes the first letter
+title: sentence case capitalizes each sentence
 params: {"mode": "sentence"}
-input: HELLO WORLD
-output: Hello world
+input: HELLO WORLD. this is FINE!
+output: Hello world. This is fine!
+```
+
+A leading quote or digit is skipped, so the first actual letter is the one capitalized:
+
+```example
+title: the first letter after a leading digit is capitalized
+params: {"mode": "sentence"}
+input: 3 APPLES. two pears
+output: 3 Apples. Two pears
 ```
 
 Empty input is returned unchanged for every mode:
@@ -63,11 +72,11 @@ output:
 - Normalizing form input, usernames, or search queries before comparing or storing them.
 - Formatting a heading or label as Title Case for a UI or document.
 - Cleaning up text that was typed in the wrong case, such as `AN ACCIDENTAL CAPS LOCK MESSAGE`.
-- Producing a single capitalized lead-in for a sentence pulled from all-caps or all-lowercase source data.
+- Turning all-caps or all-lowercase text — shouted headings, old database exports — back into normal sentences.
 
 ## Tips and pitfalls
 
-- **Sentence case is not sentence-aware.** If your text has several sentences, only the first character of the whole string is capitalized; letters after periods elsewhere in the text are lowercased along with everything else. If you want the rest of the text left as it is rather than lowercased, the `sentence` mode of [format case](/util/format_case/) trims surrounding whitespace, uppercases the first remaining character and leaves everything else as it is.
+- **Sentence case knows punctuation, not grammar.** A sentence starts after `.`, `!` or `?` plus whitespace, so abbreviations start one too (`e.g. this` becomes `E.g. This`), while a line break without punctuation does not. Names and acronyms are lowercased like every other word (`i love Paris` becomes `I love paris`), so check proper nouns afterwards.
 - **Title case ignores style-guide rules.** It does not skip small words like "a" or "the" the way a professional style guide would — every word gets its first letter capitalized.
 - **Title case only recognizes ASCII word starts.** A word that begins with an accented or non-Latin letter is matched from its first ASCII letter instead, so `élan` becomes `éLan`. Use `upper` or `lower` for non-English text.
 - If you need code-identifier casing such as `camelCase` or `snake_case` instead of prose casing, use [format case](/util/format_case/).

@@ -1,4 +1,5 @@
 import type { Utility } from '@/types/utility'
+import { toSentenceCase } from '@/utilities/helpers'
 const util: Utility = {
   id: 'format_case',
   name: 'format case',
@@ -66,12 +67,6 @@ function toTitleCase(s: string): string {
   return s.replace(/\w\S*/g, (word) => {
     return word[0].toUpperCase() + word.slice(1).toLowerCase()
   })
-}
-
-function toSentenceCase(s: string): string {
-  const trimmed = s.trim()
-  if (!trimmed) return s
-  return trimmed[0].toUpperCase() + trimmed.slice(1)
 }
 
 export default util

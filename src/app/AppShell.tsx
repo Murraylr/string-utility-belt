@@ -25,6 +25,7 @@ const EmbedPage = lazy(() => import('./pages/EmbedPage'))
 const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SitePage = lazy(() => import('./pages/SitePage'))
 const HomeDirectory = lazy(() => import('./pages/HomeDirectory'))
+const Docs = lazy(() => import('@/components/Docs'))
 
 const PageLoading = () => <div className="muted" role="status">Loading…</div>
 
@@ -32,6 +33,8 @@ const PageLoading = () => <div className="muted" role="status">Loading…</div>
 // reach the pre-rendered pages. `useInAppLinks` keeps clicks inside the running app.
 const NAV = [
   { href: '/', key: 'nav.tool', routes: ['home', 'pipeline', 'notFound'] },
+  // not pre-rendered (yet), so still a #/ route
+  { href: '/#/docs', key: 'nav.docs', routes: ['docs'] },
   { href: '/utilities/', key: 'nav.utilities', routes: ['utilities', 'utility'] },
   { href: '/blog/', key: 'nav.blog', routes: ['blogIndex', 'blogPost'] },
   { href: '/changelog/', key: 'nav.changelog', routes: ['changelog'] },
@@ -194,6 +197,7 @@ export default function AppShell() {
           {route.name === 'utility' && <UtilityDocPage id={route.params.id} />}
           {route.name === 'changelog' && <ChangelogPage />}
           {route.name === 'page' && <SitePage slug={route.params.slug as SitePageSlug} />}
+          {route.name === 'docs' && <Docs />}
         </Suspense>
         {route.name === 'pipeline' && <SharedPipeline payload={route.params.payload} />}
         {(route.name === 'home' || route.name === 'notFound') && (

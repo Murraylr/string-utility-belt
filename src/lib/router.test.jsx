@@ -168,3 +168,11 @@ describe('router: site pages, 404 paths and in-app links', () => {
     }
   })
 })
+
+describe('router docs route', () => {
+  it('matches #/docs', () => {
+    location.hash = '#/docs'
+    expect(getRoute().name).toBe('docs')
+    location.hash = ''
+  })
+})

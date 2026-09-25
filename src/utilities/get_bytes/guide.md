@@ -4,7 +4,7 @@ description: Convert text into raw bytes using UTF-8 encoding, parsed hex pairs,
 ---
 ## What does this tool do?
 
-This tool turns a text string into raw bytes, which is the representation most binary-oriented steps in a pipeline — hashing, compression, [hex dump](/util/hex_dump/), or a custom byte-level transform — actually operate on. Three modes control how the conversion happens, chosen with the **mode** option.
+This tool turns a text string into raw bytes, which is the representation most binary-oriented steps in a pipeline — hashing, compression, [hex dump](/util/hex_dump/), or a custom byte-level transform — actually operate on. Four modes control how the conversion happens, chosen with the **mode** option.
 
 ## How each mode works
 
@@ -34,6 +34,18 @@ utf8: Hi
 
 Hex input must have an even number of hex digits once whitespace is stripped — an odd-length string like `abc` has no valid last byte and is rejected. Only the characters `0-9`, `a-f` and `A-F` are accepted, so a `0x` prefix or `:` separators must be removed first.
 
+**base64** decodes Base64 text into the bytes it encodes — handy when binary data arrives Base64-encoded (from an API, a config file or a data URI) and the next step needs the raw bytes. Whitespace, including line breaks, is ignored, so wrapped Base64 works as-is. It uses the standard alphabet with `+` and `/`; for URL-safe input with `-` and `_`, use [base64url decode](/util/base64url_decode/) first.
+
+```example
+title: base64 mode decodes Base64 into bytes
+params: {"mode": "base64"}
+input: SGk=
+output:
+bytes[72, 105]
+hex: [48, 69]
+utf8: Hi
+```
+
 **unicode** encodes each UTF-16 code unit of the input as two bytes, high byte first — the same layout as big-endian UTF-16. This is a lower-level view than utf8 mode: astral characters (outside the Basic Multilingual Plane, like most emoji) are written as their surrogate pair — two code units and therefore four bytes — which is exactly how UTF-16BE stores them. Unlike a real UTF-16 encoder, it also writes an unpaired surrogate as-is instead of rejecting it.
 
 ```example
@@ -59,7 +71,7 @@ hex: []
 
 ## Options
 
-- **Mode** — `utf8` (default), `hex` or `unicode`, as described above.
+- **Mode** — `utf8` (default), `hex`, `base64` or `unicode`, as described above.
 
 ## Common uses
 

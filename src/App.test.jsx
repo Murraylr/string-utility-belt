@@ -17,6 +17,14 @@ describe('<App />', () => {
     expect(matches.length).toBeGreaterThan(0)
   })
 
+  it('renders the usage guide at #/docs', async () => {
+    location.hash = '#/docs'
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: /how to use string utility belt/i })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.queryByPlaceholderText(/type or paste/i)).toBeNull()
+  })
+
   it('renders the blog index at #/blog', async () => {
     location.hash = '#/blog'
     render(<App />)

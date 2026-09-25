@@ -1,6 +1,6 @@
 import { Utility } from "@/types/utility";
 
-type Mode = "utf8" | "hex" | "unicode";
+type Mode = "utf8" | "hex" | "base64" | "unicode";
 
 function fromUtf8(s: string): Uint8Array {
   return new TextEncoder().encode(s);
@@ -18,6 +18,11 @@ function fromHex(s: string): Uint8Array {
   return out;
 }
 
+function fromBase64(s: string): Uint8Array {
+  const bin = atob(s.replace(/\s+/g, ""));
+  return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+
 function fromUnicode(s: string): Uint8Array {
   const out = new Uint8Array(s.length * 2);
   for (let i = 0; i < s.length; i++) {
@@ -32,7 +37,7 @@ function fromUnicode(s: string): Uint8Array {
 const util: Utility = {
   id: "get_bytes",
   name: "Get bytes",
-  description: "Convert a string into bytes. Modes: utf8 (default), hex, unicode (UTF-16BE).",
+  description: "Convert a string into bytes. Modes: utf8 (default), hex, base64, unicode (UTF-16BE).",
   category: "Encoding",
   accepts: ["string"],
   produces: "bytes",
@@ -49,6 +54,7 @@ const util: Utility = {
       options: [
         'utf8',
         'hex',
+        'base64',
         'unicode'
       ],
       default: 'utf8',
@@ -62,6 +68,8 @@ const util: Utility = {
         return fromUtf8(input);
       case "hex":
         return fromHex(input);
+      case "base64":
+        return fromBase64(input);
       case "unicode":
         return fromUnicode(input);
 

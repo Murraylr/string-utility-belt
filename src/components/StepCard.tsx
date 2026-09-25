@@ -1,5 +1,5 @@
 import React, { useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp, Diff as DiffIcon, Trash2 } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronUp, Diff as DiffIcon, Trash2 } from 'lucide-react'
 import { formatForDisplay, valueType } from '@/core/coerce'
 import type { UtilityStep, Value } from '@/types/utility'
 import { registry } from '@/app/registry'
@@ -118,6 +118,11 @@ export default function StepCard({
           <label className="muted" htmlFor={utilityFieldId}>utility</label>
           <Select id={utilityFieldId} value={step.utilityId} onChange={onChangeUtil} options={options} className="w-full" />
           <div className="text-xs text-muted mt-1">{meta?.description ?? `unknown utility "${step.utilityId}"`}</div>
+          {meta && (
+            <a className="text-xs text-primary-600 hover:underline inline-flex items-center gap-1 mt-1" href={`#/util/${encodeURIComponent(meta.id)}`}>
+              <BookOpen size={12} aria-hidden /> {meta.name} docs
+            </a>
+          )}
         </div>
         <div className="md:col-span-2 min-w-0">
           {meta && <ParamsEditor spec={meta.params} params={step.params ?? {}} onChange={onChangeParams} />}

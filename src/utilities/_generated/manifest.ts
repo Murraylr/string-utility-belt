@@ -3473,7 +3473,7 @@ export const MANIFEST: UtilityMeta[] = [
     "id": "get_bytes",
     "name": "Get bytes",
     "category": "Encoding",
-    "description": "Convert a string into bytes. Modes: utf8 (default), hex, unicode (UTF-16BE).",
+    "description": "Convert a string into bytes. Modes: utf8 (default), hex, base64, unicode (UTF-16BE).",
     "accepts": [
       "string"
     ],
@@ -3485,6 +3485,7 @@ export const MANIFEST: UtilityMeta[] = [
         "options": [
           "utf8",
           "hex",
+          "base64",
           "unicode"
         ],
         "default": "utf8"

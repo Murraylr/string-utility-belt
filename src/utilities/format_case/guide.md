@@ -40,13 +40,13 @@ input: café latte
 output: caféLatte
 ```
 
-The `sentence` mode here trims leading and trailing whitespace, uppercases the first remaining character and leaves the rest exactly as it was — unlike [change case](/util/case/)'s `sentence` mode, it does **not** lowercase the remainder:
+The `sentence` mode is the same as [change case](/util/case/)'s: it lowercases everything, then capitalizes the first letter of each sentence — the first letter of the input and the first letter after every `.`, `!` or `?` followed by whitespace. Surrounding whitespace is kept as it is:
 
 ```example
-title: sentence mode here does not lowercase the rest
+title: sentence mode capitalizes each sentence and lowercases the rest
 params: {"mode": "sentence"}
-input: HELLO WORLD
-output: HELLO WORLD
+input: HELLO WORLD. this is FINE.
+output: Hello world. This is fine.
 ```
 
 Empty input passes straight through for every mode:
@@ -67,7 +67,7 @@ output:
   - `kebab` — `hello-world-example`
   - `upper` / `lower` — plain `.toUpperCase()` / `.toLowerCase()` on the whole string
   - `title` — capitalizes the first letter of each word and lowercases the rest of it, using the same rule as [change case](/util/case/): a word must start with an ASCII letter, digit or underscore
-  - `sentence` — trims surrounding whitespace, then uppercases only the first character and leaves the remainder untouched
+  - `sentence` — lowercases everything, then capitalizes the first letter of each sentence (the start of the input, and after `.`, `!` or `?` plus whitespace)
 
 ## Common uses
 

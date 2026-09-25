@@ -81,7 +81,8 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
+  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide, not pre-rendered yet),
+  `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
 - A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex` (the host's
   SPA fallback answers it with index.html and a 200; `dist/404.html` is ready for `not_found_handling: "404-page"`).
