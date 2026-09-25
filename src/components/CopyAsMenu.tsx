@@ -9,6 +9,8 @@ export interface CopyAsMenuProps {
   /** Visible label; icon-only when omitted. */
   label?: string
   className?: string
+  /** After a successful copy, with the format used. */
+  onCopy?: (format: CopyFormat) => void
 }
 
 type CopyFormat = 'raw' | 'json-literal' | 'hex' | 'base64'
@@ -28,7 +30,7 @@ const MENU_ITEMS: Array<{ format: CopyFormat; label: string }> = [
 ]
 
 /** Split button: main click copies raw; the menu offers JSON-literal/hex/base64 forms. */
-export default function CopyAsMenu({ value, label, className }: CopyAsMenuProps) {
+export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMenuProps) {
   const [status, setStatus] = useState<'idle' | 'copied' | 'error'>('idle')
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -50,8 +52,10 @@ export default function CopyAsMenu({ value, label, className }: CopyAsMenuProps)
       announce('copied')
     } catch {
       announce('error')
+      return
     }
-  }, [value, announce])
+    onCopy?.(format)
+  }, [value, announce, onCopy])
 
   useEffect(() => () => { if (statusTimer.current) clearTimeout(statusTimer.current) }, [])
 

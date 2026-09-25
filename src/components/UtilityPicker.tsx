@@ -7,6 +7,7 @@ import type { ValueType } from '@/types/utility'
 import { searchUtilities, type FuzzyRange } from '@/app/search/fuzzy'
 import Highlight from '@/app/search/Highlight'
 import { useFavorites, useRecents, pushRecent } from '@/app/favorites'
+import { useSearchTracking } from '@/app/analytics/analytics'
 
 export interface UtilityPickerProps {
   onPick: (id: string) => void
@@ -162,6 +163,7 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
     const pinned = new Set(favoriteMetas.map(m => m.id))
     return results.filter(r => !pinned.has(r.meta.id) && passesFilters(r.meta))
   }, [results, favoriteMetas, passesFilters])
+  useSearchTracking('picker', query, filteredResults.length)
 
   const visible: VisibleItem[] = useMemo(() => [
     ...favoriteMetas.map(m => ({ key: `${idBase}-fav-${m.id}`, meta: m, section: 'favorites' as const, nameRanges: NO_RANGES })),

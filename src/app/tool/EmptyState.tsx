@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import type { Value } from '@/types/utility'
 import { useTool } from '@/app/ToolContext'
 import { registry } from '@/app/registry'
+import { trackUtilityAdd } from '@/app/analytics/analytics'
 import { SIZE_GUARD } from '@/app/engine/useRunner'
 import { isBytes, isEmptyValue } from '@/core/coerce'
 import { suggestDecoders, type Suggestion } from '@/core/detect'
@@ -47,6 +48,7 @@ export default function EmptyState({ onAddUtility }: EmptyStateProps) {
 
   const pick = (s: Suggestion) => {
     dispatch({ type: 'ADD_STEP', utilityId: s.step.utilityId, params: seededParams(s.step) })
+    trackUtilityAdd(s.step.utilityId, 'suggestion')
   }
 
   const browsePresets = () => window.dispatchEvent(new CustomEvent('sub:open-presets'))

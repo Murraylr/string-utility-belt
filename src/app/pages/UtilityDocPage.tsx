@@ -8,6 +8,7 @@ import { loadState, saveState } from '@/lib/persist'
 import { isPlainLeftClick, navigateToPath } from '@/lib/router'
 import ParamsEditor from '@/components/ParamsEditor'
 import AdSlot from '@/app/ads/AdSlot'
+import { track, trackUtilityAdd } from '@/app/analytics/analytics'
 import type { ParamSpec, Params, UtilityEnv, UtilityExample } from '@/types/utility'
 import UtilityGuide from './UtilityGuide'
 import { useUtilityGuide } from './useUtilityGuide'
@@ -151,12 +152,14 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
     setPlayInput(ex.input)
     setPlayParams({ ...defaultParams(meta), ...ex.params })
     inputRef.current?.focus()
+    track('doc_example_try', { utility_id: id })
   }
 
   const useInPipeline = () => {
     const current = loadState()
     const step = { id: stepId(), utilityId: id, enabled: true, params: { ...playParams } }
     saveState({ ...current, steps: [...current.steps, step] })
+    trackUtilityAdd(id, 'doc_page')
     setSaved(true)
     openTool()
   }
@@ -237,7 +240,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
         </div>
       </section>
 
-      <UtilityGuide name={meta.name} state={guide} />
+      <UtilityGuide name={meta.name} state={guide} onOpen={() => track('guide_open', { utility_id: id })} />
 
       {/* between content sections, clear of the playground's controls */}
       <AdSlot placement="doc-page" />

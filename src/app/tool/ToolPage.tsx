@@ -6,6 +6,7 @@ import { isUtilityStep } from '@/core/steps'
 import type { ValueType } from '@/types/utility'
 import { registry } from '@/app/registry'
 import { useTool } from '@/app/ToolContext'
+import { trackUtilityAdd } from '@/app/analytics/analytics'
 import ToolCommandBridge from '@/app/commands/ToolCommandBridge'
 import EngineControls from '@/app/engine/EngineControls'
 import MagicButton from '@/app/magic/MagicButton'
@@ -37,6 +38,7 @@ export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
   const togglePicker = () => (showPicker ? closePicker() : openPicker())
   const addStep = (id: string) => {
     dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)) })
+    trackUtilityAdd(id, 'picker')
     closePicker()
   }
 

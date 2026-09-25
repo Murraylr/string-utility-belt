@@ -8,6 +8,7 @@ import { defaultParams } from '@/core/params'
 import { registry } from '@/app/registry'
 import { useTool } from '@/app/ToolContext'
 import { pushRecent } from '@/app/favorites'
+import { trackUtilityAdd } from '@/app/analytics/analytics'
 import { attachToolBridge, TOOL_COMMAND_EVENT, type ToolCommandDetail } from './commands'
 
 export default function ToolCommandBridge(): null {
@@ -52,6 +53,7 @@ export default function ToolCommandBridge(): null {
           const meta = typeof detail.utilityId === 'string' ? registry.get(detail.utilityId) : undefined
           if (!meta) break
           dispatch({ type: 'ADD_STEP', utilityId: meta.id, params: defaultParams(meta) })
+          trackUtilityAdd(meta.id, 'command_palette')
           pushRecent(meta.id)
           break
         }

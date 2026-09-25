@@ -101,6 +101,18 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
   `#/embed`). Manual units are `<AdSlot placement>` (`src/app/ads/`), inert until `AD_SLOTS` has unit ids.
   Content pages only; never in the pipeline editor or embed; never remount a unit without a navigation.
 
+### Analytics (`src/app/analytics/analytics.ts`)
+- GA4 property `G-EFVMEMB86E`. index.html only loads gtag.js and sets Consent Mode defaults; `initAnalytics()`
+  (from `main.tsx`) configures the tag. Never add a `gtag('config')` to index.html: it would report
+  `location.href`, and share links carry the user's input in the fragment.
+- Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
+  params only) — GA's own history-based page views are off in the stream settings.
+- Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
+  counts and size buckets only, never input/output text. New params need a custom dimension in GA
+  (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
+- Silent off `stringutilitybelt.com` (dev, E2E, CI, previews). `?analytics=off|on|debug` switches a browser.
+  Automation (webdriver/headless/bot UA) is reported as `visitor_type: automated`, page views only.
+
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).
 - Library under `sub:library`; preferences under `sub:pref:<name>` (theme, locale, favorites, recents).

@@ -6,6 +6,7 @@ import { pickDownload, triggerDownload } from '@/app/io/download'
 import OutputView from '@/app/io/OutputView'
 import StatsBar from '@/app/io/StatsBar'
 import { useTool } from '@/app/ToolContext'
+import { sizeBucket, trackPipelineEvent, valueSize } from '@/app/analytics/analytics'
 
 /** The pipeline's final value: highlighted/hex view, stats, copy-as and a smart-named download. */
 export default function OutputPanel() {
@@ -17,8 +18,14 @@ export default function OutputPanel() {
   const text = useMemo(() => (isBytes(value) ? '' : formatForDisplay(value)), [value])
 
   const download = useCallback(() => {
-    triggerDownload(pickDownload(value, state.name))
-  }, [value, state.name])
+    const plan = pickDownload(value, state.name)
+    triggerDownload(plan)
+    trackPipelineEvent('output_download', state.steps, { file_type: plan.mime, output_size: sizeBucket(valueSize(value)) })
+  }, [value, state.name, state.steps])
+
+  const onCopy = useCallback((format: string) => {
+    trackPipelineEvent('output_copy', state.steps, { format, output_size: sizeBucket(valueSize(value)) })
+  }, [value, state.steps])
 
   return (
     <div className="grid gap-2">
@@ -36,7 +43,7 @@ export default function OutputPanel() {
       </div>
       <StatsBar value={value} />
       <div className="flex gap-2 mt-2">
-        <CopyAsMenu value={value} label="copy" />
+        <CopyAsMenu value={value} label="copy" onCopy={onCopy} />
         <button type="button" className="btn" onClick={download}>
           <Download size={16} /> download
         </button>

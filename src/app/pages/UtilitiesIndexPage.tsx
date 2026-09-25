@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { registry } from '@/app/registry'
 import AdSlot from '@/app/ads/AdSlot'
+import { useSearchTracking } from '@/app/analytics/analytics'
 import { utilityPath } from './related'
 import { displayName, utilitiesDescription, utilitiesTitle } from './seo'
 import { useDocumentMeta } from './useDocumentMeta'
@@ -44,6 +45,7 @@ export default function UtilitiesIndexPage() {
   }, [q])
 
   const total = useMemo(() => groups.reduce((n, g) => n + g.items.length, 0), [groups])
+  useSearchTracking('utility_index', q, total)
 
   return (
     <div className="max-w-5xl mx-auto grid gap-6">

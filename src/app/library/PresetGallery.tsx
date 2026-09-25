@@ -2,6 +2,7 @@ import React from 'react'
 import { Sparkles } from 'lucide-react'
 import { cloneWithNewIds, countSteps } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
+import { track } from '@/app/analytics/analytics'
 import Dialog from './Dialog'
 import { PRESETS } from './presets'
 
@@ -21,6 +22,7 @@ export default function PresetGallery({ onClose, returnFocus }: PresetGalleryPro
     // fresh ids so trying the same preset twice never collides with the first copy
     dispatch({ type: 'LOAD', steps: preset.steps.map(cloneWithNewIds), name: preset.name })
     setInput(preset.sampleInput)
+    track('pipeline_load', { method: 'preset', preset_id: preset.id, step_count: countSteps(preset.steps) })
     onClose()
   }
 

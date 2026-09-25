@@ -5,6 +5,7 @@ import { defaultParams } from '@/core/params'
 import { registry } from '@/app/registry'
 import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useTool } from '@/app/ToolContext'
+import { trackUtilityAdd } from '@/app/analytics/analytics'
 
 export interface PipelineToolbarProps {
   onTogglePicker: () => void
@@ -24,7 +25,11 @@ export default function PipelineToolbar({ onTogglePicker, pickerOpen, children }
         <span className="inline-flex items-center gap-2"><Plus size={16} /> Add utility</span>
       </button>
       <span className="muted" aria-hidden="true">or quick add</span>
-      <Select value="" aria-label="quick add a utility" onChange={id => id && dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)) })}
+      <Select value="" aria-label="quick add a utility" onChange={id => {
+        if (!id) return
+        dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)) })
+        trackUtilityAdd(id, 'quick_add')
+      }}
         options={options as any} className="max-w-sm" />
       <button type="button" className="btn" onClick={() => dispatch({ type: 'ADD_BRANCH' })} title="fork the pipeline into parallel lanes">
         <GitFork size={16} /> branch

@@ -4,6 +4,7 @@ import { asText, isBytes } from '@/core/coerce'
 import type { Value } from '@/types/utility'
 import { useTool } from '@/app/ToolContext'
 import { usePref } from '@/app/prefs'
+import { trackInput } from '@/app/analytics/analytics'
 import { decodeUtf8Lossy } from '@/app/io/bytes'
 import FetchUrlDialog, { type FetchedMeta } from '@/app/io/FetchUrlDialog'
 import { readFileAsInput, type FileInputMeta } from '@/app/io/fileInput'
@@ -102,7 +103,7 @@ export default function InputPanel() {
   }, [autoRunOnPaste, liveRun, run])
 
   /** Reads a file into the input; only the most recently requested file may land. */
-  const applyFile = useCallback(async (file: File): Promise<boolean> => {
+  const applyFile = useCallback(async (file: File, via: 'file' | 'drop' | 'paste_file'): Promise<boolean> => {
     const seq = ++readSeq.current
     try {
       const result = await readFileAsInput(file)
@@ -110,6 +111,7 @@ export default function InputPanel() {
       setSource({ value: result.value, data: result.meta })
       setError(null)
       setInput(result.value)
+      trackInput(via, result.value)
       return true
     } catch {
       if (seq === readSeq.current) setError(`could not read ${file.name || 'that file'}`)
@@ -120,7 +122,7 @@ export default function InputPanel() {
   const onFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (file) applyFile(file)
+    if (file) applyFile(file, 'file')
   }
 
   const onDrop = (e: React.DragEvent) => {
@@ -129,7 +131,7 @@ export default function InputPanel() {
     const file = e.dataTransfer?.files?.[0]
     if (!file) return // plain text drops: let the textarea insert the text natively
     e.preventDefault()
-    applyFile(file)
+    applyFile(file, 'drop')
   }
   const onDragOver = (e: React.DragEvent) => {
     if (!fromPanel(e) || !hasFiles(e.dataTransfer)) return
@@ -148,7 +150,7 @@ export default function InputPanel() {
     const file = pastedFile(e.clipboardData)
     if (!file) return
     e.preventDefault()
-    applyFile(file).then(ok => { if (ok) runIfManual() })
+    applyFile(file, 'paste_file').then(ok => { if (ok) runIfManual() })
   }
   const onTextPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (pastedFile(e.clipboardData)) return // a file: the panel handler takes it
@@ -163,6 +165,7 @@ export default function InputPanel() {
     setCaret(e.target.selectionStart ?? e.target.value.length)
     if (textPasteFlag.current) {
       textPasteFlag.current = false
+      trackInput('paste', e.target.value)
       runIfManual()
     }
   }
@@ -178,6 +181,7 @@ export default function InputPanel() {
       setInput(pasted)
       setCaret(pasted.length)
       setError(null)
+      trackInput('clipboard_button', pasted)
       runIfManual()
     } catch (err) {
       setError((err as Error)?.name === 'NotAllowedError'
@@ -236,11 +240,13 @@ export default function InputPanel() {
     setInput(restored)
     setCaret(restored.length)
     setError(null)
+    trackInput('history', restored)
   }
 
   const onFetched = (value: Value, meta: FetchedMeta) => {
     setInput(value)
     setError(null)
+    trackInput('url', value)
     setSource(isBytes(value)
       ? { value, data: { name: nameFromUrl(meta.url), size: value.length, mime: meta.contentType ?? '' } }
       : null)

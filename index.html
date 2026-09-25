@@ -31,7 +31,9 @@
   <script>
     // Google tag (gtag.js). Consent Mode v2: in the EEA, the UK and Switzerland nothing is
     // stored until the visitor answers the consent message (Google's CMP, configured in
-    // AdSense → Privacy & messaging), which updates these defaults.
+    // AdSense → Privacy & messaging), which updates these defaults. Google Analytics is
+    // configured by the app (src/app/analytics/analytics.ts), never here: a plain
+    // gtag('config') would report location.href, and share links carry input in the hash.
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('consent', 'default', {
@@ -44,7 +46,6 @@
       wait_for_update: 500
     });
     gtag('js', new Date());
-    gtag('config', 'G-EFVMEMB86E');
 
     // No ads inside a frame: the #/embed widget runs on other people's sites, and every
     // other page refuses to render framed. Must run before adsbygoogle.js loads.

@@ -17,6 +17,7 @@ import Select from '@/components/Select'
 import { registry } from '@/app/registry'
 import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useTool } from '@/app/ToolContext'
+import { trackUtilityAdd } from '@/app/analytics/analytics'
 import BranchCard from './steps/BranchCard'
 import MacroCard from './steps/MacroCard'
 import { SelectionProvider } from './steps/SelectionContext'
@@ -225,6 +226,10 @@ function AddInto({ parentId, lane }: { parentId: string; lane?: number }) {
   return (
     <Select className="text-sm w-full" value="" options={options as any}
       aria-label={lane !== undefined ? `add a step to lane ${lane + 1}` : 'add a step to this macro'}
-      onChange={id => id && dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)), target: { parentId, lane } })} />
+      onChange={id => {
+        if (!id) return
+        dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)), target: { parentId, lane } })
+        trackUtilityAdd(id, 'nested')
+      }} />
   )
 }

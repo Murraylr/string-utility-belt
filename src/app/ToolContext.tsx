@@ -15,6 +15,7 @@ import { usePref } from './prefs'
 import { canRunInWorker } from '@/core/registry'
 import { isBranchStep, isMacroStep } from '@/core/steps'
 import { registry } from './registry'
+import { usePipelineRunTracking } from './analytics/analytics'
 
 export interface ToolApi {
   state: PipelineState
@@ -103,6 +104,7 @@ export function ToolProvider({ children, initialSteps, initialName, initialInput
   const runHeld = useMemo(() => holding && !workerOnly(state.steps), [holding, state.steps])
 
   const runner = useRunner(input, state.steps, { previews: showPreviews, live: liveRun && !runHeld })
+  usePipelineRunTracking(state.steps, input, runner.result, runner.ms)
   const runnerRunNow = runner.runNow
   const run = useMemo(() => ({
     ...runner,

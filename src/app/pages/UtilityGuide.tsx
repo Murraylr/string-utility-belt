@@ -9,7 +9,7 @@ import type { GuideState } from './useUtilityGuide'
  * text in the DOM while collapsed, so search engines index it (and it works
  * without JS in the pre-rendered snapshot, which mirrors this markup).
  */
-export default function UtilityGuide({ name, state }: { name: string; state: GuideState }) {
+export default function UtilityGuide({ name, state, onOpen }: { name: string; state: GuideState; onOpen?: () => void }) {
   if (state.status === 'missing') return null
 
   // guide links point at crawlable `/util/<id>/` paths; clicks stay in the app
@@ -22,7 +22,8 @@ export default function UtilityGuide({ name, state }: { name: string; state: Gui
   }
 
   return (
-    <details className="card group" aria-busy={state.status === 'loading' ? true : undefined}>
+    <details className="card group" aria-busy={state.status === 'loading' ? true : undefined}
+      onToggle={e => { if (e.currentTarget.open) onOpen?.() }}>
       <summary className="p-6 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
         <span className="grid gap-0.5 flex-1 min-w-0">
           <h2 className="text-lg font-medium">{guideHeading(name)}</h2>

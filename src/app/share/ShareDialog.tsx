@@ -7,6 +7,7 @@ import { useTool } from '@/app/ToolContext'
 import Dialog from '@/app/library/Dialog'
 import Tabs from '@/app/library/Tabs'
 import { downloadText, safeFilename } from '@/app/library/download'
+import { trackPipelineEvent } from '@/app/analytics/analytics'
 
 /** Above this many characters a share link risks being truncated by chat apps, some browsers and old proxies. */
 const WARN_LENGTH = 8000
@@ -60,16 +61,25 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
     statusTimer.current = setTimeout(() => setCopyStatus('idle'), 1500)
   }, [])
 
-  const copy = useCallback(async (text: string) => {
+  // what was shared, never the link itself (it carries the input when included)
+  const trackShare = (event: string) =>
+    trackPipelineEvent(event, state.steps, { include_input: sharedInput !== undefined ? 'yes' : 'no' })
+
+  const copy = useCallback(async (text: string, onCopied: () => void) => {
     try {
       await navigator.clipboard.writeText(text)
       announce('copied')
     } catch {
       announce('error')
+      return
     }
+    onCopied()
   }, [announce])
 
-  const downloadJson = () => downloadText(`${safeFilename(state.name || '')}.json`, JSON.stringify(doc, null, 2))
+  const downloadJson = () => {
+    downloadText(`${safeFilename(state.name || '')}.json`, JSON.stringify(doc, null, 2))
+    trackShare('share_json_download')
+  }
 
   return (
     <Dialog title="Share pipeline" onClose={onClose} returnFocus={returnFocus}>
@@ -94,7 +104,7 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
               truncate very long URLs. Consider unchecking "include my input" or downloading the .json file instead.
             </div>
           )}
-          <button className="btn justify-self-start" onClick={() => copy(shareUrl)}>
+          <button className="btn justify-self-start" onClick={() => copy(shareUrl, () => trackShare('share_link_copy'))}>
             {copyStatus === 'copied' ? <Check size={16} /> : <ClipboardCopy size={16} />}
             {copyStatus === 'copied' ? 'copied' : copyStatus === 'error' ? 'copy failed' : 'copy link'}
           </button>
@@ -103,7 +113,7 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
         <div id="share-panel" role="tabpanel" aria-labelledby="share-tab-embed" className="grid gap-2">
           <label className="muted" htmlFor="embed-snippet">embed snippet</label>
           <textarea id="embed-snippet" readOnly className="field mono text-xs min-h-[96px]" value={embedSnippet} onFocus={e => e.currentTarget.select()} />
-          <button className="btn justify-self-start" onClick={() => copy(embedSnippet)}>
+          <button className="btn justify-self-start" onClick={() => copy(embedSnippet, () => trackShare('embed_code_copy'))}>
             {copyStatus === 'copied' ? <Check size={16} /> : <ClipboardCopy size={16} />}
             {copyStatus === 'copied' ? 'copied' : copyStatus === 'error' ? 'copy failed' : 'copy snippet'}
           </button>

@@ -1,5 +1,6 @@
 import React, { useSyncExternalStore } from 'react'
 import { canInstall, promptInstall, subscribeInstall } from './installPrompt'
+import { track } from '@/app/analytics/analytics'
 
 /**
  * "Install app" button, driven entirely by `beforeinstallprompt`: hidden
@@ -11,7 +12,9 @@ export default function InstallButton() {
   if (!available) return null
 
   return (
-    <button type="button" className="btn" onClick={() => { void promptInstall() }}>
+    <button type="button" className="btn" onClick={() => {
+      void promptInstall().then(outcome => track('pwa_install_prompt', { outcome }))
+    }}>
       Install app
     </button>
   )
