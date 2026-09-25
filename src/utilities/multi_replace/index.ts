@@ -198,7 +198,7 @@ const util: Utility = {
   name: 'multi replace',
   category: 'String Ops',
   description:
-    'Apply a list of find/replace rules at once, written one "find => replace" per line, optionally as regexes, case-insensitively, or in a single non-cascading pass.',
+    'Apply a list of find/replace pairs at once, optionally as regexes, case-insensitively, or in a single non-cascading pass.',
   accepts: 'string',
   produces: 'string',
   tags: ['find and replace', 'bulk replace', 'rules', 'mapping table', 'multiple replacements', 'substitution list'],

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react'
-import { mdToHtml, parseFrontmatter } from '@/lib/markdown'
+import { parseFrontmatter } from '@/lib/markdown'
 import { useT } from '@/app/i18n/useT'
+import AdSlot from '@/app/ads/AdSlot'
+import { renderMarkdownDocument } from '@/app/pages/guide'
+import { pageTitle } from '@/app/pages/seo'
 
 type BlogPostProps = { slug: string }
 type Frontmatter = Record<string, string>
 type Loaded =
   | { slug: string; status: 'ok'; meta: Frontmatter; html: string }
   | { slug: string; status: 'missing' }
-
-const SITE_NAME = 'String Utility Belt'
 
 /** Posts open with `# <title>`, which the header already renders — don't show it twice. */
 function dropRepeatedTitle(body: string, title: string | undefined): string {
@@ -42,9 +43,10 @@ export default function BlogPost({ slug }: BlogPostProps) {
       .then(txt => {
         if (!active) return
         const { frontmatter, body } = parseFrontmatter(txt) as { frontmatter: Frontmatter; body: string }
-        const html = withWrappableInlineCode(mdToHtml(dropRepeatedTitle(body, frontmatter.title)))
+        // lists and tables as in the guides; the same renderer pre-renders /blog/<slug>/
+        const html = withWrappableInlineCode(renderMarkdownDocument(dropRepeatedTitle(body, frontmatter.title)))
         setLoaded({ slug, status: 'ok', meta: frontmatter, html })
-        if (frontmatter.title) document.title = `${frontmatter.title} — ${SITE_NAME}`
+        if (frontmatter.title) document.title = pageTitle(frontmatter.title)
         if (frontmatter.description) {
           let metaDesc = document.querySelector('meta[name="description"]')
           if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.setAttribute('name', 'description'); document.head.appendChild(metaDesc) }
@@ -57,20 +59,27 @@ export default function BlogPost({ slug }: BlogPostProps) {
 
   const meta = post?.status === 'ok' ? post.meta : null
   return (
-    // w-full + min-w-0: `max-w-3xl mx-auto` alone leaves this grid item's width "auto",
-    // which — with a non-wrapping code block inside (.md-pre already scrolls itself) —
-    // grid sizes via shrink-to-fit up to the block's min-content width, blowing the article
-    // (and the page) wider than the viewport instead of clipping to the grid track
-    <article className="md w-full max-w-3xl mx-auto card p-6 min-w-0" aria-busy={post ? undefined : true}>
-      {!post && <p className="muted" role="status">{t('common.loading')}</p>}
-      {post?.status === 'missing' && <p className="text-danger" role="alert">{t('blog.notFound')}</p>}
-      {meta && (
-        <header className="mb-4">
-          {meta.title && <h1 className="!mt-0 text-2xl font-semibold">{meta.title}</h1>}
-          {meta.date && <p className="muted"><time dateTime={meta.date}>{formatDate(meta.date, { dateStyle: 'long' })}</time></p>}
-        </header>
-      )}
-      {post?.status === 'ok' && <div dangerouslySetInnerHTML={{ __html: post.html }} />}
-    </article>
+    <>
+      {/* w-full + min-w-0: `max-w-3xl mx-auto` alone leaves this grid item's width "auto",
+          which — with a non-wrapping code block inside (.md-pre already scrolls itself) —
+          grid sizes via shrink-to-fit up to the block's min-content width, blowing the article
+          (and the page) wider than the viewport instead of clipping to the grid track */}
+      <article className="md w-full max-w-3xl mx-auto card p-6 min-w-0" aria-busy={post ? undefined : true}>
+        {!post && <p className="muted" role="status">{t('common.loading')}</p>}
+        {post?.status === 'missing' && <p className="text-danger" role="alert">{t('blog.notFound')}</p>}
+        {meta && (
+          <header className="mb-4">
+            {meta.title && <h1 className="!mt-0 text-2xl font-semibold">{meta.title}</h1>}
+            {meta.date && <p className="muted"><time dateTime={meta.date}>{formatDate(meta.date, { dateStyle: 'long' })}</time></p>}
+            {meta.updated && meta.updated !== meta.date && (
+              <p className="muted text-sm">Updated <time dateTime={meta.updated}>{formatDate(meta.updated, { dateStyle: 'long' })}</time></p>
+            )}
+          </header>
+        )}
+        {post?.status === 'ok' && <div dangerouslySetInnerHTML={{ __html: post.html }} />}
+      </article>
+      {/* after the article, once it has loaded; keyed so each post gets its own ad request */}
+      {post?.status === 'ok' && <AdSlot key={slug} placement="blog-post" className="w-full max-w-3xl mx-auto" />}
+    </>
   )
 }

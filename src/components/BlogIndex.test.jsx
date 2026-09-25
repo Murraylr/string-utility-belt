@@ -27,7 +27,8 @@ describe('<BlogIndex />', () => {
     }))
     render(<BlogIndex />)
     const link = await screen.findByText('Post A')
-    expect(link).toHaveAttribute('href', '#/blog/a')
+    // the pre-rendered post's crawlable path, not a #/ route
+    expect(link).toHaveAttribute('href', '/blog/a/')
     const card = link.closest('li')
     expect(card.className).toContain('card')
     expect(card.className).not.toMatch(/bg-white|text-gray/)

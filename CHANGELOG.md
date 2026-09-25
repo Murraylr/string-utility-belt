@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Platform** — an installable PWA, a framework-free core package, a `subelt` CLI, an HTTP API and fetch
   proxy on the existing Cloudflare Worker, an MCP server exposing utilities/pipelines as agent tools, and
   browser + VS Code extensions, all built on the same utility core.
+- **Site pages & search** — About, Privacy policy and Contact pages linked from a new site footer; a
+  popular-tools section on the home page; utility pages open with their playground; links between pages are
+  real addresses (`/utilities/`, `/util/<id>/`, `/blog/<slug>/`) that search engines can follow; every
+  production build now ships the pre-rendered pages, sitemap and preview images; unknown addresses show a
+  "page not found" notice and stay out of search results; structured data for the site name, blog posts
+  and breadcrumbs.
 
 ### Fixed
 

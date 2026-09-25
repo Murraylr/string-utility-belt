@@ -5,7 +5,10 @@ import path from 'node:path'
 import type { UtilityMeta } from '../../src/core/registry'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
 import { buildSeo, SITE } from './build'
-import { resolveOutDir } from '../build-seo'
+import { parseGuide } from '../../src/app/pages/guide'
+import { POPULAR_UTILITY_IDS, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
+import { SITE_PAGES } from '../../src/lib/router'
+import { resolveOg, resolveOutDir } from '../build-seo'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -52,9 +55,57 @@ const xml = (source: string) => {
   return doc
 }
 const silent = () => {}
+/** The shipped `src/utilities/<id>/guide.md`, parsed, when there is one. */
+const shippedGuide = (id: string) => {
+  const file = path.join(ROOT, 'src', 'utilities', id, 'guide.md')
+  return existsSync(file) ? parseGuide(readFileSync(file, 'utf8')) : undefined
+}
 
 afterAll(() => {
   for (const dir of tmpDirs) rmSync(dir, { recursive: true, force: true })
+})
+
+describe('buildSeo utility guides', () => {
+  const GUIDE = [
+    '---', 'title: Trim Whitespace Online — Strip Spaces', 'description: Strip leading and trailing whitespace. $& $$', '---',
+    '## What it removes', '', `Everything ${XSS}`, '',
+    '```example', 'input:   padded', 'output: padded', '```',
+  ].join('\n')
+  const trim = MANIFEST.find(m => m.id === 'trim')!
+  const pad = MANIFEST.find(m => m.id === 'pad')!
+  let dist: string
+  const logs: string[] = []
+
+  beforeAll(async () => {
+    dist = fixtureDist()
+    await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: m => logs.push(m), manifest: [trim, pad], examples: {}, guides: { trim: GUIDE } })
+  }, 60000)
+
+  it("takes the page title and description from the guide's frontmatter", () => {
+    const doc = html(read(dist, 'util/trim/index.html'))
+    expect(doc.title).toBe('Trim Whitespace Online — Strip Spaces — String Utility Belt')
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Strip leading and trailing whitespace. $& $$')
+    expect(doc.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Trim Whitespace Online — Strip Spaces — String Utility Belt')
+    const ld = JSON.parse(doc.querySelector('script[type="application/ld+json"]')!.textContent!)
+    expect(ld.description).toBe('Strip leading and trailing whitespace. $& $$')
+  })
+
+  it('pre-renders the guide in a collapsed <details> under an h2, escaped', () => {
+    const source = read(dist, 'util/trim/index.html')
+    expect(source).not.toContain('<script>alert(1)</script>')
+    const details = html(source).querySelector('#root details')!
+    expect(details.hasAttribute('open')).toBe(false)
+    expect(details.querySelector('summary h2')?.textContent).toBe('How trim works')
+    expect(details.querySelector('h3')?.textContent).toBe('What it removes')
+    expect(details.querySelector('figure.guide-example')?.textContent).toContain('padded')
+  })
+
+  it('falls back to the utility name/description, with no guide section, when there is no guide', () => {
+    const doc = html(read(dist, 'util/pad/index.html'))
+    expect(doc.title).toBe(`${pad.name} — String Utility Belt`)
+    expect(doc.querySelector('#root details')).toBeNull()
+    expect(logs).toContain('[build-seo] warning: 1 of 2 utilities have no guide.md')
+  })
 })
 
 describe('buildSeo over a built dist/', () => {
@@ -67,14 +118,15 @@ describe('buildSeo over a built dist/', () => {
     result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: m => logs.push(m) })
   }, 60000)
 
-  it('writes one crawlable page per utility, plus the index, blog and changelog pages', () => {
+  it('writes one crawlable page per utility, plus the index, blog, changelog, site pages and 404', () => {
     const utilDirs = readdirSync(path.join(dist, 'util'))
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
     for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html',
-      'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html']) {
+      'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
+      'about/index.html', 'privacy/index.html', 'contact/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + 5)
+    expect(result.pages).toBe(MANIFEST.length + 9)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -93,17 +145,28 @@ describe('buildSeo over a built dist/', () => {
     const sample = MANIFEST.filter((_, i) => i % 25 === 0).concat(MANIFEST.filter(m => /tabs_spaces|trim|aes_decrypt/.test(m.id)))
     for (const meta of sample) {
       const doc = html(read(dist, `util/${meta.id}/index.html`))
-      expect(doc.title).toBe(`${meta.name} — String Utility Belt`)
+      const guide = shippedGuide(meta.id)
+      expect(doc.title).toBe(pageTitle(guide?.title ?? displayName(meta.name)))
+      expect(doc.title.length <= 60 || doc.title === guide?.title, meta.id).toBe(true)
       const canonicals = doc.querySelectorAll('link[rel="canonical"]')
       expect(canonicals, meta.id).toHaveLength(1)
       expect(canonicals[0].getAttribute('href')).toBe(`${SITE}/util/${meta.id}/`)
       expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/${meta.id}.png`)
-      expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(meta.description)
+      expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(guide?.description ?? meta.description)
+      expect(!!doc.querySelector('#root details'), meta.id).toBe(!!guide)
       const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
       expect(ld.map(d => d['@type'])).toEqual(['WebApplication', 'BreadcrumbList'])
-      expect(ld[0].name).toBe(meta.name)
-      expect(doc.querySelector('#root h1')?.textContent).toBe(meta.name)
+      expect(ld[0].name).toBe(displayName(meta.name))
+      expect(doc.querySelector('#root h1')?.textContent).toBe(displayName(meta.name))
     }
+  })
+
+  it('links related utilities by their crawlable /util/<id>/ paths', () => {
+    const doc = html(read(dist, 'util/url_decode/index.html'))
+    const related = [...doc.querySelectorAll('#root section')].find(s => s.querySelector('h2')?.textContent === 'Related utilities')!
+    const hrefs = [...related.querySelectorAll('a')].map(a => a.getAttribute('href'))
+    expect(hrefs[0]).toBe('/util/url_encode/')
+    expect(hrefs.every(h => /^\/util\/[a-z0-9_]+\/$/.test(h!))).toBe(true)
   })
 
   it('keeps the built app script so React mounts over the static content', () => {
@@ -111,14 +174,60 @@ describe('buildSeo over a built dist/', () => {
     expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
   })
 
-  it('injects RSS discovery, canonical and default OG into the home page without double-escaping', () => {
+  it('gives the home page its title, RSS discovery, canonical, default OG and site-name JSON-LD', () => {
     const doc = html(read(dist, 'index.html'))
+    expect(doc.title).toBe('Free Online String & Text Tools — String Utility Belt')
     expect(doc.querySelector('link[rel="alternate"][type="application/rss+xml"]')?.getAttribute('href')).toBe(`${SITE}/rss.xml`)
     expect(doc.querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
     expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/default.png`)
-    expect(doc.querySelector('meta[property="og:description"]')?.getAttribute('content'))
-      .toBe('String Pipeline Workshop & friends — chain elegant string utilities with previews.')
-    expect(doc.querySelector('#root')?.innerHTML).toBe('')
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(homeDescription(MANIFEST.length))
+    expect(doc.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe(homeDescription(MANIFEST.length))
+    const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
+    expect(ld.map(d => d['@type'])).toEqual(['WebSite', 'WebApplication'])
+    expect(ld[0]).toMatchObject({ name: 'String Utility Belt', url: `${SITE}/` })
+  })
+
+  it('pre-renders the home page with crawlable links to the popular utilities', () => {
+    const doc = html(read(dist, 'index.html'))
+    expect(doc.querySelector('#root h1')?.textContent).toBe('String Utility Belt')
+    const hrefs = [...doc.querySelectorAll('#root main a')].map(a => a.getAttribute('href'))
+    expect(hrefs).toEqual(expect.arrayContaining(POPULAR_UTILITY_IDS.map(id => `/util/${id}/`)))
+    expect(hrefs).toContain('/utilities/')
+  })
+
+  it('surrounds every pre-rendered page with the site nav and footer links', () => {
+    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'privacy/index.html', '404.html']) {
+      const doc = html(read(dist, rel))
+      const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
+      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/'])
+      expect([...doc.querySelectorAll('#root header nav a')].map(a => a.getAttribute('href')), rel)
+        .toEqual(['/', '/utilities/', '/blog/', '/changelog/'])
+    }
+  })
+
+  it('pre-renders the about, privacy and contact pages from their markdown', () => {
+    for (const slug of SITE_PAGES) {
+      const doc = html(read(dist, `${slug}/index.html`))
+      expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href'), slug).toBe(`${SITE}/${slug}/`)
+      expect(doc.querySelectorAll('#root h1'), slug).toHaveLength(1)
+      expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')?.length, slug).toBeGreaterThanOrEqual(80)
+      const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
+      expect(ld.map(d => d['@type'])[1], slug).toBe('BreadcrumbList')
+    }
+    expect(html(read(dist, 'privacy/index.html')).title).toBe('Privacy Policy — String Utility Belt')
+    // AdSense's required disclosures, with the opt-out link
+    const privacy = html(read(dist, 'privacy/index.html')).querySelector('#root main')!
+    expect(privacy.textContent).toContain('Third-party vendors, including Google, use cookies to serve ads')
+    expect([...privacy.querySelectorAll('a')].map(a => a.getAttribute('href'))).toContain('https://adssettings.google.com/')
+  })
+
+  it('writes a 404 page that is kept out of the index and links back into the site', () => {
+    const doc = html(read(dist, '404.html'))
+    expect(doc.title).toBe('Page not found — String Utility Belt')
+    expect(doc.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
+    expect(doc.querySelector('link[rel="canonical"]')).toBeNull()
+    expect(doc.querySelector('#root h1')?.textContent).toBe('Page not found')
+    expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
   })
 
   it('skips manifest posts that have no markdown or an unsafe slug — no dead URLs anywhere', () => {
@@ -138,6 +247,15 @@ describe('buildSeo over a built dist/', () => {
     expect(doc.querySelector('meta[property="og:type"]')?.getAttribute('content')).toBe('article')
   })
 
+  it('marks blog posts up as BlogPosting with their dates', () => {
+    const doc = html(read(dist, 'blog/md5-insecure-but-useful/index.html'))
+    const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
+    expect(ld.map(d => d['@type'])).toEqual(['BlogPosting', 'BreadcrumbList'])
+    expect(ld[0]).toMatchObject({ datePublished: '2025-09-18', url: `${SITE}/blog/md5-insecure-but-useful/` })
+    expect(ld[0].headline).toBe(doc.querySelector('#root h1')?.textContent)
+    expect(doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')).toBe('2025-09-18')
+  })
+
   it('pre-renders the changelog with real lists', () => {
     const doc = html(read(dist, 'changelog/index.html'))
     expect([...doc.querySelectorAll('#root h1')].map(h => h.textContent)).toEqual(['Changelog'])
@@ -152,7 +270,9 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`,
     ]))
+    expect(locs).not.toContain(`${SITE}/404.html`)
     expect(locs.filter(l => l?.startsWith(`${SITE}/util/`))).toHaveLength(MANIFEST.length)
     const lastmods = [...doc.getElementsByTagName('lastmod')].map(l => l.textContent)
     expect(lastmods.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && d !== '1970-01-01')).toBe(true)
@@ -165,10 +285,10 @@ describe('buildSeo over a built dist/', () => {
       pubDate: item.getElementsByTagName('pubDate')[0]?.textContent,
       guid: item.getElementsByTagName('guid')[0].textContent,
     }))
+    const shipped: Array<{ title: string }> = JSON.parse(read(ROOT, 'public/blog/_manifest.json'))
     expect(items.map(i => i.title)).toEqual([
       'Unreleased changes',
-      'How to Encode and Decode Base64 Strings Online (Fast & Free)',
-      'Why MD5 Is Insecure (But Still Useful for Developers)',
+      ...shipped.map(p => p.title),
       'Release 1.3.0',
     ])
     expect(items[0].pubDate).toBe(NOW.toUTCString().replace(/\d\d:\d\d:\d\d/, '00:00:00'))
@@ -239,6 +359,17 @@ describe('buildSeo edge cases', () => {
     expect(result.ogImages).toBe(3)
     expect(result.missingGlyphs).toEqual([])
   }, 60000)
+})
+
+describe('resolveOg', () => {
+  it('renders OG images by default, never with --no-og, and with --og-if-workers-ci only in Workers Builds', () => {
+    expect(resolveOg([], {})).toBe(true)
+    expect(resolveOg(['--', '--no-og'], { WORKERS_CI: '1' })).toBe(false)
+    // npm run build's postbuild: fast locally and in GitHub CI, complete in the production deploy
+    expect(resolveOg(['--', '--og-if-workers-ci'], {})).toBe(false)
+    expect(resolveOg(['--', '--og-if-workers-ci'], { CI: 'true' })).toBe(false)
+    expect(resolveOg(['--', '--og-if-workers-ci'], { WORKERS_CI: '1' })).toBe(true)
+  })
 })
 
 describe('resolveOutDir', () => {

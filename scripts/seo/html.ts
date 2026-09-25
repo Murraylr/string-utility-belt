@@ -112,12 +112,45 @@ export function setRootContent(html: string, contentHtml: string): string {
   return html.replace(mount, () => `<div id="root">${contentHtml}</div>`)
 }
 
+const ROOT_START = '<!-- prerender:start -->'
+const ROOT_END = '<!-- prerender:end -->'
+
+/**
+ * `setRootContent` fenced in marker comments, for the one page a later run reads
+ * back as its template (`index.html`): `stripRootContent` empties it again.
+ * React's first render clears the comments along with the content.
+ */
+export function setRemovableRootContent(html: string, contentHtml: string): string {
+  return setRootContent(html, `${ROOT_START}${contentHtml}${ROOT_END}`)
+}
+
+/** Restores the empty mount point `setRemovableRootContent` filled. */
+export function stripRootContent(html: string): string {
+  const open = `<div id="root">${ROOT_START}`
+  const close = `${ROOT_END}</div>`
+  const start = html.indexOf(open)
+  const end = start === -1 ? -1 : html.indexOf(close, start)
+  if (end === -1) return html
+  return `${html.slice(0, start)}<div id="root"></div>${html.slice(end + close.length)}`
+}
+
+const META_ROBOTS = /<meta\s+name=["']robots["'][^>]*>/i
+
+/** Sets (or inserts) `<meta name="robots">`. */
+export function setRobots(html: string, content: string): string {
+  const tag = `<meta name="robots" content="${escapeAttr(content)}">`
+  return META_ROBOTS.test(html) ? html.replace(META_ROBOTS, () => tag) : injectHead(html, tag)
+}
+
 export interface SeoMetaOptions {
   title: string
   description: string
   canonical: string
   ogImage: string
   ogType?: 'website' | 'article'
+  /** An article's `article:published_time` / `article:modified_time` (ISO dates). */
+  published?: string
+  modified?: string
 }
 
 /** Canonical link + Open Graph + Twitter card tags, all escaped. */
@@ -130,6 +163,7 @@ export function seoMetaTags(opts: SeoMetaOptions): string {
     `<link rel="canonical" href="${canonical}">`,
     `<meta property="og:type" content="${opts.ogType ?? 'website'}">`,
     `<meta property="og:site_name" content="String Utility Belt">`,
+    `<meta property="og:locale" content="en_US">`,
     `<meta property="og:title" content="${title}">`,
     `<meta property="og:description" content="${description}">`,
     `<meta property="og:url" content="${canonical}">`,
@@ -140,6 +174,8 @@ export function seoMetaTags(opts: SeoMetaOptions): string {
     `<meta name="twitter:title" content="${title}">`,
     `<meta name="twitter:description" content="${description}">`,
     `<meta name="twitter:image" content="${image}">`,
+    ...(opts.published ? [`<meta property="article:published_time" content="${escapeAttr(opts.published)}">`] : []),
+    ...(opts.modified ? [`<meta property="article:modified_time" content="${escapeAttr(opts.modified)}">`] : []),
   ].join('\n')
 }
 

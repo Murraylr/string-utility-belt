@@ -62,7 +62,7 @@ export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="cta" onClick={openPicker}>Add utility</button>
-            <a className="btn" href="#/blog">Read blog</a>
+            <a className="btn" href="/blog/">Read blog</a>
           </div>
         </div>
         <IOSection />

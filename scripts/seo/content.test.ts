@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import type { UtilityMeta } from '../../src/core/registry'
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent,
-  renderBlogPostContent, renderChangelogContent,
+  renderBlogPostContent, renderChangelogContent, renderSiteChrome, renderHomeContent,
+  renderNotFoundContent, renderSitePageContent,
 } from './content'
 
 const XSS = '"><script>alert(1)</script>'
@@ -26,6 +27,26 @@ function meta(overrides: Partial<UtilityMeta> = {}): UtilityMeta {
 }
 
 describe('renderUtilityContent', () => {
+  it('puts a supplied guide in a collapsed <details> with an h2 summary, after the header', () => {
+    const html = renderUtilityContent(meta({ name: 'base64_encode' }), [], { guideHtml: '<h3 class="md-h2">What is Base64?</h3>' })
+    expect(html).toContain('<details>')
+    expect(html).not.toContain('<details open')
+    expect(html).toContain('<summary><h2>How base64 encode works</h2>')
+    expect(html).toContain('<h3 class="md-h2">What is Base64?</h3>')
+    expect(html.indexOf('</header>')).toBeLessThan(html.indexOf('<details>'))
+  })
+
+  it('omits the guide section without a guide', () => {
+    expect(renderUtilityContent(meta(), [])).not.toContain('<details')
+  })
+
+  it('links related utilities by crawlable path, escaping their text', () => {
+    const html = renderUtilityContent(meta(), [], { related: [meta({ id: 'trim_lines', name: XSS, description: XSS })] })
+    expect(html).toContain('<h2>Related utilities</h2>')
+    expect(html).toContain('<a href="/util/trim_lines/">')
+    expect(html).not.toContain('<script>alert(1)</script>')
+  })
+
   it('includes name, category and description', () => {
     const html = renderUtilityContent(meta(), [])
     expect(html).toContain('trim')
@@ -114,5 +135,60 @@ describe('renderChangelogContent', () => {
     const html = renderChangelogContent('<h1 class="md-h1">Changelog</h1><p class="md-p">x</p>')
     expect(html).toContain('<h1 class="md-h1">Changelog</h1>')
     expect(html.match(/<h1/g)).toHaveLength(1)
+  })
+})
+
+describe('renderSiteChrome', () => {
+  it("wraps a page's content in the app's header nav and footer, as plain crawlable links", () => {
+    const html = renderSiteChrome('<article>body</article>', 2026)
+    expect(html).toContain('<main><article>body</article></main>')
+    for (const href of ['/', '/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
+      expect(html).toContain(`<a href="${href}">`)
+    }
+    expect(html).toContain('© 2026 String Utility Belt')
+    expect(html.indexOf('<header>')).toBeLessThan(html.indexOf('<main>'))
+    expect(html.indexOf('</main>')).toBeLessThan(html.indexOf('<footer>'))
+  })
+})
+
+describe('renderHomeContent', () => {
+  it('links the popular utilities that exist, and the full list', () => {
+    const html = renderHomeContent([meta({ id: 'base64_encode', name: 'base64_encode' }), meta({ id: 'trim' })])
+    expect(html).toContain('<a href="/util/base64_encode/">base64 encode</a>')
+    // trim is not a popular utility; missing popular ids are skipped
+    expect(html).not.toContain('/util/trim/')
+    expect(html).not.toContain('/util/url_encode/')
+    expect(html).toContain('<a href="/utilities/">Browse all 2 utilities</a>')
+  })
+
+  it('escapes utility text', () => {
+    expect(renderHomeContent([meta({ id: 'base64_encode', name: XSS, description: XSS })])).not.toContain('<script>alert(1)</script>')
+  })
+})
+
+describe('renderNotFoundContent / renderSitePageContent', () => {
+  it('gives a 404 its own heading and ways back into the site', () => {
+    const html = renderNotFoundContent()
+    expect(html).toContain('<h1>Page not found</h1>')
+    expect(html).toContain('<a href="/utilities/">')
+  })
+
+  it('wraps a site page body as is', () => {
+    expect(renderSitePageContent('<h1 class="md-h1">About</h1>')).toBe('<article><h1 class="md-h1">About</h1></article>')
+  })
+})
+
+describe('renderUtilityContent names', () => {
+  it('spaces out a legacy id-as-name in the heading and related links', () => {
+    const html = renderUtilityContent(meta({ id: 'base64_encode', name: 'base64_encode' }), [], { related: [meta({ id: 'base64_decode', name: 'base64_decode' })] })
+    expect(html).toContain('<h1>base64 encode</h1>')
+    expect(html).toContain('<a href="/util/base64_decode/">base64 decode</a>')
+  })
+})
+
+describe('renderBlogPostContent dates', () => {
+  it('shows an update date only when it differs from the publish date', () => {
+    expect(renderBlogPostContent({ title: 't', date: '2025-09-18', updated: '2026-09-25' }, '')).toContain('Updated <time datetime="2026-09-25">')
+    expect(renderBlogPostContent({ title: 't', date: '2025-09-18', updated: '2025-09-18' }, '')).not.toContain('Updated')
   })
 })

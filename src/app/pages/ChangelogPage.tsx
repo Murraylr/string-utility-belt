@@ -1,10 +1,9 @@
-import { useEffect } from 'react'
 import { renderChangelogHtml } from './changelogHtml'
+import { CHANGELOG_DESCRIPTION, CHANGELOG_TITLE } from './seo'
+import { useDocumentMeta } from './useDocumentMeta'
 // Vite `?raw` import: the changelog ships as plain markdown text, rendered
 // through the same escaping-safe renderer as blog posts.
 import changelogMd from '../../../CHANGELOG.md?raw'
-
-const SITE_NAME = 'String Utility Belt'
 
 // static text: rendered on first view (not at app startup — this module is
 // imported eagerly by the shell), then reused on every later render
@@ -14,11 +13,7 @@ const getChangelogHtml = () => (changelogHtml ??= renderChangelogHtml(changelogM
 /** Renders CHANGELOG.md as the app's release history page. */
 export default function ChangelogPage() {
   // restored on leaving: pages that set no title of their own would otherwise keep this one
-  useEffect(() => {
-    const prev = document.title
-    document.title = `Changelog — ${SITE_NAME}`
-    return () => { document.title = prev }
-  }, [])
+  useDocumentMeta(CHANGELOG_TITLE, CHANGELOG_DESCRIPTION)
 
   return (
     // w-full + min-w-0: `max-w-3xl mx-auto` alone leaves this grid item's width "auto",

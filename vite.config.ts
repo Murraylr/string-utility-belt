@@ -3,9 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import { utilityManifest } from './scripts/vite-plugin-utilities'
 import { pwaServiceWorker } from './scripts/vite-plugin-pwa'
+import { utilityGuides } from './scripts/vite-plugin-guides'
 
 export default defineConfig(async ({ mode }) => {
-  const plugins = [react(), utilityManifest(), pwaServiceWorker()];
+  const plugins = [react(), utilityManifest(), utilityGuides(), pwaServiceWorker()];
 
   // Enable CF plugin only when not testing, and only when you actually want Workers
   const enableCloudflare =

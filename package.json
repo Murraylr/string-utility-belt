@@ -9,6 +9,7 @@
         "dev": "vite",
         "prebuild": "npm run gen",
         "build": "vite build",
+        "postbuild": "vite-node scripts/build-seo.ts -- --og-if-workers-ci",
         "lint": "eslint .",
         "typecheck": "tsc --noEmit",
         "preview": "npm run build && vite preview",
@@ -26,6 +27,7 @@
         "bench": "vitest bench --run",
         "test:e2e": "playwright test",
         "build:seo:fast": "vite-node scripts/build-seo.ts -- --no-og",
+        "check:guides": "vite-node scripts/check-guides.ts",
         "build:site": "npm run build && npm run build:seo"
     },
     "dependencies": {

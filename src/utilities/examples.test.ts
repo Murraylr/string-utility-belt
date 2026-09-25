@@ -10,22 +10,7 @@ import { UTILITIES } from './index'
 import { formatForDisplay } from '../core/coerce'
 import { resolveParams, validateParams } from '../core/params'
 import { coerceInputFor, resolveAccepts } from '../core/coerce'
-import type { UtilityExample, Value } from '../types/utility'
-
-export function decodeExampleInput(ex: UtilityExample): Value {
-  switch (ex.inputEncoding ?? 'text') {
-    case 'hex': {
-      const clean = ex.input.replace(/\s+/g, '')
-      return Uint8Array.from(clean.match(/../g) ?? [], h => parseInt(h, 16))
-    }
-    case 'base64':
-      return Uint8Array.from(atob(ex.input), c => c.charCodeAt(0))
-    case 'json':
-      return JSON.parse(ex.input)
-    default:
-      return ex.input
-  }
-}
+import { decodeExampleInput } from './exampleInput'
 
 describe('utility examples', () => {
   for (const u of UTILITIES) {

@@ -1,0 +1,39 @@
+---
+title: About String Utility Belt — Free Browser-Based Text Tools
+description: String Utility Belt is a free collection of text and string tools that run in your browser. Use one tool at a time, or chain them into pipelines with live previews.
+---
+
+# About String Utility Belt
+
+String Utility Belt is a free collection of online text and string tools — Base64 and URL encoding, hashes and checksums, JSON, YAML, CSV and XML conversion, case changes, line sorting, regular expressions, generators and much more. You can use each tool on its own page, or chain several into a pipeline and watch every step's output update as you type.
+
+## Why it exists
+
+Most online converters do one thing per page, and many send your text to a server to do it. Real tasks usually take several steps — decode a JWT, pretty-print the JSON inside it, pull out one field — and the text is often something you would rather not upload. String Utility Belt was built around three ideas:
+
+- **Your data stays with you.** Every transformation runs in your browser, on your device. Your input is never uploaded to be processed; the [privacy policy](/privacy/) lists the two optional features that do contact our server.
+- **Steps chain together.** Build a pipeline from any number of steps, see a preview after each one, reorder or disable steps, and share the whole pipeline as a link.
+- **Every tool explains itself.** Each utility has its own page with a guide to how it works, worked examples, its options and a live playground.
+
+## What you can do with it
+
+- **Encode and decode:** Base64, Base32, Base58, hex, URL encoding, HTML entities, Unicode escapes, Morse code, Punycode and more.
+- **Hash and check:** MD5, SHA-1, SHA-2, SHA-3, BLAKE, HMAC, bcrypt, Argon2 and checksums.
+- **Convert data formats:** JSON, YAML, TOML, CSV, XML, INI, .env and query strings, plus formatting, minifying and validating.
+- **Work with text and lines:** change case, sort and deduplicate lines, find and replace, wrap, trim, pad, compare two texts and count words.
+- **Generate:** UUIDs, ULIDs, passwords, random strings, lorem ipsum, fake data and QR codes.
+- **Developer helpers:** JWT decoding, regex explanations, cron descriptions, cURL conversion, timestamps, number bases and colours.
+
+Browse [every utility by category](/utilities/), or start building a pipeline on the [home page](/).
+
+## Accurate by design
+
+Every worked example on this site — on each utility's page and in its guide — is run automatically as a test against the real code, so the output you see is what the tool actually produces.
+
+## How the site is funded
+
+String Utility Belt is free to use and is supported by advertising through Google AdSense. Ads are shown alongside the content and never change how the tools work or what they do with your data.
+
+## Get in touch
+
+Found a bug, want a new utility, or have a question? See the [contact page](/contact/).

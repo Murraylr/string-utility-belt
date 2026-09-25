@@ -130,6 +130,31 @@
   .md .md-pre { @apply overflow-x-auto p-3 rounded-lg bg-surface-2 border my-4; }
   .md .md-pre .md-code-block { @apply font-mono text-sm bg-transparent border-0 p-0; }
   .md .md-link { @apply text-primary-600 dark:text-primary-100 underline underline-offset-2 hover:no-underline; }
+  .md .md-ul { @apply list-disc pl-6 mb-4 grid gap-1 marker:text-muted; }
+  .md .md-ol { @apply list-decimal pl-6 mb-4 grid gap-1 marker:text-muted; }
+  /* grid items: without min-w-0 a long inline code span pushes the item past the track */
+  .md .md-li { @apply min-w-0; }
+  .md .md-table-wrap { @apply overflow-x-auto my-4; }
+  .md .md-table { @apply w-full text-sm border-collapse; }
+  .md .md-table th { @apply text-left font-semibold border-b px-2 py-1; }
+  .md .md-table td { @apply border-t px-2 py-1 align-top; }
+
+  /* Utility guides (src/app/pages/guide.ts): sections sit one level below the
+     guide's own <h2>, and inside a card rather than a full-width article. */
+  .guide .md-h2 { @apply text-lg mt-6 mb-2; }
+  .guide .md-h3 { @apply text-base mt-4 mb-2; }
+  .guide > :first-child { @apply mt-0; }
+  .guide .md-code { @apply break-words; }
+  .guide .guide-example { @apply my-4 rounded-xl border p-3 grid gap-1; }
+  .guide .guide-example .md-pre { @apply my-0 whitespace-pre-wrap; overflow-wrap: anywhere; }
+  .guide .guide-example-title { @apply font-medium text-sm; }
+  .guide .guide-example-params { @apply text-xs text-muted; }
+  .guide .guide-example-label { @apply text-xs text-muted mt-1; }
+
+  /* AdSlot (src/app/ads): the unit's height is reserved before the ad arrives, so it
+     cannot shift the content below it; an unfilled unit collapses instead of leaving a gap */
+  .ad-slot { @apply block min-h-[280px]; }
+  .ad-slot:has(ins[data-ad-status="unfilled"]) { @apply hidden; }
 }
 
 /* fancy background gradient helpers */

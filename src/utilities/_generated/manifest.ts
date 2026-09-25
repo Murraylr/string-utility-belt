@@ -3473,7 +3473,7 @@ export const MANIFEST: UtilityMeta[] = [
     "id": "get_bytes",
     "name": "Get bytes",
     "category": "Encoding",
-    "description": "Convert a string into bytes. Modes: utf8 (default), hex, base64.",
+    "description": "Convert a string into bytes. Modes: utf8 (default), hex, unicode (UTF-16BE).",
     "accepts": [
       "string"
     ],
@@ -3739,7 +3739,7 @@ export const MANIFEST: UtilityMeta[] = [
     "id": "hex_dump",
     "name": "hex dump",
     "category": "Analysis",
-    "description": "Render bytes as an xxd-style hex dump with a configurable row width, optional offsets, ASCII gutter and upper-case hex.",
+    "description": "Render bytes as a hexdump -C style dump with a configurable row width, optional offsets, ASCII gutter and upper-case hex.",
     "accepts": [
       "string",
       "bytes"
@@ -6072,7 +6072,7 @@ export const MANIFEST: UtilityMeta[] = [
     "id": "multi_replace",
     "name": "multi replace",
     "category": "String Ops",
-    "description": "Apply a list of find/replace rules at once, written one \"find => replace\" per line, optionally as regexes, case-insensitively, or in a single non-cascading pass.",
+    "description": "Apply a list of find/replace pairs at once, optionally as regexes, case-insensitively, or in a single non-cascading pass.",
     "accepts": "string",
     "produces": "string",
     "params": {

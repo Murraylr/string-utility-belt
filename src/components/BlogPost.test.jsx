@@ -117,3 +117,18 @@ describe('<BlogPost /> title', () => {
     expect(screen.getAllByRole('heading', { level: 1 }).map(h => h.textContent)).toEqual(['Same'])
   })
 })
+
+describe('<BlogPost /> revisions and markup', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('shows the update date of a revised post, and keeps lists and h2 sections as written', async () => {
+    const text = '---\ntitle: Revised\ndate: 2025-09-18\nupdated: 2026-09-25\n---\n\n## Part\n\n- one\n- two\n'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve(text) }))
+    render(<BlogPost slug="revised" />)
+    await screen.findByText('Revised')
+    expect(screen.getByText('September 25, 2026').closest('time')?.getAttribute('datetime')).toBe('2026-09-25')
+    expect(screen.getByRole('heading', { level: 2, name: 'Part' })).toBeTruthy()
+    expect(screen.getAllByRole('listitem').map(li => li.textContent)).toEqual(['one', 'two'])
+    expect(document.title).toBe('Revised — String Utility Belt')
+  })
+})

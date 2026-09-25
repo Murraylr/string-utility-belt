@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   escapeHtml, setTitle, setMetaDescription, extractMetaDescription, injectHead,
   setRootContent, jsonLdScript, seoMetaTags, rssLinkTag, injectSeoHead, stripSeoHead,
+  setRemovableRootContent, stripRootContent, setRobots,
 } from './html'
 
 const XSS = '"><script>alert(1)</script>'
@@ -173,5 +174,41 @@ describe('missing anchors fail loudly', () => {
 
   it('injectHead throws when the template has no </head>', () => {
     expect(() => injectHead('<html><body></body></html>', '<meta>')).toThrow(/head/)
+  })
+})
+
+describe('setRemovableRootContent / stripRootContent', () => {
+  it('round-trips: the next run gets back the empty mount point', () => {
+    const filled = setRemovableRootContent(TEMPLATE, '<main><div><p>home</p></div></main>')
+    expect(filled).toContain('<p>home</p>')
+    expect(stripRootContent(filled)).toBe(TEMPLATE)
+    // then fillable again, as setRootContent requires
+    expect(setRootContent(stripRootContent(filled), '<p>x</p>')).toContain('<div id="root"><p>x</p></div>')
+  })
+
+  it('leaves a page it did not fill alone', () => {
+    const plain = setRootContent(TEMPLATE, '<p>x</p>')
+    expect(stripRootContent(plain)).toBe(plain)
+    expect(stripRootContent(TEMPLATE)).toBe(TEMPLATE)
+  })
+})
+
+describe('setRobots', () => {
+  it('replaces an existing robots meta, or adds one', () => {
+    const withRobots = TEMPLATE.replace('</head>', '<meta name="robots" content="max-image-preview:large" />\n</head>')
+    const out = setRobots(withRobots, 'noindex')
+    expect(out.match(/name="robots"/g)).toHaveLength(1)
+    expect(out).toContain('<meta name="robots" content="noindex">')
+    expect(setRobots(TEMPLATE, 'noindex')).toContain('<meta name="robots" content="noindex">')
+  })
+})
+
+describe('seoMetaTags for articles', () => {
+  it('adds the published and modified times only when given', () => {
+    const base = { title: 't', description: 'd', canonical: 'https://x/', ogImage: 'https://x/i.png' }
+    expect(seoMetaTags(base)).not.toContain('article:')
+    const tags = seoMetaTags({ ...base, ogType: 'article', published: '2025-09-18', modified: '2026-09-25' })
+    expect(tags).toContain('<meta property="article:published_time" content="2025-09-18">')
+    expect(tags).toContain('<meta property="article:modified_time" content="2026-09-25">')
   })
 })

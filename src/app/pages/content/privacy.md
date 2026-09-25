@@ -1,0 +1,82 @@
+---
+title: Privacy Policy
+description: How String Utility Belt handles data: your text is processed in your browser, while Google Analytics and Google AdSense use cookies. Your choices explained.
+---
+
+# Privacy Policy
+
+*Last updated: 25 September 2026*
+
+String Utility Belt ("we", "us") runs the website at stringutilitybelt.com. This policy explains what information is collected when you use the site, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
+
+## The short version
+
+- The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except for the two features described under "Features that contact our server".
+- We use **Google Analytics** to understand how the site is used and **Google AdSense** to show the ads that keep it free. Both use cookies and similar technologies.
+- There are no user accounts, and we do not sell your personal information.
+
+## Data that stays on your device
+
+Every transformation runs locally in your browser. To keep your work between visits, the site stores your current pipeline (including the settings and any files you add to its steps), your saved pipelines library, a history of your recent inputs and your preferences (theme, language, favourite and recently used utilities) in your browser's own storage (localStorage, sessionStorage and IndexedDB). This data never leaves your device and we cannot see it. You can delete it at any time by clearing this site's data in your browser settings.
+
+If you install the site as an app, its service worker keeps a copy of the site's own files on your device so that it also works offline.
+
+## Share links
+
+When you create a share link, your pipeline — and your input, if you choose to include it — is compressed into the part of the link after the `#`. Browsers do not send that part of a web address to the server, so we never receive it. Anyone you give the link to can read what it contains, so only include input you are happy to share.
+
+## Features that contact our server
+
+- **Fetching a web address.** When you load input from a URL, your browser first tries to fetch it directly. If the other site does not allow that, the request goes through our fetch proxy, which retrieves the address on your behalf and passes the response back to you. The proxy sees the address you requested and your IP address; it does not keep the content it fetches.
+- **The public API.** Developers can send text to our HTTP API to run a pipeline. Requests are processed in memory and are not stored.
+
+To protect these two features from abuse, your IP address is used for rate limiting. It is held briefly in memory and is not written to storage. Requests to them may also appear in short-lived operational logs (for example the requested address, the time and the response status), which we use only to keep the service running and secure, and which are deleted automatically.
+
+The site is hosted by Cloudflare, which processes every request to deliver the site and protect it from attacks. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+## Cookies, analytics and advertising
+
+### Google Analytics
+
+We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. We only look at this information in aggregate. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
+
+### Google AdSense
+
+The site shows ads served by Google AdSense.
+
+- Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this website or other websites.
+- Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and/or other sites on the internet.
+- You may opt out of personalised advertising by visiting [Google's Ads Settings](https://adssettings.google.com/). You can also opt out of some third-party vendors' use of cookies for personalised advertising at [aboutads.info](https://www.aboutads.info/choices/) or, in Europe, [youronlinechoices.eu](https://www.youronlinechoices.eu/).
+- Google may let other certified ad technology providers serve or measure ads through AdSense. Visitors in the European Economic Area, the UK and Switzerland can see and control these providers in the consent message described below.
+
+If you opt out, you will still see ads, but they will not be personalised to you.
+
+Learn more in [how Google uses information from sites that use its services](https://policies.google.com/technologies/partner-sites) and in [Google's privacy policy](https://policies.google.com/privacy).
+
+### Google Fonts
+
+The site's typefaces are loaded from Google Fonts. To download them, your browser sends your IP address and browser details to Google. Google Fonts does not set cookies.
+
+## Your choices and consent
+
+- **In the European Economic Area, the UK and Switzerland**, we ask for your consent before cookies are used for analytics or personalised advertising, through a consent message provided by Google, a Google-certified consent management platform. You can change or withdraw your consent at any time with the "Privacy and cookie settings" link on the site.
+- **Everywhere**, you can block or delete cookies in your browser settings, and turn off personalised ads using the links above. The tools keep working without cookies.
+- **In some US states**, you may have the right to opt out of the "sale" or "sharing" of personal information for targeted advertising. We do not sell personal information for money; to stop your information being used for personalised ads, use Google's Ads Settings as described above.
+
+## Your rights
+
+Depending on where you live — for example under the GDPR or the UK GDPR — you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data collected by Google, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
+
+We process data on the basis of your consent (analytics and advertising cookies, where consent is required) and of our legitimate interest in running a secure and reliable service (rate limiting and operational logs).
+
+## Children
+
+The site is not directed at children under 13, and we do not knowingly collect personal information from them.
+
+## Changes to this policy
+
+We may update this policy when the site or the law changes. The date at the top shows when it was last revised.
+
+## Contact
+
+Email [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com), or see the [contact page](/contact/).

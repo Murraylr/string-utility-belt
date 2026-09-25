@@ -5,8 +5,15 @@ import { defaultParams } from '@/core/params'
 import { formatForDisplay } from '@/core/coerce'
 import { stepId } from '@/core/steps'
 import { loadState, saveState } from '@/lib/persist'
+import { isPlainLeftClick, navigateToPath } from '@/lib/router'
 import ParamsEditor from '@/components/ParamsEditor'
+import AdSlot from '@/app/ads/AdSlot'
 import type { ParamSpec, Params, UtilityEnv, UtilityExample } from '@/types/utility'
+import UtilityGuide from './UtilityGuide'
+import { useUtilityGuide } from './useUtilityGuide'
+import { useDocumentMeta } from './useDocumentMeta'
+import { relatedUtilities, utilityPath } from './related'
+import { SITE_NAME, displayName, pageTitle } from './seo'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
   dom: 'Needs the DOM (DOMParser/document) — browser main thread only.',
@@ -15,10 +22,8 @@ const ENV_NOTES: Record<UtilityEnv, string> = {
   main: 'Must run on the browser main thread.',
 }
 
-const SITE = 'String Utility Belt'
 const PLAYGROUND_DEBOUNCE_MS = 300
 const PLAYGROUND_STEP_ID = '__doc_playground__'
-const RELATED_LIMIT = 6
 
 function boundsOrOptions(spec: ParamSpec): string {
   switch (spec.kind) {
@@ -80,37 +85,14 @@ export default function UtilityDocPage({ id }: { id: string }) {
 }
 
 function UnknownUtility({ id }: { id: string }) {
-  useDocumentMeta(`Unknown utility — ${SITE}`, `There is no ${SITE} utility called "${id}".`)
+  useDocumentMeta(pageTitle('Unknown utility'), `There is no ${SITE_NAME} utility called "${id}".`)
   return (
     <div className="max-w-3xl mx-auto card p-6 grid gap-3">
       <h1 className="text-xl font-semibold">Unknown utility "{id}"</h1>
       <p className="muted">There's no utility with that id. Search the full list instead.</p>
-      <a className="btn w-fit" href="#/utilities">Browse all utilities</a>
+      <a className="btn w-fit" href="/utilities/">Browse all utilities</a>
     </div>
   )
-}
-
-/** Sets the tab title and meta description while mounted; restores the previous ones after. */
-function useDocumentMeta(title: string, description: string) {
-  useEffect(() => {
-    const prevTitle = document.title
-    document.title = title
-    let tag = document.querySelector<HTMLMetaElement>('meta[name="description"]')
-    const created = !tag
-    if (!tag) {
-      tag = document.createElement('meta')
-      tag.setAttribute('name', 'description')
-      document.head.appendChild(tag)
-    }
-    const prevContent = tag.getAttribute('content')
-    tag.setAttribute('content', description)
-    return () => {
-      document.title = prevTitle
-      if (created) tag.remove()
-      else if (prevContent === null) tag.removeAttribute('content')
-      else tag.setAttribute('content', prevContent)
-    }
-  }, [title, description])
 }
 
 function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
@@ -122,8 +104,14 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
   const [saved, setSaved] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const playgroundId = useId()
+  const guide = useUtilityGuide(id)
+  const seo = guide.status === 'ok' ? guide.guide : undefined
 
-  useDocumentMeta(`${meta.name} — ${SITE}`, meta.description || `${meta.name} — a ${SITE} utility.`)
+  // the guide's SEO title/description match the pre-rendered page's <head>
+  useDocumentMeta(
+    pageTitle(seo?.title ?? displayName(meta.name)),
+    seo?.description || meta.description || `${displayName(meta.name)} — a ${SITE_NAME} utility.`,
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -157,17 +145,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
     return () => { ctrl.abort(); clearTimeout(timer) }
   }, [id, playInput, playParams])
 
-  // shared tags say more than a shared category (url_decode ↔ url_encode live in different ones)
-  const related = useMemo(() => {
-    const tags = new Set(meta.tags)
-    return registry.list()
-      .filter(m => m.id !== id)
-      .map(m => ({ m, shared: m.tags.filter(t => tags.has(t)).length, same: m.category === meta.category }))
-      .filter(r => r.shared > 0 || r.same)
-      .sort((a, b) => b.shared - a.shared || Number(b.same) - Number(a.same) || a.m.name.localeCompare(b.m.name))
-      .slice(0, RELATED_LIMIT)
-      .map(r => r.m)
-  }, [id, meta])
+  const related = useMemo(() => relatedUtilities(meta, registry.list()), [meta])
 
   const tryExample = (ex: UtilityExample) => {
     setPlayInput(ex.input)
@@ -192,7 +170,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
     <article className="w-full max-w-3xl mx-auto grid gap-6 min-w-0">
       <header className="card p-6 grid gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold">{meta.name}</h1>
+          <h1 className="text-2xl font-semibold">{displayName(meta.name)}</h1>
           <span className="chip">{meta.category}</span>
         </div>
         <p className="muted">{meta.description}</p>
@@ -213,6 +191,56 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
           </div>
         )}
       </header>
+
+      {/* first after the header: most visitors arrive from a search for the tool itself */}
+      <section className="card p-6 grid gap-3" aria-labelledby={`${playgroundId}-h`}>
+        <h2 id={`${playgroundId}-h`} className="text-lg font-medium">Try it</h2>
+        <label className="grid gap-1 text-sm">
+          <span className="muted">input</span>
+          <textarea
+            ref={inputRef}
+            className="field font-mono min-h-24"
+            value={playInput}
+            onChange={e => setPlayInput(e.target.value)}
+            placeholder="type or paste something to try…"
+            aria-label="playground input"
+          />
+        </label>
+        {paramEntries.length > 0 && (
+          <ParamsEditor
+            spec={meta.params}
+            params={playParams}
+            onChange={setPlayParams}
+            idPrefix={`doc-playground-${id}`}
+            sampleInput={playInput}
+          />
+        )}
+        {playError && (
+          <div role="status" aria-label="playground error" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl p-2">
+            {playError}
+          </div>
+        )}
+        <div className="grid gap-1 text-sm">
+          <span className="muted" aria-hidden>output</span>
+          {/* a named live region: aria-label alone is not allowed on a plain <pre> */}
+          <pre
+            role="status"
+            aria-label="playground output"
+            className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-3 min-h-12 max-h-96 overflow-auto"
+          >
+            {playOutput}
+          </pre>
+        </div>
+        <div className="flex items-center gap-3">
+          <button type="button" className="cta w-fit" onClick={useInPipeline}>Use in pipeline</button>
+          {saved && <span role="status" className="text-sm text-success">Added — opening the tool…</span>}
+        </div>
+      </section>
+
+      <UtilityGuide name={meta.name} state={guide} />
+
+      {/* between content sections, clear of the playground's controls */}
+      <AdSlot placement="doc-page" />
 
       {paramEntries.length > 0 && (
         <section className="card p-6 grid gap-3">
@@ -283,57 +311,24 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
         </section>
       )}
 
-      <section className="card p-6 grid gap-3" aria-labelledby={`${playgroundId}-h`}>
-        <h2 id={`${playgroundId}-h`} className="text-lg font-medium">Try it</h2>
-        <label className="grid gap-1 text-sm">
-          <span className="muted">input</span>
-          <textarea
-            ref={inputRef}
-            className="field font-mono min-h-24"
-            value={playInput}
-            onChange={e => setPlayInput(e.target.value)}
-            placeholder="type or paste something to try…"
-            aria-label="playground input"
-          />
-        </label>
-        {paramEntries.length > 0 && (
-          <ParamsEditor
-            spec={meta.params}
-            params={playParams}
-            onChange={setPlayParams}
-            idPrefix={`doc-playground-${id}`}
-            sampleInput={playInput}
-          />
-        )}
-        {playError && (
-          <div role="status" aria-label="playground error" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl p-2">
-            {playError}
-          </div>
-        )}
-        <div className="grid gap-1 text-sm">
-          <span className="muted" aria-hidden>output</span>
-          {/* a named live region: aria-label alone is not allowed on a plain <pre> */}
-          <pre
-            role="status"
-            aria-label="playground output"
-            className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-3 min-h-12 max-h-96 overflow-auto"
-          >
-            {playOutput}
-          </pre>
-        </div>
-        <div className="flex items-center gap-3">
-          <button type="button" className="cta w-fit" onClick={useInPipeline}>Use in pipeline</button>
-          {saved && <span role="status" className="text-sm text-success">Added — opening the tool…</span>}
-        </div>
-      </section>
-
       {related.length > 0 && (
         <section className="card p-6 grid gap-2">
           <h2 className="text-lg font-medium">Related utilities</h2>
           <ul className="grid sm:grid-cols-2 gap-2">
             {related.map(m => (
               <li key={m.id}>
-                <a className="hover:underline" href={`#/util/${encodeURIComponent(m.id)}`}>{m.name}</a>
+                {/* a crawlable path href (search engines drop #/ fragments); clicks stay in the app */}
+                <a
+                  className="hover:underline"
+                  href={utilityPath(m.id)}
+                  onClick={e => {
+                    if (!isPlainLeftClick(e, e.currentTarget)) return
+                    e.preventDefault()
+                    navigateToPath(utilityPath(m.id))
+                  }}
+                >
+                  {displayName(m.name)}
+                </a>
                 <span className="text-xs text-muted ml-2">{m.category}</span>
               </li>
             ))}

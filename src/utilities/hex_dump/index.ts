@@ -50,7 +50,7 @@ const util: Utility = {
   name: 'hex dump',
   category: 'Analysis',
   description:
-    'Render bytes as an xxd-style hex dump with a configurable row width, optional offsets, ASCII gutter and upper-case hex.',
+    'Render bytes as a hexdump -C style dump with a configurable row width, optional offsets, ASCII gutter and upper-case hex.',
   accepts: ['string', 'bytes'],
   produces: 'string',
   tags: ['hexdump', 'binary viewer', 'byte viewer', 'ascii gutter', 'hex editor'],

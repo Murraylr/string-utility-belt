@@ -103,7 +103,7 @@ export interface ServiceWorkerOptions {
  * Pure: the full `sw.js` source for a given precache list. Routing:
  * cross-origin untouched; `/api/*` network-only; navigations network-first
  * falling back to the cached app shell offline; `/assets/*` and the other
- * precached files cache-first; `/blog/*` stale-while-revalidate. Activate
+ * precached files cache-first; `/blog/*` and `/guides/*` stale-while-revalidate. Activate
  * carries still-shipped `/assets/*` files over from, then deletes, every other
  * `subelt-precache-*` cache; `skipWaiting` fires only on a `SKIP_WAITING`
  * message; a `{type: 'CACHE_URLS', urls}` message caches `/assets/*` files the
@@ -258,7 +258,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.indexOf('/blog/') === 0) {
+  if (url.pathname.indexOf('/blog/') === 0 || url.pathname.indexOf('/guides/') === 0) {
     event.respondWith(staleWhileRevalidate(event, request));
   }
 });

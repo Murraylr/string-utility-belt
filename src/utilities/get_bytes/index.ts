@@ -32,7 +32,7 @@ function fromUnicode(s: string): Uint8Array {
 const util: Utility = {
   id: "get_bytes",
   name: "Get bytes",
-  description: "Convert a string into bytes. Modes: utf8 (default), hex, base64.",
+  description: "Convert a string into bytes. Modes: utf8 (default), hex, unicode (UTF-16BE).",
   category: "Encoding",
   accepts: ["string"],
   produces: "bytes",

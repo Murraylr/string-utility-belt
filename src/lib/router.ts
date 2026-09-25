@@ -11,9 +11,18 @@ export type RouteName =
   /** One utility's documentation: `#/util/<id>`, or the pre-rendered `/util/<id>` */
   | 'utility'
   | 'changelog'
+  /** A site page (about, privacy policy, contact): `/<slug>/` or `#/<slug>` */
+  | 'page'
   | 'notFound'
 
 export type Route = { name: RouteName; params: Record<string, string> }
+
+/** Slugs of the site pages, each pre-rendered at `/<slug>/` from `src/app/pages/content/<slug>.md`. */
+export const SITE_PAGES = ['about', 'privacy', 'contact'] as const
+export type SitePageSlug = (typeof SITE_PAGES)[number]
+
+const isSitePage = (slug: string | undefined): slug is SitePageSlug =>
+  (SITE_PAGES as readonly string[]).includes(slug ?? '')
 
 const NOT_FOUND: Route = { name: 'notFound', params: {} }
 
@@ -39,6 +48,8 @@ const blogRoute = (segments: string[]): Route => {
   return ok ? { name: 'blogPost', params: { slug: segments.join('/') } } : NOT_FOUND
 }
 
+const isHomePath = (pathname: string) => pathname === '/' || pathname === '/index.html'
+
 /** Pre-rendered static pages live at real paths; the hash takes precedence when present. */
 function routeFromPath(pathname: string): Route | null {
   const parts = pathname.split('/').filter(Boolean)
@@ -47,6 +58,7 @@ function routeFromPath(pathname: string): Route | null {
   if (parts[0] === 'blog' && parts.length === 1) return { name: 'blogIndex', params: {} }
   if (parts[0] === 'blog' && parts[1]) return blogRoute(parts.slice(1))
   if (parts[0] === 'changelog') return { name: 'changelog', params: {} }
+  if (parts.length === 1 && isSitePage(parts[0])) return { name: 'page', params: { slug: parts[0] } }
   return null
 }
 
@@ -54,9 +66,12 @@ export function getRoute(): Route {
   // tolerant parsing: strip ?query, ignore empty segments and a missing
   // leading slash so hand-typed hashes like '#blog' or '#/blog/' still route
   // Only a page with NO hash routes by its real path (pre-rendered /util/<id>/ pages).
-  // An explicit '#/' is the tool, even on a pre-rendered path — that is where the
-  // header's "Tool" link points.
-  if (!location.hash) return routeFromPath(location.pathname || '/') ?? { name: 'home', params: {} }
+  // An explicit '#/' is the tool, even on a pre-rendered path. Any other path is not
+  // a page: the host answered it with its fallback (index.html, or 404.html).
+  if (!location.hash) {
+    const pathname = location.pathname || '/'
+    return routeFromPath(pathname) ?? (isHomePath(pathname) ? { name: 'home', params: {} } : NOT_FOUND)
+  }
   const hash = location.hash.replace(/^#/, '').trim()
   if (!hash || hash === '/') return { name: 'home', params: {} }
   const [path] = hash.split('?')
@@ -74,6 +89,7 @@ export function getRoute(): Route {
   if (head === 'utilities' && parts.length === 1) return { name: 'utilities', params: {} }
   if (head === 'util' && parts[1]) return utilityRoute(parts[1])
   if (head === 'changelog') return { name: 'changelog', params: {} }
+  if (parts.length === 1 && isSitePage(head)) return { name: 'page', params: { slug: head } }
   return { name: 'notFound', params: {} }
 }
 
@@ -82,6 +98,37 @@ export function onRouteChange(cb: (r: Route) => void) {
   window.addEventListener('hashchange', h)
   window.addEventListener('popstate', h)
   return () => { window.removeEventListener('hashchange', h); window.removeEventListener('popstate', h) }
+}
+
+/**
+ * In-app navigation to a real path — a pre-rendered page such as `/util/<id>/` —
+ * without a reload. Links keep crawlable path hrefs (search engines drop `#/…`
+ * fragments) while clicks still stay inside the running app.
+ */
+export function navigateToPath(path: string) {
+  // a link to the page already showing re-renders it without stacking a history entry
+  if (path !== location.pathname || location.hash) history.pushState(history.state, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+  window.scrollTo?.(0, 0)
+}
+
+// a post only by its pre-rendered `/blog/<slug>/` (slash required): `/blog/<slug>.md`
+// and `/blog/_manifest.json` are files beside the posts, not pages
+const IN_APP_PATH = new RegExp(
+  `^/(?:|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)$`,
+)
+
+/**
+ * Paths `navigateToPath` may take over from a link click: the home page and
+ * every pre-rendered page — what the router resolves from a real path.
+ */
+export const isInAppPath = (href: string): boolean => IN_APP_PATH.test(href)
+
+/** A click the browser would handle as "follow here": no modifier keys, main button, no target. */
+export function isPlainLeftClick(e: { button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; defaultPrevented: boolean }, anchor?: Element | null): boolean {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return false
+  const target = anchor?.getAttribute('target')
+  return !target || target === '_self'
 }
 
 /** Replace the hash without adding a history entry (e.g. after importing a share link). */

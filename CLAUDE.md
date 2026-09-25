@@ -19,8 +19,10 @@ npm test             # vitest run (all tests, incl. packages/ and worker/)
 npm run typecheck    # tsc --noEmit (CI also checks tsconfig.worker.json and each packages/*/tsconfig.json)
 npm run lint         # ESLint
 npm run gen          # regenerate src/utilities/_generated/* (predev/prebuild run it)
-npm run build        # production build; npm run check:bundle enforces bundle-budget.json
-npm run build:seo    # pre-rendered /util/<id>/ pages, sitemap, RSS, OG images (build:seo:fast skips OG)
+npm run build        # production build, then (postbuild) build:seo — OG images only in Workers Builds (WORKERS_CI);
+                     # npm run check:bundle enforces bundle-budget.json
+npm run build:seo    # pre-rendered pages (/util/<id>/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
+npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy
@@ -48,6 +50,17 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
   - `src/utilities/lazy.ts` (`registry`, re-exported from `src/app/registry.ts`) — **the web app**. Metadata up front, code per chunk.
   - `src/utilities/static-registry.ts` — CLI, MCP, Worker, extensions (no `import.meta.glob`).
   - `src/utilities/index.ts` (`UTILITIES`, `UTIL_MAP`, back-compat `runPipeline(source, steps, wantPreviews)`) — **tests and Node only**. Never import it from app code: it pulls every utility into the entry chunk.
+
+### Utility guides (SEO)
+- Every utility has `src/utilities/<id>/guide.md`: frontmatter `title` (the page `<title>`, ≤ 60 chars) and
+  `description` (meta description, 80–160), then `##` sections with ```` ```example ```` blocks. Format and
+  parser: `src/app/pages/guide.ts`. Rules: `src/utilities/guideCheck.ts`, enforced by `guides.test.ts`
+  (every example is executed like a golden example; links must be `/util/<id>/` paths to real utilities).
+- Not bundled as JS: `scripts/vite-plugin-guides.ts` serves them at `/guides/<id>.md` in dev and emits
+  them as assets in `vite build`. `UtilityDocPage` fetches its guide and shows it in a collapsed `<details>`
+  (`UtilityGuide.tsx`); `scripts/seo/build.ts` pre-renders the same markup plus the guide's title/description
+  into `/util/<id>/`. Related-utility and guide links use crawlable `/util/<id>/` hrefs with in-app
+  navigation (`navigateToPath` in `src/lib/router.ts`).
 - `Utility` (`src/types/utility.ts`): `id`, `name`, `category`, `description`, `accepts`, `produces`,
   `params`, `tags`, `aliases`, `examples`, `env` (`dom`/`wasm`/`eval`/`main` capability flags, detected
   by the generator), `streamable`, `apply(input, params, ctx?)` where `ctx` carries `signal` and `env`.
@@ -68,8 +81,24 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`.
-- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/blog/…`).
+  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
+- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/blog/…`, `/about/`…);
+  any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex` (the host's
+  SPA fallback answers it with index.html and a 200; `dist/404.html` is ready for `not_found_handling: "404-page"`).
+- **Links use real paths, never `#/` routes** (search engines drop fragments): `href="/utilities/"`,
+  `utilityPath(id)`, `/blog/<slug>/`. `AppShell`'s `useInAppLinks` turns plain clicks on any `isInAppPath`
+  href into `navigateToPath` (pushState, no reload). Hash routes still resolve for old links and commands.
+
+### SEO & ads
+- `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
+  pre-render use — titles go through `pageTitle()` (site name only when it fits 60 chars). Change a
+  title/description there, never in only one place: Google indexes the rendered page.
+- Site pages: `src/app/pages/content/{about,privacy,contact}.md` (frontmatter title/description, guide
+  markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by `build.ts`. The privacy
+  policy carries AdSense's required disclosures — keep it accurate when data flows change.
+- Ads: the AdSense loader and Consent Mode defaults live in `index.html` (ads are paused inside frames and
+  `#/embed`). Manual units are `<AdSlot placement>` (`src/app/ads/`), inert until `AD_SLOTS` has unit ids.
+  Content pages only; never in the pipeline editor or embed; never remount a unit without a navigation.
 
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).
@@ -97,7 +126,10 @@ so a static import would bloat every non-browser host and the per-utility chunks
 
 1. Create `src/utilities/<id>/index.ts` exporting a default `Utility` object
 2. Create `src/utilities/<id>/index.test.ts` with tests
-3. Run `npm run gen` (dev/build do it automatically; the test suite fails if you forget)
+3. Create `src/utilities/<id>/guide.md` — the SEO guide for its doc page (see "Utility guides" above;
+   `src/utilities/base64_encode/guide.md` and `src/utilities/pad/guide.md` are the references), then
+   `npm run check:guides -- <id>`
+4. Run `npm run gen` (dev/build do it automatically; the test suite fails if you forget)
 
 Registry tests require: a description, ≥3 lowercase `tags`, ≥1 `example` whose params pass validation
 (examples run as golden tests and render on the doc page), and a `max` on amplifying number params.

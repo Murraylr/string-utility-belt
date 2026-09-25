@@ -2,8 +2,38 @@ import type { UtilityMeta } from '../../src/core/registry'
 import type { ParamSpec, UtilityExample } from '../../src/types/utility'
 import { escapeHtml } from './html'
 import type { BlogPostMeta } from './blog'
+import { guideHeading } from '../../src/app/pages/guide'
+import { utilityPath } from '../../src/app/pages/related'
+import { POPULAR_UTILITY_IDS, SITE_NAME, displayName } from '../../src/app/pages/seo'
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
+
+const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`
+
+// the app's header nav and footer (src/app/AppShell.tsx), as plain links
+const NAV_LINKS = [['/', 'Tool'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
+const FOOTER_LINKS = [
+  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'],
+  ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'],
+] as const
+
+/**
+ * A pre-rendered page's content inside the site's header nav and footer, so the
+ * static HTML links every page to the main sections and the about, privacy and
+ * contact pages even before (or without) React replacing it.
+ */
+export function renderSiteChrome(contentHtml: string, year: number): string {
+  return `
+  <header>
+    <a href="/">${escapeHtml(SITE_NAME)}</a>
+    <nav aria-label="main">${NAV_LINKS.map(link).join(' ')}</nav>
+  </header>
+  <main>${contentHtml}</main>
+  <footer>
+    <nav aria-label="site">${FOOTER_LINKS.map(link).join(' ')}</nav>
+    <p>© ${year} ${escapeHtml(SITE_NAME)}</p>
+  </footer>`
+}
 
 function boundsOrOptions(spec: ParamSpec): string {
   switch (spec.kind) {
@@ -31,12 +61,27 @@ const defaultOf = (spec: ParamSpec): string => {
   return typeof d === 'string' ? d || '(empty)' : JSON.stringify(d)
 }
 
+export interface UtilityContentExtras {
+  /** The rendered guide body (`renderGuideHtml`), shown in a collapsed `<details>`. */
+  guideHtml?: string
+  /** Utilities to link to, by their crawlable `/util/<id>/` paths. */
+  related?: UtilityMeta[]
+}
+
 /**
- * Static, crawlable snapshot of a utility doc page: name, description, params
- * and examples as plain semantic HTML. React replaces this element on mount
- * (`UtilityDocPage`); search engines and link previews see this markup.
+ * Static, crawlable snapshot of a utility doc page: name, description, guide,
+ * params, examples and related utilities as plain semantic HTML. React
+ * replaces this element on mount (`UtilityDocPage`); search engines and link
+ * previews see this markup.
  */
-export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample[]): string {
+export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample[], extras: UtilityContentExtras = {}): string {
+  // collapsed like the app's, but the text is in the document for crawlers (and no-JS readers)
+  const guideHtml = !extras.guideHtml ? '' : `
+    <details>
+      <summary><h2>${escapeHtml(guideHeading(meta.name))}</h2> Detailed guide with worked examples</summary>
+      <div>${extras.guideHtml}</div>
+    </details>`
+
   const params = Object.entries(meta.params)
   const paramsHtml = params.length === 0 ? '' : `
     <section>
@@ -70,16 +115,27 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
       </div>`).join('')}
     </section>`
 
+  const related = extras.related ?? []
+  const relatedHtml = related.length === 0 ? '' : `
+    <section>
+      <h2>Related utilities</h2>
+      <ul>
+        ${related.map(u => `<li><a href="${escapeHtml(utilityPath(u.id))}">${escapeHtml(displayName(u.name))}</a> — ${escapeHtml(u.description)}</li>`).join('')}
+      </ul>
+    </section>`
+
   return `
   <article>
     <header>
-      <h1>${escapeHtml(meta.name)}</h1>
+      <h1>${escapeHtml(displayName(meta.name))}</h1>
       <p>${escapeHtml(meta.category)}</p>
       <p>${escapeHtml(meta.description)}</p>
       <p>accepts <code>${escapeHtml(typesOf(meta.accepts))}</code> → produces <code>${escapeHtml(typesOf(meta.produces))}</code></p>
     </header>
+    ${guideHtml}
     ${paramsHtml}
     ${examplesHtml}
+    ${relatedHtml}
     <p><a href="/utilities/">Browse all utilities</a></p>
   </article>`
 }
@@ -93,16 +149,59 @@ export function renderUtilitiesIndexContent(manifest: UtilityMeta[]): string {
     <section>
       <h2>${escapeHtml(cat)} (${items.length})</h2>
       <ul>
-        ${items.map(u => `<li><a href="/util/${escapeHtml(u.id)}/">${escapeHtml(u.name)}</a> — ${escapeHtml(u.description)}</li>`).join('')}
+        ${items.map(u => `<li><a href="/util/${escapeHtml(u.id)}/">${escapeHtml(displayName(u.name))}</a> — ${escapeHtml(u.description)}</li>`).join('')}
       </ul>
     </section>`
   }).join('')
   return `
   <div>
     <h1>All utilities</h1>
-    <p>${manifest.length} utilities</p>
+    <p>${manifest.length} free text and string tools, grouped by category. Each one runs in your browser and has its own page with a guide, worked examples and a live playground.</p>
     ${groups}
   </div>`
+}
+
+/**
+ * Static snapshot of the home page: the tool's heading and the popular-tools
+ * list `HomeDirectory` renders below the editor (the editor itself needs JS).
+ */
+export function renderHomeContent(manifest: UtilityMeta[]): string {
+  const byId = new Map(manifest.map(m => [m.id, m]))
+  const popular = POPULAR_UTILITY_IDS.flatMap(id => byId.get(id) ?? [])
+  return `
+  <article>
+    <header>
+      <h1>${escapeHtml(SITE_NAME)}</h1>
+      <p>Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
+    </header>
+    <section>
+      <h2>Popular tools</h2>
+      <p>Every utility also has its own page with a guide, worked examples and a playground. They all run in your browser: nothing you paste is uploaded.</p>
+      <ul>
+        ${popular.map(u => `<li><a href="${escapeHtml(utilityPath(u.id))}">${escapeHtml(displayName(u.name))}</a> — ${escapeHtml(u.description)}</li>`).join('')}
+      </ul>
+      <p><a href="/utilities/">Browse all ${manifest.length} utilities</a></p>
+    </section>
+  </article>`
+}
+
+/** Static snapshot of `SitePage`: the page's rendered markdown (already escaped), `# heading` included. */
+export function renderSitePageContent(bodyHtml: string): string {
+  return `<article>${bodyHtml}</article>`
+}
+
+/** The body of `404.html`, served (with a 404 status) for any path that is not a page. */
+export function renderNotFoundContent(): string {
+  return `
+  <article>
+    <h1>Page not found</h1>
+    <p>There is no page at this address. It may have moved, or the link may be mistyped.</p>
+    <ul>
+      <li><a href="/">Open the pipeline tool</a></li>
+      <li><a href="/utilities/">Browse all utilities</a></li>
+      <li><a href="/blog/">Read the blog</a></li>
+    </ul>
+  </article>`
 }
 
 /** Static snapshot of `BlogIndex`. */
@@ -117,13 +216,17 @@ export function renderBlogIndexContent(posts: BlogPostMeta[]): string {
   return `<div><h1>Blog</h1><ul>${items}</ul></div>`
 }
 
-/** Static snapshot of `BlogPost`: pre-rendered markdown body (already HTML-escaped by `mdToHtml`). */
-export function renderBlogPostContent(meta: { title?: string; date?: string }, bodyHtml: string): string {
+/** Static snapshot of `BlogPost`: pre-rendered markdown body (already HTML-escaped by `renderMarkdownDocument`). */
+export function renderBlogPostContent(meta: { title?: string; date?: string; updated?: string }, bodyHtml: string): string {
+  const updated = meta.updated && meta.updated !== meta.date
+    ? `<p>Updated <time datetime="${escapeHtml(meta.updated)}">${escapeHtml(meta.updated)}</time></p>`
+    : ''
   return `
   <article>
     <header>
       ${meta.title ? `<h1>${escapeHtml(meta.title)}</h1>` : ''}
       ${meta.date ? `<time datetime="${escapeHtml(meta.date)}">${escapeHtml(meta.date)}</time>` : ''}
+      ${updated}
     </header>
     <div>${bodyHtml}</div>
   </article>`

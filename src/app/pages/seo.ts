@@ -1,0 +1,53 @@
+/**
+ * Search-facing strings shared by the app (`document.title` while a page is
+ * mounted) and the pre-render (`scripts/seo/build.ts`). Google indexes the
+ * rendered page, so a title set at runtime must match the static one.
+ */
+
+export const SITE_NAME = 'String Utility Belt'
+export const SITE_URL = 'https://stringutilitybelt.com'
+
+/** About what a search result shows of a title before truncating it. */
+export const TITLE_BUDGET = 60
+
+/**
+ * A page's `<title>`: its own title plus the site name, unless that would not
+ * fit in a search result. Google already shows the site name above each
+ * result, so a truncated suffix only costs the page its own keywords.
+ */
+export function pageTitle(title: string): string {
+  if (title.includes(SITE_NAME)) return title
+  const branded = `${title} — ${SITE_NAME}`
+  return branded.length <= TITLE_BUDGET ? branded : title
+}
+
+/** A utility name as a heading: legacy ids-as-names (`base64_encode`) read better spaced. */
+export const displayName = (name: string): string => name.replace(/_/g, ' ')
+
+export const HOME_TITLE = `Free Online String & Text Tools — ${SITE_NAME}`
+
+export const homeDescription = (count: number): string =>
+  `${count} free string and text tools that run in your browser: encode, decode, hash, format and convert — Base64, URL, JSON, SHA-256 and more.`
+
+export const utilitiesTitle = (count: number): string => pageTitle(`${count} Free Online Text & String Tools`)
+
+export const utilitiesDescription = (count: number): string =>
+  `Browse all ${count} free text and string tools by category: encoding, decoding, hashing, ciphers, compression, data formats, line tools and generators.`
+
+export const BLOG_TITLE = pageTitle('Blog')
+export const BLOG_DESCRIPTION = `Practical guides to encoding, hashing and text processing, with examples you can run in ${SITE_NAME}.`
+
+export const CHANGELOG_TITLE = pageTitle('Changelog')
+export const CHANGELOG_DESCRIPTION = `Release history for ${SITE_NAME}: new utilities, features and fixes.`
+
+/**
+ * Linked from the home page (static and rendered) — high-demand tools, so the
+ * site's most-linked page passes its weight to the pages people search for.
+ * Ids that no longer exist are skipped.
+ */
+export const POPULAR_UTILITY_IDS = [
+  'base64_encode', 'base64_decode', 'url_encode', 'url_decode', 'json_pretty', 'json_validate',
+  'jwt_decode', 'md5', 'hash', 'uuid', 'case', 'text_diff',
+  'timestamp_convert', 'json_to_yaml', 'csv_to_json', 'html_entity_encode', 'regex_explain', 'password_generator',
+  'lorem_ipsum', 'line_sort', 'line_dedupe', 'text_stats', 'slug', 'sql_format',
+] as const

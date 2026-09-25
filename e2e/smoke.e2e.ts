@@ -41,7 +41,7 @@ const UPPER_STEP = { id: 'u1', utilityId: 'case', params: { mode: 'upper' } }
 test.describe('smoke', () => {
   test('home page renders the tool under the app title', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle('String Utility Belt')
+    await expect(page).toHaveTitle('Free Online String & Text Tools — String Utility Belt')
     // wait for the app to mount so errors thrown while rendering are caught by the fixture
     await expect(page.locator('#pipeline-input')).toBeVisible()
   })
@@ -103,9 +103,10 @@ test.describe('smoke', () => {
   test('#/utilities lists every utility, each linking to its doc page', async ({ page }) => {
     await page.goto('/#/utilities')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.locator('a[href="#/util/base64_encode"]')).toBeVisible()
+    // crawlable paths to the pre-rendered pages, not #/ routes
+    await expect(page.locator('a[href="/util/base64_encode/"]')).toBeVisible()
     // 240+ utilities ship; a handful would mean the registry or the page broke
-    expect(await page.locator('a[href^="#/util/"]').count()).toBeGreaterThan(200)
+    expect(await page.locator('a[href^="/util/"]').count()).toBeGreaterThan(200)
   })
 
   test('#/util/base64_encode shows "base64"', async ({ page }) => {

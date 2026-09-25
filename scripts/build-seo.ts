@@ -4,7 +4,9 @@
  * Reads the built site (`--outDir <dir>` / `--outDir=<dir>` or `SEO_OUT_DIR`,
  * default `dist`) and writes pre-rendered pages, `sitemap.xml`, `rss.xml` and
  * Open Graph images into it — see `scripts/seo/build.ts`. `--no-og` skips the
- * (slow) image rendering.
+ * (slow) image rendering; `--og-if-workers-ci` skips it except in a Workers
+ * Builds deploy (`resolveOg`). `npm run build` runs it that way as `postbuild`,
+ * so every build — including the production one — ships the pre-rendered site.
  *
  * Run with vite-node so the `@/`-aliased generated manifest/examples and the
  * markdown renderer resolve exactly as they do in the app:
@@ -13,6 +15,17 @@
  */
 import path from 'node:path'
 import { buildSeo } from './seo/build'
+
+/**
+ * Whether to render the (slow, ~2 min) OG images: not with `--no-og`; with
+ * `--og-if-workers-ci` (how `npm run build`'s postbuild runs this) only in a
+ * Cloudflare Workers Builds deploy, which sets `WORKERS_CI`; otherwise always.
+ */
+export function resolveOg(argv: string[], env: Record<string, string | undefined>): boolean {
+  if (argv.includes('--no-og')) return false
+  if (argv.includes('--og-if-workers-ci')) return !!env.WORKERS_CI
+  return true
+}
 
 /** `--outDir <dir>`, `--outDir=<dir>`, then `SEO_OUT_DIR`, then `dist`; resolved against `root`. */
 export function resolveOutDir(argv: string[], env: Record<string, string | undefined>, root: string): string {
@@ -29,7 +42,7 @@ async function main() {
   const root = process.cwd()
   const argv = process.argv.slice(2)
   const outDir = resolveOutDir(argv, process.env, root)
-  const result = await buildSeo({ outDir, root, og: !argv.includes('--no-og') })
+  const result = await buildSeo({ outDir, root, og: resolveOg(argv, process.env) })
   console.log(`[build-seo] ${result.pages} pages written in ${result.htmlMs}ms`)
   console.log(`[build-seo] ${result.ogImages} OG images rendered in ${result.ogMs}ms`)
   console.log(`[build-seo] sitemap.xml: ${result.sitemapUrls} urls; rss.xml: ${result.rssItems} items`)

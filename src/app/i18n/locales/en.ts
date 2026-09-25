@@ -17,6 +17,13 @@ export const en = {
     blog: 'Blog',
     changelog: 'Changelog',
   },
+  footer: {
+    label: 'site',
+    utilities: 'All utilities',
+    about: 'About',
+    privacy: 'Privacy policy',
+    contact: 'Contact',
+  },
   blog: {
     title: 'Blog',
     empty: 'No posts yet.',

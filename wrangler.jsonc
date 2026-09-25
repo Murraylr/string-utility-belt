@@ -8,6 +8,10 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-09-27",
 	"assets": {
+		// unknown paths get index.html; the app shows "page not found" and sets noindex.
+		// build:seo also writes dist/404.html: once the live /sitemap.xml proves the deploy
+		// build runs it, "404-page" answers unknown paths with a real 404 status instead
+		// (with no build:seo output, "404-page" would 404 every /util/, /blog/… page)
 		"not_found_handling": "single-page-application",
 		"directory": "./dist",
 		"binding": "ASSETS",

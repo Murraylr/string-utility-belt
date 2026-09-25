@@ -4,8 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Online String &amp; Text Tools — String Utility Belt</title>
+  <meta name="description" content="Free string and text tools that run in your browser: encode, decode, hash, format and convert — Base64, URL, JSON, SHA-256 and more." />
+  <meta name="robots" content="max-image-preview:large" />
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="String Pipeline Workshop — chain elegant string utilities with previews." />
+  <!-- AdSense site verification (same publisher id as public/ads.txt and src/app/ads/config.ts) -->
+  <meta name="google-adsense-account" content="ca-pub-2227752612794222" />
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
@@ -24,23 +28,42 @@
       } catch (e) {}
     })();
   </script>
-  <title>String Utility Belt</title>
-</head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-EFVMEMB86E"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
+  <script>
+    // Google tag (gtag.js). Consent Mode v2: in the EEA, the UK and Switzerland nothing is
+    // stored until the visitor answers the consent message (Google's CMP, configured in
+    // AdSense → Privacy & messaging), which updates these defaults.
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      region: ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
+        'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'],
+      wait_for_update: 500
+    });
+    gtag('js', new Date());
+    gtag('config', 'G-EFVMEMB86E');
 
-  gtag('config', 'G-EFVMEMB86E');
-</script>
+    // No ads inside a frame: the #/embed widget runs on other people's sites, and every
+    // other page refuses to render framed. Must run before adsbygoogle.js loads.
+    (function () {
+      var framed;
+      try { framed = window.self !== window.top; } catch (e) { framed = true; }
+      if (framed || /^#\/*embed(?:[\/?]|$)/.test(location.hash)) {
+        (window.adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 1;
+      }
+    })();
+  </script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EFVMEMB86E"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2227752612794222"
+    crossorigin="anonymous"></script>
+</head>
 
 <body class="min-h-screen">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6530508241519483"
-    crossorigin="anonymous"></script>
 </body>
 
 </html>

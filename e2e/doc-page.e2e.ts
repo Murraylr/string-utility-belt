@@ -39,9 +39,12 @@ test.describe('utility doc page', () => {
     await page.goto('/util/sha3/')
     await expect(page.getByRole('heading', { level: 1 })).toContainText('sha3')
 
-    await page.getByRole('navigation', { name: 'main' }).getByRole('link', { name: 'Tool' }).click()
+    const tool = page.getByRole('navigation', { name: 'main' }).getByRole('link', { name: 'Tool' })
+    // a crawlable path, followed in place by the app
+    await expect(tool).toHaveAttribute('href', '/')
+    await tool.click()
 
     await expect(page.locator('#pipeline-input')).toBeVisible()
-    await expect(page).toHaveURL(/#\/$/)
+    await expect(page).toHaveURL(/^https?:\/\/[^/]+\/$/)
   })
 })

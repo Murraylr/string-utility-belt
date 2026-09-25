@@ -38,7 +38,7 @@ describe('UtilityDocPage', () => {
     render(<UtilityDocPage id="does-not-exist" />)
     expect(screen.getByText(/unknown utility/i)).toBeTruthy()
     const link = screen.getByRole('link', { name: /browse all utilities/i })
-    expect(link.getAttribute('href')).toBe('#/utilities')
+    expect(link.getAttribute('href')).toBe('/utilities/')
   })
 
   it('renders a params table with kind, default, bounds and a description', () => {
@@ -147,6 +147,107 @@ describe('UtilityDocPage', () => {
     const section = screen.getByRole('heading', { name: 'Related utilities' }).closest('section')!
     const links = within(section).getAllByRole('link')
     expect(links.length).toBeLessThanOrEqual(6)
-    expect(links[0].getAttribute('href')).toBe('#/util/url_encode')
+    // a crawlable path, not a #/ fragment search engines would drop
+    expect(links[0].getAttribute('href')).toBe('/util/url_encode/')
+  })
+
+  it('follows a related link in-app, without a reload, to the pre-rendered path', () => {
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const onRoute = vi.fn()
+    const off = onRouteChange(onRoute)
+    try {
+      render(<UtilityDocPage id="url_decode" />)
+      const section = screen.getByRole('heading', { name: 'Related utilities' }).closest('section')!
+      const link = within(section).getAllByRole('link')[0]
+      expect(fireEvent.click(link)).toBe(false) // default (a full page load) prevented
+      expect(location.pathname).toBe('/util/url_encode/')
+      expect(onRoute).toHaveBeenCalledWith({ name: 'utility', params: { id: 'url_encode' } })
+    } finally {
+      off()
+      scroll.mockRestore()
+      history.replaceState(null, '', '/')
+    }
+  })
+
+  it('leaves a modified click on a related link to the browser (open in a new tab)', () => {
+    render(<UtilityDocPage id="url_decode" />)
+    const section = screen.getByRole('heading', { name: 'Related utilities' }).closest('section')!
+    expect(fireEvent.click(within(section).getAllByRole('link')[0], { ctrlKey: true })).toBe(true)
+    expect(location.pathname).toBe('/')
+  })
+})
+
+const GUIDE = `---
+title: Trim Whitespace Online — Strip Leading & Trailing Spaces
+description: Remove leading and trailing whitespace from text.
+---
+## What trim removes
+
+Spaces, tabs and newlines at **both ends**. See [trim lines](/util/trim_lines/).
+
+- one
+- two
+
+\`\`\`example
+title: padded
+input:   padded  
+output: padded
+\`\`\`
+`
+
+function stubFetch(body: string, type = 'text/markdown; charset=utf-8') {
+  const fetchMock = vi.fn(async () => new Response(body, { headers: { 'content-type': type } }))
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+describe('UtilityDocPage guide', () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+
+  it('fetches the guide and renders it collapsed, in the DOM for crawlers', async () => {
+    const fetchMock = stubFetch(GUIDE)
+    render(<UtilityDocPage id="trim" />)
+    expect(fetchMock).toHaveBeenCalledWith('/guides/trim.md')
+    const heading = await screen.findByRole('heading', { level: 2, name: 'How trim works' })
+    const details = heading.closest('details')!
+    expect(details.open).toBe(false)
+    await waitFor(() => expect(within(details).getByRole('heading', { level: 3, name: 'What trim removes' })).toBeTruthy())
+    expect(within(details).getByText('both ends').tagName).toBe('STRONG')
+    expect(within(details).getAllByRole('listitem').map(li => li.textContent)).toEqual(['one', 'two'])
+    expect(within(details).getByText('padded', { selector: 'figcaption' })).toBeTruthy()
+    fireEvent.click(within(details).getByText('How trim works'))
+    expect(details.open).toBe(true)
+  })
+
+  it('uses the guide title and description for the document <head>', async () => {
+    stubFetch(GUIDE)
+    render(<UtilityDocPage id="trim" />)
+    // 56 characters: the site name would push it past what a search result shows
+    await waitFor(() => expect(document.title).toBe('Trim Whitespace Online — Strip Leading & Trailing Spaces'))
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content'))
+      .toBe('Remove leading and trailing whitespace from text.')
+  })
+
+  it('follows a guide link to another utility in-app', async () => {
+    stubFetch(GUIDE)
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    try {
+      render(<UtilityDocPage id="trim" />)
+      const link = await screen.findByRole('link', { name: 'trim lines' })
+      expect(link.getAttribute('href')).toBe('/util/trim_lines/')
+      expect(fireEvent.click(link)).toBe(false)
+      expect(location.pathname).toBe('/util/trim_lines/')
+    } finally {
+      scroll.mockRestore()
+      history.replaceState(null, '', '/')
+    }
+  })
+
+  it('shows no guide section when the server answers with the SPA fallback page', async () => {
+    const fetchMock = stubFetch('<!doctype html><html></html>', 'text/html')
+    render(<UtilityDocPage id="trim" />)
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'How trim works' })).toBeNull())
+    expect(document.title).toBe('trim — String Utility Belt')
   })
 })

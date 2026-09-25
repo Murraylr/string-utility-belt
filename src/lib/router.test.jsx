@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach } from 'vitest'
-import { getRoute } from './router'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import { SITE_PAGES, getRoute, isInAppPath, navigateToPath } from './router'
 
 afterEach(() => { location.hash = '' })
 
@@ -112,5 +112,59 @@ describe('router: roadmap routes', () => {
     // the header's "Tool" link (#/) must reach the tool from a pre-rendered page
     history.replaceState(null, '', '/util/sha3/#/')
     expect(getRoute().name).toBe('home')
+  })
+})
+
+describe('router: site pages, 404 paths and in-app links', () => {
+  afterEach(() => { location.hash = ''; history.replaceState(null, '', '/') })
+
+  it('routes the about, privacy and contact pages by path and by hash', () => {
+    for (const slug of SITE_PAGES) {
+      history.replaceState(null, '', `/${slug}/`)
+      expect(getRoute(), slug).toEqual({ name: 'page', params: { slug } })
+      history.replaceState(null, '', `/#/${slug}`)
+      expect(getRoute(), slug).toEqual({ name: 'page', params: { slug } })
+    }
+    history.replaceState(null, '', '/about/team/')
+    expect(getRoute().name).toBe('notFound')
+  })
+
+  it('treats a path that is no page as not found (the host answered it with 404.html), but not the root', () => {
+    history.replaceState(null, '', '/no/such/page')
+    expect(getRoute().name).toBe('notFound')
+    history.replaceState(null, '', '/util/')
+    expect(getRoute().name).toBe('notFound')
+    history.replaceState(null, '', '/index.html')
+    expect(getRoute().name).toBe('home')
+    history.replaceState(null, '', '/?text=shared')
+    expect(getRoute().name).toBe('home')
+  })
+
+  it('takes over links to the home page and every pre-rendered page, not files or other URLs', () => {
+    for (const href of ['/', '/utilities/', '/utilities', '/util/base64_encode/', '/util/trim', '/blog/', '/blog/a-post/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
+      expect(isInAppPath(href), href).toBe(true)
+    }
+    for (const href of ['/blog/a-post.md', '/blog/_manifest.json', '/guides/trim.md', '/api/utilities', '/rss.xml', '/#/p/x', '/?q=1',
+      'https://stringutilitybelt.com/utilities/', '//evil.example/', '#/utilities', 'mailto:a@b.c', '/util/a/b/']) {
+      expect(isInAppPath(href), href).toBe(false)
+    }
+  })
+
+  it('navigates in place without stacking a history entry for the page already showing', () => {
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const onPop = vi.fn()
+    window.addEventListener('popstate', onPop)
+    try {
+      const before = history.length
+      navigateToPath('/utilities/')
+      expect(location.pathname).toBe('/utilities/')
+      expect(history.length).toBe(before + 1)
+      navigateToPath('/utilities/')
+      expect(history.length).toBe(before + 1)
+      expect(onPop).toHaveBeenCalledTimes(2)
+    } finally {
+      window.removeEventListener('popstate', onPop)
+      scroll.mockRestore()
+    }
   })
 })

@@ -395,6 +395,14 @@ describe('generated sw.js (fake ServiceWorkerGlobalScope)', () => {
     expect(await (await h.cached('/blog/a-post.md'))!.text()).toBe(`net:${ORIGIN}/blog/a-post.md`)
   })
 
+  it('/guides/* (utility guides) is stale-while-revalidate too, so a visited guide reads offline', async () => {
+    const h = createHarness(source)
+    await (await h.caches.open(cacheName)).put(`${ORIGIN}/guides/base64_encode.md`, res('stale'))
+    const { response } = await h.fetchEvent('/guides/base64_encode.md')
+    expect(await (await response)!.text()).toBe('stale')
+    expect(await (await h.cached('/guides/base64_encode.md'))!.text()).toBe(`net:${ORIGIN}/guides/base64_encode.md`)
+  })
+
   it('/blog/* falls back to the network when nothing is cached yet, and survives a failed refresh', async () => {
     const h = createHarness(source)
     const { response } = await h.fetchEvent('/blog/new-post.md')

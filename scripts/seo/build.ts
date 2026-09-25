@@ -4,27 +4,35 @@ import type { UtilityMeta } from '../../src/core/registry'
 import type { UtilityExample } from '../../src/types/utility'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
 import { EXAMPLES } from '../../src/utilities/_generated/examples'
-// .js extension: the plain-JS markdown renderer shared with the app's blog
+// .js extension: the plain-JS markdown helpers shared with the app's blog
 // components (`src/components/BlogPost.tsx`) — not duplicated here
-import { mdToHtml, parseFrontmatter } from '../../src/lib/markdown.js'
+import { parseFrontmatter } from '../../src/lib/markdown.js'
+import { SITE_PAGES, type SitePageSlug } from '../../src/lib/router'
 import { renderChangelogHtml } from '../../src/app/pages/changelogHtml'
 import {
-  setTitle, setMetaDescription, extractMetaDescription, injectSeoHead, stripSeoHead,
-  setRootContent, jsonLdScript, seoMetaTags, rssLinkTag,
+  setTitle, setMetaDescription, injectSeoHead, stripSeoHead, setRootContent, setRemovableRootContent,
+  stripRootContent, setRobots, jsonLdScript, seoMetaTags, rssLinkTag,
 } from './html'
 import { buildSitemap, buildRss, toIsoDate, type SitemapUrl, type RssItem } from './xml'
 import { readBlogManifest, readBlogPostSource, dropRepeatedTitle, isSafeSlug, type BlogPostMeta } from './blog'
 import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './changelog'
 import {
-  renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent,
-  renderBlogPostContent, renderChangelogContent,
+  renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
+  renderChangelogContent, renderHomeContent, renderSitePageContent, renderNotFoundContent, renderSiteChrome,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
+import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
+import { relatedUtilities } from '../../src/app/pages/related'
+import { parseSitePage } from '../../src/app/pages/sitePages'
+import {
+  SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
+  BLOG_TITLE, BLOG_DESCRIPTION, CHANGELOG_TITLE, CHANGELOG_DESCRIPTION,
+} from '../../src/app/pages/seo'
 
-export const SITE = 'https://stringutilitybelt.com'
+export const SITE = SITE_URL
 const SITE_HOST = new URL(SITE).host
 const DEFAULT_OG = `${SITE}/og/default.png`
-const SITE_NAME = 'String Utility Belt'
+const LOGO = `${SITE}/icons/icon-512.png`
 
 export interface BuildSeoOptions {
   /** The `vite build` output directory; must already contain `index.html`. */
@@ -40,6 +48,8 @@ export interface BuildSeoOptions {
   /** Utilities to publish (default: the generated manifest + examples). */
   manifest?: UtilityMeta[]
   examples?: Record<string, UtilityExample[]>
+  /** Guide markdown by utility id (default: each `src/utilities/<id>/guide.md` under `root`). */
+  guides?: Record<string, string>
 }
 
 export interface BuildSeoResult {
@@ -67,19 +77,70 @@ function writeOut(outDir: string, relPath: string, contents: string | Uint8Array
 // JSON-LD
 // ---------------------------------------------------------------------------
 
+const ORGANIZATION = { '@type': 'Organization', name: SITE_NAME, url: `${SITE}/`, logo: LOGO }
+const WEBSITE = { '@type': 'WebSite', name: SITE_NAME, url: `${SITE}/` }
+const FREE = { '@type': 'Offer', price: '0', priceCurrency: 'USD' }
+
+/** On the home page only: tells Google the site's name (shown above every result) and publisher. */
+function websiteLd(description: string) {
+  return { '@context': 'https://schema.org', ...WEBSITE, description, inLanguage: 'en', publisher: ORGANIZATION }
+}
+
+function homeApplicationLd(description: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: SITE_NAME,
+    url: `${SITE}/`,
+    description,
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript',
+    isAccessibleForFree: true,
+    offers: FREE,
+  }
+}
+
 function webApplicationLd(meta: UtilityMeta, url: string, description: string) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: meta.name,
+    name: displayName(meta.name),
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
     url,
     description,
-    isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: `${SITE}/` },
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    isAccessibleForFree: true,
+    isPartOf: WEBSITE,
+    offers: FREE,
   }
 }
+
+/** A page about the site itself (`AboutPage`, `ContactPage`, or a plain `WebPage` such as the privacy policy). */
+function webPageLd(type: string, name: string, url: string, description: string) {
+  return { '@context': 'https://schema.org', '@type': type, name, url, description, isPartOf: WEBSITE }
+}
+
+function blogPostingLd(post: PublishedPost, url: string) {
+  const modified = post.updated ?? post.date
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    url,
+    mainEntityOfPage: url,
+    image: DEFAULT_OG,
+    inLanguage: 'en',
+    ...(post.date ? { datePublished: post.date } : {}),
+    ...(modified ? { dateModified: modified } : {}),
+    author: ORGANIZATION,
+    publisher: ORGANIZATION,
+    isPartOf: WEBSITE,
+  }
+}
+
+const HOME_CRUMB = { name: 'Home', url: `${SITE}/` }
 
 function breadcrumbLd(items: Array<{ name: string; url: string }>) {
   return {
@@ -89,9 +150,11 @@ function breadcrumbLd(items: Array<{ name: string; url: string }>) {
   }
 }
 
+const SITE_PAGE_TYPES: Record<SitePageSlug, string> = { about: 'AboutPage', privacy: 'WebPage', contact: 'ContactPage' }
+
 // ---------------------------------------------------------------------------
 // Page builders — each starts from the built `index.html` template (with any
-// earlier run's SEO block already stripped)
+// earlier run's SEO block and home content already stripped)
 // ---------------------------------------------------------------------------
 
 interface PageSpec {
@@ -100,40 +163,49 @@ interface PageSpec {
   canonical: string
   ogImage: string
   ogType?: 'website' | 'article'
+  published?: string
+  modified?: string
   jsonLd?: unknown[]
   content: string
 }
 
-function buildPage(template: string, page: PageSpec): string {
+function buildPage(template: string, page: PageSpec, year: number): string {
   let html = setTitle(template, page.title)
   html = setMetaDescription(html, page.description)
   const head = [
-    seoMetaTags({ title: page.title, description: page.description, canonical: page.canonical, ogImage: page.ogImage, ogType: page.ogType }),
+    seoMetaTags({
+      title: page.title, description: page.description, canonical: page.canonical, ogImage: page.ogImage,
+      ogType: page.ogType, published: page.published, modified: page.modified,
+    }),
     ...(page.jsonLd ?? []).map(jsonLdScript),
   ]
   html = injectSeoHead(html, head.join('\n'))
-  return setRootContent(html, page.content)
+  return setRootContent(html, renderSiteChrome(page.content, year))
 }
 
-function utilPage(template: string, meta: UtilityMeta, examples: UtilityExample[]): string {
-  const title = `${meta.name} — ${SITE_NAME}`
-  const description = meta.description || `${meta.name} — a ${SITE_NAME} utility.`
+/** `src/utilities/<id>/guide.md`, when the utility has one. */
+function readGuide(root: string, id: string): string | undefined {
+  const file = path.join(root, 'src', 'utilities', id, 'guide.md')
+  return existsSync(file) ? readFileSync(file, 'utf8') : undefined
+}
+
+function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[]): PageSpec {
+  // the guide's search-facing title/description, as `UtilityDocPage` also sets them
+  const name = displayName(meta.name)
+  const title = pageTitle(guide?.title ?? name)
+  const description = guide?.description || meta.description || `${name} — a ${SITE_NAME} utility.`
   const canonical = `${SITE}/util/${meta.id}/`
-  return buildPage(template, {
+  return {
     title,
     description,
     canonical,
     ogImage: `${SITE}/og/${meta.id}.png`,
     jsonLd: [
       webApplicationLd(meta, canonical, description),
-      breadcrumbLd([
-        { name: 'Home', url: `${SITE}/` },
-        { name: 'Utilities', url: `${SITE}/utilities/` },
-        { name: meta.name, url: canonical },
-      ]),
+      breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: `${SITE}/utilities/` }, { name, url: canonical }]),
     ],
-    content: renderUtilityContent(meta, examples),
-  })
+    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related }),
+  }
 }
 
 export interface PublishedPost {
@@ -141,6 +213,8 @@ export interface PublishedPost {
   title: string
   description: string
   date?: string
+  /** Frontmatter `updated`: the last substantial revision, when later than `date`. */
+  updated?: string
   bodyHtml: string
 }
 
@@ -161,7 +235,9 @@ function loadPosts(blogDir: string, log: (m: string) => void): PublishedPost[] {
       title,
       description: frontmatter.description || meta.description || title,
       date: validDate(frontmatter.date) ?? validDate(meta.date),
-      bodyHtml: mdToHtml(dropRepeatedTitle(body, title)),
+      updated: validDate(frontmatter.updated),
+      // the renderer `BlogPost` uses too: guide syntax (lists, tables) at the post's own heading levels
+      bodyHtml: renderMarkdownDocument(dropRepeatedTitle(body, title)),
     })
   }
   return posts
@@ -201,14 +277,18 @@ export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease
 
 /**
  * The post-`vite build` SEO pass over `outDir`: pre-rendered pages for every
- * utility, the utilities index, the blog and the changelog; `sitemap.xml`,
- * `rss.xml`; RSS/canonical/OG tags on the home page; and OG images.
- * Idempotent — re-running over its own output rewrites the same files.
+ * utility, the utilities index, the blog, the changelog and the site pages
+ * (about, privacy, contact); `404.html`; `sitemap.xml`, `rss.xml`; the home
+ * page's head and static content; and OG images. Every page's static content
+ * sits in the site's header nav and footer. Idempotent — re-running over its
+ * own output rewrites the same files.
  */
 export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult> {
   const { outDir, root, og = true, ogConcurrency = 4, log = console.log } = options
   const manifest = options.manifest ?? MANIFEST
   const examples = options.examples ?? EXAMPLES
+  const now = options.now ?? new Date()
+  const year = now.getUTCFullYear()
   const t0 = Date.now()
 
   const indexHtmlPath = path.join(outDir, 'index.html')
@@ -218,7 +298,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   for (const meta of manifest) {
     if (!isSafeSlug(meta.id)) throw new Error(`[build-seo] utility id ${JSON.stringify(meta.id)} is not safe as a path segment`)
   }
-  const template = stripSeoHead(readFileSync(indexHtmlPath, 'utf8'))
+  // a processed index.html (an earlier run's output) back to the bare `vite build` template
+  const template = stripRootContent(stripSeoHead(readFileSync(indexHtmlPath, 'utf8')))
   const blogDir = path.join(outDir, 'blog')
   const posts = loadPosts(blogDir, log)
   const changelogMd = readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
@@ -228,61 +309,115 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     writeOut(outDir, relPath, html)
     pages++
   }
+  const page = (relPath: string, spec: PageSpec) => emit(relPath, buildPage(template, spec, year))
 
+  let guides = 0
   for (const meta of manifest) {
-    emit(path.join('util', meta.id, 'index.html'), utilPage(template, meta, examples[meta.id] ?? []))
+    const source = options.guides ? options.guides[meta.id] : readGuide(root, meta.id)
+    const guide = source === undefined ? undefined : parseGuide(source)
+    if (guide) guides++
+    page(path.join('util', meta.id, 'index.html'), utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest)))
   }
+  if (guides < manifest.length) log(`[build-seo] warning: ${manifest.length - guides} of ${manifest.length} utilities have no guide.md`)
 
-  emit(path.join('utilities', 'index.html'), buildPage(template, {
-    title: `All utilities — ${SITE_NAME}`,
-    description: `Browse all ${manifest.length} string utilities in ${SITE_NAME}, grouped by category.`,
-    canonical: `${SITE}/utilities/`,
+  const utilitiesUrl = `${SITE}/utilities/`
+  page(path.join('utilities', 'index.html'), {
+    title: utilitiesTitle(manifest.length),
+    description: utilitiesDescription(manifest.length),
+    canonical: utilitiesUrl,
     ogImage: DEFAULT_OG,
+    jsonLd: [
+      webPageLd('CollectionPage', 'All utilities', utilitiesUrl, utilitiesDescription(manifest.length)),
+      breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: utilitiesUrl }]),
+    ],
     content: renderUtilitiesIndexContent(manifest),
-  }))
+  })
 
-  emit(path.join('blog', 'index.html'), buildPage(template, {
-    title: `Blog — ${SITE_NAME}`,
-    description: `Guides and notes on string encoding, hashing and text tools from ${SITE_NAME}.`,
-    canonical: `${SITE}/blog/`,
+  const blogUrl = `${SITE}/blog/`
+  page(path.join('blog', 'index.html'), {
+    title: BLOG_TITLE,
+    description: BLOG_DESCRIPTION,
+    canonical: blogUrl,
     ogImage: DEFAULT_OG,
+    jsonLd: [breadcrumbLd([HOME_CRUMB, { name: 'Blog', url: blogUrl }])],
     content: renderBlogIndexContent(posts.map(p => ({ ...p.meta, title: p.title, description: p.description, date: p.date }))),
-  }))
+  })
   for (const post of posts) {
-    emit(path.join('blog', post.meta.slug, 'index.html'), buildPage(template, {
-      title: `${post.title} — ${SITE_NAME}`,
+    const url = `${SITE}/blog/${post.meta.slug}/`
+    page(path.join('blog', post.meta.slug, 'index.html'), {
+      title: pageTitle(post.title),
       description: post.description,
-      canonical: `${SITE}/blog/${post.meta.slug}/`,
+      canonical: url,
       ogImage: DEFAULT_OG,
       ogType: 'article',
-      content: renderBlogPostContent({ title: post.title, date: post.date }, post.bodyHtml),
-    }))
+      published: post.date,
+      modified: post.updated,
+      jsonLd: [
+        blogPostingLd(post, url),
+        breadcrumbLd([HOME_CRUMB, { name: 'Blog', url: blogUrl }, { name: post.title, url }]),
+      ],
+      content: renderBlogPostContent({ title: post.title, date: post.date, updated: post.updated }, post.bodyHtml),
+    })
   }
 
-  emit(path.join('changelog', 'index.html'), buildPage(template, {
-    title: `Changelog — ${SITE_NAME}`,
-    description: `Release history for ${SITE_NAME}.`,
+  page(path.join('changelog', 'index.html'), {
+    title: CHANGELOG_TITLE,
+    description: CHANGELOG_DESCRIPTION,
     canonical: `${SITE}/changelog/`,
     ogImage: DEFAULT_OG,
     content: renderChangelogContent(renderChangelogHtml(changelogMd)),
-  }))
+  })
 
-  // home: RSS discovery + canonical + default OG on the site's own index.html
-  const homeDescription = extractMetaDescription(template) || `${SITE_NAME} — chain string utilities into pipelines with live previews.`
-  writeOut(outDir, 'index.html', injectSeoHead(template, [
+  for (const slug of SITE_PAGES) {
+    const doc = parseSitePage(readFileSync(path.join(root, 'src', 'app', 'pages', 'content', `${slug}.md`), 'utf8'))
+    const url = `${SITE}/${slug}/`
+    const heading = doc.title.split(' — ')[0]
+    page(path.join(slug, 'index.html'), {
+      title: pageTitle(doc.title),
+      description: doc.description,
+      canonical: url,
+      ogImage: DEFAULT_OG,
+      jsonLd: [
+        webPageLd(SITE_PAGE_TYPES[slug], heading, url, doc.description),
+        breadcrumbLd([HOME_CRUMB, { name: heading, url }]),
+      ],
+      content: renderSitePageContent(doc.html),
+    })
+  }
+
+  // for any path that is not a page, once wrangler.jsonc switches not_found_handling
+  // to "404-page"; no canonical, and kept out of the index
+  let notFound = setTitle(template, pageTitle('Page not found'))
+  notFound = setMetaDescription(notFound, `There is no ${SITE_NAME} page at this address.`)
+  notFound = setRobots(notFound, 'noindex')
+  emit('404.html', setRootContent(notFound, renderSiteChrome(renderNotFoundContent(), year)))
+
+  // home: title, description, RSS discovery, canonical, default OG, the site's
+  // name/publisher for search results, and the popular-tools links as static content
+  const homeDesc = homeDescription(manifest.length)
+  let home = setMetaDescription(setTitle(template, HOME_TITLE), homeDesc)
+  home = injectSeoHead(home, [
     rssLinkTag(`${SITE}/rss.xml`),
-    seoMetaTags({ title: SITE_NAME, description: homeDescription, canonical: `${SITE}/`, ogImage: DEFAULT_OG }),
-  ].join('\n')))
+    seoMetaTags({ title: HOME_TITLE, description: homeDesc, canonical: `${SITE}/`, ogImage: DEFAULT_OG }),
+    jsonLdScript(websiteLd(homeDesc)),
+    jsonLdScript(homeApplicationLd(homeDesc)),
+  ].join('\n'))
+  // removable: this file is the next run's template
+  writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest), year)))
 
-  const buildDate = toIsoDate(options.now ?? new Date())
+  const buildDate = toIsoDate(now)
   const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? buildDate
   const sitemapUrls: SitemapUrl[] = [
     { loc: `${SITE}/`, lastmod: buildDate },
-    { loc: `${SITE}/utilities/`, lastmod: buildDate },
+    { loc: utilitiesUrl, lastmod: buildDate },
     ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: buildDate })),
-    { loc: `${SITE}/blog/`, lastmod: buildDate },
-    ...posts.map(p => ({ loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: p.date ? toIsoDate(p.date) : buildDate })),
+    { loc: blogUrl, lastmod: buildDate },
+    ...posts.map(p => {
+      const changed = p.updated ?? p.date
+      return { loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: changed ? toIsoDate(changed) : buildDate }
+    }),
     { loc: `${SITE}/changelog/`, lastmod: changelogLastmod },
+    ...SITE_PAGES.map(slug => ({ loc: `${SITE}/${slug}/`, lastmod: buildDate })),
   ]
   writeOut(outDir, 'sitemap.xml', buildSitemap(sitemapUrls))
 
@@ -302,7 +437,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const fonts = loadOgFonts()
     const onMissingGlyphs = (segment: string) => { for (const ch of segment) if (ch.trim()) missing.add(ch) }
     const cards = [
-      ...manifest.map(m => ({ file: `${m.id}.png`, card: { name: m.name, category: m.category, description: m.description } })),
+      ...manifest.map(m => ({ file: `${m.id}.png`, card: { name: displayName(m.name), category: m.category, description: m.description } })),
       {
         file: 'default.png',
         card: { name: SITE_NAME, category: 'Free online tool', description: 'Chain string transformations into visual pipelines with live previews.' },
