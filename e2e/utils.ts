@@ -29,3 +29,14 @@ export async function quickAdd(page: Page, utilityId: string) {
 export async function setInput(page: Page, text: string) {
   await page.locator('#pipeline-input').fill(text)
 }
+
+type Marked = { __e2eSameDocument?: true }
+
+/** Marks the loaded document, so `isSameDocument` can tell an in-app navigation from a page load. */
+export async function markDocument(page: Page) {
+  await page.evaluate(() => { (window as Marked).__e2eSameDocument = true })
+}
+
+/** True while the document `markDocument` marked is still the one showing (no page load since). */
+export const isSameDocument = (page: Page): Promise<boolean> =>
+  page.evaluate(() => (window as Marked).__e2eSameDocument === true)

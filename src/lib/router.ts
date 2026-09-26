@@ -4,7 +4,7 @@ export type RouteName =
   | 'pipeline'
   /** Minimal iframe view of a shared pipeline: `#/embed/<payload>` */
   | 'embed'
-  /** How to use the tool: `#/docs` */
+  /** How to use the tool: the pre-rendered `/docs/`, or `#/docs` */
   | 'docs'
   | 'blogIndex'
   | 'blogPost'
@@ -57,6 +57,7 @@ function routeFromPath(pathname: string): Route | null {
   const parts = pathname.split('/').filter(Boolean)
   if (parts[0] === 'util' && parts[1]) return utilityRoute(parts[1])
   if (parts[0] === 'utilities' && parts.length === 1) return { name: 'utilities', params: {} }
+  if (parts[0] === 'docs' && parts.length === 1) return { name: 'docs', params: {} }
   if (parts[0] === 'blog' && parts.length === 1) return { name: 'blogIndex', params: {} }
   if (parts[0] === 'blog' && parts[1]) return blogRoute(parts.slice(1))
   if (parts[0] === 'changelog') return { name: 'changelog', params: {} }
@@ -118,7 +119,7 @@ export function navigateToPath(path: string) {
 // a post only by its pre-rendered `/blog/<slug>/` (slash required): `/blog/<slug>.md`
 // and `/blog/_manifest.json` are files beside the posts, not pages
 const IN_APP_PATH = new RegExp(
-  `^/(?:|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)$`,
+  `^/(?:|docs/?|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)$`,
 )
 
 /**

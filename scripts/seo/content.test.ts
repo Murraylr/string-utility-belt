@@ -3,7 +3,7 @@ import type { UtilityMeta } from '../../src/core/registry'
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent,
   renderBlogPostContent, renderChangelogContent, renderSiteChrome, renderHomeContent,
-  renderNotFoundContent, renderSitePageContent,
+  renderNotFoundContent, renderSitePageContent, renderDocsContent,
 } from './content'
 
 const XSS = '"><script>alert(1)</script>'
@@ -142,7 +142,7 @@ describe('renderSiteChrome', () => {
   it("wraps a page's content in the app's header nav and footer, as plain crawlable links", () => {
     const html = renderSiteChrome('<article>body</article>', 2026)
     expect(html).toContain('<main><article>body</article></main>')
-    for (const href of ['/', '/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
+    for (const href of ['/', '/docs/', '/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
       expect(html).toContain(`<a href="${href}">`)
     }
     expect(html).toContain('© 2026 String Utility Belt')
@@ -163,6 +163,20 @@ describe('renderHomeContent', () => {
 
   it('escapes utility text', () => {
     expect(renderHomeContent([meta({ id: 'base64_encode', name: XSS, description: XSS })])).not.toContain('<script>alert(1)</script>')
+  })
+})
+
+describe('renderDocsContent', () => {
+  it('renders the usage guide component: one heading, every section, crawlable path links only', () => {
+    const doc = new DOMParser().parseFromString(renderDocsContent(), 'text/html')
+    expect([...doc.querySelectorAll('h1')].map(h => h.textContent)).toEqual(['How to use String Utility Belt'])
+    const sections = [...doc.querySelectorAll('section[id]')].map(s => s.id)
+    expect(sections).toEqual(expect.arrayContaining(['pipeline', 'steps', 'output', 'utilities']))
+    // the section nav's entries point at its sections
+    expect(doc.querySelectorAll('nav[aria-label="Docs sections"] a')).toHaveLength(sections.length)
+    const hrefs = [...doc.querySelectorAll('a')].map(a => a.getAttribute('href'))
+    expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/', '/docs/']))
+    expect(hrefs.filter(h => !h?.startsWith('/'))).toEqual([])
   })
 })
 

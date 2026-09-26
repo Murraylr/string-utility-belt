@@ -37,12 +37,21 @@ describe('UtilityPicker', () => {
     expect(onPick).toHaveBeenCalledWith('base64_encode')
   })
 
-  it('links each card to its docs page without picking it', () => {
+  it('links each card to its docs page, leaving the click to the in-app link handler without picking it', () => {
     const onPick = vi.fn()
     render(<UtilityPicker onPick={onPick} />)
     const link = screen.getByRole('link', { name: 'base64 encode docs' })
-    expect(link).toHaveAttribute('href', '#/util/base64_encode')
-    fireEvent.click(link)
+    expect(link).toHaveAttribute('href', '/util/base64_encode/')
+    // stands in for AppShell's document-level handler (useInAppLinks), which follows the link in-app
+    const reached: boolean[] = []
+    const onDocumentClick = (e: MouseEvent) => { reached.push(!e.defaultPrevented); e.preventDefault() }
+    document.addEventListener('click', onDocumentClick)
+    try {
+      fireEvent.click(link)
+    } finally {
+      document.removeEventListener('click', onDocumentClick)
+    }
+    expect(reached).toEqual([true])
     expect(onPick).not.toHaveBeenCalled()
   })
 

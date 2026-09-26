@@ -1,3 +1,5 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import type { UtilityMeta } from '../../src/core/registry'
 import type { ParamSpec, UtilityExample } from '../../src/types/utility'
 import { escapeHtml } from './html'
@@ -5,14 +7,14 @@ import type { BlogPostMeta } from './blog'
 import { guideHeading } from '../../src/app/pages/guide'
 import { utilityPath } from '../../src/app/pages/related'
 import { POPULAR_UTILITY_IDS, SITE_NAME, displayName } from '../../src/app/pages/seo'
+import Docs from '../../src/components/Docs'
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
 
 const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`
 
-// the app's header nav and footer (src/app/AppShell.tsx), as plain links — minus the
-// #/docs route, which has no pre-rendered page to link to yet
-const NAV_LINKS = [['/', 'Tool'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
+// the app's header nav and footer (src/app/AppShell.tsx), as plain links
+const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
   ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'],
   ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'],
@@ -184,6 +186,14 @@ export function renderHomeContent(manifest: UtilityMeta[]): string {
       <p><a href="/utilities/">Browse all ${manifest.length} utilities</a></p>
     </section>
   </article>`
+}
+
+/**
+ * Static snapshot of the usage guide: the `Docs` component itself, rendered by React
+ * (so escaped), which keeps the pre-render from drifting from the page.
+ */
+export function renderDocsContent(): string {
+  return renderToStaticMarkup(createElement(Docs))
 }
 
 /** Static snapshot of `SitePage`: the page's rendered markdown (already escaped), `# heading` included. */

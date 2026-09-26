@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
-
-const SITE_NAME = 'String Utility Belt'
+import React from 'react'
+import { DOCS_DESCRIPTION, DOCS_TITLE } from '@/app/pages/seo'
+import { useDocumentMeta } from '@/app/pages/useDocumentMeta'
 
 const SECTIONS = [
   { id: 'pipeline', title: 'Build a pipeline' },
@@ -60,21 +60,22 @@ function Table({ head, rows, monoCols = [] }: { head: string[]; rows: React.Reac
 
 const Code = ({ children }: { children: React.ReactNode }) => <code className="mono">{children}</code>
 
-/** How to use the tool: the `#/docs` page. */
+/**
+ * How to use the tool: the `/docs/` page. `scripts/seo/build.ts` pre-renders it with
+ * `renderToStaticMarkup`, so rendering must stay free of browser APIs (effects are fine).
+ */
 export default function Docs() {
   // restored on leaving, like the other route pages
-  useEffect(() => {
-    const prev = document.title
-    document.title = `How to use — ${SITE_NAME}`
-    return () => { document.title = prev }
-  }, [])
+  useDocumentMeta(DOCS_TITLE, DOCS_DESCRIPTION)
 
   return (
     <div className="grid gap-6 md:grid-cols-[200px_1fr] items-start">
       <nav aria-label="Docs sections" className="md:sticky md:top-24 grid gap-1 text-sm">
         {SECTIONS.map(s => (
-          // scroll, don't navigate: with hash routing, href="#id" would route to an unknown page
-          <a key={s.id} href="#/docs" onClick={e => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' }) }}
+          // scroll, don't navigate: with hash routing, href="#id" would route to an unknown page.
+          // The href (this page) is for a new tab; the prevented click is left alone by the
+          // app's in-app link handler
+          <a key={s.id} href="/docs/" onClick={e => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' }) }}
             className="px-3 py-1.5 rounded-lg hover:bg-surface-2">{s.title}</a>
         ))}
       </nav>
@@ -86,7 +87,7 @@ export default function Docs() {
             Your text runs through a <strong>pipeline</strong>: an ordered list of steps. Each step applies one utility to the
             output of the step before it. The <strong>result</strong> panel shows the output of the last step.
           </p>
-          <div><a className="cta inline-block mt-2" href="#/">Open the tool</a></div>
+          <div><a className="cta inline-block mt-2" href="/">Open the tool</a></div>
         </header>
 
         <Section id="pipeline" title="Build a pipeline">
@@ -169,7 +170,7 @@ export default function Docs() {
         <Section id="utilities" title="Utility reference">
           <p>
             Every utility has its own page with its settings and worked examples. Browse them all on the{' '}
-            <a className="underline underline-offset-2" href="#/utilities">utilities index</a>.
+            <a className="underline underline-offset-2" href="/utilities/">utilities index</a>.
           </p>
         </Section>
       </div>

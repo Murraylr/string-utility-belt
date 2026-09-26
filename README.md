@@ -27,9 +27,9 @@ extension and a VS Code extension.
 
 ## Using the app
 
-The how-to guide lives in the app itself: click **Docs** in the header, or go to `#/docs`
+The how-to guide lives in the app itself: click **Docs** in the header, or go to `/docs/`
 ([`src/components/Docs.tsx`](src/components/Docs.tsx)). Each utility's settings and examples are on
-its own page under `#/utilities`.
+its own page, listed at `/utilities/`.
 
 ## Development
 

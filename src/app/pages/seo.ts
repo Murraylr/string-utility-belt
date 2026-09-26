@@ -40,6 +40,11 @@ export const BLOG_DESCRIPTION = `Practical guides to encoding, hashing and text 
 export const CHANGELOG_TITLE = pageTitle('Changelog')
 export const CHANGELOG_DESCRIPTION = `Release history for ${SITE_NAME}: new utilities, features and fixes.`
 
+/** The usage guide (`Docs`, pre-rendered at `/docs/`). */
+export const DOCS_TITLE = pageTitle('How to use')
+export const DOCS_DESCRIPTION =
+  "Learn to chain text utilities into a pipeline, configure and reorder steps, preview each step's output, and copy, download or share the result."
+
 /**
  * Linked from the home page (static and rendered) — high-demand tools, so the
  * site's most-linked page passes its weight to the pages people search for.

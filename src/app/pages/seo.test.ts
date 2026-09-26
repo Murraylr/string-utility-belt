@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { TITLE_BUDGET, displayName, homeDescription, pageTitle, utilitiesDescription, utilitiesTitle, HOME_TITLE } from './seo'
+import {
+  TITLE_BUDGET, displayName, homeDescription, pageTitle, utilitiesDescription, utilitiesTitle, HOME_TITLE,
+  DOCS_TITLE, DOCS_DESCRIPTION,
+} from './seo'
 
 describe('pageTitle', () => {
   it('adds the site name when the whole title still fits a search result', () => {
@@ -21,7 +24,8 @@ describe('site copy', () => {
   it('keeps titles within a search result and descriptions within a snippet', () => {
     expect(HOME_TITLE.length).toBeLessThanOrEqual(TITLE_BUDGET)
     expect(utilitiesTitle(246).length).toBeLessThanOrEqual(TITLE_BUDGET)
-    for (const d of [homeDescription(246), utilitiesDescription(246)]) {
+    expect(DOCS_TITLE.length).toBeLessThanOrEqual(TITLE_BUDGET)
+    for (const d of [homeDescription(246), utilitiesDescription(246), DOCS_DESCRIPTION]) {
       expect(d.length).toBeGreaterThanOrEqual(80)
       expect(d.length).toBeLessThanOrEqual(160)
     }

@@ -21,7 +21,7 @@ npm run lint         # ESLint
 npm run gen          # regenerate src/utilities/_generated/* (predev/prebuild run it)
 npm run build        # production build, then (postbuild) build:seo — OG images only in Workers Builds (WORKERS_CI);
                      # npm run check:bundle enforces bundle-budget.json
-npm run build:seo    # pre-rendered pages (/util/<id>/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
+npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
 npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
@@ -81,14 +81,15 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide, not pre-rendered yet),
+  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
   `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
-- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/blog/…`, `/about/`…);
+- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/docs/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex` (the host's
   SPA fallback answers it with index.html and a 200; `dist/404.html` is ready for `not_found_handling: "404-page"`).
 - **Links use real paths, never `#/` routes** (search engines drop fragments): `href="/utilities/"`,
   `utilityPath(id)`, `/blog/<slug>/`. `AppShell`'s `useInAppLinks` turns plain clicks on any `isInAppPath`
-  href into `navigateToPath` (pushState, no reload). Hash routes still resolve for old links and commands.
+  href into `navigateToPath` (pushState, no reload). It listens on `document`, so a link's click must bubble:
+  a React `stopPropagation()` on it (or an ancestor) means a full page load. Hash routes still resolve for old links and commands.
 
 ### SEO & ads
 - `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
@@ -97,6 +98,8 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
 - Site pages: `src/app/pages/content/{about,privacy,contact}.md` (frontmatter title/description, guide
   markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by `build.ts`. The privacy
   policy carries AdSense's required disclosures — keep it accurate when data flows change.
+- Usage guide: `src/components/Docs.tsx` (`/docs/`), pre-rendered by `build.ts` with `renderToStaticMarkup` of the
+  component itself — keep its render free of browser APIs (effects are fine).
 - Ads: the AdSense loader and Consent Mode defaults live in `index.html` (ads are paused inside frames and
   `#/embed`). Manual units are `<AdSlot placement>` (`src/app/ads/`), inert until `AD_SLOTS` has unit ids.
   Content pages only; never in the pipeline editor or embed; never remount a unit without a navigation.

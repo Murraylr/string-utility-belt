@@ -1,12 +1,13 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import App from './App'
 
 const STORAGE_KEY = 'string-utility-belt'
 
 afterEach(() => {
   location.hash = ''
+  history.replaceState(null, '', '/')
   localStorage.removeItem(STORAGE_KEY)
 })
 
@@ -17,12 +18,36 @@ describe('<App />', () => {
     expect(matches.length).toBeGreaterThan(0)
   })
 
-  it('renders the usage guide at #/docs', async () => {
+  it('renders the usage guide at /docs/, its nav link marked as the current page', async () => {
+    history.replaceState(null, '', '/docs/')
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: /how to use string utility belt/i })).toBeTruthy()
+    const nav = screen.getByRole('link', { name: 'Docs' })
+    expect(nav).toHaveAttribute('href', '/docs/')
+    expect(nav).toHaveAttribute('aria-current', 'page')
+    expect(screen.queryByPlaceholderText(/type or paste/i)).toBeNull()
+  })
+
+  it('still renders the usage guide at the old #/docs', async () => {
     location.hash = '#/docs'
     render(<App />)
     expect(await screen.findByRole('heading', { name: /how to use string utility belt/i })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.queryByPlaceholderText(/type or paste/i)).toBeNull()
+  })
+
+  it("follows the header's Docs link in place, then the guide's links back into the app", async () => {
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    try {
+      render(<App />)
+      fireEvent.click(screen.getByRole('link', { name: 'Docs' }))
+      expect(location.pathname).toBe('/docs/')
+      expect(await screen.findByRole('heading', { name: /how to use string utility belt/i })).toBeTruthy()
+      fireEvent.click(screen.getByRole('link', { name: /utilities index/i }))
+      expect(location.pathname).toBe('/utilities/')
+      expect(await screen.findByRole('heading', { level: 1, name: 'All utilities' })).toBeTruthy()
+    } finally {
+      scroll.mockRestore()
+    }
   })
 
   it('renders the blog index at #/blog', async () => {

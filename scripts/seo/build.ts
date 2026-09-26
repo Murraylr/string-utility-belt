@@ -18,7 +18,8 @@ import { readBlogManifest, readBlogPostSource, dropRepeatedTitle, isSafeSlug, ty
 import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './changelog'
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
-  renderChangelogContent, renderHomeContent, renderSitePageContent, renderNotFoundContent, renderSiteChrome,
+  renderChangelogContent, renderHomeContent, renderDocsContent, renderSitePageContent, renderNotFoundContent,
+  renderSiteChrome,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
@@ -26,7 +27,7 @@ import { relatedUtilities } from '../../src/app/pages/related'
 import { parseSitePage } from '../../src/app/pages/sitePages'
 import {
   SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
-  BLOG_TITLE, BLOG_DESCRIPTION, CHANGELOG_TITLE, CHANGELOG_DESCRIPTION,
+  BLOG_TITLE, BLOG_DESCRIPTION, CHANGELOG_TITLE, CHANGELOG_DESCRIPTION, DOCS_TITLE, DOCS_DESCRIPTION,
 } from '../../src/app/pages/seo'
 
 export const SITE = SITE_URL
@@ -277,8 +278,8 @@ export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease
 
 /**
  * The post-`vite build` SEO pass over `outDir`: pre-rendered pages for every
- * utility, the utilities index, the blog, the changelog and the site pages
- * (about, privacy, contact); `404.html`; `sitemap.xml`, `rss.xml`; the home
+ * utility, the utilities index, the blog, the changelog, the usage guide (`/docs/`)
+ * and the site pages (about, privacy, contact); `404.html`; `sitemap.xml`, `rss.xml`; the home
  * page's head and static content; and OG images. Every page's static content
  * sits in the site's header nav and footer. Idempotent — re-running over its
  * own output rewrites the same files.
@@ -368,6 +369,16 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     content: renderChangelogContent(renderChangelogHtml(changelogMd)),
   })
 
+  const docsUrl = `${SITE}/docs/`
+  page(path.join('docs', 'index.html'), {
+    title: DOCS_TITLE,
+    description: DOCS_DESCRIPTION,
+    canonical: docsUrl,
+    ogImage: DEFAULT_OG,
+    jsonLd: [breadcrumbLd([HOME_CRUMB, { name: 'Docs', url: docsUrl }])],
+    content: renderDocsContent(),
+  })
+
   for (const slug of SITE_PAGES) {
     const doc = parseSitePage(readFileSync(path.join(root, 'src', 'app', 'pages', 'content', `${slug}.md`), 'utf8'))
     const url = `${SITE}/${slug}/`
@@ -409,6 +420,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? buildDate
   const sitemapUrls: SitemapUrl[] = [
     { loc: `${SITE}/`, lastmod: buildDate },
+    { loc: docsUrl, lastmod: buildDate },
     { loc: utilitiesUrl, lastmod: buildDate },
     ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: buildDate })),
     { loc: blogUrl, lastmod: buildDate },

@@ -6,7 +6,7 @@ import type { UtilityMeta } from '../../src/core/registry'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
 import { buildSeo, SITE } from './build'
 import { parseGuide } from '../../src/app/pages/guide'
-import { POPULAR_UTILITY_IDS, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
+import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
 import { SITE_PAGES } from '../../src/lib/router'
 import { resolveOg, resolveOutDir } from '../build-seo'
 
@@ -118,15 +118,15 @@ describe('buildSeo over a built dist/', () => {
     result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: m => logs.push(m) })
   }, 60000)
 
-  it('writes one crawlable page per utility, plus the index, blog, changelog, site pages and 404', () => {
+  it('writes one crawlable page per utility, plus the index, blog, changelog, docs, site pages and 404', () => {
     const utilDirs = readdirSync(path.join(dist, 'util'))
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
-    for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html',
+    for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
       'about/index.html', 'privacy/index.html', 'contact/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + 9)
+    expect(result.pages).toBe(MANIFEST.length + 10)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -196,13 +196,38 @@ describe('buildSeo over a built dist/', () => {
   })
 
   it('surrounds every pre-rendered page with the site nav and footer links', () => {
-    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'privacy/index.html', '404.html']) {
+    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
       expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/'])
-      expect([...doc.querySelectorAll('#root header nav a')].map(a => a.getAttribute('href')), rel)
-        .toEqual(['/', '/utilities/', '/blog/', '/changelog/'])
+      expect([...doc.querySelectorAll('#root > header nav a')].map(a => a.getAttribute('href')), rel)
+        .toEqual(['/', '/docs/', '/utilities/', '/blog/', '/changelog/'])
     }
+  })
+
+  it('pre-renders the usage guide from the Docs component, with the head the app sets at runtime', () => {
+    const doc = html(read(dist, 'docs/index.html'))
+    expect(doc.title).toBe(DOCS_TITLE)
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe(DOCS_DESCRIPTION)
+    expect(doc.querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`${SITE}/docs/`)
+    expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/default.png`)
+    const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
+    expect(ld).toEqual([expect.objectContaining({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Docs', item: `${SITE}/docs/` },
+      ],
+    })])
+    const main = doc.querySelector('#root main')!
+    expect([...main.querySelectorAll('h1')].map(h => h.textContent)).toEqual(['How to use String Utility Belt'])
+    expect(main.querySelector('section#utilities h2')?.textContent).toBe('Utility reference')
+    // crawlable paths only: no #/ route links left in the static page
+    const hrefs = [...doc.querySelectorAll('#root a')].map(a => a.getAttribute('href'))
+    expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/']))
+    expect(hrefs.filter(h => h?.includes('#'))).toEqual([])
+    expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
   })
 
   it('pre-renders the about, privacy and contact pages from their markdown', () => {
@@ -268,10 +293,12 @@ describe('buildSeo over a built dist/', () => {
     const locs = [...doc.getElementsByTagName('loc')].map(l => l.textContent)
     expect(locs).toHaveLength(result.sitemapUrls)
     expect(locs).toEqual(expect.arrayContaining([
-      `${SITE}/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
+      `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
       `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`,
     ]))
+    // every page `pages` counts but the 404, plus the home page (written apart from the count)
+    expect(locs).toHaveLength(result.pages - 1 + 1)
     expect(locs).not.toContain(`${SITE}/404.html`)
     expect(locs.filter(l => l?.startsWith(`${SITE}/util/`))).toHaveLength(MANIFEST.length)
     const lastmods = [...doc.getElementsByTagName('lastmod')].map(l => l.textContent)
@@ -298,9 +325,10 @@ describe('buildSeo over a built dist/', () => {
   })
 
   it('is idempotent: a second run over its own output changes nothing', async () => {
-    const before = ['index.html', 'util/trim/index.html', 'changelog/index.html', 'sitemap.xml', 'rss.xml'].map(f => read(dist, f))
+    const files = ['index.html', 'util/trim/index.html', 'changelog/index.html', 'docs/index.html', 'sitemap.xml', 'rss.xml']
+    const before = files.map(f => read(dist, f))
     await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent })
-    const after = ['index.html', 'util/trim/index.html', 'changelog/index.html', 'sitemap.xml', 'rss.xml'].map(f => read(dist, f))
+    const after = files.map(f => read(dist, f))
     expect(after).toEqual(before)
     expect(html(after[1]).querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
   }, 60000)

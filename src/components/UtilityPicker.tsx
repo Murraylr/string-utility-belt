@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, Search, Plus, Star, Clock } from 'lucide-react'
 import { registry } from '@/app/registry'
+import { utilityPath } from '@/app/pages/related'
 import type { UtilityMeta } from '@/core/registry'
 import { compatibility } from '@/core/coerce'
 import type { ValueType } from '@/types/utility'
@@ -59,7 +60,9 @@ const PickerCard = memo(function PickerCard({
       onMouseEnter={() => onHover(index)}
       // keep focus in the search box so the arrow keys keep working after a click
       onMouseDown={e => e.preventDefault()}
-      onClick={() => onPick(meta.id)}
+      // a click on the docs link is not a pick. Not stopped at the link instead: the click
+      // must bubble on to the document, where AppShell's handler follows it in-app
+      onClick={e => { if (!(e.target as Element).closest('a')) onPick(meta.id) }}
       className={`text-left p-4 rounded-2xl border cursor-pointer transition ${active ? 'border-primary-600 bg-surface-2 shadow-glow' : 'bg-surface hover:border-primary-600'}`}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -98,12 +101,11 @@ const PickerCard = memo(function PickerCard({
       <div className="mt-3 flex items-center justify-between gap-2 text-sm">
         <span className="flex items-center gap-2 text-primary-600"><Plus size={14} aria-hidden /> add</span>
         <a
-          href={`#/util/${encodeURIComponent(meta.id)}`}
+          href={utilityPath(meta.id)}
           aria-label={`${meta.name} docs`}
           // same single Tab stop as the favorite toggle
           tabIndex={active ? 0 : -1}
           className="inline-flex items-center gap-1 text-xs text-muted hover:text-primary-600 hover:underline"
-          onClick={e => e.stopPropagation()}
         >
           <BookOpen size={12} aria-hidden /> docs
         </a>

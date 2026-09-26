@@ -3,6 +3,7 @@ import { BookOpen, ChevronDown, ChevronUp, Diff as DiffIcon, Trash2 } from 'luci
 import { formatForDisplay, valueType } from '@/core/coerce'
 import type { UtilityStep, Value } from '@/types/utility'
 import { registry } from '@/app/registry'
+import { utilityPath } from '@/app/pages/related'
 import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useOptionalTool } from '@/app/ToolContext'
 import AdvancedSection from '@/app/tool/steps/AdvancedSection'
@@ -119,7 +120,7 @@ export default function StepCard({
           <Select id={utilityFieldId} value={step.utilityId} onChange={onChangeUtil} options={options} className="w-full" />
           <div className="text-xs text-muted mt-1">{meta?.description ?? `unknown utility "${step.utilityId}"`}</div>
           {meta && (
-            <a className="text-xs text-primary-600 hover:underline inline-flex items-center gap-1 mt-1" href={`#/util/${encodeURIComponent(meta.id)}`}>
+            <a className="text-xs text-primary-600 hover:underline inline-flex items-center gap-1 mt-1" href={utilityPath(meta.id)}>
               <BookOpen size={12} aria-hidden /> {meta.name} docs
             </a>
           )}

@@ -141,11 +141,11 @@ describe('router: site pages, 404 paths and in-app links', () => {
   })
 
   it('takes over links to the home page and every pre-rendered page, not files or other URLs', () => {
-    for (const href of ['/', '/utilities/', '/utilities', '/util/base64_encode/', '/util/trim', '/blog/', '/blog/a-post/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
+    for (const href of ['/', '/docs/', '/docs', '/utilities/', '/utilities', '/util/base64_encode/', '/util/trim', '/blog/', '/blog/a-post/', '/changelog/', '/about/', '/privacy/', '/contact/']) {
       expect(isInAppPath(href), href).toBe(true)
     }
     for (const href of ['/blog/a-post.md', '/blog/_manifest.json', '/guides/trim.md', '/api/utilities', '/rss.xml', '/#/p/x', '/?q=1',
-      'https://stringutilitybelt.com/utilities/', '//evil.example/', '#/utilities', 'mailto:a@b.c', '/util/a/b/']) {
+      'https://stringutilitybelt.com/utilities/', '//evil.example/', '#/utilities', 'mailto:a@b.c', '/util/a/b/', '/docs/a/', '/#/docs']) {
       expect(isInAppPath(href), href).toBe(false)
     }
   })
@@ -170,9 +170,19 @@ describe('router: site pages, 404 paths and in-app links', () => {
 })
 
 describe('router docs route', () => {
-  it('matches #/docs', () => {
+  afterEach(() => { location.hash = ''; history.replaceState(null, '', '/') })
+
+  it('routes the pre-rendered /docs/ path', () => {
+    history.replaceState(null, '', '/docs/')
+    expect(getRoute()).toEqual({ name: 'docs', params: {} })
+    history.replaceState(null, '', '/docs')
+    expect(getRoute().name).toBe('docs')
+    history.replaceState(null, '', '/docs/extra/')
+    expect(getRoute().name).toBe('notFound')
+  })
+
+  it('still matches the old #/docs links', () => {
     location.hash = '#/docs'
     expect(getRoute().name).toBe('docs')
-    location.hash = ''
   })
 })

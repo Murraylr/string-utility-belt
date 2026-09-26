@@ -28,9 +28,9 @@ describe('StepCard', () => {
     expect(screen.getByText('step 1')).toBeTruthy()
   })
 
-  it('links to the utility docs page', () => {
+  it('links to the utility docs page by its crawlable path', () => {
     render(<StepCard {...baseProps} />)
-    expect(screen.getByRole('link', { name: /docs$/ })).toHaveAttribute('href', '#/util/trim')
+    expect(screen.getByRole('link', { name: /docs$/ })).toHaveAttribute('href', '/util/trim/')
   })
 
   it('shows no docs link for an unknown utility', () => {
