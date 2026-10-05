@@ -6,12 +6,13 @@
  * 429 rate limited · 502 upstream failure · 503 proxy disabled (FETCH_PROXY=off) · 504 timeout.
  *
  * It is not an open proxy: only this site's own pages may call it (no CORS headers
- * are ever sent, and cross-site browser requests are refused), every hop's host and
- * port are vetted by `checkTarget` (see ./ssrf.ts), and nothing from the caller —
- * cookies, authorization, other headers — is forwarded upstream. Headers are advisory
- * for non-browser clients, so the per-isolate rate limit (per IP, per /64 for IPv6) is
- * the only brake on scripted abuse, and it is best-effort: real rate limiting needs a
- * Cloudflare WAF rate-limiting rule on this path.
+ * are ever sent, and every request must carry `Sec-Fetch-Site: same-origin`, which
+ * browsers set themselves and pages cannot forge, so cross-site pages and header-less
+ * scripts are refused), every hop's host and port are vetted by `checkTarget` (see
+ * ./ssrf.ts), and nothing from the caller — cookies, authorization, other headers — is
+ * forwarded upstream. A script can still send the header by hand, so the per-isolate
+ * rate limit (per IP, per /64 for IPv6) remains the brake on deliberate abuse, and it
+ * is best-effort: real rate limiting needs a Cloudflare WAF rate-limiting rule on this path.
  */
 import type { ApiEnv, UpstreamFetch } from './env'
 import { TooLargeError, contentLength, jsonError, readCapped, untilAborted } from './http'
@@ -57,8 +58,9 @@ const FETCH_MODES = new Set(['cors', 'same-origin'])
  * looped through another hostname of this deployment.
  */
 function refusalReason(request: Request): string | null {
-  const site = request.headers.get('sec-fetch-site')
-  if (site !== null && site !== 'same-origin') return 'the fetch proxy only serves pages on this site'
+  // every browser this site supports sends Sec-Fetch-Site (Safari since 16.4); a request
+  // without it is a script, not one of our pages
+  if (request.headers.get('sec-fetch-site') !== 'same-origin') return 'the fetch proxy only serves pages on this site'
   const origin = request.headers.get('origin')
   if (origin !== null && origin !== new URL(request.url).origin) return 'the fetch proxy only serves pages on this site'
   const dest = request.headers.get('sec-fetch-dest')

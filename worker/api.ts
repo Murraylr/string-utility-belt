@@ -13,7 +13,7 @@ import { staticRegistry } from '../src/utilities/static-registry'
 import type { ApiEnv, ApiOptions } from './env'
 import { handleFetchProxy } from './fetch-proxy'
 import { CORS_HEADERS, jsonError } from './http'
-import { createRateLimiter } from './rate-limit'
+import { createRateLimiter, rateLimitKey } from './rate-limit'
 import { handleRun } from './run'
 import { handleUtilities } from './utilities'
 
@@ -42,6 +42,7 @@ export function createApi(opts: ApiOptions = {}): Api {
   }
   const examples = opts.examples ?? EXAMPLES
   const limiter = createRateLimiter({ ...(opts.rateLimit ?? { limit: 30, windowMs: 60_000 }), now: opts.now })
+  const runLimiter = createRateLimiter({ ...(opts.runRateLimit ?? { limit: 60, windowMs: 60_000 }), now: opts.now })
 
   async function route(request: Request, url: URL, env: ApiEnv): Promise<Response> {
     const path = url.pathname
@@ -50,6 +51,10 @@ export function createApi(opts: ApiOptions = {}): Api {
     if (isRun(path)) {
       if (method === 'OPTIONS') return preflight()
       if (method !== 'POST') return cors(jsonError(405, 'use POST', {}, { allow: 'POST, OPTIONS' }))
+      const wait = runLimiter.hit(rateLimitKey(request.headers.get('cf-connecting-ip')))
+      if (wait) {
+        return cors(jsonError(429, `too many runs; try again in ${wait} s`, {}, { 'retry-after': String(wait) }))
+      }
       return cors(await handleRun(request, {
         registry,
         maxBodyBytes: opts.maxBodyBytes ?? MB,

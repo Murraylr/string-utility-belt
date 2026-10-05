@@ -231,6 +231,17 @@ const sizeOf = (v: Value): number | null =>
  * '<'); marked's emphasis scan is quadratic on '*'/'_' runs (8.5 s at 32k); base58/62
  * are BigInt base conversions (O(n²)).
  */
+/**
+ * Output-size predictions for utilities whose output is a multiple of their input, so an
+ * oversized result is refused before it is built rather than measured afterwards.
+ */
+const OUTPUT_ESTIMATES: Readonly<Record<string, (inSize: number, params: any) => number>> = {
+  repeat: (inSize, { count, separator }) => {
+    const n = Math.max(0, Math.floor(Number(count) || 0))
+    return n * inSize + Math.max(0, n - 1) * String(separator ?? '').length
+  },
+}
+
 export const INPUT_CAPS: Readonly<Record<string, number>> = {
   sql_format: 4_000,
   markdown_to_html: 20_000,
@@ -245,8 +256,8 @@ export const INPUT_CAPS: Readonly<Record<string, number>> = {
  * but nothing bounds growth: a 1 MB input through seven doubling steps (hex_encode…)
  * passes the isolate's 128 MB and takes every in-flight request with it. An oversized
  * output becomes that step's error, so the runner drops it and applies the step's
- * error policy. The check runs after the step, so one amplifying step (a huge repeat
- * count) still allocates once; only the Workers memory limit stops that.
+ * error policy. The check runs after the step, except for the multipliers in
+ * OUTPUT_ESTIMATES, which are refused up front so one huge repeat never allocates.
  */
 function bounded(util: Utility, max: number): Utility {
   const cap = Object.prototype.hasOwnProperty.call(INPUT_CAPS, util.id) ? INPUT_CAPS[util.id] : undefined
@@ -257,11 +268,13 @@ function bounded(util: Utility, max: number): Utility {
       if (cap !== undefined && inSize !== null && inSize > cap) {
         throw new Error(`${util.id} accepts at most ${cap} characters or bytes on this server (got ${inSize}); run it locally for larger inputs`)
       }
+      const estimate = Object.prototype.hasOwnProperty.call(OUTPUT_ESTIMATES, util.id) && inSize !== null
+        ? OUTPUT_ESTIMATES[util.id](inSize, params) : null
+      const tooLarge = () => new Error(`the step's output is larger than the server's limit of ${max} characters or bytes`)
+      if (estimate !== null && estimate > max) throw tooLarge()
       const out = await util.apply(input, params, ctx)
       const size = sizeOf(out)
-      if (size !== null && size > max) {
-        throw new Error(`the step's output is larger than the server's limit of ${max} characters or bytes`)
-      }
+      if (size !== null && size > max) throw tooLarge()
       return out
     },
   }
@@ -341,7 +354,7 @@ export async function handleRun(request: Request, deps: RunDeps): Promise<Respon
     result = await Promise.race([
       runPipeline(input.value, steps, {
         load: async id => bounded(await registry.load(id), deps.maxValueSize),
-        signal: ctrl.signal, env: 'edge', clock: deps.clock,
+        signal: ctrl.signal, env: 'edge', clock: deps.clock, maxValueSize: deps.maxValueSize,
       }),
       untilAborted(ctrl.signal),
     ])

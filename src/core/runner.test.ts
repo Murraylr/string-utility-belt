@@ -154,6 +154,14 @@ describe('runPipeline', () => {
       expect(zipped).toBe('a\n1\nb\n2\nc')
     })
 
+    it('refuses a merge whose lanes add up past maxValueSize before joining them; pick is exempt', async () => {
+      // 'abcd' → 'ABCD' and 'dcba!': each lane fits in 6, together they do not
+      const r = await runPipeline('abcd', [branch({ mode: 'concat', separator: '' })], { load, maxValueSize: 6 })
+      expect(r.err.br).toMatch(/output is too large \(9 characters; the limit is 6 characters\)/)
+      expect(r.out).toBe('abcd')
+      expect((await runPipeline('abcd', [branch({ mode: 'pick', index: 1 })], { load, maxValueSize: 6 })).out).toBe('dcba!')
+    })
+
     it('reports a pick beyond the last branch as the branch step\'s error', async () => {
       const r = await runPipeline('ab', [branch({ mode: 'pick', index: 5 })], { load })
       expect(r.err.br).toMatch(/does not exist/)

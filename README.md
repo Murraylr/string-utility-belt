@@ -1,5 +1,11 @@
 # String Utility Belt
 
+[![CI](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml/badge.svg)](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![npm: subelt](https://img.shields.io/npm/v/subelt?label=subelt)](https://www.npmjs.com/package/subelt)
+
+**[stringutilitybelt.com](https://stringutilitybelt.com)** · [Usage guide](https://stringutilitybelt.com/docs/) · [All utilities](https://stringutilitybelt.com/utilities/)
+
 Chain string transformations into visual pipelines with live, per-step previews. 246 utilities —
 encodings, hashes, ciphers, compression, data formats (JSON/YAML/TOML/CSV/XML), line and text
 operations, analysis, generators, web/dev helpers, numbers, dates and colours — all running
@@ -27,14 +33,27 @@ extension and a VS Code extension.
 
 ## Using the app
 
-The how-to guide lives in the app itself: click **Docs** in the header, or go to `/docs/`
-([`src/components/Docs.tsx`](src/components/Docs.tsx)). Each utility's settings and examples are on
-its own page, listed at `/utilities/`.
+Open [stringutilitybelt.com](https://stringutilitybelt.com) — nothing to install, and every
+transformation runs in your browser (see the [privacy policy](https://stringutilitybelt.com/privacy/)
+for the few features that contact the server). The how-to guide lives in the app
+itself: click **Docs** in the header, or go to [`/docs/`](https://stringutilitybelt.com/docs/). Each
+utility's settings and examples are on its own page, listed at
+[`/utilities/`](https://stringutilitybelt.com/utilities/).
+
+From a terminal, the same engine is one command away:
+
+```bash
+echo -n hello | npx subelt trim base64_encode hash   # SHA-256 of the base64
+```
 
 ## Development
 
+Requires Node.js 20.19+ or 22.12+.
+
 ```bash
-npm install
+git clone https://github.com/Murraylr/string-utility-belt.git
+cd string-utility-belt
+npm ci
 npm run dev          # generates the utility manifest, then starts Vite
 npm test             # Vitest (unit, component, golden-example and property tests)
 npm run lint
@@ -64,10 +83,14 @@ npm run typecheck
 | Browser extension | [`packages/extension`](packages/extension/README.md) | MV3; context menu "run on selection" |
 | VS Code extension | [`packages/vscode`](packages/vscode/README.md) | Transform selection, run a share link |
 
-## Adding a utility
+## Contributing
 
-Create `src/utilities/<id>/index.ts` with a default-exported `Utility` (see
-[`src/types/utility.ts`](src/types/utility.ts)) and a colocated `index.test.ts`, then run
-`npm run gen`. Every utility needs a description, at least three lowercase `tags` and at least one
-worked `example` (examples run as tests and render on the doc page). See [CLAUDE.md](CLAUDE.md) for
-the conventions.
+Contributions are welcome — bug reports, utility ideas and pull requests. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md) (setup, adding a utility, PR checklist) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). [CLAUDE.md](CLAUDE.md) is the detailed architecture reference.
+
+Found a security issue? Please report it privately — see [SECURITY.md](SECURITY.md).
+
+## License
+
+[MIT](LICENSE)

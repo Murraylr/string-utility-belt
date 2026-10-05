@@ -1,0 +1,30 @@
+name: Utility or feature request
+description: Suggest a new utility, a new option for an existing one, or a feature.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: The transformation or feature you need, and the problem it solves.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: A short input and the output you expect.
+      placeholder: |
+        Input:  hello world
+        Output: HELLO WORLD
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Existing utilities you tried
+      description: Utilities or pipelines that come close, if any, and what they are missing.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to implement this myself (see CONTRIBUTING.md)

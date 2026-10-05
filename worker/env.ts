@@ -44,6 +44,8 @@ export interface ApiOptions {
   maxFetchBytes?: number
   maxRedirects?: number
   rateLimit?: { limit: number; windowMs: number }
+  /** POST /api/run, per client IP (a bucket separate from the fetch proxy's). */
+  runRateLimit?: { limit: number; windowMs: number }
   /** Rate-limiter clock. */
   now?: () => number
   /** Defaults to the global `fetch`, looked up per call so tests can stub it. */

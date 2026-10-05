@@ -54,6 +54,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
+- `POST /api/run` is now rate-limited per client IP (60 runs a minute), like the fetch proxy; it answers
+  `429` with `retry-after` beyond that.
+- The fetch proxy (`GET /api/fetch`) now refuses requests without `Sec-Fetch-Site: same-origin`, so
+  scripts and other header-less clients can no longer use it as a general-purpose proxy.
+- The HTTP API refuses a `repeat` step or a branch merge that would pass its 8 MiB output limit before
+  building the oversized value, instead of allocating it first and risking the Worker's memory limit.
 - Share links, embeds and imports: select params naming an `Object.prototype` member are refused (a
   `base58_encode` alphabet of `constructor` looped until the tab died); 27 utilities' quadratic regexes
   rewritten to linear forms; a pipeline that crashes the background worker is no longer replayed on the

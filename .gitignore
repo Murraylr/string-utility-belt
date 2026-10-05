@@ -34,3 +34,9 @@ dist-ssr
 test-results/
 playwright-report/
 blob-report/
+
+# build caches and packaged artifacts
+*.tsbuildinfo
+*.vsix
+*.tgz
+worker-dry/

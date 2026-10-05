@@ -3,7 +3,7 @@
  *
  * Cloudflare runs many isolates across many locations and recycles them freely, so
  * this only slows down a single client hammering one isolate; it is not a quota.
- * Real enforcement belongs in a Cloudflare WAF rate-limiting rule on `/api/fetch`.
+ * Real enforcement belongs in Cloudflare WAF rate-limiting rules on `/api/fetch` and `/api/run`.
  */
 import { parseIPv6 } from './ssrf'
 

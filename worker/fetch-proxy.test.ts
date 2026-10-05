@@ -276,7 +276,7 @@ describe('GET /api/fetch: input validation', () => {
   })
 
   it('requires the url parameter', async () => {
-    const res = await call(new Request(`${ORIGIN}/api/fetch`, { headers: { 'cf-connecting-ip': freshIp() } }))
+    const res = await call(new Request(`${ORIGIN}/api/fetch`, { headers: { ...BROWSER_FETCH, 'cf-connecting-ip': freshIp() } }))
     expect(res.status).toBe(400)
   })
 
@@ -334,12 +334,14 @@ describe('GET /api/fetch: abuse controls', () => {
     }
   })
 
-  it('serves same-origin browser requests and header-less clients', async () => {
+  it('serves same-origin browser requests, and refuses header-less clients (curl, scripts)', async () => {
     upstream.mockImplementation(async () => reply('ok'))
     const sameOrigin = await call(proxyRequest('https://example.com/', { origin: ORIGIN }))
     expect(sameOrigin.status).toBe(200)
     const bare = await call(new Request(`${ORIGIN}/api/fetch?url=https://example.com/`, { headers: { 'cf-connecting-ip': freshIp() } }))
-    expect(bare.status).toBe(200)
+    expect(bare.status).toBe(403)
+    expect((await bare.json() as any).error).toMatch(/only serves pages on this site/)
+    expect(upstream).toHaveBeenCalledTimes(1) // the same-origin request only
   })
 
   it('answers 503 when FETCH_PROXY is off', async () => {

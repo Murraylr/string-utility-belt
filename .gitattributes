@@ -1,0 +1,13 @@
+# Normalize line endings: LF in the repository and in every working copy, so generated
+# files (src/utilities/_generated/*) match on Windows too.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.wasm binary
+*.vsix binary

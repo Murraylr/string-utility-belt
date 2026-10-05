@@ -1,20 +1,21 @@
 # subelt
 
-Run a [String Utility Belt](../..) pipeline from the shell — the same 245+
+Run a [String Utility Belt](https://stringutilitybelt.com) pipeline from the shell — the same 246
 utilities and pipeline engine as the web app, built on
-[`@string-utility-belt/core`](../core).
+[`@string-utility-belt/core`](https://www.npmjs.com/package/@string-utility-belt/core).
+
+```bash
+npm install -g subelt        # or run it without installing: npx subelt …
+echo hi | subelt base64_encode
+# aGkK
+```
+
+Requires Node.js 20 or later. From a checkout of the [monorepo](https://github.com/Murraylr/string-utility-belt), build and
+run it in place instead:
 
 ```bash
 npm run build:cli
 echo hi | node packages/cli/dist/subelt.mjs base64_encode
-# aGkK
-```
-
-Once installed as a package (`npm i -g subelt`, or run in place with `npx subelt`
-from this repo once it's linked), the same thing is just:
-
-```bash
-echo hi | subelt base64_encode
 ```
 
 ## Usage
@@ -140,7 +141,7 @@ or array a utility produced, e.g. `csv_to_json`) is always pretty-printed.
 ```bash
 echo hi | subelt base64_encode
 subelt -t 'a,b' csv_to_json
-subelt --share 'https://string-utility-belt.example/#/p/N4Ig…' < in.txt
+subelt --share 'https://stringutilitybelt.com/#/p/N4Ig…' < in.txt
 subelt -i photo.png mime_from_magic
 subelt -t hi get_bytes --display
 subelt -p my-pipeline.json -i input.txt -o output.txt

@@ -23,6 +23,8 @@ export interface RunOptions {
   onStep?: (e: StepEvent) => void
   /** Millisecond clock for timings; defaults to performance.now. */
   clock?: () => number
+  /** Largest value any step may produce, in characters or bytes; defaults to MAX_VALUE_SIZE. */
+  maxValueSize?: number
 }
 
 export interface RunResult {
@@ -112,6 +114,14 @@ function sizeOf(v: Value): number {
   return 0
 }
 
+const human = (n: number) =>
+  n >= 1048576 ? `${Math.round(n / 1048576)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} characters`
+
+function checkSize(size: number, ctx: Ctx) {
+  const max = ctx.opts.maxValueSize ?? MAX_VALUE_SIZE
+  if (size > max) throw new Error(`output is too large (${human(size)}; the limit is ${human(max)})`)
+}
+
 /**
  * Declared number/range bounds are enforced, not just displayed: pipelines arrive
  * from share links, and `repeat` with count 1e9 must fail as a step error rather
@@ -153,8 +163,12 @@ async function runStep(step: PipelineStep, input: Value, ctx: Ctx): Promise<Valu
   const t0 = ctx.clock()
   try {
     if (isBranchStep(step)) {
-      const outs = await Promise.all(step.branches.map(b => runSequence(input, b, ctx)))
-      return mergeOutputs(outs.map(o => o.out), step.merge ?? { mode: 'concat' })
+      const outs = (await Promise.all(step.branches.map(b => runSequence(input, b, ctx)))).map(o => o.out)
+      // refuse before joining: each lane is within the limit, but merging them all would
+      // allocate their sum (plus the merged copy) before the step's output check runs
+      const merge = step.merge ?? { mode: 'concat' }
+      if (merge.mode !== 'pick') checkSize(outs.reduce((n, o) => n + sizeOf(o), 0), ctx)
+      return mergeOutputs(outs, merge)
     }
     if (isMacroStep(step)) return (await runSequence(input, step.steps, ctx)).out
     throw new Error(`unknown step type: ${(step as any).type}`)
@@ -189,10 +203,7 @@ async function runSequence(input: Value, steps: PipelineStep[], ctx: Ctx): Promi
         continue
       }
       const next = await runStep(step, out, ctx)
-      const size = sizeOf(next)
-      if (size > MAX_VALUE_SIZE) {
-        throw new Error(`output is too large (${(size / 1048576).toFixed(0)} MB; the limit is ${MAX_VALUE_SIZE / 1048576} MB)`)
-      }
+      checkSize(sizeOf(next), ctx)
       out = next
       if (opts.previews) res.previews[step.id] = out
       opts.onStep?.({ id: step.id, status: 'done', ms: res.timings[step.id] })

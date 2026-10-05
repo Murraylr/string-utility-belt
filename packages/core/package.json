@@ -5,6 +5,14 @@
   "author": "String Utility Belt",
   "license": "MIT",
   "homepage": "https://stringutilitybelt.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Murraylr/string-utility-belt.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Murraylr/string-utility-belt/issues"
+  },
   "keywords": [
     "string",
     "text",
@@ -39,5 +47,8 @@
   ],
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

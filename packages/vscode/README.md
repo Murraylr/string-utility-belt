@@ -74,9 +74,8 @@ npx @vscode/vsce package --no-dependencies
 ```
 
 `vsce` reads `package.json` and `.vscodeignore` (an allowlist: only `dist/extension.cjs`,
-its source map, `package.json`, `README.md` and `CHANGELOG.md` ship). It asks for
-confirmation when there is no `LICENSE` file or `repository` field in this directory —
-add them before publishing. Build first: there is no `vscode:prepublish` script.
+its source map, `package.json`, `README.md`, `CHANGELOG.md`, `LICENSE` and `icon.png` ship).
+Build first: there is no `vscode:prepublish` script.
 
 ## Development
 

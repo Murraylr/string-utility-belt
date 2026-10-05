@@ -14,10 +14,14 @@ import { bombPayload } from './test-utils'
 const ctx = { waitUntil() {}, passThroughOnException() {} } as ExecutionContext
 const ORIGIN = 'https://stringutilitybelt.com'
 
+// every request comes from its own client IP, so the per-IP rate limit never interferes
+let clients = 0
+const nextClientIp = () => `198.51.${(++clients >> 8) & 0xff}.${clients & 0xff}`
+
 function post(body: unknown, init: RequestInit = {}): Request {
   return new Request(`${ORIGIN}/api/run`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': nextClientIp() },
     body: typeof body === 'string' ? body : JSON.stringify(body),
     ...init,
   })
@@ -349,12 +353,31 @@ describe('POST /api/run: value size ceiling', () => {
     expect((await res.json() as any).errors.b).toMatch(/larger than/)
   })
 
-  it('answers 413 when the final output (e.g. a branch merge) passes the ceiling', async () => {
+  it('refuses a branch merge whose lanes add up past the ceiling, before joining them', async () => {
     const api = createApi({ maxValueSize: 1_000 })
     const lane = [{ utilityId: 'hex_encode' }] // 600 each
-    const res = await api.fetch(post({ input: 'a'.repeat(300), steps: [{ type: 'branch', merge: { mode: 'concat', separator: '' }, branches: [lane, lane] }] }))
+    const res = await api.fetch(post({ input: 'a'.repeat(300), steps: [{ id: 'br', type: 'branch', merge: { mode: 'concat', separator: '' }, branches: [lane, lane] }] }))
+    const data = await res.json() as any
+    expect(res.status).toBe(200)
+    expect(data.errors.br).toMatch(/output is too large/)
+    expect(data.output).toBe('a'.repeat(300)) // the branch step's error policy passes its input through
+  })
+
+  it('refuses a repeat whose output would pass the ceiling without building it', async () => {
+    const api = createApi({ maxValueSize: 1_000 })
+    const steps = (count: number) => [{ id: 'r', utilityId: 'repeat', params: { count, separator: '-' } }]
+    const over = await (await api.fetch(post({ input: 'a'.repeat(100), steps: steps(10) }))).json() as any
+    expect(over.errors.r).toMatch(/larger than the server's limit of 1000/) // 10 × 100 + 9 separators
+    const fits = await (await api.fetch(post({ input: 'a'.repeat(100), steps: steps(9) }))).json() as any
+    expect(fits.errors).toEqual({})
+    expect(fits.output).toHaveLength(908)
+  })
+
+  it('answers 413 when the final output passes the ceiling, with CORS', async () => {
+    const api = createApi({ maxValueSize: 60 })
+    const res = await api.fetch(post({ input: 'https://example.com:8080/a?x=1#f', steps: ['url_parse'] }))
     expect(res.status).toBe(413)
-    expect((await res.json() as any).error).toMatch(/output is larger than the server's limit of 1000/)
+    expect((await res.json() as any).error).toMatch(/output is larger than the server's limit of 60/)
     expect(res.headers.get('access-control-allow-origin')).toBe('*')
   })
 
@@ -576,6 +599,25 @@ describe('/api/run: HTTP semantics', () => {
     expect(res.status).toBe(405)
     expect(res.headers.get('allow')).toBe('POST, OPTIONS')
     expect(await res.json()).toHaveProperty('error')
+  })
+
+  it('rate-limits each client IP, with retry-after and CORS on the 429', async () => {
+    let now = 1_000_000
+    const api = createApi({ now: () => now, runRateLimit: { limit: 2, windowMs: 60_000 } })
+    const from = (ip: string) => api.fetch(post({ input: 'abc', steps: ['reverse'] }, {
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
+    }))
+    expect((await from('192.0.2.1')).status).toBe(200)
+    now += 30_000
+    expect((await from('192.0.2.1')).status).toBe(200)
+    const limited = await from('192.0.2.1')
+    expect(limited.status).toBe(429)
+    expect(limited.headers.get('retry-after')).toBe('30')
+    expect(limited.headers.get('access-control-allow-origin')).toBe('*')
+    expect((await limited.json() as any).error).toMatch(/too many runs/)
+    expect((await from('192.0.2.2')).status).toBe(200)
+    now += 30_001
+    expect((await from('192.0.2.1')).status).toBe(200)
   })
 
   it('accepts a form-encoded content type (curl -d) as long as the body is JSON', async () => {

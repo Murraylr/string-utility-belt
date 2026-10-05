@@ -1,0 +1,49 @@
+name: Bug report
+description: Something produces the wrong output, errors or misbehaves.
+labels: [bug]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did it happen?
+      options:
+        - Web app (stringutilitybelt.com)
+        - HTTP API (/api/*)
+        - CLI (subelt)
+        - MCP server
+        - Core library (@string-utility-belt/core)
+        - Browser extension
+        - VS Code extension
+    validations:
+      required: true
+  - type: input
+    id: utility
+    attributes:
+      label: Utility or feature
+      description: The utility id (e.g. `base64_decode`) or the feature (share links, library, magic decode, …).
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: >
+        A share link (Share in the tool) is the quickest way to show a pipeline. Only include your
+        input if it contains nothing private.
+      placeholder: |
+        1. Input: …
+        2. Add step …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. actual
+      description: What you expected to happen, and what happened instead (including any error message).
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and OS, or Node.js / VS Code version for the packages.
+      placeholder: Chrome 140 on Windows 11

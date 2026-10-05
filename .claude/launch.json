@@ -10,20 +10,6 @@
       ],
       "port": 5173,
       "autoPort": true
-    },
-    {
-      "name": "preview-build",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": [
-        "vite",
-        "preview",
-        "--outDir",
-        "C:/Users/Murray/AppData/Local/Temp/claude/D--Dev-Projects-string-utility-belt/991af933-f227-430e-83a5-c50f89517ca2/scratchpad/build-integ",
-        "--port",
-        "4180",
-        "--strictPort"
-      ],
-      "port": 4180
     }
   ]
 }

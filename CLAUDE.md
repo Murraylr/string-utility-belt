@@ -37,7 +37,8 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
   (`runPipeline(source, steps, { load, previews, signal, env, onStep })`), `serialize` (schema v2,
   migration, `#/p/…` share links bounded by `MAX_SHARE_CHARS`), `steps`, `sandbox`, `streaming`, `detect`.
 - The runner enforces declared number/range bounds as step errors and caps any step's output at
-  `MAX_VALUE_SIZE` (64 MiB). Steps can be utility steps, `branch` steps (parallel, merged
+  `MAX_VALUE_SIZE` (64 MiB; `maxValueSize` overrides it — the Worker uses 8 MiB), checking a branch's
+  lanes before merging them. Steps can be utility steps, `branch` steps (parallel, merged
   concat/zip/json/pick) or `macro` steps, each with an optional `condition` and `onError` policy
   (`passthrough` default, `stop`, `empty`).
 

@@ -18,6 +18,9 @@ describe('helpers', () => {
   it('bytesToHex', () => {
     expect(bytesToHex(new Uint8Array([0xde, 0xad]))).toBe('dead')
   })
+  it('bytesToHex of UTF-8 text', () => {
+    expect(bytesToHex(textToUint8Array('A'))).toBe('41')
+  })
   it('hexToBytes', () => {
     expect(Array.from(hexToBytes('dead'))).toEqual([0xde, 0xad])
   })

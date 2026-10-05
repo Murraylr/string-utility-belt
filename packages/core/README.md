@@ -1,7 +1,7 @@
 # @string-utility-belt/core
 
-The framework-free pipeline engine behind [String Utility Belt](https://github.com/),
-plus all of its 245+ string/data utilities, packaged for use outside the browser:
+The framework-free pipeline engine behind [String Utility Belt](https://stringutilitybelt.com) ([source](https://github.com/Murraylr/string-utility-belt)),
+plus all of its 246 string/data utilities, packaged for use outside the browser:
 Node scripts, servers, CLIs, other bundlers.
 
 It has no dependency on React, the DOM, or the web app — it's the same engine
@@ -11,8 +11,12 @@ one.
 
 ## Install
 
-This package is part of the `string-pipeline-workshop-pro` monorepo and isn't
-published yet. Build it locally:
+```bash
+npm install @string-utility-belt/core
+```
+
+Requires Node.js 20 or later. To build it from a checkout of the
+[monorepo](https://github.com/Murraylr/string-utility-belt) instead:
 
 ```bash
 npm run build:core                       # emits dist/index.mjs (+ lazily loaded chunks)
@@ -49,7 +53,7 @@ await run(input, { v: 2, steps: [{ id: 'a', utilityId: 'trim' }] })
 
 // 3. A share payload or a full share URL — the part after `#/p/` (or `#/embed/`)
 //    is decoded with decodeShare(), percent-decoded first if a chat app escaped it.
-await run(input, 'https://string-utility-belt.example/#/p/N4IgdghgtgpiBc...')
+await run(input, 'https://stringutilitybelt.com/#/p/N4IgdghgtgpiBc...')
 await run(input, 'N4IgdghgtgpiBc...')
 ```
 
