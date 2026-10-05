@@ -24,7 +24,7 @@ import type { Job, JobResult } from './jobs'
 import { MAX_INPUT_BYTES, MAX_OUTPUT_CHARS, MAX_PIPELINE_STEPS, TOOL_TIMEOUT_MS } from './limits'
 
 const SERVER_NAME = 'subelt'
-const SERVER_VERSION = '0.1.0'
+const SERVER_VERSION = '1.3.0'
 
 const textResult = (text: string): CallToolResult => ({ content: [{ type: 'text', text }] })
 const errorResult = (message: string): CallToolResult => ({ content: [{ type: 'text', text: message }], isError: true })

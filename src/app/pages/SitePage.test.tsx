@@ -11,7 +11,9 @@ describe('SitePage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Privacy Policy')
     expect(screen.getByRole('heading', { level: 2, name: 'Cookies, analytics and advertising' })).toBeTruthy()
     expect(screen.getAllByRole('listitem').length).toBeGreaterThan(5)
-    expect(screen.getByRole('link', { name: "Google's Ads Settings" }).getAttribute('href')).toBe('https://adssettings.google.com/')
+    for (const link of screen.getAllByRole('link', { name: "Google's Ads Settings" })) {
+      expect(link.getAttribute('href')).toBe('https://adssettings.google.com/')
+    }
     expect(document.title).toBe('Privacy Policy — String Utility Belt')
     unmount()
     expect(document.title).toBe('String Utility Belt')

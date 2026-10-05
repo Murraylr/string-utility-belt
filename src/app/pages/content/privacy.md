@@ -5,15 +5,16 @@ description: How String Utility Belt handles data: your text is processed in you
 
 # Privacy Policy
 
-*Last updated: 25 September 2026*
+*Last updated: 5 October 2026*
 
-String Utility Belt ("we", "us") runs the website at stringutilitybelt.com. This policy explains what information is collected when you use the site, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
+String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and publishes the String Utility Belt browser extension, VS Code extension, command-line tool (`subelt`), MCP server and code library. This policy explains what information is collected when you use the site or these tools, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
 
 ## The short version
 
-- The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except for the two features described under "Features that contact our server".
+- The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except as described under "Features that contact our server".
 - We use **Google Analytics** to understand how the site is used and **Google AdSense** to show the ads that keep it free. Both use cookies and similar technologies.
 - There are no user accounts, and we do not sell your personal information.
+- The browser extension, VS Code extension, command-line tool, MCP server and library run on your own device. They contain no analytics or ads and do not send your text anywhere, except when you choose to open text in the website (see "Browser and editor extensions and developer tools").
 
 ## Data that stays on your device
 
@@ -29,10 +30,29 @@ When you create a share link, your pipeline — and your input, if you choose to
 
 - **Fetching a web address.** When you load input from a URL, your browser first tries to fetch it directly. If the other site does not allow that, the request goes through our fetch proxy, which retrieves the address on your behalf and passes the response back to you. The proxy sees the address you requested and your IP address; it does not keep the content it fetches.
 - **The public API.** Developers can send text to our HTTP API to run a pipeline. Requests are processed in memory and are not stored.
+- **Text sent to the site in its web address.** When you share text into the installed app from your device's share menu, or use the browser extension's "Open in String Utility Belt", the text is placed in the page address (`?text=…`), so it is sent to our host along with the request for the page, and may appear in the short-lived operational logs described next. The site then processes it in your browser like any other input. Our analytics never report it: only the page path and campaign tags are sent to Google Analytics.
 
-To protect these two features from abuse, your IP address is used for rate limiting. It is held briefly in memory and is not written to storage. Requests to them may also appear in short-lived operational logs (for example the requested address, the time and the response status), which we use only to keep the service running and secure, and which are deleted automatically.
+To protect the fetch proxy and the API from abuse, your IP address is used for rate limiting. It is held briefly in memory and is not written to storage. Requests to them, and page requests that carry text in their address, may also appear in short-lived operational logs (for example the requested address, the time and the response status), which we use only to keep the service running and secure, and which are deleted automatically.
 
 The site is hosted by Cloudflare, which processes every request to deliver the site and protect it from attacks. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
+
+## Browser and editor extensions and developer tools
+
+### Browser extension
+
+The String Utility Belt extension for Chrome, Edge and other browsers runs every transformation inside the extension, on your device.
+
+- **Text it reads.** It reads the text you have selected (or the text field you right-clicked) only when you choose one of its menu items, and only to transform it. It never reads password fields.
+- **Where results go.** The result replaces your selection in the page, or is copied to your clipboard when it cannot be inserted.
+- **What it stores.** Your choice of menu utilities and the website address it opens are kept in your browser's extension storage, which your browser may sync between your devices if you have turned on browser sync. The last result it could not insert (or the input of a failed run) is kept on your device so the toolbar popup can show it, until it is replaced by the next one. Removing the extension deletes all of this.
+- **Network.** The extension makes no network requests and contains no analytics, ads or tracking. The one exception is "Open in String Utility Belt", which opens the website in a new tab with your selected text in the address, as described under "Features that contact our server"; from then on the website's own practices in this policy apply.
+- **Permissions.** It asks for the context menu (to add its right-click items), storage (for the settings above), access to the active tab and scripting (to read and replace the selection in the page you are using, only when you pick a menu item), and clipboard writing (to copy results).
+
+The extension does not sell or transfer your data to anyone, and uses it for nothing other than the transformation you chose.
+
+### VS Code extension, command-line tool, MCP server and library
+
+These run entirely on your computer, on the text you give them, and make no network requests. They contain no analytics, telemetry or ads. The only thing any of them keeps is the VS Code extension's list of your recently used utilities, stored by VS Code on your computer. The MCP server only receives what the AI application you connect it to sends it, and returns results only to that application.
 
 ## Cookies, analytics and advertising
 

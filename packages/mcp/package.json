@@ -1,17 +1,37 @@
 {
   "name": "@string-utility-belt/mcp",
-  "version": "0.1.0",
   "description": "MCP server exposing String Utility Belt's utilities and pipelines as tools for AI agents.",
-  "private": true,
+  "version": "1.3.0",
+  "mcpName": "com.stringutilitybelt/mcp",
+  "author": "String Utility Belt",
+  "license": "MIT",
+  "homepage": "https://stringutilitybelt.com",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "ai",
+    "agent",
+    "llm",
+    "claude",
+    "string",
+    "text",
+    "transform",
+    "encoding",
+    "hashing",
+    "base64",
+    "json",
+    "pipeline"
+  ],
   "type": "module",
   "bin": {
     "subelt-mcp": "./dist/server.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.1",
-    "zod": "^4.6.5"
+  "engines": {
+    "node": ">=20"
   }
 }

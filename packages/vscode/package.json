@@ -5,6 +5,27 @@
   "publisher": "stringutilitybelt",
   "version": "1.3.0",
   "private": true,
+  "author": "String Utility Belt",
+  "license": "MIT",
+  "homepage": "https://stringutilitybelt.com",
+  "keywords": [
+    "string",
+    "text",
+    "transform",
+    "encode",
+    "decode",
+    "base64",
+    "hex",
+    "hash",
+    "sha256",
+    "url encode",
+    "json",
+    "yaml",
+    "case",
+    "cipher",
+    "pipeline"
+  ],
+  "icon": "icon.png",
   "type": "module",
   "engines": {
     "vscode": "^1.85.0"
