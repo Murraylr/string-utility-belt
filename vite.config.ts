@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import { utilityManifest } from './scripts/vite-plugin-utilities'
@@ -34,6 +35,10 @@ export default defineConfig(async ({ mode }) => {
       // suites that lazy-load utility chunks run several seconds on a busy or
       // 2-core CI machine; 5 s (the default) makes them flaky rather than faster
       testTimeout: 15000,
+      // .claude/worktrees holds other agents' git worktrees, each resolving its own node_modules
+      // (duplicate React → "Invalid hook call"). `vitest bench` swaps in benchmark.exclude, so repeat it.
+      exclude: [...configDefaults.exclude, '.claude/**'],
+      benchmark: { exclude: [...configDefaults.exclude, '.claude/**'] },
     },
     // honour PORT so a preview harness can assign a free port
     server: process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : undefined,

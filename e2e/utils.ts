@@ -10,6 +10,21 @@ import { type Page } from '@playwright/test'
 /** The pipeline's result region — every page that runs a pipeline names it "result". */
 export const result = (page: Page) => page.getByRole('region', { name: 'result' })
 
+/**
+ * The result's exact text (newlines, indentation) in either view. Highlighted kinds (JSON, XML,
+ * YAML…) show a `<pre>`, then swap to lazily-loaded CodeMirror, whose textContent adds the
+ * line-number gutter and drops line breaks — `toHaveText` on `result()` passes only if it polls
+ * before the swap. Poll this instead: `expect.poll(() => resultText(page)).toBe(…)`. Reads the
+ * rendered lines via CodeMirror's documented `cm-content`/`cm-line` classes (library API, not app
+ * markup); CodeMirror virtualizes long documents, so keep highlighted outputs short.
+ */
+export function resultText(page: Page): Promise<string> {
+  return result(page).evaluate(region => {
+    const lines = region.querySelectorAll('.cm-content > .cm-line')
+    return lines.length ? Array.from(lines, line => line.textContent ?? '').join('\n') : region.textContent ?? ''
+  })
+}
+
 /** The output panel's char/word/byte readout (the input panel has one too; this is the last on the page). */
 export const outputStats = (page: Page) => page.locator('[data-testid="stats-bar"]').last()
 

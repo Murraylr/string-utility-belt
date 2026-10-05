@@ -1,6 +1,6 @@
 /** roadmap §13.3 — Magic auto-detect: "Decode all the way" on base64-of-JSON. */
 import { test, expect } from '@playwright/test'
-import { result, setInput } from './utils'
+import { resultText, setInput } from './utils'
 
 test.describe('magic', () => {
   test('paste base64-of-JSON, run Magic, "Decode all the way" produces the pretty JSON', async ({ page }) => {
@@ -20,7 +20,8 @@ test.describe('magic', () => {
     await expect(dialog).toBeHidden()
 
     await expect(page.locator('[data-step-id]')).toHaveCount(2) // base64 decode + JSON pretty-print
+    // exact, and in either view: JSON is highlighted by a lazily-swapped-in CodeMirror (see resultText)
     const expected = JSON.stringify(payload, null, 2)
-    await expect(result(page)).toHaveText(expected)
+    await expect.poll(() => resultText(page)).toBe(expected)
   })
 })
