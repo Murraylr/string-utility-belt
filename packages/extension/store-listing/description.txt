@@ -1,0 +1,34 @@
+Turn selected text into something useful without interrupting your work.
+
+String Utility Belt brings 242 text and developer utilities to Chrome. Decode a Base64 string, format JSON, change letter case, generate a hash, and handle everyday text tasks from the right-click menu or a compact toolbar popup.
+
+WORK WHERE YOUR TEXT IS
+
+Select text on a page, right-click, and choose String Utility Belt. In supported editable fields, the result replaces your selection. If nothing is selected in a supported text field, the utility works on the whole field. For ordinary page text, the extension attempts to copy the result and keeps it available in the popup.
+
+USE THE TOOLBAR POPUP
+
+Paste text, choose a utility, adjust the available settings, and click Run. Review the result and copy it when you are ready. Set JSON indentation, choose a case style, pick a hashing algorithm, and more.
+
+TOOLS FOR DAILY DEVELOPMENT
+
+• Encode and decode Base64 and URLs.
+• Decode JWT contents for inspection.
+• Pretty-print JSON and work with data formats.
+• Change case, trim whitespace, and transform lines of text.
+• Generate hashes, including SHA-256, SHA-384, and SHA-512.
+• Explore utilities for numbers, dates, colors, analysis, and more.
+
+MAKE THE RIGHT-CLICK MENU YOURS
+
+Start with ten useful defaults, then search the Options page by utility name, identifier, tag, or category. Choose the tools you want in your menu and save your selection. Right-click actions use each utility's default settings; the popup exposes supported settings for individual runs.
+
+GO FURTHER IN THE FULL APP
+
+Open String Utility Belt's companion web app when you need to chain transformations into visual pipelines with per-step previews. The extension is designed for quick, single-utility tasks; the full app provides the pipeline workspace.
+
+LOCAL PROCESSING, WITH A CLEAR HANDOFF
+
+Transformations run locally in the extension. It stores the last result locally so it can be reused in the popup, and menu preferences and the app URL use Chrome's sync storage. Choosing “Open selection in String Utility Belt” opens the configured website with your selected text in the URL. The default destination is stringutilitybelt.com.
+
+No account is required to use the extension. String Utility Belt is open source under the MIT license.

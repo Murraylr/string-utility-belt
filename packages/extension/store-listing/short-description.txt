@@ -1,0 +1,1 @@
+Decode, format, hash, and transform text from Chrome's right-click menu or toolbar popup. Runs locally in your browser.
