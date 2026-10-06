@@ -1,10 +1,10 @@
 /**
  * The contract between the web app and the browser extension
- * (`packages/extension`). On the app's own origin the extension injects a small
- * content script (`packages/extension/src/bridge.ts`); the page and that script
- * share a window, so they talk with `window.postMessage`. The content script
- * relays requests to the extension's service worker, which validates them again:
- * whatever arrives from a page is untrusted input.
+ * (`packages/extension`). The extension declares the app's own origins in its
+ * manifest's `externally_connectable`, which lets pages there message it
+ * directly with `chrome.runtime.sendMessage(extensionId, …)` — no content
+ * script, no extra install permission. The service worker validates every
+ * request again: whatever arrives from a page is untrusted input.
  *
  * Also the one place that says which utilities the extension can run, so the
  * app can warn before it offers a pipeline the extension would refuse.
@@ -16,12 +16,13 @@ import { isUtilityStep, walkSteps } from './steps'
 /** Bumped only for a breaking change to the messages below. */
 export const BRIDGE_PROTOCOL = 1
 
-/** `source` of every message the app posts. */
+/** `source` of every message the app sends. */
 export const APP_SOURCE = 'subelt-app'
-/** `source` of every message the extension's content script posts. */
-export const EXTENSION_SOURCE = 'subelt-extension'
 
-/** Origins the extension's content script runs on (its manifest `matches` are derived from these). */
+/** The extension's id in the Chrome Web Store (the app also accepts `VITE_EXTENSION_IDS`, for unpacked builds). */
+export const STORE_EXTENSION_ID = 'onmlbgadajghegkcpkkhlmmognihjfbh'
+
+/** Origins that may message the extension (its manifest's `externally_connectable.matches` are derived from these). */
 export const BRIDGE_ORIGINS: readonly string[] = ['https://stringutilitybelt.com', 'https://www.stringutilitybelt.com']
 
 /** Capabilities the extension lacks: no DOM in its service worker, no main thread, no eval under its CSP. */
@@ -41,20 +42,23 @@ export type BridgeResult = { ok: true; message: string } | { ok: false; error: s
 
 export type AppMessage =
   | { source: typeof APP_SOURCE; protocol: number; type: 'ping' }
-  | { source: typeof APP_SOURCE; protocol: number; type: 'request'; requestId: string; request: AppRequest }
+  | { source: typeof APP_SOURCE; protocol: number; type: 'request'; request: AppRequest }
 
-export type ExtensionMessage =
-  | { source: typeof EXTENSION_SOURCE; protocol: number; type: 'hello'; version: string }
-  | { source: typeof EXTENSION_SOURCE; protocol: number; type: 'response'; requestId: string; result: BridgeResult }
+/** The extension's answer to a ping. */
+export interface ExtensionHello { protocol: number; version: string }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 
 export function isAppMessage(v: unknown): v is AppMessage {
-  return isObj(v) && v.source === APP_SOURCE && (v.type === 'ping' || (v.type === 'request' && typeof v.requestId === 'string'))
+  return isObj(v) && v.source === APP_SOURCE && typeof v.protocol === 'number' && (v.type === 'ping' || v.type === 'request')
 }
 
-export function isExtensionMessage(v: unknown): v is ExtensionMessage {
-  return isObj(v) && v.source === EXTENSION_SOURCE && (v.type === 'hello' || (v.type === 'response' && typeof v.requestId === 'string'))
+export function isExtensionHello(v: unknown): v is ExtensionHello {
+  return isObj(v) && typeof v.protocol === 'number' && typeof v.version === 'string'
+}
+
+export function isBridgeResult(v: unknown): v is BridgeResult {
+  return isObj(v) && ((v.ok === true && typeof v.message === 'string') || (v.ok === false && typeof v.error === 'string'))
 }
 
 /**

@@ -1,5 +1,5 @@
 import React from 'react'
-import { SquareTerminal } from 'lucide-react'
+import { Chrome, SquareTerminal } from 'lucide-react'
 import { usePref } from '@/app/prefs'
 import { track } from '@/app/analytics/analytics'
 import { useT } from '@/app/i18n/useT'
@@ -7,6 +7,7 @@ import { INTEGRATION_LINKS, INTEGRATIONS_SEEN_PREF, type IntegrationId } from '.
 import { McpIcon, VsCodeIcon } from './icons'
 
 const ICONS: Record<IntegrationId, React.ComponentType<{ size?: number; className?: string }>> = {
+  chrome: ({ size, className }) => <Chrome size={size} className={className} aria-hidden="true" focusable="false" />,
   vscode: VsCodeIcon,
   mcp: McpIcon,
   cli: ({ size, className }) => <SquareTerminal size={size} className={className} aria-hidden="true" focusable="false" />,
@@ -14,14 +15,15 @@ const ICONS: Record<IntegrationId, React.ComponentType<{ size?: number; classNam
 
 // visible text, and the accessible name that starts with it (WCAG 2.5.3, label in name)
 const TEXT = {
+  chrome: { short: 'integrations.chrome', name: 'integrations.chromeName' },
   vscode: { short: 'integrations.vscode', name: 'integrations.vscodeName' },
   mcp: { short: 'integrations.mcp', name: 'integrations.mcpName' },
   cli: { short: 'integrations.cli', name: 'integrations.cliName' },
 } as const satisfies Record<IntegrationId, { short: string; name: string }>
 
 /**
- * The header's "Get it for VS Code · MCP · CLI" group: the site's way into the
- * editor extension, MCP server and command-line tool. Brand marks always, their
+ * The header's "Get it for Chrome · VS Code · MCP · CLI" group: the site's way into the
+ * browser and editor extensions, MCP server and command-line tool. Brand marks always, their
  * names and the lead-in from `xl` up. A dot marks it as new until the visitor follows one of the
  * links or opens `/integrations/`. No looping animation: the header sits over the
  * pipeline editor.

@@ -26,6 +26,3 @@ export const MENU_OPEN_ID = 'subelt-open-in-app'
 export const MENU_PIPELINES_SEPARATOR_ID = 'subelt-pipelines-separator'
 export const APPLY_PREFIX = 'subelt-apply:'
 export const RUN_PREFIX = 'subelt-run:'
-
-/** Message type the page bridge (content script) sends to the service worker. */
-export const BRIDGE_REQUEST = 'subelt-bridge-request'

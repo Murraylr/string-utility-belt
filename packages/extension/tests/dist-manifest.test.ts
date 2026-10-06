@@ -31,10 +31,9 @@ describeIfBuilt('built extension (dist/)', () => {
       manifest.options_page,
       ...Object.values<string>(manifest.icons ?? {}),
       ...Object.values<string>(manifest.action?.default_icon ?? {}),
-      ...(manifest.content_scripts ?? []).flatMap((c: { js?: string[] }) => c.js ?? []),
     ].filter(Boolean))
 
-    expect(referenced.size).toBe(8) // worker, popup, options, the page bridge, and 4 icon sizes shared by both icon maps
+    expect(referenced.size).toBe(7) // worker, popup, options, and 4 icon sizes shared by both icon maps
     for (const file of referenced) {
       expect(existsSync(resolve(distDir, file)), `manifest.json references missing file: ${file}`).toBe(true)
     }
@@ -48,21 +47,13 @@ describeIfBuilt('built extension (dist/)', () => {
     expect(manifest.version).toBe(rootPkg.version)
     expect([...manifest.permissions].sort()).toEqual(['activeTab', 'clipboardWrite', 'contextMenus', 'scripting', 'storage'])
     expect(manifest.host_permissions).toBeUndefined()
+    expect(manifest.content_scripts).toBeUndefined() // a host permission: a new install warning, which disables existing installs on update
     expect(manifest.background).toEqual({ service_worker: 'background.js', type: 'module' })
     expect(manifest.content_security_policy.extension_pages).toBe("script-src 'self' 'wasm-unsafe-eval'; object-src 'self'")
   })
 
-  it('injects the page bridge only into the app\'s own origins, top frame only (a production build has no localhost)', () => {
-    expect(readManifest().content_scripts).toEqual([
-      { matches: BRIDGE_ORIGINS.map(o => `${o}/*`), js: ['bridge.js'], run_at: 'document_idle' },
-    ])
-  })
-
-  it('the page bridge is a classic script (content scripts are never modules) that compiles', () => {
-    const code = read('bridge.js')
-    expect(code).not.toMatch(/^\s*(import|export)\b/m)
-    expect(code).not.toMatch(/\bimport\s*\(/)
-    expect(() => new Function(code)).not.toThrow()
+  it('lets only the app\'s own origins message it (a production build has no localhost)', () => {
+    expect(readManifest().externally_connectable).toEqual({ matches: BRIDGE_ORIGINS.map(o => `${o}/*`) })
   })
 
   it.each(['popup.html', 'options.html'])('%s loads only existing files and has no inline script (MV3 CSP)', page => {
@@ -90,7 +81,7 @@ describeIfBuilt('built extension (dist/)', () => {
   describe('service worker, evaluated without a DOM', () => {
     type Listener = (...args: unknown[]) => unknown
     type Injected = { func: (...args: unknown[]) => unknown; args?: unknown[]; target: { tabId: number; frameIds?: number[] } }
-    const listeners: Record<string, Listener[]> = { installed: [], startup: [], changed: [], clicked: [], message: [] }
+    const listeners: Record<string, Listener[]> = { installed: [], startup: [], changed: [], clicked: [], external: [] }
     const menus: Array<{ id: string; title?: string }> = []
     const local: Record<string, unknown> = {}
     const opened: string[] = []
@@ -103,7 +94,7 @@ describeIfBuilt('built extension (dist/)', () => {
     })
     const on = (name: string) => ({ addListener: (fn: Listener) => listeners[name].push(fn) })
     const chromeMock = {
-      runtime: { id: 'ext', onInstalled: on('installed'), onStartup: on('startup'), onMessage: on('message') },
+      runtime: { onInstalled: on('installed'), onStartup: on('startup'), onMessageExternal: on('external'), getManifest: () => ({ version: '9.9.9' }) },
       storage: { sync: area({}), local: area(local), onChanged: on('changed') },
       contextMenus: {
         create: (props: { id: string; title?: string }, cb?: () => void) => { menus.push(props); cb?.() },
@@ -167,11 +158,11 @@ describeIfBuilt('built extension (dist/)', () => {
       expect(textarea.value).toBe('YQpi')
     })
 
-    it('saves a pipeline sent by the app\'s page bridge, then runs it from the menu', async () => {
+    it('saves a pipeline sent by the web app, then runs it from the menu', async () => {
       const steps = [{ id: 'a', utilityId: 'trim' }, { id: 'b', utilityId: 'base64_encode' }]
-      const result = await new Promise(resolve => listeners.message[0](
-        { type: 'subelt-bridge-request', request: { type: 'save-pipeline', name: 'Trim + encode', steps } },
-        { id: 'ext', tab: { id: 1 }, frameId: 0, url: 'https://stringutilitybelt.com/' },
+      const result = await new Promise(resolve => listeners.external[0](
+        { source: 'subelt-app', protocol: 1, type: 'request', request: { type: 'save-pipeline', name: 'Trim + encode', steps } },
+        { tab: { id: 1 }, frameId: 0, url: 'https://stringutilitybelt.com/' },
         resolve,
       ))
       expect(result).toMatchObject({ ok: true })
@@ -183,10 +174,10 @@ describeIfBuilt('built extension (dist/)', () => {
       expect(textarea.value).toBe('aGk=')
     })
 
-    it('a production build refuses the page bridge from a local dev server', async () => {
-      const result = await new Promise(resolve => listeners.message[0](
-        { type: 'subelt-bridge-request', request: { type: 'add-favorites', utilityIds: ['trim'] } },
-        { id: 'ext', tab: { id: 1 }, frameId: 0, url: 'http://localhost:5173/' },
+    it('a production build refuses messages from a local dev server', async () => {
+      const result = await new Promise(resolve => listeners.external[0](
+        { source: 'subelt-app', protocol: 1, type: 'ping' },
+        { tab: { id: 1 }, frameId: 0, url: 'http://localhost:5173/' },
         resolve,
       ))
       expect(result).toEqual({ ok: false, error: 'The extension refused this request.' })

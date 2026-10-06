@@ -3,9 +3,11 @@
  * page's current selection. Built as one self-contained module (service
  * workers can't use dynamic `import()`; see vite.config.ts).
  */
-import { BRIDGE_ORIGINS, parseAppRequest, type BridgeResult } from '../../../src/core/extensionBridge'
+import {
+  BRIDGE_ORIGINS, BRIDGE_PROTOCOL, isAppMessage, parseAppRequest, type BridgeResult, type ExtensionHello,
+} from '../../../src/core/extensionBridge'
 import type { Value } from '../../../src/types/utility'
-import { BRIDGE_REQUEST, MENU_OPEN_ID } from './lib/constants'
+import { MENU_OPEN_ID } from './lib/constants'
 import { handleAppRequest } from './lib/library'
 import { buildMenuItems, pipelineIdFromMenuItem, utilityIdFromMenuItem } from './lib/menu'
 import { readSelection, replaceSelectionOrCopy, type PageSelection } from './lib/replace'
@@ -113,13 +115,14 @@ export async function handleClick(info: chrome.contextMenus.OnClickData, tab?: c
 chrome.contextMenus.onClicked.addListener((info, tab) => { void handleClick(info, tab) })
 
 /**
- * Where page-bridge requests may come from. The manifest already limits the
- * content script to these origins; checking the sender again means no other
- * page can reach the handler through some other extension context.
- * Development builds also accept a local dev server.
+ * Where web-app messages may come from. The manifest's `externally_connectable`
+ * already limits which pages can message the extension; checking the sender
+ * again keeps the rule here even if the manifest is widened, and refuses
+ * frames (an embed of the site inside someone else's page). Development builds
+ * also accept a local dev server.
  */
-export function isBridgeSender(sender: chrome.runtime.MessageSender): boolean {
-  if (sender.id !== chrome.runtime.id || !sender.tab || sender.frameId !== 0 || !sender.url) return false
+export function isAppSender(sender: chrome.runtime.MessageSender): boolean {
+  if (!sender.tab || sender.frameId !== 0 || !sender.url) return false
   let url: URL
   try {
     url = new URL(sender.url)
@@ -130,20 +133,37 @@ export function isBridgeSender(sender: chrome.runtime.MessageSender): boolean {
   return import.meta.env.MODE !== 'production' && url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
 }
 
-/** Requests the web app sends through the page bridge: save a pipeline, add favourites. */
-export function handleBridgeMessage(
+const REFUSED: BridgeResult = { ok: false, error: 'The extension refused this request.' }
+
+/**
+ * Messages from the web app (`chrome.runtime.sendMessage(extensionId, …)`): a
+ * ping, answered with the extension's version so the app can offer "save to
+ * extension", or a request to save a pipeline or add favourites.
+ */
+export function handleAppMessage(
   message: unknown,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (result: BridgeResult) => void,
+  sendResponse: (answer: BridgeResult | ExtensionHello) => void,
 ): boolean {
-  if (!message || typeof message !== 'object' || (message as { type?: unknown }).type !== BRIDGE_REQUEST) return false
-  const request = parseAppRequest((message as { request?: unknown }).request)
-  if (!isBridgeSender(sender) || !request) {
-    sendResponse({ ok: false, error: 'The extension refused this request.' })
+  if (!isAppSender(sender) || !isAppMessage(message)) {
+    sendResponse(REFUSED)
+    return false
+  }
+  if (message.type === 'ping') {
+    sendResponse({ protocol: BRIDGE_PROTOCOL, version: chrome.runtime.getManifest().version })
+    return false
+  }
+  if (message.protocol !== BRIDGE_PROTOCOL) {
+    sendResponse({ ok: false, error: 'This page and the extension are different versions. Update the extension and reload the page.' })
+    return false
+  }
+  const request = parseAppRequest(message.request)
+  if (!request) {
+    sendResponse(REFUSED)
     return false
   }
   void handleAppRequest(request).then(sendResponse)
   return true // answered asynchronously
 }
 
-chrome.runtime.onMessage.addListener(handleBridgeMessage)
+chrome.runtime.onMessageExternal.addListener(handleAppMessage)

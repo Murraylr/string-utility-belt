@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  APP_SOURCE, EXTENSION_SOURCE, MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, isAppMessage,
-  isExtensionMessage, normalizePipelineName, parseAppRequest,
+  APP_SOURCE, MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, isAppMessage, isBridgeResult,
+  isExtensionHello, normalizePipelineName, parseAppRequest,
 } from './extensionBridge'
 
 const env: Record<string, { env: Array<'dom' | 'wasm' | 'eval' | 'main'> }> = {
@@ -36,16 +36,19 @@ describe('extensionUnsupportedSteps', () => {
 })
 
 describe('message guards', () => {
-  it('recognise each side\'s messages and nothing else', () => {
-    expect(isAppMessage({ source: APP_SOURCE, type: 'ping' })).toBe(true)
-    expect(isAppMessage({ source: APP_SOURCE, type: 'request', requestId: 'r' })).toBe(true)
-    expect(isAppMessage({ source: APP_SOURCE, type: 'request' })).toBe(false)
-    expect(isAppMessage({ source: EXTENSION_SOURCE, type: 'ping' })).toBe(false)
+  it('recognise app messages, the extension\'s hello and bridge results, and nothing else', () => {
+    expect(isAppMessage({ source: APP_SOURCE, protocol: 1, type: 'ping' })).toBe(true)
+    expect(isAppMessage({ source: APP_SOURCE, protocol: 1, type: 'request', request: {} })).toBe(true)
+    expect(isAppMessage({ source: APP_SOURCE, type: 'ping' })).toBe(false) // no protocol
+    expect(isAppMessage({ source: 'someone-else', protocol: 1, type: 'ping' })).toBe(false)
+    expect(isAppMessage({ source: APP_SOURCE, protocol: 1, type: 'delete' })).toBe(false)
     expect(isAppMessage('ping')).toBe(false)
-    expect(isExtensionMessage({ source: EXTENSION_SOURCE, type: 'hello', version: '1' })).toBe(true)
-    expect(isExtensionMessage({ source: EXTENSION_SOURCE, type: 'response', requestId: 'r' })).toBe(true)
-    expect(isExtensionMessage({ source: APP_SOURCE, type: 'hello' })).toBe(false)
-    expect(isExtensionMessage(null)).toBe(false)
+    expect(isExtensionHello({ protocol: 1, version: '1.3.0' })).toBe(true)
+    expect(isExtensionHello({ protocol: 1 })).toBe(false)
+    expect(isBridgeResult({ ok: true, message: 'm' })).toBe(true)
+    expect(isBridgeResult({ ok: false, error: 'e' })).toBe(true)
+    expect(isBridgeResult({ ok: true })).toBe(false)
+    expect(isBridgeResult(null)).toBe(false)
   })
 })
 

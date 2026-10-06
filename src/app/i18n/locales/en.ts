@@ -22,6 +22,8 @@ export const en = {
     label: 'Integrations',
     lead: 'Get it for',
     new: 'New',
+    chrome: 'Chrome',
+    chromeName: 'Chrome extension, on the Chrome Web Store (opens in a new tab)',
     vscode: 'VS Code',
     vscodeName: 'VS Code extension, on the Visual Studio Marketplace (opens in a new tab)',
     mcp: 'MCP',
@@ -32,7 +34,7 @@ export const en = {
   footer: {
     label: 'site',
     utilities: 'All utilities',
-    integrations: 'VS Code, CLI & MCP',
+    integrations: 'Extensions, CLI & MCP',
     about: 'About',
     privacy: 'Privacy policy',
     contact: 'Contact',

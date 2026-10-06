@@ -18,7 +18,7 @@ const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtm
 // the app's header nav and footer (src/app/AppShell.tsx), as plain links
 const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
-  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'VS Code, CLI & MCP'],
+  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
   ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'],
 ] as const
 

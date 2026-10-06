@@ -33,14 +33,14 @@ const page = {
 function installChromeMock() {
   const sync = makeArea()
   const local = makeArea()
-  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[], clicked: [] as Listener[], message: [] as Listener[] }
+  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[], clicked: [] as Listener[], external: [] as Listener[] }
   /** Models Chrome's menu registry: ids must be unique until removeAll. */
   const menu = new Map<string, Record<string, unknown>>()
-  const runtime: { id: string; lastError?: { message: string }; onInstalled: unknown; onStartup: unknown; onMessage: unknown } = {
-    id: 'ext-id',
+  const runtime: { lastError?: { message: string }; onInstalled: unknown; onStartup: unknown; onMessageExternal: unknown; getManifest: () => { version: string } } = {
     onInstalled: { addListener: (fn: Listener) => listeners.installed.push(fn) },
     onStartup: { addListener: (fn: Listener) => listeners.startup.push(fn) },
-    onMessage: { addListener: (fn: Listener) => listeners.message.push(fn) },
+    onMessageExternal: { addListener: (fn: Listener) => listeners.external.push(fn) },
+    getManifest: () => ({ version: '1.2.3' }),
   }
   const chromeMock = {
     runtime,
@@ -105,12 +105,12 @@ const injections = () => ctx.chromeMock.scripting.executeScript.mock.calls.map(c
 const writes = () => injections().filter(i => i.func === replaceModule.replaceSelectionOrCopy)
 
 describe('background: wiring', () => {
-  it('registers a menu rebuild for install, startup, and a storage change, plus click and page-bridge handlers', () => {
+  it('registers a menu rebuild for install, startup, and a storage change, plus click and web-app message handlers', () => {
     expect(ctx.listeners.installed).toHaveLength(1)
     expect(ctx.listeners.startup).toHaveLength(1)
     expect(ctx.listeners.onChanged).toHaveLength(1)
     expect(ctx.listeners.clicked).toHaveLength(1)
-    expect(ctx.listeners.message).toEqual([mod.handleBridgeMessage])
+    expect(ctx.listeners.external).toEqual([mod.handleAppMessage])
   })
 })
 
@@ -323,10 +323,21 @@ describe('background: running a saved pipeline', () => {
   })
 })
 
-describe('background: page bridge', () => {
-  const trusted = { id: 'ext-id', tab: { id: 3 } as chrome.tabs.Tab, frameId: 0, url: 'https://stringutilitybelt.com/' }
-  const send = (request: unknown, sender: chrome.runtime.MessageSender = trusted) =>
-    new Promise<unknown>(resolve => mod.handleBridgeMessage({ type: 'subelt-bridge-request', request }, sender, resolve))
+describe('background: messages from the web app', () => {
+  const trusted = { tab: { id: 3 } as chrome.tabs.Tab, frameId: 0, url: 'https://stringutilitybelt.com/', origin: 'https://stringutilitybelt.com' }
+  const message = (body: Record<string, unknown>, sender: chrome.runtime.MessageSender = trusted) =>
+    new Promise<unknown>(resolve => mod.handleAppMessage({ source: 'subelt-app', protocol: 1, ...body }, sender, resolve))
+  const send = (request: unknown, sender: chrome.runtime.MessageSender = trusted) => message({ type: 'request', request }, sender)
+
+  it('answers a ping with its version, so the app can offer "save to extension"', async () => {
+    expect(await message({ type: 'ping' })).toEqual({ protocol: 1, version: '1.2.3' })
+  })
+
+  it('refuses a request from a newer or older protocol', async () => {
+    expect(await message({ type: 'request', protocol: 2, request: { type: 'add-favorites', utilityIds: ['sha3'] } }))
+      .toEqual({ ok: false, error: expect.stringMatching(/different versions/) })
+  })
+
   const save = (name: string, steps: unknown[]) => send({ type: 'save-pipeline', name, steps })
 
   it('saves a pipeline from the app, then updates it in place when saved again under the same name', async () => {
@@ -359,12 +370,12 @@ describe('background: page bridge', () => {
     expect(ctx.sync.store.menuUtilities).toEqual(['trim', 'sha3'])
   })
 
-  it('refuses requests from any other origin, a subframe, or another extension', async () => {
+  it('refuses messages from any other origin, a subframe (an embed in someone else\'s page), or outside a tab', async () => {
     for (const sender of [
       { ...trusted, url: 'https://evil.example/' },
       { ...trusted, url: 'https://stringutilitybelt.com.evil.example/' },
+      { ...trusted, url: 'http://stringutilitybelt.com/' },
       { ...trusted, frameId: 2 },
-      { ...trusted, id: 'other-extension' },
       { ...trusted, tab: undefined },
     ]) {
       expect(await send({ type: 'add-favorites', utilityIds: ['sha3'] }, sender)).toEqual({ ok: false, error: 'The extension refused this request.' })
@@ -372,10 +383,10 @@ describe('background: page bridge', () => {
     expect(ctx.sync.store.menuUtilities).toBeUndefined()
   })
 
-  it('refuses a malformed request and ignores messages that are not bridge requests', async () => {
-    expect(await send({ type: 'delete-everything' })).toMatchObject({ ok: false })
+  it('refuses a malformed request, and anything that is not an app message', async () => {
+    expect(await send({ type: 'delete-everything' })).toEqual({ ok: false, error: 'The extension refused this request.' })
     const sendResponse = vi.fn()
-    expect(mod.handleBridgeMessage({ type: 'something-else' }, trusted, sendResponse)).toBe(false)
-    expect(sendResponse).not.toHaveBeenCalled()
+    expect(mod.handleAppMessage({ type: 'something-else' }, trusted, sendResponse)).toBe(false)
+    expect(sendResponse).toHaveBeenCalledWith({ ok: false, error: 'The extension refused this request.' })
   })
 })

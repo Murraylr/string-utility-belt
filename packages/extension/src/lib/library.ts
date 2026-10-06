@@ -1,6 +1,6 @@
 /**
- * Favourites and saved pipelines: the pure list operations the options page and
- * the page bridge share, and the service worker's handling of the web app's
+ * Favourites and saved pipelines: the list operations the options page and the
+ * service worker share, and the service worker's handling of the web app's
  * requests (`AppRequest`), which arrive from a page and are validated in full.
  */
 import {

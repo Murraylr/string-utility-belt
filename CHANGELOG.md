@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (from a share link) pipelines; the toolbar popup lists both first and can run a pipeline.
 - **Save to extension** — with the browser extension installed, the pipeline toolbar offers "save to
   extension" for the current pipeline (saving under an existing name updates it) and your starred utilities.
+- **Chrome extension in the header** — "Get it for" now links the Chrome Web Store listing, and the
+  integrations page has a browser extension section.
 
 ### Fixed
 

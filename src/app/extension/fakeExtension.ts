@@ -1,38 +1,37 @@
 /**
- * Test double for the browser extension's content script: captures what the app
- * posts and answers the way the real bridge does (from this window and origin).
+ * Test double for the browser extension as a page sees it: the
+ * `chrome.runtime.sendMessage(extensionId, …)` Chrome exposes when an
+ * installed extension is externally connectable from the page.
  */
 import { vi } from 'vitest'
-import { BRIDGE_PROTOCOL, EXTENSION_SOURCE, type BridgeResult } from '@/core/extensionBridge'
+import type { BridgeResult } from '@/core/extensionBridge'
 
 export interface FakeExtension {
-  /** Messages the app posted, in order. */
-  posted: Array<Record<string, any>>
-  hello(version?: string): void
-  respond(requestId: string, result: BridgeResult): void
-  /** Answer every request from now on with `fn(request)`. */
-  autoRespond(fn: (request: Record<string, any>) => BridgeResult): void
+  /** Messages the app sent, with the id it sent them to. */
+  sent: Array<{ id: string; message: Record<string, any> }>
+  /** Answer requests with `fn(request)`; a function returning undefined never answers. */
+  respond(fn: (request: Record<string, any>) => BridgeResult | undefined): void
 }
 
-export function fromExtension(data: unknown, init: Partial<MessageEventInit> = {}): void {
-  window.dispatchEvent(new MessageEvent('message', { data, origin: window.location.origin, source: window, ...init }))
-}
-
-export function installFakeExtension(): FakeExtension {
-  let responder: ((request: Record<string, any>) => BridgeResult) | null = null
-  const fake: FakeExtension = {
-    posted: [],
-    hello: (version = '1.0.0') => fromExtension({ source: EXTENSION_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'hello', version }),
-    respond: (requestId, result) =>
-      fromExtension({ source: EXTENSION_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'response', requestId, result }),
-    autoRespond: fn => { responder = fn },
+/** Installs `chrome.runtime` with an extension (by default the store one) answering pings with `version`. */
+export function installFakeExtension({ id = 'onmlbgadajghegkcpkkhlmmognihjfbh', version = '1.0.0' } = {}): FakeExtension {
+  let responder: (request: Record<string, any>) => BridgeResult | undefined = () => ({ ok: true, message: 'ok' })
+  const runtime: { lastError?: { message: string }; sendMessage: ReturnType<typeof vi.fn> } = {
+    sendMessage: vi.fn((target: string, message: Record<string, any>, callback: (response: unknown) => void) => {
+      fake.sent.push({ id: target, message })
+      queueMicrotask(() => {
+        if (target !== id) {
+          runtime.lastError = { message: 'Could not establish connection. Receiving end does not exist.' }
+          callback(undefined)
+          delete runtime.lastError
+          return
+        }
+        const answer = message.type === 'ping' ? { protocol: 1, version } : responder(message.request)
+        if (answer !== undefined) callback(answer)
+      })
+    }),
   }
-  vi.spyOn(window, 'postMessage').mockImplementation((message: any) => {
-    fake.posted.push(message)
-    if (responder && message?.type === 'request') {
-      const result = responder(message.request)
-      queueMicrotask(() => fake.respond(message.requestId, result))
-    }
-  })
+  const fake: FakeExtension = { sent: [], respond: fn => { responder = fn } }
+  vi.stubGlobal('chrome', { runtime })
   return fake
 }
