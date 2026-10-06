@@ -52,6 +52,38 @@ describe('subelt MCP server', () => {
     ])
   })
 
+  it('declares an output schema on every tool and returns matching structured content', async () => {
+    const { tools } = await client.listTools()
+    for (const t of tools) expect(t.outputSchema, t.name).toBeDefined()
+    // the client validates structuredContent against each tool's outputSchema, so a mismatch rejects here
+    const results = await Promise.all([
+      call('list_utilities', { query: 'base64' }),
+      call('run_utility', { id: 'gzip_compress', input: 'hi' }),
+      call('run_pipeline', {
+        input: ' !not base64! ',
+        steps: [
+          { id: 'a', utilityId: 'trim' },
+          { id: 'b', utilityId: 'base64_decode', onError: 'stop' },
+          { id: 'c', utilityId: 'base64_encode' },
+        ],
+      }),
+      call('detect_format', { input: '{"a":1}' }),
+    ])
+    for (const res of results) {
+      expect(res.isError, text(res)).toBeFalsy()
+      expect(res.structuredContent).toEqual(json(res))
+    }
+    expect(results[2].structuredContent).toMatchObject({ halted: true, skipped: { c: 'halted' } })
+  })
+
+  it('describes every utility within describe_utility’s output schema', async () => {
+    const { items } = json(await call('list_utilities', { limit: 500 }))
+    for (const { id } of items) {
+      const res = await call('describe_utility', { id })
+      expect(res.isError, `${id}: ${text(res)}`).toBeFalsy()
+    }
+  })
+
   it('accepts every inputEncoding that describe_utility examples use', async () => {
     const used = new Set(Object.values(EXAMPLES).flat().map(ex => ex.inputEncoding ?? 'text'))
     const { tools } = await client.listTools()
