@@ -59,7 +59,7 @@ function EmbedInner({ payload, quarantined, name }: { payload: string; quarantin
           role="region"
           aria-labelledby="embed-result-label"
           aria-busy={run.running}
-          className="border rounded-xl p-2 bg-surface-2 mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] max-h-64 overflow-auto"
+          className="border rounded-xl p-2 bg-surface-2 mono text-xs whitespace-pre-wrap wrap-anywhere max-h-64 overflow-auto"
         >{run.result ? formatForDisplay(run.result.out) : run.running ? 'running…' : ''}</pre>
         {firstError && <div role="alert" className="text-xs text-danger">{firstError}</div>}
         {runHeld && (

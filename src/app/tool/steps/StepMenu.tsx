@@ -112,7 +112,7 @@ export default function StepMenu({
       {open && (
         // while renaming it holds a text field, which a role="menu" may not contain
         <div ref={menuRef} role={renaming ? 'group' : 'menu'} aria-label={renaming ? `rename step ${index + 1}` : `step ${index + 1} actions`}
-          className="absolute right-0 z-10 mt-1 min-w-[11rem] card p-1 grid gap-0.5" onKeyDown={onMenuKeyDown}>
+          className="absolute right-0 z-10 mt-1 min-w-44 card p-1 grid gap-0.5" onKeyDown={onMenuKeyDown}>
           {renaming ? (
             <form className="p-1" onSubmit={e => { e.preventDefault(); submitRename() }}>
               {/* 120: the longest label a share link / import keeps (core/serialize) */}

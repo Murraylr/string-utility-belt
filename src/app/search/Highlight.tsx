@@ -8,7 +8,7 @@ export default function Highlight({ text, ranges }: { text: string; ranges: Fuzz
   let last = 0
   ranges.forEach((r, i) => {
     if (r.start > last) nodes.push(text.slice(last, r.start))
-    nodes.push(<mark key={i} className="bg-primary-500/30 text-inherit rounded-sm">{text.slice(r.start, r.end)}</mark>)
+    nodes.push(<mark key={i} className="bg-primary-500/30 text-inherit rounded-xs">{text.slice(r.start, r.end)}</mark>)
     last = r.end
   })
   if (last < text.length) nodes.push(text.slice(last))

@@ -162,7 +162,7 @@ export default function Docs() {
         </Section>
 
         <Section id="example" title="Example: title to URL slug">
-          <p>Input: <code className="mono bg-surface-2 rounded px-1 whitespace-pre">{'  Crème Brûlée: A Guide!  '}</code></p>
+          <p>Input: <code className="mono bg-surface-2 rounded-sm px-1 whitespace-pre">{'  Crème Brûlée: A Guide!  '}</code></p>
           <Table head={['Step', 'Utility', 'Settings', 'Output']} monoCols={[3]}
             rows={EXAMPLE.map(([u, s, o], i) => [String(i + 1), u, s, o])} />
         </Section>

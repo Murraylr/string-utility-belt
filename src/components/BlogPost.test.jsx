@@ -102,7 +102,7 @@ describe('<BlogPost /> (responsive regressions)', () => {
     await screen.findByText('Paths')
     const code = document.querySelector('.md-code')
     expect(code?.textContent).toBe('src/utilities/_generated/manifest.ts')
-    expect(code.className).toContain('break-words')
+    expect(code.className).toContain('wrap-break-word')
   })
 })
 

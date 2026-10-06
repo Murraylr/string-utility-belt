@@ -95,7 +95,7 @@ const PickerCard = memo(function PickerCard({
       <div className="text-xs text-muted">{meta.description}</div>
       <div className="mt-3 flex flex-wrap gap-1">
         {Object.keys(meta.params).slice(0, 3).map(k => (
-          <span key={k} className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border">{k}</span>
+          <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-sm bg-surface-2 border">{k}</span>
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between gap-2 text-sm">

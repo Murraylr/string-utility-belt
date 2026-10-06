@@ -199,7 +199,7 @@ export default function CommandPalette() {
         aria-labelledby={`${ID_PREFIX}title`}
         tabIndex={-1}
         {...dialogProps}
-        className="card w-full max-w-xl p-4 outline-none"
+        className="card w-full max-w-xl p-4 outline-hidden"
         onKeyDown={onDialogKeyDown}
       >
         <div className="flex items-center justify-between mb-2">

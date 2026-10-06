@@ -361,7 +361,7 @@ describe('LibraryDialog', () => {
   it('rings the search box wrapper while its unstyled input has focus (it has no focus style of its own)', () => {
     render(<Harness initialSteps={[step('a')]} />)
     const search = screen.getByRole('textbox', { name: 'search pipelines' })
-    expect(search.className).toContain('outline-none')
+    expect(search.className).toContain('outline-hidden')
     const wrapper = search.parentElement as HTMLElement
     expect(wrapper.className).toContain('focus-within:ring-2')
     expect(wrapper.className).toContain('focus-within:ring-primary-500')
