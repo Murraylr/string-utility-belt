@@ -11,6 +11,7 @@ import ShortcutsHelp from './commands/ShortcutsHelp'
 import { EVENT_OPEN_PALETTE } from './commands/commands'
 import UpdateBanner from './pwa/UpdateBanner'
 import InstallButton from './pwa/InstallButton'
+import IntegrationsNav from './integrations/IntegrationsNav'
 import { useShareTarget } from './pwa/useShareTarget'
 import { useT } from './i18n/useT'
 import { useDocumentMeta } from './pages/useDocumentMeta'
@@ -107,6 +108,7 @@ export function Header({ children, current }: { children?: React.ReactNode; curr
               )
             })}
           </nav>
+          <IntegrationsNav />
           {children}
         </div>
       </div>

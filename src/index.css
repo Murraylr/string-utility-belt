@@ -124,6 +124,8 @@
   .md { @apply leading-7 text-fg; }
   .md .md-h1 { @apply text-2xl font-bold mt-10 mb-4; }
   .md .md-h2 { @apply text-xl font-bold mt-8 mb-3; }
+  /* a section opened from a link (`/integrations/#cli`) clears the sticky header */
+  .md [id] { scroll-margin-top: 5rem; }
   .md .md-h3 { @apply text-lg font-semibold mt-6 mb-2; }
   .md .md-p { @apply mb-4; }
   .md .md-code { @apply px-1.5 py-0.5 rounded bg-surface-2 border text-[0.9em] font-mono; }

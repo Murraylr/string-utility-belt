@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { SITE_PAGES, getRoute, isInAppPath, navigateToPath } from './router'
+import { SITE_PAGES, fragmentId, getRoute, isInAppPath, navigateToPath } from './router'
 
 afterEach(() => { location.hash = '' })
 
@@ -147,6 +147,51 @@ describe('router: site pages, 404 paths and in-app links', () => {
     for (const href of ['/blog/a-post.md', '/blog/_manifest.json', '/guides/trim.md', '/api/utilities', '/rss.xml', '/#/p/x', '/?q=1',
       'https://stringutilitybelt.com/utilities/', '//evil.example/', '#/utilities', 'mailto:a@b.c', '/util/a/b/', '/docs/a/', '/#/docs']) {
       expect(isInAppPath(href), href).toBe(false)
+    }
+  })
+
+  it('reads a fragment on a pre-rendered page as an in-page anchor, and only #/… as a route', () => {
+    history.replaceState(null, '', '/integrations/#command-line-tool')
+    expect(getRoute()).toEqual({ name: 'page', params: { slug: 'integrations' } })
+    expect(fragmentId()).toBe('command-line-tool')
+    history.replaceState(null, '', '/util/sha3/#examples')
+    expect(getRoute()).toEqual({ name: 'utility', params: { id: 'sha3' } })
+    history.replaceState(null, '', '/integrations/#/blog')
+    expect(getRoute().name).toBe('blogIndex')
+    expect(fragmentId()).toBeNull()
+    // the home page has no anchors: its hand-typed fragments are still routes
+    history.replaceState(null, '', '/#blog')
+    expect(getRoute().name).toBe('blogIndex')
+    // a path that is no page stays not found, anchor or not
+    history.replaceState(null, '', '/no/such/page#x')
+    expect(getRoute().name).toBe('notFound')
+  })
+
+  it('takes over links to a section of a pre-rendered page, but not anchors on the home page', () => {
+    for (const href of ['/integrations/#command-line-tool', '/util/trim/#examples', '/blog/a-post/#intro']) {
+      expect(isInAppPath(href), href).toBe(true)
+    }
+    for (const href of ['/#cli', '/integrations/#', '/integrations/#/blog', '/integrations/#a b', '/integrations/#1st']) {
+      expect(isInAppPath(href), href).toBe(false)
+    }
+  })
+
+  it('opens a link to a section at that section, or at the top when the page has not rendered it yet', () => {
+    const scrollTop = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const section = document.createElement('h2')
+    section.id = 'command-line-tool'
+    section.scrollIntoView = vi.fn()
+    document.body.appendChild(section)
+    try {
+      navigateToPath('/integrations/#command-line-tool')
+      expect(location.pathname + location.hash).toBe('/integrations/#command-line-tool')
+      expect(section.scrollIntoView).toHaveBeenCalledTimes(1)
+      expect(scrollTop).not.toHaveBeenCalled()
+      navigateToPath('/integrations/#mcp-server-for-ai-agents')
+      expect(scrollTop).toHaveBeenCalledWith(0, 0)
+    } finally {
+      section.remove()
+      scrollTop.mockRestore()
     }
   })
 

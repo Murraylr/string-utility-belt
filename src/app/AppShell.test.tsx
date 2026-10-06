@@ -54,6 +54,23 @@ describe('site links', () => {
     }
   })
 
+  it('opens the integrations page at the section a header integration link names, in place', async () => {
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const intoView = vi.fn(function (this: Element) { return this.id })
+    Element.prototype.scrollIntoView = intoView
+    try {
+      render(<AppShell />)
+      const integrations = screen.getByRole('navigation', { name: 'Integrations' })
+      fireEvent.click(within(integrations).getByRole('link', { name: /^MCP server/ }))
+      expect(location.pathname + location.hash).toBe('/integrations/#mcp-server-for-ai-agents')
+      expect(await screen.findByRole('heading', { level: 1, name: 'Integrations' }, LAZY)).toBeTruthy()
+      expect(intoView.mock.results.map(r => r.value)).toContain('mcp-server-for-ai-agents')
+    } finally {
+      scroll.mockRestore()
+      delete (Element.prototype as Partial<Element>).scrollIntoView
+    }
+  })
+
   it('says so above the tool when the address is not a page, and keeps it out of search results', () => {
     history.replaceState(null, '', '/no/such/page')
     const { unmount } = render(<AppShell />)

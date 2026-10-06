@@ -71,9 +71,16 @@ export function getRoute(): Route {
   // Only a page with NO hash routes by its real path (pre-rendered /util/<id>/ pages).
   // An explicit '#/' is the tool, even on a pre-rendered path. Any other path is not
   // a page: the host answered it with its fallback (index.html, or 404.html).
+  const pathname = location.pathname || '/'
   if (!location.hash) {
-    const pathname = location.pathname || '/'
     return routeFromPath(pathname) ?? (isHomePath(pathname) ? { name: 'home', params: {} } : NOT_FOUND)
+  }
+  // On a pre-rendered page a fragment without a leading '/' (`/integrations/#cli`) is an
+  // in-page anchor, not a route: only `#/…` re-routes there. The home path keeps the
+  // tolerant parsing below, so a hand-typed `/#blog` still reaches the blog.
+  if (fragmentId() !== null) {
+    const page = routeFromPath(pathname)
+    if (page) return page
   }
   const hash = location.hash.replace(/^#/, '').trim()
   if (!hash || hash === '/') return { name: 'home', params: {} }
@@ -111,20 +118,41 @@ export function onRouteChange(cb: (r: Route) => void) {
  */
 export function navigateToPath(path: string) {
   // a link to the page already showing re-renders it without stacking a history entry
-  if (path !== location.pathname || location.hash) history.pushState(history.state, '', path)
+  if (path !== location.pathname + location.hash) history.pushState(history.state, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
-  window.scrollTo?.(0, 0)
+  // a page that renders later (a lazy chunk) scrolls to its own anchor: see `scrollToFragment`
+  if (!scrollToFragment()) window.scrollTo?.(0, 0)
+}
+
+/** The in-page anchor id in the address (`#cli` → `cli`), or null for none or a `#/…` route. */
+export function fragmentId(): string | null {
+  const raw = location.hash.slice(1)
+  if (!raw || raw.startsWith('/')) return null
+  return safeDecode(raw)
+}
+
+/**
+ * Scrolls the address's in-page anchor into view, when the page shows it. For a
+ * page that renders after navigation (a lazy route) to call once its content is in.
+ */
+export function scrollToFragment(): boolean {
+  const id = fragmentId()
+  const target = id === null ? null : document.getElementById(id)
+  target?.scrollIntoView?.()
+  return !!target
 }
 
 // a post only by its pre-rendered `/blog/<slug>/` (slash required): `/blog/<slug>.md`
-// and `/blog/_manifest.json` are files beside the posts, not pages
+// and `/blog/_manifest.json` are files beside the posts, not pages. A pre-rendered page
+// may carry an in-page anchor; the home page may not (its fragment is a route).
 const IN_APP_PATH = new RegExp(
-  `^/(?:|docs/?|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)$`,
+  `^/(?:|(?:docs/?|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)(?:#[A-Za-z][\\w-]*)?)$`,
 )
 
 /**
  * Paths `navigateToPath` may take over from a link click: the home page and
- * every pre-rendered page — what the router resolves from a real path.
+ * every pre-rendered page (optionally with an in-page `#anchor`) — what the
+ * router resolves from a real path.
  */
 export const isInAppPath = (href: string): boolean => IN_APP_PATH.test(href)
 
