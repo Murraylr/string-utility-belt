@@ -7,7 +7,7 @@
  *
  * `npm run bench` (vitest bench --run) runs this file.
  */
-import { bench, describe } from 'vitest'
+import { describe, test } from 'vitest'
 import { runPipeline, loadEager } from '../src/utilities/index'
 import type { PipelineStep } from '../src/types/utility'
 
@@ -46,33 +46,23 @@ if (streamingModule) {
 const HEAVY = { time: 200, iterations: 5, warmupIterations: 1, warmupTime: 50 }
 
 describe.runIf(streamingModule !== null)('chunked vs full run (streamable pipeline)', () => {
-  bench(
-    'full run (runPipeline)',
-    async () => {
-      await runPipeline(BIG_INPUT, STREAMABLE_STEPS, false)
-    },
-    HEAVY
-  )
-
-  bench(
-    'chunked run (runChunked, 5000 lines/chunk)',
-    async () => {
-      const { runChunked } = streamingModule!
-      await runChunked(BIG_INPUT, STREAMABLE_STEPS, { load: (id) => loadEager(id), chunkLines: 5000 })
-    },
-    HEAVY
-  )
-
-  bench(
-    'chunked run (runChunked, 500 lines/chunk)',
-    async () => {
-      const { runChunked } = streamingModule!
-      await runChunked(BIG_INPUT, STREAMABLE_STEPS, { load: (id) => loadEager(id), chunkLines: 500 })
-    },
-    HEAVY
-  )
+  test('full vs chunked', async ({ bench }) => {
+    const { runChunked } = streamingModule!
+    await bench.compare(
+      bench('full run (runPipeline)', async () => {
+        await runPipeline(BIG_INPUT, STREAMABLE_STEPS, false)
+      }),
+      bench('chunked run (runChunked, 5000 lines/chunk)', async () => {
+        await runChunked(BIG_INPUT, STREAMABLE_STEPS, { load: (id) => loadEager(id), chunkLines: 5000 })
+      }),
+      bench('chunked run (runChunked, 500 lines/chunk)', async () => {
+        await runChunked(BIG_INPUT, STREAMABLE_STEPS, { load: (id) => loadEager(id), chunkLines: 500 })
+      }),
+      HEAVY
+    )
+  })
 })
 
 describe.skipIf(streamingModule !== null)('chunked vs full run (streamable pipeline)', () => {
-  bench.skip('src/core/streaming.ts not present yet', () => {})
+  test.skip('src/core/streaming.ts not present yet', () => {})
 })
