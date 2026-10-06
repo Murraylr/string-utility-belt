@@ -18,6 +18,17 @@ export const en = {
     blog: 'Blog',
     changelog: 'Changelog',
   },
+  integrations: {
+    label: 'Integrations',
+    lead: 'Get it for',
+    new: 'New',
+    vscode: 'VS Code',
+    vscodeName: 'VS Code extension, on the Visual Studio Marketplace (opens in a new tab)',
+    mcp: 'MCP',
+    mcpName: 'MCP server for AI agents: how to install',
+    cli: 'CLI',
+    cliName: 'CLI (command-line tool): how to install',
+  },
   footer: {
     label: 'site',
     utilities: 'All utilities',

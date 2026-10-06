@@ -8,6 +8,7 @@ import { buildSeo, SITE } from './build'
 import { parseGuide } from '../../src/app/pages/guide'
 import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
 import { SITE_PAGES } from '../../src/lib/router'
+import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import { resolveOg, resolveOutDir } from '../build-seo'
 
 const ROOT = process.cwd()
@@ -200,8 +201,10 @@ describe('buildSeo over a built dist/', () => {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
       expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
-      expect([...doc.querySelectorAll('#root > header nav a')].map(a => a.getAttribute('href')), rel)
+      expect([...doc.querySelectorAll('#root > header nav[aria-label="main"] a')].map(a => a.getAttribute('href')), rel)
         .toEqual(['/', '/docs/', '/utilities/', '/blog/', '/changelog/'])
+      expect([...doc.querySelectorAll('#root > header nav[aria-label="Integrations"] a')].map(a => a.getAttribute('href')), rel)
+        .toEqual(INTEGRATION_LINKS.map(l => l.href))
     }
   })
 
@@ -226,8 +229,18 @@ describe('buildSeo over a built dist/', () => {
     // crawlable paths only: no #/ route links left in the static page
     const hrefs = [...doc.querySelectorAll('#root a')].map(a => a.getAttribute('href'))
     expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/']))
-    expect(hrefs.filter(h => h?.includes('#'))).toEqual([])
+    expect(hrefs.filter(h => h?.includes('#/'))).toEqual([])
     expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
+  })
+
+  it('pre-renders the integrations sections the header links open', () => {
+    const doc = html(read(dist, 'integrations/index.html'))
+    for (const { href, external } of INTEGRATION_LINKS) {
+      if (external) continue
+      const [pathname, id] = href.split('#')
+      expect(pathname, href).toBe('/integrations/')
+      expect(doc.querySelector(`#root main h2[id="${id}"]`), href).not.toBeNull()
+    }
   })
 
   it('pre-renders the about, privacy, contact and integrations pages from their markdown', () => {
