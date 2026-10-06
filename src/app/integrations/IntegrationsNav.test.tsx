@@ -68,6 +68,6 @@ describe('IntegrationsNav', () => {
   it('reports which integration was followed, never anything else', () => {
     render(<IntegrationsNav />)
     fireEvent.click(within(nav()).getByRole('link', { name: /^VS Code/ }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'vscode', placement: 'header' })
+    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'vscode' })
   })
 })

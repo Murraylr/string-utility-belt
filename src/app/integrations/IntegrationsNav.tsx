@@ -41,7 +41,7 @@ export default function IntegrationsNav() {
           <a key={link.id} href={link.href} aria-label={name} title={name}
             {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
             onClick={() => {
-              track('integration_click', { integration: link.id, placement: 'header' })
+              track('integration_click', { integration: link.id })
               setSeen(true)
             }}
             className="inline-flex items-center justify-center gap-1 h-9 px-2 rounded-full font-medium hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
