@@ -1,0 +1,410 @@
+name: Release
+
+# After CI passes on a push to main: release every target whose shipped files changed since its
+# last `<id>-v<version>` tag — and nothing else. A version the merged pull request didn't raise is
+# bumped (patch, or minor/major from the `release:minor` / `release:major` labels) in a release
+# commit pushed to main; then each changed target deploys and is tagged. Every deploy checks its
+# store first, so re-running a failed job (or the whole workflow, by hand) never publishes twice.
+# Setup — secrets, variables, store accounts: RELEASING.md.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# every job asks for exactly what it needs
+permissions: {}
+
+# one release at a time, never cancelled half-way; a newer run waits (GitHub keeps the newest waiting
+# run only, which is fine: a run releases everything since each target's last tag)
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    # a successful CI run for a push to this repository's main, or a manual run
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write       # push the release commit (version bumps, changelog) to main
+      pull-requests: read   # release:minor / release:major labels on the merged pull requests
+      actions: read         # a manual run confirms CI passed on the commit it releases
+    outputs:
+      targets: ${{ steps.commit.outputs.targets }}
+      sha: ${{ steps.commit.outputs.sha }}
+      app_version: ${{ steps.plan.outputs.app_version }}
+      core_version: ${{ steps.plan.outputs.core_version }}
+      cli_version: ${{ steps.plan.outputs.cli_version }}
+      mcp_version: ${{ steps.plan.outputs.mcp_version }}
+      extension_version: ${{ steps.plan.outputs.extension_version }}
+      vscode_version: ${{ steps.plan.outputs.vscode_version }}
+    steps:
+      # optional: a GitHub App allowed to bypass main's branch protection (RELEASING.md); without
+      # one, the job's own token pushes the release commit, which only works while main is unprotected
+      - id: app-token
+        if: vars.RELEASE_APP_ID != ''
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # all history and tags: a target's last release is its newest tag reachable from main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || github.token }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      # no install scripts in a job that can push to main
+      - run: npm ci --ignore-scripts
+      - id: plan
+        run: npm run release -- plan --tested "$TESTED" --apply
+        env:
+          # the commit CI just verified; a manual run finds the newest one and checks CI passed on it
+          TESTED: ${{ github.event.workflow_run.head_sha || 'auto' }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - id: commit
+        env:
+          TARGETS: ${{ steps.plan.outputs.targets }}
+          MESSAGE: ${{ steps.plan.outputs.message }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TARGETS" ] || [ "$TARGETS" = "[]" ]; then
+            echo "Nothing to release."
+            echo "targets=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="$(git rev-parse HEAD)"
+          if ! git diff --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit --quiet --all --message "$MESSAGE"
+            if ! git push origin HEAD:refs/heads/main; then
+              git fetch --quiet origin main
+              if [ "$(git rev-parse origin/main)" != "$base" ]; then
+                echo "::notice::main moved on while this run was planning; the release run for the newer commit includes these changes."
+                echo "targets=[]" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              echo "::error::Could not push the release commit to main. A protected main needs the release GitHub App (RELEASING.md)."
+              exit 1
+            fi
+          fi
+          echo "targets=$TARGETS" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  app:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"app"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://stringutilitybelt.com
+    permissions:
+      contents: write   # tag + GitHub release
+    env:
+      VERSION: ${{ needs.plan.outputs.app_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # the deploy build: the site plus pre-rendered pages, sitemap, RSS and OG images
+      - run: npm run build:site
+      - run: npm run check:bundle
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy --tag "app-v$VERSION" --message "Release app $VERSION (${SHA:0:12})"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SHA: ${{ needs.plan.outputs.sha }}
+      - uses: ./.github/actions/github-release
+        with:
+          target: app
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: Web app
+          latest: 'true'
+
+  core:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"core"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+    permissions:
+      contents: write   # tag + GitHub release
+      id-token: write   # npm trusted publishing and provenance
+    env:
+      VERSION: ${{ needs.plan.outputs.core_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci --ignore-scripts
+      - run: npm run build:core && npx tsc -p packages/core/tsconfig.json
+      # the package's tests include smoke tests of the built dist/
+      - run: npx vitest run packages/core
+      - id: published
+        run: npm run release -- published core
+      - name: Publish to npm
+        if: steps.published.outputs.npm != 'true'
+        run: |
+          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
+          npm publish ./packages/core --provenance --access public
+        env:
+          # empty with trusted publishing (OIDC); the fallback for a classic automation token
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/github-release
+        with:
+          target: core
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: '@string-utility-belt/core'
+
+  cli:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"cli"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm
+    permissions:
+      contents: write   # tag + GitHub release
+      id-token: write   # npm trusted publishing and provenance
+    env:
+      VERSION: ${{ needs.plan.outputs.cli_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci --ignore-scripts
+      - run: npm run build:cli
+      - run: npx vitest run packages/cli
+      - id: published
+        run: npm run release -- published cli
+      - name: Publish to npm
+        if: steps.published.outputs.npm != 'true'
+        run: |
+          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
+          npm publish ./packages/cli --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: ./.github/actions/github-release
+        with:
+          target: cli
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: subelt CLI
+
+  mcp:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"mcp"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: npm
+    permissions:
+      contents: write   # tag + GitHub release
+      id-token: write   # npm trusted publishing and provenance
+    env:
+      VERSION: ${{ needs.plan.outputs.mcp_version }}
+      MCP_PUBLISHER_VERSION: 1.8.1
+      MCP_PUBLISHER_SHA256: a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci --ignore-scripts
+      - run: npm run build:mcp
+      - run: npx vitest run packages/mcp
+      - id: published
+        run: npm run release -- published mcp
+      # the MCP Registry entry points at the npm package, so npm goes first
+      - name: Publish to npm
+        if: steps.published.outputs.npm != 'true'
+        run: |
+          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
+          npm publish ./packages/mcp --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to the MCP Registry
+        if: steps.published.outputs.mcp_registry != 'true'
+        env:
+          MCP_REGISTRY_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MCP_REGISTRY_PRIVATE_KEY" ]; then
+            echo "::error::MCP_REGISTRY_PRIVATE_KEY is not set (RELEASING.md)"
+            exit 1
+          fi
+          archive="$RUNNER_TEMP/mcp-publisher.tar.gz"
+          curl -fsSL -o "$archive" \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v$MCP_PUBLISHER_VERSION/mcp-publisher_linux_amd64.tar.gz"
+          echo "$MCP_PUBLISHER_SHA256  $archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP" mcp-publisher
+          "$RUNNER_TEMP/mcp-publisher" login dns --domain stringutilitybelt.com --private-key "$MCP_REGISTRY_PRIVATE_KEY"
+          # the registry verifies the npm package it points at, which can lag a fresh publish briefly
+          for attempt in 1 2 3 4 5; do
+            if "$RUNNER_TEMP/mcp-publisher" publish server.json; then exit 0; fi
+            echo "MCP Registry publish attempt $attempt failed; retrying in 20s"
+            sleep 20
+          done
+          exit 1
+      # the one-click Claude Desktop bundle, attached to the GitHub release
+      - id: bundle
+        run: |
+          bundle="$RUNNER_TEMP/string-utility-belt-mcp-$VERSION.mcpb"
+          npx --yes @anthropic-ai/mcpb@2.1.2 pack packages/mcp "$bundle"
+          echo "path=$bundle" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/github-release
+        with:
+          target: mcp
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: '@string-utility-belt/mcp'
+          files: ${{ steps.bundle.outputs.path }}
+
+  extension:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"extension"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: chrome-web-store
+    permissions:
+      contents: write   # tag + GitHub release
+      id-token: write   # keyless Google auth (workload identity federation)
+    env:
+      VERSION: ${{ needs.plan.outputs.extension_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build:extension
+      - run: npx vitest run packages/extension
+      - id: zip
+        run: |
+          zip="$RUNNER_TEMP/string-utility-belt-extension-$VERSION.zip"
+          (cd packages/extension/dist && zip -q -r -X "$zip" .)
+          echo "path=$zip" >> "$GITHUB_OUTPUT"
+      - id: google
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.CWS_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.CWS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+          create_credentials_file: false
+      - name: Submit to the Chrome Web Store
+        run: npm run release -- chrome-web-store "$ZIP"
+        env:
+          ZIP: ${{ steps.zip.outputs.path }}
+          CWS_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+      - uses: ./.github/actions/github-release
+        with:
+          target: extension
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: Browser extension
+          files: ${{ steps.zip.outputs.path }}
+
+  vscode:
+    needs: plan
+    if: contains(needs.plan.outputs.targets, '"vscode"')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: vscode-marketplace
+    permissions:
+      contents: write   # tag + GitHub release
+      id-token: write   # Microsoft Entra ID sign-in (no Azure DevOps PAT: global PATs retire 2026-12-01)
+    env:
+      VERSION: ${{ needs.plan.outputs.vscode_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build:vscode
+      - run: npx vitest run packages/vscode
+      - id: vsix
+        working-directory: packages/vscode
+        run: |
+          vsix="$RUNNER_TEMP/string-utility-belt-vscode-$VERSION.vsix"
+          npx --yes @vscode/vsce@4.0.0 package --no-dependencies --out "$vsix"
+          echo "path=$vsix" >> "$GITHUB_OUTPUT"
+      - id: published
+        run: npm run release -- published vscode
+      - if: steps.published.outputs.vscode_marketplace != 'true'
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      - name: Publish to the VS Code Marketplace
+        if: steps.published.outputs.vscode_marketplace != 'true'
+        run: npx --yes @vscode/vsce@4.0.0 publish --azure-credential --packagePath "$VSIX"
+        env:
+          VSIX: ${{ steps.vsix.outputs.path }}
+      # Open VSX (VSCodium, Cursor, Gitpod…) is opt-in: it publishes once OVSX_PAT is set
+      - id: open-vsx
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -n "$OVSX_PAT" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::Open VSX skipped: OVSX_PAT is not set"; fi
+      - name: Publish to Open VSX
+        if: steps.open-vsx.outputs.enabled == 'true' && steps.published.outputs.open_vsx != 'true'
+        run: npx --yes ovsx@1.2.0 publish "$VSIX"
+        env:
+          VSIX: ${{ steps.vsix.outputs.path }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - uses: ./.github/actions/github-release
+        with:
+          target: vscode
+          version: ${{ env.VERSION }}
+          sha: ${{ needs.plan.outputs.sha }}
+          title: VS Code extension
+          files: ${{ steps.vsix.outputs.path }}

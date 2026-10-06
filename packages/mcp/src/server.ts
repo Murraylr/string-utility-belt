@@ -22,9 +22,9 @@ import { checkInputSize, errorMessage, paramSummary } from './format'
 import { isEvalUtility, runJob } from './jobs'
 import type { Job, JobResult } from './jobs'
 import { MAX_INPUT_BYTES, MAX_OUTPUT_CHARS, MAX_PIPELINE_STEPS, TOOL_TIMEOUT_MS } from './limits'
+import { version as SERVER_VERSION } from '../package.json'
 
 const SERVER_NAME = 'subelt'
-const SERVER_VERSION = '1.3.1'
 
 const errorResult = (message: string): CallToolResult => ({ content: [{ type: 'text', text: message }], isError: true })
 /** The body twice: as `structuredContent` (checked against the tool's `outputSchema`) and as JSON text for older clients. */

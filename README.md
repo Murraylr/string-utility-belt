@@ -71,7 +71,8 @@ npm run typecheck
 | `npm run build:tools` | Build `packages/*` (core, CLI, MCP server, browser extension, VS Code extension) |
 | `npm run test:e2e` | Playwright end-to-end tests against a production build |
 | `npm run bench` | Large-input benchmarks (`vitest bench`) |
-| `npm run deploy` | `build:site`, then `wrangler deploy` (Cloudflare Workers: static assets + `/api/*`) |
+| `npm run deploy` | `build:site`, then `wrangler deploy` (Cloudflare Workers: static assets + `/api/*`) — releases normally deploy from CI |
+| `npm run release -- plan` | What a release from `HEAD` would ship, and at which versions ([RELEASING.md](RELEASING.md)) |
 
 ## Other surfaces
 

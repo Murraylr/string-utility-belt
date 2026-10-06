@@ -127,6 +127,15 @@ Two rules that are easy to miss:
 Commit messages are written in the imperative mood and describe the change and its reason
 ("Reject out-of-range widths in pad" rather than "fixed bug").
 
+## Releases
+
+Releases are automatic: once a pull request is merged and CI passes on `main`, every target whose
+shipped files changed (the site, `core`, `cli`, `mcp`, the browser extension, the VS Code
+extension) gets a new version and is deployed — nothing else is. Changes ship as a **patch** unless
+the pull request carries the `release:minor` or `release:major` label, or raises the version itself.
+The **Release preview** check on the pull request shows what merging it would release. Details,
+store setup and rollbacks: [RELEASING.md](RELEASING.md).
+
 ## License
 
 By contributing you agree that your contributions are licensed under the project's

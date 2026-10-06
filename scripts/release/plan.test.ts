@@ -1,0 +1,208 @@
+// @vitest-environment node
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { Git } from './git'
+import {
+  applyPlan, lastNonReleaseCommit, levelFromLabels, planRelease, planSummary, releaseCommitMessage, supersededReason,
+  type TargetPlan,
+} from './plan'
+import type { Target } from './targets'
+
+const TARGETS: Target[] = [
+  {
+    id: 'app', title: 'App', include: ['src/**', 'CHANGELOG.md'], exclude: ['**/*.test.ts'], rootManifest: 'all',
+    versionFiles: [{ path: 'package.json', pointer: ['version'] }], changelog: 'CHANGELOG.md',
+  },
+  {
+    id: 'cli', title: 'CLI', include: ['src/core/**', 'packages/cli/**'], exclude: ['**/*.test.ts'], rootManifest: 'runtime',
+    versionFiles: [
+      { path: 'packages/cli/package.json', pointer: ['version'] },
+      { path: 'packages/cli/manifest.json', pointer: ['meta', 'version'] },
+    ],
+  },
+]
+
+let dir: string
+let git: Git
+/** Pull request labels by commit, as the GitHub API would report them. */
+let labels: Map<string, string[]>
+
+const sh = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim()
+const write = (file: string, content: string) => {
+  mkdirSync(path.dirname(path.join(dir, file)), { recursive: true })
+  writeFileSync(path.join(dir, file), content)
+}
+const read = (file: string) => readFileSync(path.join(dir, file), 'utf8')
+const commit = (message: string, files: Record<string, string>, prLabels: string[] = []) => {
+  for (const [file, content] of Object.entries(files)) write(file, content)
+  sh('add', '-A')
+  sh('commit', '-q', '-m', message)
+  const sha = sh('rev-parse', 'HEAD')
+  labels.set(sha, prLabels)
+  return sha
+}
+const versions = (app: string, cli: string) => ({
+  'package.json': `{\n  "name": "app",\n  "version": "${app}"\n}\n`,
+  'packages/cli/package.json': `{\n  "name": "cli",\n  "version": "${cli}"\n}\n`,
+  'packages/cli/manifest.json': `{ "meta": { "version": "${cli}" }, "list": ["a", "b"] }\n`,
+})
+const plan = (tested?: string) => planRelease({ targets: TARGETS, git, root: dir, tested, labels: async sha => labels.get(sha) ?? [] })
+const byId = (plans: TargetPlan[]) => Object.fromEntries(plans.map(p => [p.id, p]))
+/** What the release workflow does after deploying: tag each released target on HEAD. */
+const tagReleased = (plans: TargetPlan[]) => plans.filter(p => p.release).forEach(p => sh('tag', `${p.id}-v${p.next}`))
+/** What the release job does with a plan: apply it and commit the result. */
+const releaseCommit = (plans: TargetPlan[]) => {
+  applyPlan(dir, TARGETS, plans, '2026-10-07')
+  sh('commit', '-q', '-am', releaseCommitMessage(plans))
+  return sh('rev-parse', 'HEAD')
+}
+
+beforeEach(() => {
+  dir = mkdtempSync(path.join(tmpdir(), 'release-plan-'))
+  sh('init', '-q', '-b', 'main')
+  sh('config', 'user.name', 'Test')
+  sh('config', 'user.email', 'test@example.com')
+  sh('config', 'commit.gpgsign', 'false')
+  sh('config', 'tag.gpgsign', 'false')
+  git = new Git(dir)
+  labels = new Map()
+  commit('initial', {
+    ...versions('1.0.0', '2.0.0'),
+    'src/app.ts': 'app\n',
+    'src/core/engine.ts': 'engine\n',
+    'packages/cli/main.ts': 'cli\n',
+    'CHANGELOG.md': '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n- First.\n',
+  })
+})
+
+afterEach(() => rmSync(dir, { recursive: true, force: true }))
+
+describe('planRelease', () => {
+  it('releases every target on its first run, with a bump: a store may hold the current version already', async () => {
+    const plans = byId(await plan())
+    expect(plans.app).toMatchObject({ release: true, previous: null, current: '1.0.0', next: '1.0.1', bump: 'patch' })
+    expect(plans.cli).toMatchObject({ release: true, previous: null, current: '2.0.0', next: '2.0.1', bump: 'patch' })
+    expect(plans.app.reason).toMatch(/no app-v\* tag/)
+  })
+
+  it('does not bump twice when a first release is retried after its bump commit was pushed', async () => {
+    const tested = sh('rev-parse', 'HEAD')
+    releaseCommit(await plan(tested))
+    const retry = byId(await plan(tested))
+    expect(retry.app).toMatchObject({ release: true, current: '1.0.1', next: '1.0.1', bump: null })
+    expect(retry.cli).toMatchObject({ release: true, current: '2.0.1', next: '2.0.1', bump: null })
+  })
+
+  it('releases nothing that is unchanged since its tag', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('docs', { 'README.md': 'readme\n', 'src/core/engine.test.ts': 'test\n' })
+    const plans = byId(await plan())
+    expect(plans.app).toMatchObject({ release: false, reason: 'unchanged since app-v1.0.1' })
+    expect(plans.cli).toMatchObject({ release: false, reason: 'unchanged since cli-v2.0.1' })
+  })
+
+  it('releases only the targets a change ships in, at the level of the labels on the pull requests that touched them', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('app feature', { 'src/app.ts': 'app 2\n' }, ['release:major'])
+    commit('cli fix', { 'packages/cli/main.ts': 'cli 2\n' }, ['bug', 'release:minor'])
+    const plans = byId(await plan())
+    expect(plans.app).toMatchObject({ release: true, next: '2.0.0', bump: 'major', changes: ['src/app.ts'] })
+    expect(plans.cli).toMatchObject({ release: true, next: '2.1.0', bump: 'minor', changes: ['packages/cli/main.ts'] })
+  })
+
+  it('bumps every target that shares a changed file', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('engine', { 'src/core/engine.ts': 'engine 2\n' })
+    const plans = byId(await plan())
+    expect(plans.app).toMatchObject({ release: true, next: '1.0.2', bump: 'patch' })
+    expect(plans.cli).toMatchObject({ release: true, next: '2.0.2', bump: 'patch' })
+  })
+
+  it('keeps a version a pull request already raised', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('cli 3', { ...versions('1.0.1', '3.0.0'), 'packages/cli/main.ts': 'cli 3\n' }, ['release:minor'])
+    const plans = byId(await plan())
+    expect(plans.cli).toMatchObject({ release: true, previous: '2.0.1', next: '3.0.0', bump: null, reason: 'version already raised from 2.0.1' })
+    expect(plans.app.release).toBe(false)
+  })
+
+  it('refuses version files that disagree, or that fall below the last release', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('drift', { 'packages/cli/manifest.json': '{ "meta": { "version": "9.9.9" } }\n' })
+    await expect(plan()).rejects.toThrow(/cli: version files disagree — packages\/cli\/package.json\["version"\] = 2\.0\.1, packages\/cli\/manifest.json\["meta"\]\["version"\] = 9\.9\.9/)
+    commit('lower', versions('1.0.0', '2.0.1'))
+    await expect(plan()).rejects.toThrow(/app: the version files say 1\.0\.0, lower than the last release app-v1\.0\.1/)
+  })
+})
+
+describe('applyPlan', () => {
+  it('writes the new version into every version file without reformatting, and promotes the changelog', async () => {
+    write('CHANGELOG.md', '# Changelog\n\n## [Unreleased]\n\n- New thing.\n\n## [1.0.0] - 2026-01-01\n\n- First.\n')
+    const changed = applyPlan(dir, TARGETS, await plan(), '2026-10-07')
+    expect(changed.sort()).toEqual(['CHANGELOG.md', 'package.json', 'packages/cli/manifest.json', 'packages/cli/package.json'])
+    expect(read('packages/cli/manifest.json')).toBe('{ "meta": { "version": "2.0.1" }, "list": ["a", "b"] }\n')
+    expect(read('package.json')).toBe('{\n  "name": "app",\n  "version": "1.0.1"\n}\n')
+    expect(read('CHANGELOG.md')).toBe('# Changelog\n\n## [Unreleased]\n\n## [1.0.1] - 2026-10-07\n\n- New thing.\n\n## [1.0.0] - 2026-01-01\n\n- First.\n')
+  })
+
+  it('leaves an empty [Unreleased] alone', async () => {
+    const before = read('CHANGELOG.md')
+    applyPlan(dir, TARGETS, await plan(), '2026-10-07')
+    expect(read('CHANGELOG.md')).toBe(before)
+  })
+})
+
+describe('tested commit checks', () => {
+  it('accepts HEAD, and HEAD plus release commits', async () => {
+    const tested = sh('rev-parse', 'HEAD')
+    expect(supersededReason(git, tested)).toBeNull()
+    releaseCommit(await plan())
+    expect(supersededReason(git, tested)).toBeNull()
+    expect(lastNonReleaseCommit(git)).toBe(tested)
+  })
+
+  it('stands down when main has moved past the tested commit', () => {
+    const tested = sh('rev-parse', 'HEAD')
+    commit('newer', { 'src/app.ts': 'newer\n' })
+    expect(supersededReason(git, tested)).toMatch(/main has moved on/)
+  })
+
+  it('stands down when the tested commit is no longer on the branch', () => {
+    sh('checkout', '-q', '-b', 'side')
+    const sideCommit = commit('side', { 'src/app.ts': 'side\n' })
+    sh('checkout', '-q', 'main')
+    expect(supersededReason(git, sideCommit)).toMatch(/no longer on this branch/)
+  })
+})
+
+describe('levelFromLabels / releaseCommitMessage / planSummary', () => {
+  it('maps release labels to bump levels, ignoring case and other labels', () => {
+    expect(levelFromLabels([])).toBeNull()
+    expect(levelFromLabels(['bug'])).toBeNull()
+    expect(levelFromLabels(['Release:Minor'])).toBe('minor')
+    expect(levelFromLabels(['release:minor', 'release:major'])).toBe('major')
+  })
+
+  it('names every released target in a [skip ci] release commit', async () => {
+    expect(releaseCommitMessage(await plan())).toBe('chore(release): app 1.0.1, cli 2.0.1 [skip ci]')
+  })
+
+  it('renders a table with the tags a run creates', async () => {
+    const summary = planSummary(await plan(), 'Release plan')
+    expect(summary).toContain('| App | 🚀 release | 1.0.0 → **1.0.1** (patch) |')
+    expect(summary).toContain('Tags: `app-v1.0.1`, `cli-v2.0.1`')
+  })
+})

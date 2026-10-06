@@ -7,7 +7,8 @@ same engine shipped as a CLI, HTTP API, MCP server, browser extension and VS Cod
 
 - **Frontend:** React 18, TypeScript, Tailwind CSS (design tokens as CSS vars, `.dark` class), Framer Motion, CodeMirror (lazy)
 - **Build:** Vite 7 with `@vitejs/plugin-react`; custom plugins in `scripts/` (utility manifest, PWA service worker)
-- **Deploy:** Cloudflare Workers via Wrangler — static assets + the `/api/*` Worker (`npm run deploy`)
+- **Deploy:** Cloudflare Workers via Wrangler — static assets + the `/api/*` Worker. Released by the Release workflow
+  (see "Releases" below); `npm run deploy` is the manual fallback
 - **Tests:** Vitest + Testing Library + jsdom, fast-check property tests, Playwright E2E, `vitest bench`
 - **Lint:** ESLint 9 flat config with typescript-eslint, react-hooks, react-refresh
 
@@ -25,7 +26,8 @@ npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.
 npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
-npm run deploy       # build:site (build + build:seo) + wrangler deploy
+npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
+npm run release -- plan   # what a release from HEAD would ship, at which versions (read-only; RELEASING.md)
 ```
 
 ## Architecture
@@ -182,6 +184,19 @@ export default util
 
 GitHub Actions (`.github/workflows/ci.yml`): tests, typecheck (app, worker, e2e, packages), lint, build +
 `check:bundle` + `build:seo:fast`, `build:tools` + package tests, `wrangler deploy --dry-run`, and Playwright.
+
+## Releases (`RELEASING.md`)
+
+- `.github/workflows/release.yml` runs after CI passes on `main`: it releases only the targets (`app`, `core`, `cli`,
+  `mcp`, `extension`, `vscode`) whose shipped files changed since their last `<id>-v<version>` tag, bumps versions the
+  merged PR didn't (patch; `release:minor` / `release:major` labels), pushes a `chore(release): … [skip ci]` commit,
+  then deploys each target, tags it and creates a GitHub release. Every deploy checks its store first (idempotent).
+- Tooling: `scripts/release.ts` + `scripts/release/`. Path rules per target live in `scripts/release/targets.ts`; a test
+  walks each package's imports and fails when a bundled file isn't covered — extend the globs when a package starts
+  importing from a new directory. `release-preview.yml` shows each PR's would-be release in its job summary.
+- Versions: every version file of a target must agree (tested). The CLI's `VERSION` and the MCP server's version are
+  imported from their `package.json`; the extension's version is `manifest.json` alone (no longer the root's).
+  Raise a version by hand only to pick it yourself (all of the target's files at once); never lower one.
 
 ## Path aliases
 

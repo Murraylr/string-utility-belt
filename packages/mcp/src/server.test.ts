@@ -4,6 +4,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { encodeShare } from '../../../src/core'
 import { EXAMPLES } from '../../../src/utilities/_generated/examples'
+import pkg from '../package.json'
 import type { Executor, RunOptions } from './executor'
 import { MAX_OUTPUT_CHARS } from './limits'
 import { createServer } from './server'
@@ -43,6 +44,10 @@ describe('subelt MCP server', () => {
   afterAll(async () => {
     await client.close()
     await server.close()
+  })
+
+  it('reports the package version releases bump (packages/mcp/package.json)', () => {
+    expect(client.getServerVersion()).toMatchObject({ name: 'subelt', version: pkg.version })
   })
 
   it('lists all five tools', async () => {
