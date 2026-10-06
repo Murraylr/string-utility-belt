@@ -20,7 +20,7 @@ export type RouteName =
 export type Route = { name: RouteName; params: Record<string, string> }
 
 /** Slugs of the site pages, each pre-rendered at `/<slug>/` from `src/app/pages/content/<slug>.md`. */
-export const SITE_PAGES = ['about', 'privacy', 'contact'] as const
+export const SITE_PAGES = ['about', 'privacy', 'contact', 'integrations'] as const
 export type SitePageSlug = (typeof SITE_PAGES)[number]
 
 const isSitePage = (slug: string | undefined): slug is SitePageSlug =>

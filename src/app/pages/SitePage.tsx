@@ -4,13 +4,14 @@ import type { SitePageSlug } from '@/lib/router'
 import about from './content/about.md?raw'
 import privacy from './content/privacy.md?raw'
 import contact from './content/contact.md?raw'
+import integrations from './content/integrations.md?raw'
 import { parseSitePage } from './sitePages'
 import { useDocumentMeta } from './useDocumentMeta'
 import { pageTitle } from './seo'
 
-const SOURCES: Record<SitePageSlug, string> = { about, privacy, contact }
+const SOURCES: Record<SitePageSlug, string> = { about, privacy, contact, integrations }
 
-/** About, privacy policy and contact: static markdown pages in the site chrome. */
+/** About, privacy policy, contact and integrations: static markdown pages in the site chrome. */
 export default function SitePage({ slug }: { slug: SitePageSlug }) {
   const page = useMemo(() => parseSitePage(SOURCES[slug]), [slug])
   useDocumentMeta(pageTitle(page.title), page.description)

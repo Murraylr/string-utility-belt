@@ -36,7 +36,9 @@ function inline(text) {
   const held = text.replace(/\[([^\]\n]+)\]\(([^)\s\u0000]+)\)/g, (_, label, url) => {
     const href = sanitizeUrl(url);
     // only off-site links open a new tab; in-app routes (`#/…`, `/…`) navigate in place
-    const external = /^https?:/i.test(href) ? ' target="_blank" rel="noopener noreferrer"' : '';
+    // no `noreferrer`: the site's Referrer-Policy already limits other hosts to its origin,
+    // which lets the stores and package registries we link to credit the visit to us
+    const external = /^https?:/i.test(href) ? ' target="_blank" rel="noopener"' : '';
     return hold(links, 'LINK', `<a class="md-link" href="${href}"${external}>${emphasis(label)}</a>`);
   });
   return emphasis(held).replace(/\u0000LINK(\d+)\u0000/g, (_, i) => links[Number(i)]);

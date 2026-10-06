@@ -123,10 +123,10 @@ describe('buildSeo over a built dist/', () => {
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
     for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
-      'about/index.html', 'privacy/index.html', 'contact/index.html', '404.html']) {
+      'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + 10)
+    expect(result.pages).toBe(MANIFEST.length + 11)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -199,7 +199,7 @@ describe('buildSeo over a built dist/', () => {
     for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
-      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/'])
+      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
       expect([...doc.querySelectorAll('#root > header nav a')].map(a => a.getAttribute('href')), rel)
         .toEqual(['/', '/docs/', '/utilities/', '/blog/', '/changelog/'])
     }
@@ -230,7 +230,7 @@ describe('buildSeo over a built dist/', () => {
     expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
   })
 
-  it('pre-renders the about, privacy and contact pages from their markdown', () => {
+  it('pre-renders the about, privacy, contact and integrations pages from their markdown', () => {
     for (const slug of SITE_PAGES) {
       const doc = html(read(dist, `${slug}/index.html`))
       expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href'), slug).toBe(`${SITE}/${slug}/`)
@@ -295,7 +295,7 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
-      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`,
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`,
     ]))
     // every page `pages` counts but the 404, plus the home page (written apart from the count)
     expect(locs).toHaveLength(result.pages - 1 + 1)
