@@ -24,11 +24,23 @@ import type { Job, JobResult } from './jobs'
 import { MAX_INPUT_BYTES, MAX_OUTPUT_CHARS, MAX_PIPELINE_STEPS, TOOL_TIMEOUT_MS } from './limits'
 
 const SERVER_NAME = 'subelt'
-const SERVER_VERSION = '1.3.0'
+const SERVER_VERSION = '1.3.1'
 
-const textResult = (text: string): CallToolResult => ({ content: [{ type: 'text', text }] })
 const errorResult = (message: string): CallToolResult => ({ content: [{ type: 'text', text: message }], isError: true })
-const jsonResult = (body: unknown): CallToolResult => textResult(JSON.stringify(body, null, 2))
+/** The body twice: as `structuredContent` (checked against the tool's `outputSchema`) and as JSON text for older clients. */
+const jsonResult = (body: Record<string, unknown>): CallToolResult => ({
+  content: [{ type: 'text', text: JSON.stringify(body, null, 2) }],
+  structuredContent: body,
+})
+
+// Output schemas: what each tool's `structuredContent` holds on success (errors carry only text).
+const renderedOutputShape = {
+  output: z.string().describe('The result: text as-is, JSON pretty-printed, bytes as base64.'),
+  outputEncoding: z.literal('base64').optional().describe('Present when `output` is base64-encoded bytes.'),
+  truncated: z.boolean().optional().describe('True when `output` was cut off at the output limit.'),
+  fullLength: z.number().optional().describe('Length `output` would have had untruncated, when `truncated`.'),
+}
+const valueTypes = z.union([z.string(), z.array(z.string())])
 
 // ---------------------------------------------------------------------------
 // list_utilities
@@ -149,6 +161,12 @@ export function createServer(opts: ServerOptions = {}): McpServer {
         'must match somewhere, in any order (e.g. "encode url", "sha256", "uppercase").'),
       limit: z.number().int().min(1).max(500).optional().describe('Maximum number of results to return (default 50, max 500).'),
     },
+    outputSchema: {
+      items: z.array(z.object({ id: z.string(), name: z.string(), category: z.string(), description: z.string() }))
+        .describe('Matching utilities, best first, up to `limit`.'),
+      total: z.number().int().describe('How many utilities matched before `limit` was applied.'),
+      categories: z.array(z.string()).describe('Every category name, for filtering.'),
+    },
   }, async args => jsonResult(listUtilities(args)))
 
   server.registerTool('describe_utility', {
@@ -162,6 +180,21 @@ export function createServer(opts: ServerOptions = {}): McpServer {
     annotations: { readOnlyHint: true, openWorldHint: false },
     inputSchema: {
       id: z.string().describe('Utility id, as returned by list_utilities (e.g. "base64_encode").'),
+    },
+    outputSchema: {
+      id: z.string(),
+      name: z.string(),
+      category: z.string(),
+      description: z.string(),
+      accepts: valueTypes.describe('Value type(s) the utility takes: string, bytes or json.'),
+      produces: valueTypes.describe('Value type(s) the utility returns.'),
+      params: z.record(z.string(), z.record(z.string(), z.unknown()))
+        .describe('Parameter name -> spec (kind, label, default, options/bounds, description…).'),
+      tags: z.array(z.string()),
+      aliases: z.array(z.string()),
+      env: z.array(z.string()).describe('Runtime capabilities the utility needs (dom, wasm, eval, main).'),
+      unavailable: z.string().optional().describe('Why this server will not run the utility, when it will not.'),
+      examples: z.array(z.record(z.string(), z.unknown())).describe('Worked examples: input, params and expected output.'),
     },
   }, async ({ id }) => {
     try {
@@ -191,6 +224,7 @@ export function createServer(opts: ServerOptions = {}): McpServer {
       params: z.record(z.string(), z.unknown()).optional()
         .describe('Utility parameters (see describe_utility for names/kinds); params left out use their declared default.'),
     },
+    outputSchema: renderedOutputShape,
   }, async (args, extra) => execute({ kind: 'utility', ...args }, extra.signal))
 
   server.registerTool('run_pipeline', {
@@ -220,6 +254,13 @@ export function createServer(opts: ServerOptions = {}): McpServer {
       input: z.string().describe("The pipeline's source input."),
       inputEncoding: z.enum(INPUT_ENCODINGS).optional().describe('How to decode `input`. Default "text".'),
     },
+    outputSchema: {
+      ...renderedOutputShape,
+      errors: z.record(z.string(), z.string()).describe('Step id -> error message, for steps that failed.'),
+      timings: z.record(z.string(), z.number()).describe('Step id -> milliseconds it took.'),
+      skipped: z.record(z.string(), z.string()).describe('Step id -> why it did not run (disabled, condition, halted, aborted).'),
+      halted: z.boolean().describe('True when a step with onError "stop" failed and ended the pipeline.'),
+    },
   }, async (args, extra) => execute({ kind: 'pipeline', ...args }, extra.signal))
 
   server.registerTool('detect_format', {
@@ -233,6 +274,10 @@ export function createServer(opts: ServerOptions = {}): McpServer {
     inputSchema: {
       input: z.string().describe('The value to inspect.'),
       inputEncoding: z.enum(['text', 'base64', 'hex']).optional().describe('How to decode `input` first. Default "text".'),
+    },
+    outputSchema: {
+      candidates: z.array(z.object({ format: z.string(), confidence: z.number(), note: z.string() }))
+        .describe('Likely formats, best first; confidence is 0-1. Empty for empty input.'),
     },
   }, async (args, extra) => execute({ kind: 'detect', ...args }, extra.signal))
 
