@@ -1,6 +1,63 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+/* the v3 `content` globs: v4 would otherwise scan the whole repo (packages/, docs) */
+@source '../index.html';
+@source './**/*.{js,jsx,ts,tsx}';
+
+/* `.dark` on <html> switches the token set (v3's darkMode: 'class') */
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: Plus Jakarta Sans, ui-sans-serif, system-ui;
+  --font-mono: JetBrains Mono, ui-monospace, SFMono-Regular;
+
+  --color-canvas: rgb(var(--c-canvas));
+  --color-surface: rgb(var(--c-surface));
+  --color-surface-2: rgb(var(--c-surface-2));
+  --color-fg: rgb(var(--c-fg));
+  --color-muted: rgb(var(--c-muted));
+  --color-line: rgb(var(--c-line));
+  --color-danger: rgb(var(--c-danger));
+  --color-success: rgb(var(--c-success));
+  --color-warn: rgb(var(--c-warn));
+
+  --color-ink-50: #f8fafc;
+  --color-ink-100: #eef2f7;
+  --color-ink-200: #e2e8f0;
+  --color-ink-900: #0b132a;
+
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #5458ee;
+  --color-primary-700: #4338ca;
+
+  /* v3's absolute line heights: v4's are unitless ratios, which a smaller-font child
+     (a text-[11px] chip inside text-sm) would inherit as a shorter line */
+  --text-xs--line-height: 1rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+
+  --shadow-soft: 0 10px 25px -10px rgba(0, 0, 0, 0.15);
+  --shadow-glow:
+    0 0 0 2px rgba(99, 102, 241, 0.15), 0 10px 30px rgba(99, 102, 241, 0.25);
+
+}
+
+/* Tailwind v4 defaults borders to currentColor and buttons to cursor: default;
+   keep v3's behaviour (the line token, pointer on enabled buttons). */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: rgb(var(--c-line));
+  }
+  button:not(:disabled), [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 /* Design tokens (space-separated RGB so Tailwind can apply alpha). `.dark` swaps them. */
 @layer base {
@@ -91,17 +148,17 @@
   }
   .btn {
     @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border hover:bg-surface-2 disabled:opacity-50 shadow-soft text-sm;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
   }
   .icon-btn {
     /* min-w/min-h (not fixed padding) floor the tap target at ~40px (WCAG 2.5.8)
        while still growing for a bigger icon, and letting a full-width text menu
        item (StepMenu) override with its own `w-full`/`justify-start`. */
     @apply inline-flex items-center justify-center min-w-10 min-h-10 p-2 rounded-xl hover:bg-surface-2 disabled:opacity-40;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
   }
   .field {
-    @apply border rounded-xl px-3 py-2 bg-surface text-fg shadow-soft outline-none focus:ring focus:ring-primary-500/30;
+    @apply border rounded-xl px-3 py-2 bg-surface text-fg shadow-soft outline-hidden focus:ring-3 focus:ring-primary-500/30;
     @apply focus-visible:ring-2 focus-visible:ring-primary-500;
   }
   .chip {
@@ -124,9 +181,11 @@
   .md { @apply leading-7 text-fg; }
   .md .md-h1 { @apply text-2xl font-bold mt-10 mb-4; }
   .md .md-h2 { @apply text-xl font-bold mt-8 mb-3; }
+  /* a section opened from a link (`/integrations/#cli`) clears the sticky header */
+  .md [id] { scroll-margin-top: 5rem; }
   .md .md-h3 { @apply text-lg font-semibold mt-6 mb-2; }
   .md .md-p { @apply mb-4; }
-  .md .md-code { @apply px-1.5 py-0.5 rounded bg-surface-2 border text-[0.9em] font-mono; }
+  .md .md-code { @apply px-1.5 py-0.5 rounded-sm bg-surface-2 border text-[0.9em] font-mono; }
   .md .md-pre { @apply overflow-x-auto p-3 rounded-lg bg-surface-2 border my-4; }
   .md .md-pre .md-code-block { @apply font-mono text-sm bg-transparent border-0 p-0; }
   .md .md-link { @apply text-primary-600 dark:text-primary-100 underline underline-offset-2 hover:no-underline; }
@@ -144,7 +203,7 @@
   .guide .md-h2 { @apply text-lg mt-6 mb-2; }
   .guide .md-h3 { @apply text-base mt-4 mb-2; }
   .guide > :first-child { @apply mt-0; }
-  .guide .md-code { @apply break-words; }
+  .guide .md-code { @apply wrap-break-word; }
   .guide .guide-example { @apply my-4 rounded-xl border p-3 grid gap-1; }
   .guide .guide-example .md-pre { @apply my-0 whitespace-pre-wrap; overflow-wrap: anywhere; }
   .guide .guide-example-title { @apply font-medium text-sm; }

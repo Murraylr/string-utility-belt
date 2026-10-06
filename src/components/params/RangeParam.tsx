@@ -17,7 +17,7 @@ export default function RangeParam({ id, spec, value, onChange, error, described
         aria-describedby={describedBy}
         onChange={e => onChange(Number(e.target.value))}
       />
-      <output htmlFor={id} className="min-w-[2.5rem] text-right text-xs tabular-nums" aria-hidden="true">{value}</output>
+      <output htmlFor={id} className="min-w-10 text-right text-xs tabular-nums" aria-hidden="true">{value}</output>
     </div>
   )
 }

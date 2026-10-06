@@ -24,7 +24,7 @@ export default function UtilityGuide({ name, state, onOpen }: { name: string; st
   return (
     <details className="card group" aria-busy={state.status === 'loading' ? true : undefined}
       onToggle={e => { if (e.currentTarget.open) onOpen?.() }}>
-      <summary className="p-6 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500">
+      <summary className="p-6 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500">
         <span className="grid gap-0.5 flex-1 min-w-0">
           <h2 className="text-lg font-medium">{guideHeading(name)}</h2>
           <span className="muted">Detailed guide with worked examples</span>

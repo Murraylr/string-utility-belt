@@ -18,7 +18,7 @@ export default function PreviewBox({ label, value, id }: PreviewBoxProps) {
         <span className="muted">{label}</span>
         <CopyAsMenu value={value} />
       </div>
-      <pre className="font-mono whitespace-pre-wrap [overflow-wrap:anywhere] overflow-auto max-h-40">{formatForDisplay(value)}</pre>
+      <pre className="font-mono whitespace-pre-wrap wrap-anywhere overflow-auto max-h-40">{formatForDisplay(value)}</pre>
     </div>
   )
 }

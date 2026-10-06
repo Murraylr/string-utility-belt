@@ -229,7 +229,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
           <pre
             role="status"
             aria-label="playground output"
-            className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-3 min-h-12 max-h-96 overflow-auto"
+            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-3 min-h-12 max-h-96 overflow-auto"
           >
             {playOutput}
           </pre>
@@ -284,11 +284,11 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
               <div className="text-xs text-muted">
                 input{ex.inputEncoding && ex.inputEncoding !== 'text' ? ` (${ex.inputEncoding})` : ''}
               </div>
-              <pre className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-2">{ex.input}</pre>
+              <pre className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">{ex.input}</pre>
               {ex.params && Object.keys(ex.params).length > 0 && (
                 <>
                   <div className="text-xs text-muted">params</div>
-                  <pre className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-2">
+                  <pre className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">
                     {JSON.stringify(ex.params)}
                   </pre>
                 </>
@@ -296,7 +296,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
               <div className="text-xs text-muted">
                 output{ex.output === undefined && ex.outputMatches ? ' (varies between runs — matches this pattern)' : ''}
               </div>
-              <pre className="mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere] bg-surface-2 rounded-lg p-2">
+              <pre className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">
                 {ex.output ?? (ex.outputMatches ? `/${ex.outputMatches}/` : '(varies between runs)')}
               </pre>
               {playable(ex) && (

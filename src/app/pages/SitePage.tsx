@@ -1,19 +1,26 @@
-import React, { useMemo } from 'react'
-import type { SitePageSlug } from '@/lib/router'
+import React, { useEffect, useMemo } from 'react'
+import { scrollToFragment, type SitePageSlug } from '@/lib/router'
+import { writePref } from '@/app/prefs'
+import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 // Vite `?raw` imports: the same markdown `scripts/seo/build.ts` pre-renders into /<slug>/
 import about from './content/about.md?raw'
 import privacy from './content/privacy.md?raw'
 import contact from './content/contact.md?raw'
+import integrations from './content/integrations.md?raw'
 import { parseSitePage } from './sitePages'
 import { useDocumentMeta } from './useDocumentMeta'
 import { pageTitle } from './seo'
 
-const SOURCES: Record<SitePageSlug, string> = { about, privacy, contact }
+const SOURCES: Record<SitePageSlug, string> = { about, privacy, contact, integrations }
 
-/** About, privacy policy and contact: static markdown pages in the site chrome. */
+/** About, privacy policy, contact and integrations: static markdown pages in the site chrome. */
 export default function SitePage({ slug }: { slug: SitePageSlug }) {
   const page = useMemo(() => parseSitePage(SOURCES[slug]), [slug])
   useDocumentMeta(pageTitle(page.title), page.description)
+  // this page renders after navigation (a lazy chunk), so it opens its own #section
+  useEffect(() => { scrollToFragment() }, [page.html])
+  // the header's integrations group stops marking itself new once its page is read
+  useEffect(() => { if (slug === 'integrations') writePref(INTEGRATIONS_SEEN_PREF, true) }, [slug])
 
   return (
     // w-full + min-w-0, as for blog posts: keeps a long code span or table inside the grid track;

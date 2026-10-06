@@ -91,7 +91,7 @@ export default function ConditionEditor({ condition, onChange }: ConditionEditor
 
       {kind === 'regex' && (
         <div className="flex flex-wrap items-center gap-2">
-          <input className="field flex-1 min-w-[8rem]" aria-label="regex pattern" placeholder="pattern"
+          <input className="field flex-1 min-w-32" aria-label="regex pattern" placeholder="pattern"
             value={draft.pattern} {...invalid('pattern')}
             onChange={e => setDraft(d => ({ ...d, pattern: e.target.value }))} onBlur={commitRegex} onKeyDown={draftKeys} />
           <input className="field w-20" aria-label="regex flags" placeholder="flags" value={draft.flags} {...invalid('flags')}

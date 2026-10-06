@@ -27,7 +27,7 @@ describe('mdToHtml', () => {
 
   it('renders a markdown link with target/rel', () => {
     const out = mdToHtml('[docs](https://example.com/a?b=1)')
-    expect(out).toContain('<a class="md-link" href="https://example.com/a?b=1" target="_blank" rel="noopener noreferrer">docs</a>')
+    expect(out).toContain('<a class="md-link" href="https://example.com/a?b=1" target="_blank" rel="noopener">docs</a>')
   })
 
   it('falls back a javascript: link href to "#" instead of passing it through', () => {
@@ -131,7 +131,7 @@ describe('mdToHtml links', () => {
     expect(internal.getAttribute('href')).toBe('#/blog/other')
     expect(internal.hasAttribute('target')).toBe(false)
     expect(external.getAttribute('target')).toBe('_blank')
-    expect(external.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(external.getAttribute('rel')).toBe('noopener')
   })
 
   it('keeps the anchor well-formed when a code span sits inside the url', () => {

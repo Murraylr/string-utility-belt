@@ -61,7 +61,7 @@ export default function StepDiff({ before, after }: StepDiffProps) {
         const cls = r.type === 'add' ? 'bg-success/10 text-success' : r.type === 'remove' ? 'bg-danger/10 text-danger' : ''
         const marker = r.type === 'add' ? '+' : r.type === 'remove' ? '-' : ' '
         return (
-          <div key={i} className={`px-2 whitespace-pre-wrap [overflow-wrap:anywhere] ${cls}`}>
+          <div key={i} className={`px-2 whitespace-pre-wrap wrap-anywhere ${cls}`}>
             {marker} {r.text}
           </div>
         )

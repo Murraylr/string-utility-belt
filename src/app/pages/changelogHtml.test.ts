@@ -82,7 +82,7 @@ describe('renderChangelogHtml', () => {
     const li = root.querySelector('li')!
     const code = li.querySelector('code')!
     expect(code.className).toContain('md-code')
-    expect(code.className).toContain('break-words')
+    expect(code.className).toContain('wrap-break-word')
     expect(code.textContent).toBe('src/utilities/_generated/manifest.ts')
     // the list is `grid` (for spacing between items): without `min-w-0` on the <li> grid
     // item, it blows out to the code span's unwrapped width instead of wrapping within it
@@ -93,6 +93,6 @@ describe('renderChangelogHtml', () => {
     const root = parse(renderChangelogHtml('```\nconst x = 1\n```'))
     const code = root.querySelector('pre code')!
     expect(code.className).toBe('md-code-block')
-    expect(code.className).not.toContain('break-words')
+    expect(code.className).not.toContain('wrap-break-word')
   })
 })

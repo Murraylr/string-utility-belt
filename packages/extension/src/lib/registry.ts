@@ -5,16 +5,16 @@
  * worker, which cannot use dynamic `import()` — see vite.config.ts).
  */
 import { formatForDisplay, valueType } from '../../../../src/core/coerce'
+import { canRunInExtension, extensionUnsupportedSteps } from '../../../../src/core/extensionBridge'
 import type { UtilityMeta } from '../../../../src/core/registry'
 import { runPipeline } from '../../../../src/core/runner'
-import type { Params, Utility, Value } from '../../../../src/types/utility'
+import { walkSteps } from '../../../../src/core/steps'
+import type { Params, PipelineStep, Utility, Value } from '../../../../src/types/utility'
 import { MANIFEST } from '../../../../src/utilities/_generated/manifest'
 import { LOADERS } from '../../../../src/utilities/_generated/loaders'
-import { UNSAFE_ENV } from './constants'
 
-export function isEdgeSafe(meta: Pick<UtilityMeta, 'env'>): boolean {
-  return !meta.env.some(e => UNSAFE_ENV.has(e))
-}
+/** The shared rule (`canRunInExtension`): no dom, main or eval capability. */
+export const isEdgeSafe = (meta: Pick<UtilityMeta, 'env'>): boolean => canRunInExtension(meta)
 
 const byId = new Map(MANIFEST.map(m => [m.id, m]))
 
@@ -52,6 +52,39 @@ export async function runUtilityById(id: string, input: Value, params: Params = 
   const result = await runPipeline(input, [{ id: 'step', utilityId: id, params }], { load: loadUtility })
   const err = result.err.step
   if (err) throw new Error(err)
+  return result.out
+}
+
+/** A step's display name for error messages: its label, else its utility's name, else its kind. */
+function stepName(step: PipelineStep): string {
+  if (step.label) return step.label
+  if (step.type === 'branch') return 'branch'
+  if (step.type === 'macro') return step.name
+  return byId.get(step.utilityId)?.name ?? step.utilityId
+}
+
+/**
+ * Runs a saved pipeline. A run whose result the user did not ask for fails as a
+ * whole, so the page is never written with half-transformed text: any error in
+ * a step that kept the default error policy, and any halt (`onError: 'stop'`).
+ * A step with an explicit `passthrough` or `empty` policy failing is the
+ * pipeline working as its author designed, and its result is kept.
+ */
+export async function runPipelineSteps(steps: PipelineStep[], input: Value): Promise<Value> {
+  const unsupported = extensionUnsupportedSteps(steps, getUtilityMeta)
+  if (unsupported.length) {
+    const { utilityId, reason } = unsupported[0]
+    throw new Error(`${byId.get(utilityId)?.name ?? utilityId} cannot run in the extension (${reason})`)
+  }
+  const result = await runPipeline(input, steps, { load: loadUtility })
+  let failure: string | undefined
+  walkSteps(steps, step => {
+    const err = result.err[step.id]
+    if (err === undefined || (step.onError !== undefined && step.onError !== 'stop')) return
+    failure = `${stepName(step)}: ${err}`
+    return false
+  })
+  if (failure) throw new Error(failure)
   return result.out
 }
 

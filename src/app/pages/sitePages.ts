@@ -9,11 +9,39 @@ export interface SitePageDoc {
   html: string
 }
 
+const SECTION_HEADING = /<h([23]) class="md-h\1">([\s\S]*?)<\/h\1>/g
+
+/** `MCP server for <code>AI</code> &amp; agents` → `mcp-server-for-ai-agents` */
+export function headingId(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&[#\w]+;/g, ' ')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * Gives every `##` / `###` section an `id` from its text, so a link can open a page
+ * at a section (`/integrations/#command-line-tool`). Repeated headings get `-2`, `-3`….
+ */
+function withSectionIds(html: string): string {
+  const used = new Map<string, number>()
+  return html.replace(SECTION_HEADING, (heading: string, level: string, inner: string) => {
+    const base = headingId(inner)
+    if (!base) return heading
+    const n = (used.get(base) ?? 0) + 1
+    used.set(base, n)
+    const id = n === 1 ? base : `${base}-${n}`
+    return `<h${level} id="${id}" class="md-h${level}">${inner}</h${level}>`
+  })
+}
+
 /**
  * Frontmatter `title` and `description`, then markdown in the guide syntax
  * (lists, tables, links) whose `#` line is the page's `<h1>`.
  */
 export function parseSitePage(source: string): SitePageDoc {
   const { title = '', description = '' } = parseGuide(source)
-  return { title, description, html: renderMarkdownDocument(source) }
+  return { title, description, html: withSectionIds(renderMarkdownDocument(source)) }
 }

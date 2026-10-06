@@ -76,7 +76,7 @@ export default function DiffView({ before, after }: DiffViewProps) {
         const prefix = c.added ? '+ ' : c.removed ? '- ' : '  '
         const tone = c.added ? 'text-success bg-success/10' : c.removed ? 'text-danger bg-danger/10' : ''
         return (
-          <pre key={i} className={`whitespace-pre-wrap [overflow-wrap:anywhere] m-0 ${tone}`}>
+          <pre key={i} className={`whitespace-pre-wrap wrap-anywhere m-0 ${tone}`}>
             {lines.map(l => `${prefix}${l}`).join('\n')}
           </pre>
         )

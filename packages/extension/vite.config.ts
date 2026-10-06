@@ -1,6 +1,7 @@
 import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { build, defineConfig, type InlineConfig, type Plugin } from 'vite'
+import { BRIDGE_ORIGINS } from '../../src/core/extensionBridge'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
 import { UNSAFE_ENV } from './src/lib/constants'
 
@@ -62,11 +63,45 @@ function backgroundBuild(outDir: string, mode: string): InlineConfig {
   }
 }
 
+/** A development build also accepts messages from a local dev server (any port); production never does. */
+const DEV_APP_MATCHES = ['http://localhost/*', 'http://127.0.0.1/*']
+
+/**
+ * `externally_connectable.matches` must be exactly the origins the app and the
+ * service worker trust (`BRIDGE_ORIGINS`): fail the build rather than ship an
+ * extension that pages the worker refuses can reach, or the app's can't.
+ */
+function appMatches(manifest: { externally_connectable?: { matches?: string[] } }, mode: string): void {
+  const matches = manifest.externally_connectable?.matches
+  const expected = BRIDGE_ORIGINS.map(o => `${o}/*`)
+  if (!matches || matches.join('\n') !== expected.join('\n')) {
+    throw new Error(`manifest.json: externally_connectable.matches ${JSON.stringify(matches)}, expected ${JSON.stringify(expected)} (BRIDGE_ORIGINS)`)
+  }
+  if (mode !== 'production') manifest.externally_connectable!.matches = [...expected, ...DEV_APP_MATCHES]
+}
+
+/**
+ * The root `package.json` is the one source of the version. `manifest.json`
+ * repeats it (so the source folder stays a loadable extension), and a
+ * mismatch fails the build instead of shipping one version while the
+ * manifest shows another.
+ */
+export function checkManifestVersion(manifestVersion: unknown, packageVersion: string): void {
+  if (manifestVersion !== packageVersion) {
+    throw new Error(
+      `packages/extension/manifest.json has version ${JSON.stringify(manifestVersion)} but the root package.json has `
+      + `"${packageVersion}". Set the version in the root package.json (npm version <x.y.z> --no-git-tag-version) `
+      + `and give manifest.json the same value.`,
+    )
+  }
+}
+
 /**
  * After the popup/options pages are written: builds the service worker into
  * the same output directory, then copies `manifest.json` (its `version`
- * stamped from the repo root's `package.json`, so it never drifts) and
- * `icons/`. Uses the output dir Rollup actually wrote to, so `--outDir` works.
+ * checked against the root `package.json` by `checkManifestVersion`; its
+ * `externally_connectable` by `appMatches`) and `icons/`. Uses the output
+ * dir Rollup actually wrote to, so `--outDir` works.
  */
 function extensionAssets(): Plugin {
   let mode = 'production'
@@ -80,7 +115,8 @@ function extensionAssets(): Plugin {
       mkdirSync(outDir, { recursive: true })
       const rootPkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
       const manifest = JSON.parse(readFileSync(resolve(__dirname, 'manifest.json'), 'utf8'))
-      manifest.version = rootPkg.version
+      checkManifestVersion(manifest.version, rootPkg.version)
+      appMatches(manifest, mode)
       writeFileSync(resolve(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
       cpSync(resolve(__dirname, 'icons'), resolve(outDir, 'icons'), { recursive: true })
     },

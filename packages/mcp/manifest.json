@@ -1,0 +1,111 @@
+{
+  "manifest_version": "0.2",
+  "name": "@string-utility-belt/mcp",
+  "display_name": "String Utility Belt",
+  "version": "1.3.1",
+  "description": "MCP server exposing String Utility Belt's utilities and pipelines as tools for AI agents.",
+  "author": {
+    "name": "String Utility Belt",
+    "email": "contact@stringutilitybelt.com",
+    "url": "https://github.com/Murraylr/string-utility-belt"
+  },
+  "homepage": "https://stringutilitybelt.com",
+  "documentation": "https://stringutilitybelt.com/docs/",
+  "support": "https://stringutilitybelt.com/contact/",
+  "icon": "assets/icon-192.png",
+  "server": {
+    "type": "node",
+    "entry_point": "./dist/server.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/./dist/server.mjs"
+      ],
+      "env": {
+        "SUBELT_MCP_TIMEOUT_MS": "${user_config.timeout_ms}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "list_utilities",
+      "description": "Search the 246 utilities by category or keywords; start here."
+    },
+    {
+      "name": "describe_utility",
+      "description": "Full documentation for one utility: params, accepted/produced types, examples."
+    },
+    {
+      "name": "run_utility",
+      "description": "Run one utility on text, base64, hex or JSON input with validated params."
+    },
+    {
+      "name": "run_pipeline",
+      "description": "Run a multi-step pipeline (steps, branches, macros, conditions) or a String Utility Belt share link."
+    },
+    {
+      "name": "detect_format",
+      "description": "Guess what an input is (JSON, YAML, base64, JWT, gzip, …), best match first."
+    }
+  ],
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "ai-tools",
+    "agent-tools",
+    "llm-tools",
+    "claude",
+    "cursor",
+    "developer-tools",
+    "text-processing",
+    "string-manipulation",
+    "text-transform",
+    "encoding",
+    "decoding",
+    "base64",
+    "hex",
+    "url-encode",
+    "json",
+    "json-formatter",
+    "yaml",
+    "xml",
+    "csv",
+    "toml",
+    "jwt",
+    "jwt-decode",
+    "hashing",
+    "sha256",
+    "md5",
+    "hmac",
+    "uuid",
+    "regex",
+    "cipher",
+    "compression",
+    "gzip",
+    "case-converter",
+    "slugify",
+    "data-conversion",
+    "format-detection",
+    "cyberchef",
+    "pipeline",
+    "offline",
+    "local"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Murraylr/string-utility-belt.git"
+  },
+  "user_config": {
+    "timeout_ms": {
+      "type": "number",
+      "title": "Per-call timeout (ms)",
+      "description": "How long a single tool call may run before it is stopped.",
+      "default": 20000,
+      "min": 1000,
+      "max": 300000,
+      "required": false
+    }
+  }
+}

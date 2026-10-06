@@ -32,7 +32,7 @@ describe('site links', () => {
   it('has a footer linking the about, privacy and contact pages by their paths', () => {
     render(<Footer />)
     const hrefs = within(screen.getByRole('navigation', { name: 'site' })).getAllByRole('link').map(a => a.getAttribute('href'))
-    expect(hrefs).toEqual(['/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/'])
+    expect(hrefs).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
   })
 
   it('follows a plain click on a path link in place, leaving modified clicks to the browser', async () => {
@@ -51,6 +51,23 @@ describe('site links', () => {
       expect(location.pathname).toBe('/privacy/')
     } finally {
       scroll.mockRestore()
+    }
+  })
+
+  it('opens the integrations page at the section a header integration link names, in place', async () => {
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    const intoView = vi.fn(function (this: Element) { return this.id })
+    Element.prototype.scrollIntoView = intoView
+    try {
+      render(<AppShell />)
+      const integrations = screen.getByRole('navigation', { name: 'Integrations' })
+      fireEvent.click(within(integrations).getByRole('link', { name: /^MCP server/ }))
+      expect(location.pathname + location.hash).toBe('/integrations/#mcp-server-for-ai-agents')
+      expect(await screen.findByRole('heading', { level: 1, name: 'Integrations' }, LAZY)).toBeTruthy()
+      expect(intoView.mock.results.map(r => r.value)).toContain('mcp-server-for-ai-agents')
+    } finally {
+      scroll.mockRestore()
+      delete (Element.prototype as Partial<Element>).scrollIntoView
     }
   })
 

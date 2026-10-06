@@ -4,10 +4,11 @@ import os from 'node:os'
 import path from 'node:path'
 import type { UtilityMeta } from '../../src/core/registry'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
-import { buildSeo, SITE } from './build'
+import { buildRssItems, buildSeo, SITE } from './build'
 import { parseGuide } from '../../src/app/pages/guide'
 import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
 import { SITE_PAGES } from '../../src/lib/router'
+import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import { resolveOg, resolveOutDir } from '../build-seo'
 
 const ROOT = process.cwd()
@@ -123,10 +124,10 @@ describe('buildSeo over a built dist/', () => {
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
     for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
-      'about/index.html', 'privacy/index.html', 'contact/index.html', '404.html']) {
+      'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + 10)
+    expect(result.pages).toBe(MANIFEST.length + 11)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -199,9 +200,11 @@ describe('buildSeo over a built dist/', () => {
     for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
-      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/about/', '/privacy/', '/contact/'])
-      expect([...doc.querySelectorAll('#root > header nav a')].map(a => a.getAttribute('href')), rel)
+      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
+      expect([...doc.querySelectorAll('#root > header nav[aria-label="main"] a')].map(a => a.getAttribute('href')), rel)
         .toEqual(['/', '/docs/', '/utilities/', '/blog/', '/changelog/'])
+      expect([...doc.querySelectorAll('#root > header nav[aria-label="Integrations"] a')].map(a => a.getAttribute('href')), rel)
+        .toEqual(INTEGRATION_LINKS.map(l => l.href))
     }
   })
 
@@ -226,11 +229,21 @@ describe('buildSeo over a built dist/', () => {
     // crawlable paths only: no #/ route links left in the static page
     const hrefs = [...doc.querySelectorAll('#root a')].map(a => a.getAttribute('href'))
     expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/']))
-    expect(hrefs.filter(h => h?.includes('#'))).toEqual([])
+    expect(hrefs.filter(h => h?.includes('#/'))).toEqual([])
     expect(doc.querySelector('script[type="module"]')?.getAttribute('src')).toBe('/assets/index-abc123.js')
   })
 
-  it('pre-renders the about, privacy and contact pages from their markdown', () => {
+  it('pre-renders the integrations sections the header links open', () => {
+    const doc = html(read(dist, 'integrations/index.html'))
+    for (const { href, external } of INTEGRATION_LINKS) {
+      if (external) continue
+      const [pathname, id] = href.split('#')
+      expect(pathname, href).toBe('/integrations/')
+      expect(doc.querySelector(`#root main h2[id="${id}"]`), href).not.toBeNull()
+    }
+  })
+
+  it('pre-renders the about, privacy, contact and integrations pages from their markdown', () => {
     for (const slug of SITE_PAGES) {
       const doc = html(read(dist, `${slug}/index.html`))
       expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href'), slug).toBe(`${SITE}/${slug}/`)
@@ -295,7 +308,7 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
-      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`,
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`,
     ]))
     // every page `pages` counts but the 404, plus the home page (written apart from the count)
     expect(locs).toHaveLength(result.pages - 1 + 1)
@@ -305,7 +318,7 @@ describe('buildSeo over a built dist/', () => {
     expect(lastmods.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && d !== '1970-01-01')).toBe(true)
   })
 
-  it('writes a well-formed RSS feed: posts and releases, dated newest first, no invented dates', () => {
+  it('writes a well-formed RSS feed: posts and releases, dated newest first, no invented dates or empty items', () => {
     const doc = xml(read(dist, 'rss.xml'))
     const items = [...doc.getElementsByTagName('item')].map(item => ({
       title: item.getElementsByTagName('title')[0].textContent,
@@ -313,12 +326,13 @@ describe('buildSeo over a built dist/', () => {
       guid: item.getElementsByTagName('guid')[0].textContent,
     }))
     const shipped: Array<{ title: string }> = JSON.parse(read(ROOT, 'public/blog/_manifest.json'))
+    // the freshly cut, still empty "Unreleased" section has no item
     expect(items.map(i => i.title)).toEqual([
-      'Unreleased changes',
+      'Release 1.4.0',
       ...shipped.map(p => p.title),
       'Release 1.3.0',
     ])
-    expect(items[0].pubDate).toBe(NOW.toUTCString().replace(/\d\d:\d\d:\d\d/, '00:00:00'))
+    expect(items[0].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
     // undated release: no pubDate rather than the build date or the epoch
     expect(items[3].pubDate).toBeUndefined()
     expect(items[3].guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
@@ -409,5 +423,17 @@ describe('resolveOutDir', () => {
     expect(resolveOutDir([], {}, root)).toBe(path.join(root, 'dist'))
     const abs = path.resolve('/abs/out')
     expect(resolveOutDir(['--outDir', abs], {}, root)).toBe(abs)
+  })
+})
+
+describe('buildRssItems', () => {
+  const release = (version: string, bodyMd: string, date?: string) => ({ version, date, bodyMd })
+
+  it('dates a non-empty Unreleased section with the build date, and leaves an empty one out', () => {
+    const withChanges = buildRssItems([], [release('Unreleased', '### Added\n- a thing'), release('1.4.0', '- shipped', '2026-10-06')], '2026-10-07')
+    expect(withChanges.map(i => [i.title, i.pubDate])).toEqual([['Unreleased changes', '2026-10-07'], ['Release 1.4.0', '2026-10-06']])
+
+    const justCut = buildRssItems([], [release('Unreleased', '  \n'), release('1.4.0', '- shipped', '2026-10-06')], '2026-10-07')
+    expect(justCut.map(i => i.title)).toEqual(['Release 1.4.0'])
   })
 })

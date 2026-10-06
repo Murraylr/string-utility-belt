@@ -44,7 +44,7 @@ function listify(html: string): string {
       }
       const lead = start > 0 ? `<p class="md-p">${lines.slice(0, start).join('\n')}</p>\n` : ''
       // min-w-0: the list is `grid` (for `gap-2` between items), which makes each <li> a
-      // grid item — without it, a long inline code span (already `break-words`) blows the
+      // grid item — without it, a long inline code span (already `wrap-break-word`) blows the
       // item past the track width instead of wrapping within it, same as any other grid
       // item whose default `min-width:auto` defers to its content's min-content size
       return `${lead}${UL_OPEN}${items.map(item => `<li class="md-li min-w-0">${item.join('\n')}</li>`).join('')}</ul>`
@@ -63,5 +63,5 @@ export function renderChangelogHtml(md: string): string {
   // Unlike a fenced block (`.md-pre` already scrolls horizontally), an inline `` `code` ``
   // span sits inside ordinary wrapping text — a long unbroken token (a file path, an
   // identifier) would otherwise force this narrow article wider than the viewport.
-  return html.replace(INLINE_CODE_CLASS, 'class="md-code break-words"')
+  return html.replace(INLINE_CODE_CLASS, 'class="md-code wrap-break-word"')
 }

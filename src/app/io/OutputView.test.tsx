@@ -134,13 +134,13 @@ describe('OutputView (text/json highlighting)', () => {
 
 describe('OutputView (narrow layouts)', () => {
   it('lets an unbroken token wrap anywhere, so it cannot widen the page on mobile', () => {
-    // `break-words` (overflow-wrap: break-word) doesn't lower min-content width, so a long
+    // `wrap-break-word` (overflow-wrap: break-word) doesn't lower min-content width, so a long
     // base64/hash token inside the IO grid pushed the whole page ~40px past a 375px viewport.
     const token = 'aGVsbG8gd29ybGQKc2Vjb25kIGxpbmU='.repeat(4)
     render(<OutputView value={token} text={token} />)
     const pre = screen.getByText(token)
     expect(pre.tagName).toBe('PRE')
-    expect(pre).toHaveClass('[overflow-wrap:anywhere]')
-    expect(pre).not.toHaveClass('break-words')
+    expect(pre).toHaveClass('wrap-anywhere')
+    expect(pre).not.toHaveClass('wrap-break-word')
   })
 })

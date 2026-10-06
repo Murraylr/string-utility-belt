@@ -38,5 +38,6 @@ blob-report/
 # build caches and packaged artifacts
 *.tsbuildinfo
 *.vsix
+*.mcpb
 *.tgz
 worker-dry/

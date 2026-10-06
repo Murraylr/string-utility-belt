@@ -15,7 +15,7 @@
  *
  * `npm run bench` (vitest bench --run) runs this file.
  */
-import { bench, describe } from 'vitest'
+import { describe, test } from 'vitest'
 import { loadEager, resolveParams } from '../src/utilities/index'
 import type { Params, Value } from '../src/types/utility'
 
@@ -58,6 +58,8 @@ const CASES: [name: string, id: string, input: Value, params?: Params][] = [
 describe('utilities: 1 MB input', () => {
   for (const [name, id, input, params] of CASES) {
     const run = prepare(id, params)
-    bench(name, async () => { await run(input) }, HEAVY)
+    test(name, async ({ bench }) => {
+      await bench(name, async () => { await run(input) }).run(HEAVY)
+    })
   }
 })

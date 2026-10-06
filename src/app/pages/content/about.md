@@ -26,6 +26,10 @@ Most online converters do one thing per page, and many send your text to a serve
 
 Browse [every utility by category](/utilities/), or start building a pipeline on the [home page](/).
 
+## Beyond the browser
+
+The same utilities run in your editor, your terminal and your AI assistant: a [VS Code extension](https://marketplace.visualstudio.com/items?itemName=stringutilitybelt.string-utility-belt) (also on [Open VSX](https://open-vsx.org/extension/stringutilitybelt/string-utility-belt) for Cursor and VSCodium), the [subelt command-line tool](https://www.npmjs.com/package/subelt), an [MCP server for AI agents](https://smithery.ai/servers/string-utility-belt/string-utility-belt) and a [Node.js library](https://www.npmjs.com/package/@string-utility-belt/core). See [integrations](/integrations/) for how to install each one.
+
 ## Accurate by design
 
 Every worked example on this site — on each utility's page and in its guide — is run automatically as a test against the real code, so the output you see is what the tool actually produces.

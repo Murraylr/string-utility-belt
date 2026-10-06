@@ -8,6 +8,8 @@ import { guideHeading } from '../../src/app/pages/guide'
 import { utilityPath } from '../../src/app/pages/related'
 import { POPULAR_UTILITY_IDS, SITE_NAME, displayName } from '../../src/app/pages/seo'
 import Docs from '../../src/components/Docs'
+import { en } from '../../src/app/i18n/locales/en'
+import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
 
@@ -16,9 +18,20 @@ const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtm
 // the app's header nav and footer (src/app/AppShell.tsx), as plain links
 const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
-  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'],
+  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
   ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'],
 ] as const
+
+// the header's integrations group (src/app/integrations/IntegrationsNav.tsx)
+const integrationsNav = (): string => {
+  const links = INTEGRATION_LINKS.map(l => {
+    const label = escapeHtml(en.integrations[l.id])
+    return l.external
+      ? `<a href="${escapeHtml(l.href)}" target="_blank" rel="noopener">${label}</a>`
+      : `<a href="${escapeHtml(l.href)}">${label}</a>`
+  })
+  return `<nav aria-label="${escapeHtml(en.integrations.label)}">${escapeHtml(en.integrations.lead)} ${links.join(' ')}</nav>`
+}
 
 /**
  * A pre-rendered page's content inside the site's header nav and footer, so the
@@ -30,6 +43,7 @@ export function renderSiteChrome(contentHtml: string, year: number): string {
   <header>
     <a href="/">${escapeHtml(SITE_NAME)}</a>
     <nav aria-label="main">${NAV_LINKS.map(link).join(' ')}</nav>
+    ${integrationsNav()}
   </header>
   <main>${contentHtml}</main>
   <footer>

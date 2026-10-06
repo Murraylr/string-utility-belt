@@ -79,7 +79,7 @@ export default function Dialog({ title, onClose, children, className, headerExtr
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`card w-full max-w-2xl max-h-[85vh] overflow-auto p-5 grid gap-4 content-start outline-none ${className ?? ''}`}
+        className={`card w-full max-w-2xl max-h-[85vh] overflow-auto p-5 grid gap-4 content-start outline-hidden ${className ?? ''}`}
       >
         <div className="flex items-center justify-between gap-3">
           <h2 id={titleId} className="text-lg font-semibold">{title}</h2>

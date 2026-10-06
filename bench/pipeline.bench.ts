@@ -6,7 +6,7 @@
  *
  * `npm run bench` (vitest bench --run) runs this file.
  */
-import { bench, describe } from 'vitest'
+import { describe, test } from 'vitest'
 import { runPipeline } from '../src/utilities/index'
 import type { PipelineStep } from '../src/types/utility'
 
@@ -35,27 +35,27 @@ const TEN_STEPS: PipelineStep[] = [
 const HEAVY = { time: 200, iterations: 5, warmupIterations: 1, warmupTime: 50 }
 
 describe('pipeline runner: 10-step pipeline', () => {
-  bench('1 KB input', async () => {
-    await runPipeline(ONE_KB, TEN_STEPS, false)
+  test('1 KB input', async ({ bench }) => {
+    await bench('1 KB input', async () => {
+      await runPipeline(ONE_KB, TEN_STEPS, false)
+    }).run()
   })
 
-  bench(
-    '1 MB input',
-    async () => {
+  test('1 MB input', async ({ bench }) => {
+    await bench('1 MB input', async () => {
       await runPipeline(ONE_MB, TEN_STEPS, false)
-    },
-    HEAVY
-  )
-
-  bench('1 KB input, with previews', async () => {
-    await runPipeline(ONE_KB, TEN_STEPS, true)
+    }).run(HEAVY)
   })
 
-  bench(
-    '1 MB input, with previews',
-    async () => {
+  test('1 KB input, with previews', async ({ bench }) => {
+    await bench('1 KB input, with previews', async () => {
+      await runPipeline(ONE_KB, TEN_STEPS, true)
+    }).run()
+  })
+
+  test('1 MB input, with previews', async ({ bench }) => {
+    await bench('1 MB input, with previews', async () => {
       await runPipeline(ONE_MB, TEN_STEPS, true)
-    },
-    HEAVY
-  )
+    }).run(HEAVY)
+  })
 })
