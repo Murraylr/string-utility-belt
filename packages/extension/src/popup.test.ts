@@ -47,12 +47,12 @@ describe('popup', () => {
   let local: ReturnType<typeof makeArea>
   let setBadgeText: ReturnType<typeof vi.fn>
 
-  async function open(localInitial: Record<string, unknown> = { lastResult: 'previous result' }) {
+  async function open(localInitial: Record<string, unknown> = { lastResult: 'previous result' }, syncInitial: Record<string, unknown> = {}) {
     document.body.innerHTML = POPUP_BODY
     local = makeArea(localInitial)
     setBadgeText = vi.fn()
     vi.stubGlobal('chrome', {
-      storage: { local, sync: makeArea({ baseUrl: 'https://example.test/app' }) },
+      storage: { local, sync: makeArea({ baseUrl: 'https://example.test/app', ...syncInitial }) },
       action: { setBadgeText },
     })
     await mod.init()
@@ -164,5 +164,37 @@ describe('popup', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) }, configurable: true })
     $('copy').click()
     await vi.waitFor(() => expect($('status').textContent).toMatch(/copy failed/i))
+  })
+
+  describe('favourites and saved pipelines', () => {
+    const pipeline = { id: 'p1', name: 'Shout', steps: [{ id: 'a', utilityId: 'trim' }, { id: 'b', utilityId: 'case', params: { mode: 'upper' } }] }
+
+    beforeEach(async () => {
+      await open({ pipelines: [pipeline] }, { menuUtilities: ['sha3', 'custom_js', 'trim'] })
+    })
+
+    it('lists runnable favourites, then saved pipelines, above the categories, and selects the first favourite', () => {
+      const select = $<HTMLSelectElement>('utility')
+      const [favorites, pipelines] = [...select.querySelectorAll('optgroup')]
+      expect(favorites.label).toBe('Favourites')
+      expect([...favorites.querySelectorAll('option')].map(o => o.value)).toEqual(['sha3', 'trim'])
+      expect(pipelines.label).toBe('Saved pipelines')
+      expect([...pipelines.querySelectorAll('option')].map(o => [o.value, o.textContent])).toEqual([['pipeline:p1', 'Shout']])
+      expect(select.value).toBe('sha3')
+    })
+
+    it('runs a saved pipeline with its own params and shows no param controls for it', async () => {
+      choose('pipeline:p1')
+      expect($('params').children).toHaveLength(0)
+      run('  quiet ')
+      await vi.waitFor(() => expect($<HTMLTextAreaElement>('output').value).toBe('QUIET'))
+    })
+
+    it('omits both groups when there is nothing in them', async () => {
+      await open({}, { menuUtilities: [] })
+      const labels = [...$('utility').querySelectorAll('optgroup')].map(g => g.label)
+      expect(labels).not.toContain('Favourites')
+      expect(labels).not.toContain('Saved pipelines')
+    })
   })
 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildMenuItems, utilityIdFromMenuItem } from './menu'
+import { buildMenuItems, menuTitle, pipelineIdFromMenuItem, utilityIdFromMenuItem } from './menu'
 
 const NAMES: Record<string, string> = {
   base64_decode: 'base64 decode',
@@ -49,5 +49,38 @@ describe('utilityIdFromMenuItem', () => {
   })
   it('returns null for a numeric menu item id', () => {
     expect(utilityIdFromMenuItem(42)).toBeNull()
+  })
+})
+
+describe('saved pipelines on the menu', () => {
+  const pipelines = [{ id: 'p1', name: 'Decode token' }, { id: 'p2', name: '100%safe' }]
+
+  it('lists them after the favourites, behind a separator', () => {
+    expect(buildMenuItems(['trim'], metaOf, pipelines).map(i => i.id)).toEqual([
+      'subelt-root', 'subelt-apply:trim', 'subelt-pipelines-separator', 'subelt-run:p1', 'subelt-run:p2', 'subelt-separator', 'subelt-open-in-app',
+    ])
+  })
+
+  it('needs no separator of their own without favourites', () => {
+    expect(buildMenuItems([], metaOf, pipelines).map(i => i.id)).toEqual([
+      'subelt-root', 'subelt-run:p1', 'subelt-run:p2', 'subelt-separator', 'subelt-open-in-app',
+    ])
+  })
+
+  it('titles them "Pipeline: <name>" under the root', () => {
+    expect(buildMenuItems([], metaOf, pipelines)[1]).toMatchObject({ parentId: 'subelt-root', title: 'Pipeline: Decode token' })
+  })
+
+  it('maps a pipeline item back to its id', () => {
+    expect(pipelineIdFromMenuItem('subelt-run:p1')).toBe('p1')
+    expect(pipelineIdFromMenuItem('subelt-apply:trim')).toBeNull()
+    expect(utilityIdFromMenuItem('subelt-run:p1')).toBeNull()
+  })
+})
+
+describe('menuTitle', () => {
+  it('breaks every %s so Chrome shows it instead of the selection', () => {
+    expect(menuTitle('a %s b %s')).toBe('a %\u200Bs b %\u200Bs')
+    expect(menuTitle('100% sure')).toBe('100% sure')
   })
 })

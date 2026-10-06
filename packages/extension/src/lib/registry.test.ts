@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { edgeSafeUtilities, getEdgeSafeUtilityMeta, isEdgeSafe, resultToText, runUtilityById } from './registry'
+import { edgeSafeUtilities, getEdgeSafeUtilityMeta, isEdgeSafe, resultToText, runPipelineSteps, runUtilityById } from './registry'
 
 // Importing this module transforms the generated utility manifest, which can
 // be slow on a cold Vite cache the first time any test process touches it.
@@ -90,5 +90,36 @@ describe('resultToText', () => {
     const text = resultToText(new Uint8Array([0xff, 0x00, 0x1f]))
     expect(text).toContain('hex: [ff, 00, 1f]')
     expect(text).not.toContain('"0":')
+  })
+})
+
+describe('runPipelineSteps', () => {
+  const step = (id: string, utilityId: string, extra: Record<string, unknown> = {}) => ({ id, utilityId, params: {}, ...extra })
+
+  it('runs the steps in order with their params, through branches', async () => {
+    const out = await runPipelineSteps([
+      step('a', 'trim'),
+      { id: 'b', type: 'branch', merge: { mode: 'concat', separator: '|' }, branches: [[step('c', 'base64_encode')], [step('d', 'case', { params: { mode: 'upper' } })]] },
+    ], '  hi ')
+    expect(out).toBe('aGk=|HI')
+  })
+
+  it('fails on an error in a step with the default error policy, naming the step', async () => {
+    await expect(runPipelineSteps([step('a', 'json_pretty'), step('b', 'trim')], 'nope')).rejects.toThrow(/^json pretty: /)
+    await expect(runPipelineSteps([step('a', 'json_pretty', { label: 'tidy' })], 'nope')).rejects.toThrow(/^tidy: /)
+  })
+
+  it('fails when a step set to stop the pipeline fails', async () => {
+    await expect(runPipelineSteps([step('a', 'json_pretty', { onError: 'stop' }), step('b', 'trim')], 'nope')).rejects.toThrow(/json pretty/)
+  })
+
+  it('keeps going past a step whose author chose passthrough or empty', async () => {
+    expect(await runPipelineSteps([step('a', 'json_pretty', { onError: 'passthrough' }), step('b', 'case', { params: { mode: 'upper' } })], 'nope')).toBe('NOPE')
+    expect(await runPipelineSteps([step('a', 'json_pretty', { onError: 'empty' })], 'nope')).toBe('')
+  })
+
+  it('refuses steps the extension cannot run, even disabled or nested ones', async () => {
+    await expect(runPipelineSteps([step('a', 'custom_js', { enabled: false })], 'x')).rejects.toThrow(/cannot run in the extension/)
+    await expect(runPipelineSteps([{ id: 'm', type: 'macro', name: 'm', steps: [step('a', 'no_such_utility')] }], 'x')).rejects.toThrow(/unknown utility/)
   })
 })

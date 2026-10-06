@@ -33,12 +33,14 @@ const page = {
 function installChromeMock() {
   const sync = makeArea()
   const local = makeArea()
-  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[], clicked: [] as Listener[] }
+  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[], clicked: [] as Listener[], message: [] as Listener[] }
   /** Models Chrome's menu registry: ids must be unique until removeAll. */
   const menu = new Map<string, Record<string, unknown>>()
-  const runtime: { lastError?: { message: string }; onInstalled: unknown; onStartup: unknown } = {
+  const runtime: { id: string; lastError?: { message: string }; onInstalled: unknown; onStartup: unknown; onMessage: unknown } = {
+    id: 'ext-id',
     onInstalled: { addListener: (fn: Listener) => listeners.installed.push(fn) },
     onStartup: { addListener: (fn: Listener) => listeners.startup.push(fn) },
+    onMessage: { addListener: (fn: Listener) => listeners.message.push(fn) },
   }
   const chromeMock = {
     runtime,
@@ -103,11 +105,12 @@ const injections = () => ctx.chromeMock.scripting.executeScript.mock.calls.map(c
 const writes = () => injections().filter(i => i.func === replaceModule.replaceSelectionOrCopy)
 
 describe('background: wiring', () => {
-  it('registers a menu rebuild for install, startup, and a sync menuUtilities change, plus a click handler', () => {
+  it('registers a menu rebuild for install, startup, and a storage change, plus click and page-bridge handlers', () => {
     expect(ctx.listeners.installed).toHaveLength(1)
     expect(ctx.listeners.startup).toHaveLength(1)
     expect(ctx.listeners.onChanged).toHaveLength(1)
     expect(ctx.listeners.clicked).toHaveLength(1)
+    expect(ctx.listeners.message).toEqual([mod.handleBridgeMessage])
   })
 })
 
@@ -145,6 +148,25 @@ describe('background: rebuildMenu', () => {
     await Promise.all([first, second])
 
     expect([...ctx.menu.keys()]).toEqual(['subelt-root', 'subelt-apply:sha3', 'subelt-separator', 'subelt-open-in-app'])
+  })
+
+  it('adds saved pipelines after the favourites, behind their own separator', async () => {
+    ctx.sync.store.menuUtilities = ['trim']
+    ctx.local.store.pipelines = [{ id: 'p1', name: 'Decode %s token', steps: [{ id: 's', utilityId: 'base64_decode' }] }]
+    await mod.rebuildMenu()
+
+    expect([...ctx.menu.keys()]).toEqual([
+      'subelt-root', 'subelt-apply:trim', 'subelt-pipelines-separator', 'subelt-run:p1', 'subelt-separator', 'subelt-open-in-app',
+    ])
+    // Chrome would substitute the selection for a literal %s
+    expect(ctx.menu.get('subelt-run:p1')?.title).toBe('Pipeline: Decode %\u200Bs token')
+  })
+
+  it('rebuilds when the saved pipelines change', async () => {
+    ctx.local.store.pipelines = [{ id: 'p2', name: 'Two', steps: [{ id: 's', utilityId: 'trim' }] }]
+    ctx.listeners.onChanged[0]({ pipelines: { newValue: [] } }, 'local')
+    await mod.rebuildMenu()
+    expect(ctx.menu.has('subelt-run:p2')).toBe(true)
   })
 
   it('is what the storage listener runs for a sync menuUtilities change, and nothing else', async () => {
@@ -261,5 +283,99 @@ describe('background: open in app', () => {
     ctx.sync.store.baseUrl = 'javascript:alert(1)'
     await click('subelt-open-in-app', { selectionText: 'x' }, null)
     expect(ctx.chromeMock.tabs.create).toHaveBeenCalledWith({ url: 'https://stringutilitybelt.com/?text=x' })
+  })
+})
+
+describe('background: running a saved pipeline', () => {
+  const steps = [
+    { id: 'a', utilityId: 'trim', params: {} },
+    { id: 'b', utilityId: 'case', params: { mode: 'upper' } },
+  ]
+
+  it('runs every step, with its saved params, over the selection', async () => {
+    ctx.local.store.pipelines = [{ id: 'p1', name: 'Shout', steps }]
+    page.selection = { text: '  hi  ', whole: false }
+    await click('subelt-run:p1')
+    expect(writes()[0].args).toEqual(['HI', '  hi  ', false])
+  })
+
+  it('leaves the page alone and reports the failing step by name when a step fails', async () => {
+    ctx.local.store.pipelines = [{ id: 'p1', name: 'Pretty', steps: [{ id: 'j', utilityId: 'json_pretty', params: {} }, ...steps] }]
+    page.selection = { text: 'not json', whole: false }
+    await click('subelt-run:p1')
+
+    expect(writes()).toHaveLength(0)
+    expect(ctx.local.store.lastError).toMatch(/^Pretty failed: json pretty: /)
+    expect(ctx.local.store.lastResult).toBe('not json')
+  })
+
+  it('keeps the result when the failing step was set to pass its input through', async () => {
+    ctx.local.store.pipelines = [{ id: 'p1', name: 'Maybe', steps: [{ id: 'j', utilityId: 'json_pretty', params: {}, onError: 'passthrough' }, ...steps] }]
+    page.selection = { text: 'not json', whole: false }
+    await click('subelt-run:p1')
+    expect(writes()[0].args?.[0]).toBe('NOT JSON')
+  })
+
+  it('does nothing for a pipeline deleted since the menu was built', async () => {
+    await click('subelt-run:gone')
+    expect(writes()).toHaveLength(0)
+    expect(ctx.local.set).not.toHaveBeenCalled()
+  })
+})
+
+describe('background: page bridge', () => {
+  const trusted = { id: 'ext-id', tab: { id: 3 } as chrome.tabs.Tab, frameId: 0, url: 'https://stringutilitybelt.com/' }
+  const send = (request: unknown, sender: chrome.runtime.MessageSender = trusted) =>
+    new Promise<unknown>(resolve => mod.handleBridgeMessage({ type: 'subelt-bridge-request', request }, sender, resolve))
+  const save = (name: string, steps: unknown[]) => send({ type: 'save-pipeline', name, steps })
+
+  it('saves a pipeline from the app, then updates it in place when saved again under the same name', async () => {
+    expect(await save('  My   pipeline ', [{ id: 's', utilityId: 'trim' }])).toEqual({ ok: true, message: 'Saved "My pipeline" — it\'s on the right-click menu.' })
+    const [first] = ctx.local.store.pipelines as Array<{ id: string; name: string }>
+    expect(first.name).toBe('My pipeline')
+
+    expect(await save('my pipeline', [{ id: 's', utilityId: 'case' }])).toMatchObject({ ok: true, message: expect.stringMatching(/^Updated/) })
+    const stored = ctx.local.store.pipelines as Array<{ id: string; steps: Array<{ utilityId: string }> }>
+    expect(stored).toHaveLength(1)
+    expect(stored[0].id).toBe(first.id)
+    expect(stored[0].steps[0].utilityId).toBe('case')
+  })
+
+  it('refuses a pipeline with a step the extension cannot run, even a nested one', async () => {
+    const result = await save('Code', [{ id: 'b', type: 'branch', merge: { mode: 'concat' }, branches: [[{ id: 'c', utilityId: 'custom_js' }]] }])
+    expect(result).toEqual({ ok: false, error: expect.stringMatching(/can't run custom javascript/i) })
+    expect(ctx.local.store.pipelines).toBeUndefined()
+  })
+
+  it('refuses an empty or unnamed pipeline', async () => {
+    expect(await save('Empty', [])).toMatchObject({ ok: false })
+    expect(await save('   ', [{ id: 's', utilityId: 'trim' }])).toMatchObject({ ok: false })
+  })
+
+  it('adds runnable favourites after the current ones, skipping duplicates and unsupported ids', async () => {
+    ctx.sync.store.menuUtilities = ['trim']
+    const result = await send({ type: 'add-favorites', utilityIds: ['trim', 'sha3', 'custom_js', 'nope'] })
+    expect(result).toEqual({ ok: true, message: "Added 1 favourite to the right-click menu. 2 utilities aren't available in the extension." })
+    expect(ctx.sync.store.menuUtilities).toEqual(['trim', 'sha3'])
+  })
+
+  it('refuses requests from any other origin, a subframe, or another extension', async () => {
+    for (const sender of [
+      { ...trusted, url: 'https://evil.example/' },
+      { ...trusted, url: 'https://stringutilitybelt.com.evil.example/' },
+      { ...trusted, frameId: 2 },
+      { ...trusted, id: 'other-extension' },
+      { ...trusted, tab: undefined },
+    ]) {
+      expect(await send({ type: 'add-favorites', utilityIds: ['sha3'] }, sender)).toEqual({ ok: false, error: 'The extension refused this request.' })
+    }
+    expect(ctx.sync.store.menuUtilities).toBeUndefined()
+  })
+
+  it('refuses a malformed request and ignores messages that are not bridge requests', async () => {
+    expect(await send({ type: 'delete-everything' })).toMatchObject({ ok: false })
+    const sendResponse = vi.fn()
+    expect(mod.handleBridgeMessage({ type: 'something-else' }, trusted, sendResponse)).toBe(false)
+    expect(sendResponse).not.toHaveBeenCalled()
   })
 })

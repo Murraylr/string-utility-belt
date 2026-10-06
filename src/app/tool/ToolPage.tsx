@@ -13,6 +13,7 @@ import MagicButton from '@/app/magic/MagicButton'
 import ShareButton from '@/app/share/ShareButton'
 import LibraryButton from '@/app/library/LibraryButton'
 import PresetsButton from '@/app/library/PresetsButton'
+import SaveToExtensionButton from '@/app/extension/SaveToExtensionButton'
 import BulkToggle from './steps/BulkToggle'
 import EmptyState from './EmptyState'
 import IOSection from './IOSection'
@@ -75,6 +76,7 @@ export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
         <PresetsButton />
         <LibraryButton />
         <ShareButton />
+        <SaveToExtensionButton />
         <BulkToggle />
         <EngineControls />
       </PipelineToolbar>

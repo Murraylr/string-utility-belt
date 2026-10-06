@@ -5,7 +5,7 @@ description: How String Utility Belt handles data: your text is processed in you
 
 # Privacy Policy
 
-*Last updated: 5 October 2026*
+*Last updated: 6 October 2026*
 
 String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and publishes the String Utility Belt browser extension, VS Code extension, command-line tool (`subelt`), MCP server and code library. This policy explains what information is collected when you use the site or these tools, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
 
@@ -44,9 +44,10 @@ The String Utility Belt extension for Chrome, Edge and other browsers runs every
 
 - **Text it reads.** It reads the text you have selected (or the text field you right-clicked) only when you choose one of its menu items, and only to transform it. It never reads password fields.
 - **Where results go.** The result replaces your selection in the page, or is copied to your clipboard when it cannot be inserted.
-- **What it stores.** Your choice of menu utilities and the website address it opens are kept in your browser's extension storage, which your browser may sync between your devices if you have turned on browser sync. The last result it could not insert (or the input of a failed run) is kept on your device so the toolbar popup can show it, until it is replaced by the next one. Removing the extension deletes all of this.
+- **What it stores.** Your favourite utilities and the website address it opens are kept in your browser's extension storage, which your browser may sync between your devices if you have turned on browser sync. Pipelines you save to it (their steps and settings, and the name you give them) are kept only on your device. The last result it could not insert (or the input of a failed run) is kept on your device so the toolbar popup can show it, until it is replaced by the next one. Removing the extension deletes all of this.
+- **Saving from the website.** On stringutilitybelt.com the extension adds a small script that lets the site's "save to extension" button hand a pipeline, or your starred utilities, to the extension. This happens inside your browser; nothing is sent to our server, and the script reads nothing else on the page. The extension's options page can open a saved pipeline in the website: its steps are placed after the `#` in the address, a part browsers do not send to the server.
 - **Network.** The extension makes no network requests and contains no analytics, ads or tracking. The one exception is "Open in String Utility Belt", which opens the website in a new tab with your selected text in the address, as described under "Features that contact our server"; from then on the website's own practices in this policy apply.
-- **Permissions.** It asks for the context menu (to add its right-click items), storage (for the settings above), access to the active tab and scripting (to read and replace the selection in the page you are using, only when you pick a menu item), and clipboard writing (to copy results).
+- **Permissions.** It asks for the context menu (to add its right-click items), storage (for the settings above), access to the active tab and scripting (to read and replace the selection in the page you are using, only when you pick a menu item), clipboard writing (to copy results), and access to stringutilitybelt.com (for the "save to extension" script above).
 
 The extension does not sell or transfer your data to anyone, and uses it for nothing other than the transformation you chose.
 

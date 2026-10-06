@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DEFAULT_BASE_URL, DEFAULT_MENU_UTILITIES } from './constants'
 import {
-  appUrl, getBaseUrl, getLastError, getLastResult, getMenuUtilities, normalizeBaseUrl,
-  setBaseUrl, setLastError, setLastResult, setMenuUtilities,
+  appUrl, getBaseUrl, getLastError, getLastResult, getMenuUtilities, getPipelines, newPipelineId, normalizeBaseUrl,
+  setBaseUrl, setLastError, setLastResult, setMenuUtilities, setPipelines,
 } from './storage'
 
 const runtime: { lastError?: { message: string } } = {}
@@ -105,5 +105,41 @@ describe('popup hand-off', () => {
     expect(await getLastResult()).toBe('hello')
     expect(await getLastError()).toBe('trim failed: boom')
     expect(area.sync.store).toEqual({})
+  })
+})
+
+describe('saved pipelines', () => {
+  const pipeline = { id: 'p1', name: 'Decode', steps: [{ id: 's', enabled: true, utilityId: 'base64_decode', params: {} }], updatedAt: 5 }
+
+  it('is empty by default, and round-trips through chrome.storage.local (not sync)', async () => {
+    expect(await getPipelines()).toEqual([])
+    await setPipelines([pipeline])
+    expect(area.local.store.pipelines).toEqual([pipeline])
+    expect(area.sync.set).not.toHaveBeenCalled()
+    expect(await getPipelines()).toEqual([pipeline])
+  })
+
+  it('re-validates what it reads: drops malformed, unnamed, empty and duplicate-id entries, and sanitizes steps', async () => {
+    area.local.store.pipelines = [
+      pipeline,
+      { ...pipeline, name: 'duplicate id' },
+      { id: 'p2', name: '   ', steps: pipeline.steps },
+      { id: 'p3', name: 'no steps', steps: [] },
+      { id: 'p4', name: '  spaced    out ', steps: [{ utilityId: 'trim', params: { evil: () => 1 } }] },
+      'junk',
+      { name: 'no id', steps: pipeline.steps },
+    ]
+    const read = await getPipelines()
+    expect(read.map(p => p.id)).toEqual(['p1', 'p4'])
+    expect(read[1]).toMatchObject({ name: 'spaced out', updatedAt: 0, steps: [{ utilityId: 'trim', params: {} }] })
+    expect(read[1].steps[0].id).toEqual(expect.any(String))
+
+    area.local.store.pipelines = 'not a list'
+    expect(await getPipelines()).toEqual([])
+  })
+
+  it('mints distinct ids', () => {
+    expect(newPipelineId()).not.toBe(newPipelineId())
+    expect(newPipelineId()).toMatch(/^p_[0-9a-f-]{36}$/)
   })
 })
