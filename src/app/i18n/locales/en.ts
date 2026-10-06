@@ -21,6 +21,7 @@ export const en = {
   footer: {
     label: 'site',
     utilities: 'All utilities',
+    integrations: 'VS Code, CLI & MCP',
     about: 'About',
     privacy: 'Privacy policy',
     contact: 'Contact',

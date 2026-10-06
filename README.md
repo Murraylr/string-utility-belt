@@ -3,8 +3,9 @@
 [![CI](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml/badge.svg)](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![npm: subelt](https://img.shields.io/npm/v/subelt?label=subelt)](https://www.npmjs.com/package/subelt)
+[![smithery badge](https://smithery.ai/badge/string-utility-belt/string-utility-belt)](https://smithery.ai/servers/string-utility-belt/string-utility-belt)
 
-**[stringutilitybelt.com](https://stringutilitybelt.com)** · [Usage guide](https://stringutilitybelt.com/docs/) · [All utilities](https://stringutilitybelt.com/utilities/)
+**[stringutilitybelt.com](https://stringutilitybelt.com)** · [Usage guide](https://stringutilitybelt.com/docs/) · [All utilities](https://stringutilitybelt.com/utilities/) · [Integrations](https://stringutilitybelt.com/integrations/)
 
 Chain string transformations into visual pipelines with live, per-step previews. 246 utilities —
 encodings, hashes, ciphers, compression, data formats (JSON/YAML/TOML/CSV/XML), line and text

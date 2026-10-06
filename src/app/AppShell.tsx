@@ -43,6 +43,7 @@ const FOOTER_LINKS = [
   { href: '/utilities/', key: 'footer.utilities' },
   { href: '/blog/', key: 'nav.blog' },
   { href: '/changelog/', key: 'nav.changelog' },
+  { href: '/integrations/', key: 'footer.integrations' },
   { href: '/about/', key: 'footer.about' },
   { href: '/privacy/', key: 'footer.privacy' },
   { href: '/contact/', key: 'footer.contact' },
