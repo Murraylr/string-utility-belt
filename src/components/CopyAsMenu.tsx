@@ -132,7 +132,7 @@ export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMe
         <div
           role="menu"
           aria-label="copy as"
-          className="absolute right-0 top-full mt-1 z-10 card p-1 grid gap-0.5 min-w-[10rem]"
+          className="absolute right-0 top-full mt-1 z-10 card p-1 grid gap-0.5 min-w-40"
           onKeyDown={onMenuKeyDown}
         >
           {MENU_ITEMS.map((item, i) => (

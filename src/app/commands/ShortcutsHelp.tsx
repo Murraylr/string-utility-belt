@@ -41,7 +41,7 @@ export default function ShortcutsHelp() {
         aria-modal="true"
         aria-labelledby="shortcuts-help-title"
         tabIndex={-1}
-        className="card w-full max-w-md p-5 outline-none"
+        className="card w-full max-w-md p-5 outline-hidden"
         onKeyDown={e => {
           if (e.key === 'Escape') { e.preventDefault(); close() }
           trapTabKey(e, dialogRef.current)

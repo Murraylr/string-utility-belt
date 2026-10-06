@@ -22,7 +22,7 @@ function dropRepeatedTitle(body: string, title: string | undefined): string {
 // block, an inline span sits inside ordinary wrapping text, where a long unbroken token
 // (a file path, an identifier) would otherwise force this narrow article wider than the
 // viewport.
-const withWrappableInlineCode = (html: string) => html.replace(/class="md-code"/g, 'class="md-code break-words"')
+const withWrappableInlineCode = (html: string) => html.replace(/class="md-code"/g, 'class="md-code wrap-break-word"')
 
 export default function BlogPost({ slug }: BlogPostProps) {
   const { t, formatDate } = useT()
@@ -69,7 +69,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
         {post?.status === 'missing' && <p className="text-danger" role="alert">{t('blog.notFound')}</p>}
         {meta && (
           <header className="mb-4">
-            {meta.title && <h1 className="!mt-0 text-2xl font-semibold">{meta.title}</h1>}
+            {meta.title && <h1 className="mt-0! text-2xl font-semibold">{meta.title}</h1>}
             {meta.date && <p className="muted"><time dateTime={meta.date}>{formatDate(meta.date, { dateStyle: 'long' })}</time></p>}
             {meta.updated && meta.updated !== meta.date && (
               <p className="muted text-sm">Updated <time dateTime={meta.updated}>{formatDate(meta.updated, { dateStyle: 'long' })}</time></p>

@@ -36,7 +36,7 @@ async function loadLanguageExtension(kind: OutputKind) {
  */
 const BASIC_SETUP = { lineNumbers: true, foldGutter: false } as const
 
-const PRE_CLASS = 'mono whitespace-pre-wrap [overflow-wrap:anywhere] border rounded-2xl p-3 bg-surface min-h-[160px] max-h-[32rem] overflow-auto'
+const PRE_CLASS = 'mono whitespace-pre-wrap wrap-anywhere border rounded-2xl p-3 bg-surface min-h-[160px] max-h-128 overflow-auto'
 
 export interface OutputViewProps {
   value: Value

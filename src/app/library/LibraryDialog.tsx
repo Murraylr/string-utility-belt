@@ -194,7 +194,7 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
           <Search size={16} className="text-muted shrink-0" aria-hidden />
           <input
             ref={searchRef}
-            className="bg-transparent outline-none flex-1 text-sm"
+            className="bg-transparent outline-hidden flex-1 text-sm"
             placeholder={`search ${tab === 'pipeline' ? 'pipelines' : 'macros'}…`}
             value={query}
             onChange={e => setQuery(e.target.value)}
@@ -297,7 +297,7 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
         <button className="btn" onClick={() => fileRef.current?.click()}><Upload size={16} /> import</button>
         <input ref={fileRef} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={onImportFile} aria-label="import library file" />
       </div>
-      <div role="status" aria-live="polite" className="text-sm min-h-[1.25rem]">
+      <div role="status" aria-live="polite" className="text-sm min-h-5">
         {status && <span className="text-success inline-flex items-center gap-1"><Check size={14} aria-hidden /> {status}</span>}
       </div>
       {error && <div role="alert" className="text-sm text-danger inline-flex items-center gap-1"><X size={14} aria-hidden /> {error}</div>}

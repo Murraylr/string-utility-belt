@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 
-/** Brand mark colour — matches `primary.600` in tailwind.config.js. */
+/** Brand mark colour — matches `--color-primary-600` in src/index.css. */
 export const LOGO_COLOR = '#5458ee'
 export const LOGO_FOREGROUND = '#ffffff'
 

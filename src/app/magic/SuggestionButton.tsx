@@ -21,7 +21,7 @@ export default function SuggestionButton({ suggestion: s, onPick }: { suggestion
         <span className="font-medium">{s.label}</span>
         <span className="chip" title="detection confidence">{pct}</span>
       </div>
-      <div id={previewId} className="text-xs text-muted mono mt-1 [overflow-wrap:anywhere] line-clamp-3">{s.preview}</div>
+      <div id={previewId} className="text-xs text-muted mono mt-1 wrap-anywhere line-clamp-3">{s.preview}</div>
     </button>
   )
 }

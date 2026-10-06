@@ -148,7 +148,7 @@ export default function StepCard({
           </div>
           {showDiff
             ? <StepDiff before={input ?? ''} after={preview} />
-            : <pre className="font-mono [overflow-wrap:anywhere] whitespace-pre-wrap overflow-auto max-h-80">{formatForDisplay(preview)}</pre>}
+            : <pre className="font-mono wrap-anywhere whitespace-pre-wrap overflow-auto max-h-80">{formatForDisplay(preview)}</pre>}
         </div>
       )}
     </div>

@@ -79,7 +79,7 @@ export default function KeyValueParam({ id, spec, value, onChange, describedBy, 
       {legacy !== null ? (
         <div className="flex flex-col gap-2 rounded-xl border bg-surface-2 p-2 text-xs">
           <p className="text-muted">legacy value, stored as free text:</p>
-          <pre className="mono max-h-40 overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere]">{legacy}</pre>
+          <pre className="mono max-h-40 overflow-auto whitespace-pre-wrap wrap-anywhere">{legacy}</pre>
           <button type="button" className="btn self-start" onClick={() => onChange(parseLegacyKeyValue(legacy, { regexKeys }))}>
             convert to pairs
           </button>

@@ -303,7 +303,7 @@ export default function InputPanel() {
           <textarea
             id="pipeline-input"
             ref={textareaRef}
-            className="border rounded-2xl p-3 min-h-[160px] focus:ring outline-none mono bg-surface text-fg shadow-soft"
+            className="border rounded-2xl p-3 min-h-[160px] focus:ring-3 focus:ring-[#3b82f680] outline-hidden mono bg-surface text-fg shadow-soft"
             placeholder="type or paste your text here…"
             value={text}
             onChange={onChange}

@@ -88,7 +88,7 @@ function useInAppLinks() {
 export function Header({ children, current }: { children?: React.ReactNode; current?: Route['name'] }) {
   const { t } = useT()
   return (
-    <header className="sticky top-0 backdrop-blur bg-surface/60 border-b z-10">
+    <header className="sticky top-0 backdrop-blur-sm bg-surface/60 border-b z-10">
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
         <a href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-2xl bg-primary-600 text-white grid place-content-center font-bold shadow-glow" aria-hidden>S</div>
@@ -189,7 +189,7 @@ export default function AppShell() {
         <ThemeToggle />
       </Header>
       <UpdateBanner />
-      <main id="main" tabIndex={-1} className="max-w-7xl mx-auto px-4 py-8 grid gap-8 outline-none">
+      <main id="main" tabIndex={-1} className="max-w-7xl mx-auto px-4 py-8 grid gap-8 outline-hidden">
         <Suspense fallback={<PageLoading />}>
           {route.name === 'blogIndex' && <BlogIndex />}
           {route.name === 'blogPost' && <BlogPost slug={route.params.slug} />}
