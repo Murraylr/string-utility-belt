@@ -1,0 +1,1006 @@
+{
+  "docs": {
+    "hash": "a1a85fee5f3bbd04",
+    "date": "2026-10-05"
+  },
+  "page/about": {
+    "hash": "cb3a89ce165a3834",
+    "date": "2026-10-05"
+  },
+  "page/contact": {
+    "hash": "5e718910f00d9c6e",
+    "date": "2026-09-25"
+  },
+  "page/integrations": {
+    "hash": "408476d48984528f",
+    "date": "2026-10-05"
+  },
+  "page/privacy": {
+    "hash": "a3a6e4f290eb6f88",
+    "date": "2026-10-05"
+  },
+  "util/aes_decrypt": {
+    "hash": "90804bef71251e16",
+    "date": "2026-09-25"
+  },
+  "util/aes_encrypt": {
+    "hash": "46ae8b404a7197bd",
+    "date": "2026-09-25"
+  },
+  "util/align_columns": {
+    "hash": "797054abf4c0abd6",
+    "date": "2026-09-25"
+  },
+  "util/alternating_case": {
+    "hash": "a95e2cbbaa706e07",
+    "date": "2026-09-25"
+  },
+  "util/argon2_hash": {
+    "hash": "984556be7bf58c92",
+    "date": "2026-09-25"
+  },
+  "util/ascii_banner": {
+    "hash": "7d8b70918c294487",
+    "date": "2026-09-25"
+  },
+  "util/atbash": {
+    "hash": "14403d1ea94e40d4",
+    "date": "2026-09-25"
+  },
+  "util/base32_decode": {
+    "hash": "45afbe2c3f533414",
+    "date": "2026-09-25"
+  },
+  "util/base32_encode": {
+    "hash": "dcaba7c04d6123a5",
+    "date": "2026-09-25"
+  },
+  "util/base58_decode": {
+    "hash": "7b0f80c0da80da57",
+    "date": "2026-09-25"
+  },
+  "util/base58_encode": {
+    "hash": "697f385938ab66ef",
+    "date": "2026-09-25"
+  },
+  "util/base62_decode": {
+    "hash": "ebc6b73b1a8bf854",
+    "date": "2026-09-25"
+  },
+  "util/base62_encode": {
+    "hash": "bd8430f3ceb186d1",
+    "date": "2026-09-25"
+  },
+  "util/base64_decode": {
+    "hash": "9394fe7f7da05643",
+    "date": "2026-09-25"
+  },
+  "util/base64_encode": {
+    "hash": "aefea9f9ad0cd460",
+    "date": "2026-09-25"
+  },
+  "util/base64url_decode": {
+    "hash": "1d1f10dfd8e02add",
+    "date": "2026-09-25"
+  },
+  "util/base64url_encode": {
+    "hash": "5ab852532678662d",
+    "date": "2026-09-25"
+  },
+  "util/base85_decode": {
+    "hash": "d65a08d03df08034",
+    "date": "2026-09-25"
+  },
+  "util/base85_encode": {
+    "hash": "e8eb3fee3bdfdc76",
+    "date": "2026-09-25"
+  },
+  "util/base91_decode": {
+    "hash": "280f7078e6e554b5",
+    "date": "2026-09-25"
+  },
+  "util/base91_encode": {
+    "hash": "273fd12e86cc8df6",
+    "date": "2026-09-25"
+  },
+  "util/bcrypt_hash": {
+    "hash": "e7d47740f3a2d284",
+    "date": "2026-09-25"
+  },
+  "util/bcrypt_verify": {
+    "hash": "95e505360ee7ecb7",
+    "date": "2026-09-25"
+  },
+  "util/binary_decode": {
+    "hash": "4e04edc09d64f94d",
+    "date": "2026-09-25"
+  },
+  "util/binary_encode": {
+    "hash": "fa9930b8fa7f693a",
+    "date": "2026-09-25"
+  },
+  "util/bit_ops": {
+    "hash": "3d2d2ac1be0f008d",
+    "date": "2026-09-25"
+  },
+  "util/blake": {
+    "hash": "17db5b31c798253f",
+    "date": "2026-09-25"
+  },
+  "util/bom": {
+    "hash": "0c87697c894fe3bd",
+    "date": "2026-09-25"
+  },
+  "util/box_text": {
+    "hash": "7b48a313faa632dd",
+    "date": "2026-09-25"
+  },
+  "util/brotli_decompress": {
+    "hash": "950da3ff6ffdb5c9",
+    "date": "2026-09-25"
+  },
+  "util/bytes_humanize": {
+    "hash": "1e52c7401c4e290e",
+    "date": "2026-09-25"
+  },
+  "util/caesar": {
+    "hash": "3e946524e9bdfe33",
+    "date": "2026-09-25"
+  },
+  "util/case": {
+    "hash": "6397c2ce72a6efa8",
+    "date": "2026-09-25"
+  },
+  "util/char_frequency": {
+    "hash": "83387e383fb674b2",
+    "date": "2026-09-25"
+  },
+  "util/charset_decode": {
+    "hash": "27fa120dcd391a27",
+    "date": "2026-09-25"
+  },
+  "util/charset_encode": {
+    "hash": "2e607d0748ee5ede",
+    "date": "2026-09-25"
+  },
+  "util/checksum": {
+    "hash": "254ca5a279a41336",
+    "date": "2026-09-25"
+  },
+  "util/checksum_verify": {
+    "hash": "b36d951dda7fc142",
+    "date": "2026-09-25"
+  },
+  "util/chunk": {
+    "hash": "86ed5224b1eb35a0",
+    "date": "2026-09-25"
+  },
+  "util/cidr": {
+    "hash": "ed8f949106ac65f4",
+    "date": "2026-09-25"
+  },
+  "util/code_string_escape": {
+    "hash": "89bf06a3f6da25aa",
+    "date": "2026-09-25"
+  },
+  "util/code_string_unescape": {
+    "hash": "5d1b650d4bbef8f6",
+    "date": "2026-09-25"
+  },
+  "util/codepoints_decode": {
+    "hash": "65633cfb3818029c",
+    "date": "2026-09-25"
+  },
+  "util/codepoints_encode": {
+    "hash": "efcfc21b61474ed9",
+    "date": "2026-09-25"
+  },
+  "util/collapse_whitespace": {
+    "hash": "fd80b8407b0a1db5",
+    "date": "2026-09-25"
+  },
+  "util/color_contrast": {
+    "hash": "aeed9736531c25a9",
+    "date": "2026-09-25"
+  },
+  "util/color_convert": {
+    "hash": "b7a2652a3236dfc1",
+    "date": "2026-09-25"
+  },
+  "util/columnar_decode": {
+    "hash": "2b294974adb0edb5",
+    "date": "2026-09-25"
+  },
+  "util/columnar_encode": {
+    "hash": "bdc5808b619f1579",
+    "date": "2026-09-25"
+  },
+  "util/count": {
+    "hash": "8a3349b975221627",
+    "date": "2026-09-25"
+  },
+  "util/cron_describe": {
+    "hash": "1985fc4d76af6411",
+    "date": "2026-09-25"
+  },
+  "util/csv_columns": {
+    "hash": "b4fbcf9c859e44f8",
+    "date": "2026-09-25"
+  },
+  "util/csv_delimiter": {
+    "hash": "8cf767118e24ea0b",
+    "date": "2026-09-25"
+  },
+  "util/csv_normalize_headers": {
+    "hash": "8749a7ff6f3c7311",
+    "date": "2026-09-25"
+  },
+  "util/csv_to_html": {
+    "hash": "227fc9b678f5874d",
+    "date": "2026-09-25"
+  },
+  "util/csv_to_json": {
+    "hash": "516badded73bef87",
+    "date": "2026-09-25"
+  },
+  "util/csv_to_markdown": {
+    "hash": "0ccc58be3f5c6b74",
+    "date": "2026-09-25"
+  },
+  "util/csv_to_sql": {
+    "hash": "975713ace5247c0e",
+    "date": "2026-09-25"
+  },
+  "util/csv_transpose": {
+    "hash": "012ab4fbc0c26f47",
+    "date": "2026-09-25"
+  },
+  "util/curl_build": {
+    "hash": "16b8dc985495d5d0",
+    "date": "2026-09-25"
+  },
+  "util/curl_parse": {
+    "hash": "b931b0471948713e",
+    "date": "2026-09-25"
+  },
+  "util/custom_js": {
+    "hash": "719496d136380727",
+    "date": "2026-09-25"
+  },
+  "util/data_uri_build": {
+    "hash": "ec5d88d12da0bea3",
+    "date": "2026-09-25"
+  },
+  "util/data_uri_parse": {
+    "hash": "e0a68b576d463b10",
+    "date": "2026-09-25"
+  },
+  "util/date_format": {
+    "hash": "489e5711e1e87da9",
+    "date": "2026-09-25"
+  },
+  "util/deflate_compress": {
+    "hash": "9016e849ad5631bf",
+    "date": "2026-09-25"
+  },
+  "util/deflate_decompress": {
+    "hash": "a582b71eedce66e5",
+    "date": "2026-09-25"
+  },
+  "util/detect_format": {
+    "hash": "09eaa6cd3ff338ea",
+    "date": "2026-09-25"
+  },
+  "util/diacritics": {
+    "hash": "f74a15fdd488817c",
+    "date": "2026-09-25"
+  },
+  "util/duration_humanize": {
+    "hash": "f2badcd2a192af51",
+    "date": "2026-09-25"
+  },
+  "util/entropy": {
+    "hash": "759480b658a723ca",
+    "date": "2026-09-25"
+  },
+  "util/env_to_json": {
+    "hash": "b12b6f640fe1533f",
+    "date": "2026-09-25"
+  },
+  "util/escape_html": {
+    "hash": "c4762e594d3fc626",
+    "date": "2026-09-25"
+  },
+  "util/extract_preset": {
+    "hash": "e982bd128b019337",
+    "date": "2026-09-25"
+  },
+  "util/fake_data": {
+    "hash": "12ea5c7e1751bfc9",
+    "date": "2026-09-25"
+  },
+  "util/filter_lines_by_length": {
+    "hash": "1aea55cb739f15df",
+    "date": "2026-09-25"
+  },
+  "util/format_case": {
+    "hash": "9f19682a0b8a105b",
+    "date": "2026-09-25"
+  },
+  "util/get_bytes": {
+    "hash": "f8d3af20ca1664d6",
+    "date": "2026-09-25"
+  },
+  "util/grep_lines": {
+    "hash": "1b90a1499f2f5df2",
+    "date": "2026-09-25"
+  },
+  "util/gzip_compress": {
+    "hash": "8c748e06e3431540",
+    "date": "2026-09-25"
+  },
+  "util/gzip_decompress": {
+    "hash": "140e7e53f8146e56",
+    "date": "2026-09-25"
+  },
+  "util/hash": {
+    "hash": "ca6652950b05d3ac",
+    "date": "2026-09-25"
+  },
+  "util/head": {
+    "hash": "2216b671e0f4b2c8",
+    "date": "2026-09-25"
+  },
+  "util/hex_decode": {
+    "hash": "e55e2f30fcf7a2f5",
+    "date": "2026-09-25"
+  },
+  "util/hex_dump": {
+    "hash": "b43ac32d2af67ffb",
+    "date": "2026-09-25"
+  },
+  "util/hex_encode": {
+    "hash": "2e7d609ec5a9aff4",
+    "date": "2026-09-25"
+  },
+  "util/hmac": {
+    "hash": "cacf349065f2ff07",
+    "date": "2026-09-25"
+  },
+  "util/html_entity_decode": {
+    "hash": "ead9fdede2a0ce90",
+    "date": "2026-09-25"
+  },
+  "util/html_entity_encode": {
+    "hash": "4d88ace847be8f5f",
+    "date": "2026-09-25"
+  },
+  "util/html_table_to_csv": {
+    "hash": "59cb820e18e6a7f7",
+    "date": "2026-09-25"
+  },
+  "util/html_to_markdown": {
+    "hash": "7f0c7b92a5cf0e5d",
+    "date": "2026-09-25"
+  },
+  "util/http_headers_build": {
+    "hash": "852de307e58976e7",
+    "date": "2026-09-25"
+  },
+  "util/http_headers_parse": {
+    "hash": "4531042677b5dae1",
+    "date": "2026-09-25"
+  },
+  "util/ieee754": {
+    "hash": "23b9a92f045e1ebd",
+    "date": "2026-09-25"
+  },
+  "util/indent": {
+    "hash": "482a16935bfce445",
+    "date": "2026-09-25"
+  },
+  "util/ini_to_json": {
+    "hash": "7f40b652435fb2ee",
+    "date": "2026-09-25"
+  },
+  "util/initials": {
+    "hash": "565c741552c3fa32",
+    "date": "2026-09-25"
+  },
+  "util/insert_at": {
+    "hash": "1553f03ce9ed90bd",
+    "date": "2026-09-25"
+  },
+  "util/ip_convert": {
+    "hash": "e56e369ee86c80a5",
+    "date": "2026-09-25"
+  },
+  "util/json5_parse": {
+    "hash": "658ba48b96d320df",
+    "date": "2026-09-25"
+  },
+  "util/json_diff": {
+    "hash": "bec3c0d40a508d8b",
+    "date": "2026-09-25"
+  },
+  "util/json_escape": {
+    "hash": "a80a87bd1ba3ceb8",
+    "date": "2026-09-25"
+  },
+  "util/json_flatten": {
+    "hash": "976512909506ddba",
+    "date": "2026-09-25"
+  },
+  "util/json_minify": {
+    "hash": "29b4cba618ff01e0",
+    "date": "2026-09-25"
+  },
+  "util/json_pretty": {
+    "hash": "f7f83062aef12e21",
+    "date": "2026-09-25"
+  },
+  "util/json_schema_validate": {
+    "hash": "6b461d6e098b664b",
+    "date": "2026-09-25"
+  },
+  "util/json_sort_keys": {
+    "hash": "75f52513cb8aeffc",
+    "date": "2026-09-25"
+  },
+  "util/json_to_csv": {
+    "hash": "1c0eb58c300df812",
+    "date": "2026-09-25"
+  },
+  "util/json_to_env": {
+    "hash": "191ceeac2fd761e4",
+    "date": "2026-09-25"
+  },
+  "util/json_to_ini": {
+    "hash": "3a3978f66584b021",
+    "date": "2026-09-25"
+  },
+  "util/json_to_jsonl": {
+    "hash": "8f2ce47e216513b7",
+    "date": "2026-09-25"
+  },
+  "util/json_to_query_string": {
+    "hash": "3599c1cc8a8cf3d3",
+    "date": "2026-09-25"
+  },
+  "util/json_to_schema": {
+    "hash": "e9873cf7f9f3c183",
+    "date": "2026-09-25"
+  },
+  "util/json_to_toml": {
+    "hash": "ef644c19035dfc95",
+    "date": "2026-09-25"
+  },
+  "util/json_to_typescript": {
+    "hash": "bae805e9d1933a11",
+    "date": "2026-09-25"
+  },
+  "util/json_to_xml": {
+    "hash": "223abff045618749",
+    "date": "2026-09-25"
+  },
+  "util/json_to_yaml": {
+    "hash": "07788aa75f8ee0c3",
+    "date": "2026-09-25"
+  },
+  "util/json_unescape": {
+    "hash": "1d84f5c129e0685b",
+    "date": "2026-09-25"
+  },
+  "util/json_unflatten": {
+    "hash": "73d7c32e846d0e68",
+    "date": "2026-09-25"
+  },
+  "util/json_validate": {
+    "hash": "d388e968302e4ff3",
+    "date": "2026-09-25"
+  },
+  "util/jsonl_to_json": {
+    "hash": "d9eca870b705777e",
+    "date": "2026-09-25"
+  },
+  "util/jsonpath": {
+    "hash": "102790dd39d3c15a",
+    "date": "2026-09-25"
+  },
+  "util/jwt_decode": {
+    "hash": "7fffeaeaf65779fb",
+    "date": "2026-09-25"
+  },
+  "util/jwt_verify": {
+    "hash": "e6d5029f305bf467",
+    "date": "2026-10-05"
+  },
+  "util/language_detect": {
+    "hash": "5fbe2cc659c373c1",
+    "date": "2026-09-25"
+  },
+  "util/leet": {
+    "hash": "510e8bb39db591b7",
+    "date": "2026-09-25"
+  },
+  "util/length": {
+    "hash": "a385e3f5cc1c5885",
+    "date": "2026-09-25"
+  },
+  "util/line_affix": {
+    "hash": "17e1af583a2ffbd6",
+    "date": "2026-09-25"
+  },
+  "util/line_dedupe": {
+    "hash": "74e1a34b257e3ca1",
+    "date": "2026-09-25"
+  },
+  "util/line_reverse": {
+    "hash": "eb37bacb4b7609d6",
+    "date": "2026-09-25"
+  },
+  "util/line_sort": {
+    "hash": "dcf0f5ca2094df67",
+    "date": "2026-09-25"
+  },
+  "util/lorem_ipsum": {
+    "hash": "91ae1a38d636bd63",
+    "date": "2026-09-25"
+  },
+  "util/mac_format": {
+    "hash": "5611f769e92ae94c",
+    "date": "2026-09-25"
+  },
+  "util/markdown_strip": {
+    "hash": "5d5ba01080739dd3",
+    "date": "2026-09-25"
+  },
+  "util/markdown_table_format": {
+    "hash": "ffdf96cc2381e0ef",
+    "date": "2026-09-25"
+  },
+  "util/markdown_to_csv": {
+    "hash": "a51277e717c3f990",
+    "date": "2026-09-25"
+  },
+  "util/markdown_to_html": {
+    "hash": "96a5814028acc0a0",
+    "date": "2026-09-25"
+  },
+  "util/md5": {
+    "hash": "e544918e3c98f9eb",
+    "date": "2026-09-25"
+  },
+  "util/mime_from_magic": {
+    "hash": "0f62f3c4f7ee2968",
+    "date": "2026-09-25"
+  },
+  "util/mime_lookup": {
+    "hash": "976ccf23ec753ab1",
+    "date": "2026-09-25"
+  },
+  "util/morse_decode": {
+    "hash": "14827ce3c9e54215",
+    "date": "2026-09-25"
+  },
+  "util/morse_encode": {
+    "hash": "186aed0ca73cf5d3",
+    "date": "2026-09-25"
+  },
+  "util/msgpack_decode": {
+    "hash": "9c94c96e3aedd988",
+    "date": "2026-09-25"
+  },
+  "util/msgpack_encode": {
+    "hash": "a8432de63f8126c4",
+    "date": "2026-09-25"
+  },
+  "util/multi_replace": {
+    "hash": "aeb4b57158dbcf41",
+    "date": "2026-09-25"
+  },
+  "util/nanoid": {
+    "hash": "83fb72639a5d9ec9",
+    "date": "2026-09-25"
+  },
+  "util/ngram_frequency": {
+    "hash": "577c29e8c5615ae1",
+    "date": "2026-09-25"
+  },
+  "util/normalize": {
+    "hash": "4e3d27355e68efa4",
+    "date": "2026-09-25"
+  },
+  "util/normalize_line_endings": {
+    "hash": "8c34f93408d03f28",
+    "date": "2026-09-25"
+  },
+  "util/number_base_convert": {
+    "hash": "5698490a7298541d",
+    "date": "2026-09-25"
+  },
+  "util/number_format": {
+    "hash": "2877b1c5dcec0631",
+    "date": "2026-09-25"
+  },
+  "util/number_lines": {
+    "hash": "58c3f88eefe69dcc",
+    "date": "2026-09-25"
+  },
+  "util/number_sequence": {
+    "hash": "d39fb17b604da61b",
+    "date": "2026-09-25"
+  },
+  "util/number_words": {
+    "hash": "a7e8fb0876eda969",
+    "date": "2026-09-25"
+  },
+  "util/octal_decode": {
+    "hash": "5197dc09d1cd4ae5",
+    "date": "2026-09-25"
+  },
+  "util/octal_encode": {
+    "hash": "149f97f871eefe39",
+    "date": "2026-09-25"
+  },
+  "util/ordinalize": {
+    "hash": "4ed0cd966b48b9a4",
+    "date": "2026-09-25"
+  },
+  "util/pad": {
+    "hash": "9a3f24ebcb79f5de",
+    "date": "2026-09-25"
+  },
+  "util/password_generator": {
+    "hash": "385fec396bb2fe1a",
+    "date": "2026-09-25"
+  },
+  "util/pbkdf2": {
+    "hash": "f9af250963238e95",
+    "date": "2026-09-25"
+  },
+  "util/pluralize_words": {
+    "hash": "ab0650af0d8dd658",
+    "date": "2026-09-25"
+  },
+  "util/protobuf_decode": {
+    "hash": "1796b1a075a65697",
+    "date": "2026-09-25"
+  },
+  "util/punycode_decode": {
+    "hash": "bc3da7a4629141b9",
+    "date": "2026-09-25"
+  },
+  "util/punycode_encode": {
+    "hash": "b99398f26106389a",
+    "date": "2026-09-25"
+  },
+  "util/qr_code": {
+    "hash": "a0c64da458b57ddf",
+    "date": "2026-09-25"
+  },
+  "util/query_params_normalize": {
+    "hash": "868c3264285a5f77",
+    "date": "2026-09-25"
+  },
+  "util/query_string_to_json": {
+    "hash": "8e92408590ea7e3f",
+    "date": "2026-09-25"
+  },
+  "util/quoted_printable_decode": {
+    "hash": "ebe44513e75a0fa0",
+    "date": "2026-09-25"
+  },
+  "util/quoted_printable_encode": {
+    "hash": "ad48e5d4cf88fe3d",
+    "date": "2026-09-25"
+  },
+  "util/rail_fence_decode": {
+    "hash": "48d9dd202e428752",
+    "date": "2026-09-25"
+  },
+  "util/rail_fence_encode": {
+    "hash": "98ce4bb2a0a1fa45",
+    "date": "2026-09-25"
+  },
+  "util/random_bytes": {
+    "hash": "f8ea00aad2ea8173",
+    "date": "2026-09-25"
+  },
+  "util/random_case": {
+    "hash": "329029796740389a",
+    "date": "2026-09-25"
+  },
+  "util/random_string": {
+    "hash": "5ced5ad7e16bf5be",
+    "date": "2026-09-25"
+  },
+  "util/readability": {
+    "hash": "5116375d347db8d8",
+    "date": "2026-09-25"
+  },
+  "util/reading_time": {
+    "hash": "502e8cdbe0b8d93b",
+    "date": "2026-09-25"
+  },
+  "util/regex_explain": {
+    "hash": "4c4c3e29536b0c26",
+    "date": "2026-09-25"
+  },
+  "util/regex_extract": {
+    "hash": "9f3b969504893b8e",
+    "date": "2026-09-25"
+  },
+  "util/remove_blank_lines": {
+    "hash": "3c7ce1689154ceed",
+    "date": "2026-09-25"
+  },
+  "util/remove_invisible": {
+    "hash": "156d9b81e5f138af",
+    "date": "2026-09-25"
+  },
+  "util/repeat": {
+    "hash": "7fe9d59b42d70d26",
+    "date": "2026-09-25"
+  },
+  "util/replace": {
+    "hash": "5676188395da1fb1",
+    "date": "2026-09-25"
+  },
+  "util/reverse": {
+    "hash": "21f72413f6610561",
+    "date": "2026-09-25"
+  },
+  "util/reverse_words": {
+    "hash": "648f77c0924bbe04",
+    "date": "2026-09-25"
+  },
+  "util/roman_numerals": {
+    "hash": "4d15edb9942962f0",
+    "date": "2026-09-25"
+  },
+  "util/rot13": {
+    "hash": "4315b1e2f35ce7f2",
+    "date": "2026-09-25"
+  },
+  "util/sed": {
+    "hash": "2a1ae6134ab6d30d",
+    "date": "2026-09-25"
+  },
+  "util/semver": {
+    "hash": "3121faa3162f52d8",
+    "date": "2026-09-25"
+  },
+  "util/set_operations": {
+    "hash": "dfd2492c3771dbe2",
+    "date": "2026-09-25"
+  },
+  "util/sha3": {
+    "hash": "32bfbbca3514feb1",
+    "date": "2026-09-25"
+  },
+  "util/shell_quote": {
+    "hash": "9678ee5f6c0f8096",
+    "date": "2026-09-25"
+  },
+  "util/shuffle": {
+    "hash": "748beb141b2c8732",
+    "date": "2026-09-25"
+  },
+  "util/slice": {
+    "hash": "8809ac3cc97e22fb",
+    "date": "2026-09-25"
+  },
+  "util/slug": {
+    "hash": "d6503ef9d3778267",
+    "date": "2026-09-25"
+  },
+  "util/smart_quotes": {
+    "hash": "4701cf379bc81812",
+    "date": "2026-09-25"
+  },
+  "util/sort_words_in_line": {
+    "hash": "8e6fbcab92dc0491",
+    "date": "2026-09-25"
+  },
+  "util/split_join": {
+    "hash": "7884b3ae3b0e1652",
+    "date": "2026-09-25"
+  },
+  "util/sql_escape": {
+    "hash": "6a673eaaa64b1114",
+    "date": "2026-09-25"
+  },
+  "util/sql_format": {
+    "hash": "eb3b297f9275cb91",
+    "date": "2026-09-25"
+  },
+  "util/sql_minify": {
+    "hash": "044d716351ef8b9b",
+    "date": "2026-09-25"
+  },
+  "util/string_distance": {
+    "hash": "153ab8a9ab97cb95",
+    "date": "2026-09-25"
+  },
+  "util/strip_ansi": {
+    "hash": "b74ad03ab11e5dc3",
+    "date": "2026-09-25"
+  },
+  "util/strip_chars": {
+    "hash": "be79ec782d4bb7f0",
+    "date": "2026-09-25"
+  },
+  "util/strip_html_tags": {
+    "hash": "d1f7eef7a4bc9007",
+    "date": "2026-09-25"
+  },
+  "util/substring_around": {
+    "hash": "81a5a3fd3c6c0a88",
+    "date": "2026-09-25"
+  },
+  "util/swap_case": {
+    "hash": "952905d9bbb70106",
+    "date": "2026-09-25"
+  },
+  "util/tabs_spaces": {
+    "hash": "0c39f0b4187beb23",
+    "date": "2026-09-25"
+  },
+  "util/tail": {
+    "hash": "40b79f1388c5b31f",
+    "date": "2026-09-25"
+  },
+  "util/template_expand": {
+    "hash": "1eff6aa1e00348b4",
+    "date": "2026-09-25"
+  },
+  "util/text_diff": {
+    "hash": "3a29d7d40ae39384",
+    "date": "2026-09-25"
+  },
+  "util/text_stats": {
+    "hash": "ffb8dec643728c97",
+    "date": "2026-09-25"
+  },
+  "util/timestamp_convert": {
+    "hash": "47d06c21e4f8f16a",
+    "date": "2026-09-25"
+  },
+  "util/timestamp_now": {
+    "hash": "87cd0a81c2e17e0f",
+    "date": "2026-09-25"
+  },
+  "util/toml_to_json": {
+    "hash": "3c8e0ae953e25b19",
+    "date": "2026-09-25"
+  },
+  "util/tr": {
+    "hash": "18ff00f080500b58",
+    "date": "2026-09-25"
+  },
+  "util/trim": {
+    "hash": "010f06c10376597e",
+    "date": "2026-09-25"
+  },
+  "util/trim_lines": {
+    "hash": "b9f7053d0f550873",
+    "date": "2026-09-25"
+  },
+  "util/truncate": {
+    "hash": "4813d511b7a96f65",
+    "date": "2026-09-25"
+  },
+  "util/ulid": {
+    "hash": "597dc3e339eee0ab",
+    "date": "2026-09-25"
+  },
+  "util/unescape_html": {
+    "hash": "f28f6dc016a7a387",
+    "date": "2026-09-25"
+  },
+  "util/unicode_escape_decode": {
+    "hash": "31b09557acdb9adb",
+    "date": "2026-09-25"
+  },
+  "util/unicode_escape_encode": {
+    "hash": "b33996de00c5fc3b",
+    "date": "2026-09-25"
+  },
+  "util/unicode_inspect": {
+    "hash": "43b3c3c9d1e417cf",
+    "date": "2026-09-25"
+  },
+  "util/unicode_style": {
+    "hash": "92d90ae00795e682",
+    "date": "2026-09-25"
+  },
+  "util/uniq_count": {
+    "hash": "d6a3c78ed2f7dcb6",
+    "date": "2026-09-25"
+  },
+  "util/unwrap": {
+    "hash": "cef131a4a42688be",
+    "date": "2026-09-25"
+  },
+  "util/url_build": {
+    "hash": "2d10e8ea81503e88",
+    "date": "2026-09-25"
+  },
+  "util/url_decode": {
+    "hash": "919181d4be661f4d",
+    "date": "2026-09-25"
+  },
+  "util/url_encode": {
+    "hash": "13e62e3e040ae747",
+    "date": "2026-09-25"
+  },
+  "util/url_parse": {
+    "hash": "207774bf42c63e9d",
+    "date": "2026-09-25"
+  },
+  "util/user_agent_parse": {
+    "hash": "73facb82a96913bd",
+    "date": "2026-09-25"
+  },
+  "util/uuid": {
+    "hash": "c486c1bacf65a83f",
+    "date": "2026-09-25"
+  },
+  "util/validate": {
+    "hash": "f0e5d02b3c22eb6c",
+    "date": "2026-09-25"
+  },
+  "util/vigenere_decode": {
+    "hash": "af140ea9982fbe60",
+    "date": "2026-09-25"
+  },
+  "util/vigenere_encode": {
+    "hash": "f993089c6948b4ca",
+    "date": "2026-09-25"
+  },
+  "util/word_frequency": {
+    "hash": "8abfdd7c8377bc51",
+    "date": "2026-09-25"
+  },
+  "util/word_wrap": {
+    "hash": "9442452e2f288b34",
+    "date": "2026-09-25"
+  },
+  "util/xml_escape": {
+    "hash": "5ce2424f031247fe",
+    "date": "2026-09-25"
+  },
+  "util/xml_minify": {
+    "hash": "6b4f1cdeaf4b1b7f",
+    "date": "2026-09-25"
+  },
+  "util/xml_pretty": {
+    "hash": "90b1f4cb6de48418",
+    "date": "2026-09-25"
+  },
+  "util/xml_to_json": {
+    "hash": "c0e4c52137d4f723",
+    "date": "2026-09-25"
+  },
+  "util/xml_unescape": {
+    "hash": "8c2e573092a8e3e7",
+    "date": "2026-09-25"
+  },
+  "util/xor_cipher": {
+    "hash": "372ebfbb76df143c",
+    "date": "2026-09-25"
+  },
+  "util/yaml_to_json": {
+    "hash": "232cee3f56fc8bad",
+    "date": "2026-09-25"
+  },
+  "util/zip_extract": {
+    "hash": "e1d3b01153a0d819",
+    "date": "2026-09-25"
+  },
+  "util/zip_list": {
+    "hash": "0c91cbee09998c18",
+    "date": "2026-09-25"
+  }
+}

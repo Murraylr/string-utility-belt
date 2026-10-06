@@ -18,7 +18,7 @@ npm run dev          # gen + Vite dev server (port 5173 may be taken; launch.jso
 npm test             # vitest run (all tests, incl. packages/ and worker/)
 npm run typecheck    # tsc --noEmit (CI also checks tsconfig.worker.json and each packages/*/tsconfig.json)
 npm run lint         # ESLint
-npm run gen          # regenerate src/utilities/_generated/* (predev/prebuild run it)
+npm run gen          # regenerate src/utilities/_generated/* and scripts/seo/lastmod.json (predev/prebuild run it)
 npm run build        # production build, then (postbuild) build:seo — OG images only in Workers Builds (WORKERS_CI);
                      # npm run check:bundle enforces bundle-budget.json
 npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
@@ -96,6 +96,9 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
 - `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
   pre-render use — titles go through `pageTitle()` (site name only when it fits 60 chars). Change a
   title/description there, never in only one place: Google indexes the rendered page.
+- Sitemap `<lastmod>` comes from `scripts/seo/lastmod.json` (per page: hash of its sources + the date that hash was
+  first seen; `scripts/seo/lastmod.ts`), never the build date — Google ignores lastmod that moves on every deploy.
+  `npm run gen` refreshes it; commit it with the content change (`lastmod.test.ts` fails while it is stale).
 - Site pages: `src/app/pages/content/{about,privacy,contact}.md` (frontmatter title/description, guide
   markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by `build.ts`. The privacy
   policy carries AdSense's required disclosures — keep it accurate when data flows change.

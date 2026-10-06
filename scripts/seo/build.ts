@@ -14,6 +14,9 @@ import {
   stripRootContent, setRobots, jsonLdScript, seoMetaTags, rssLinkTag,
 } from './html'
 import { buildSitemap, buildRss, toIsoDate, type SitemapUrl, type RssItem } from './xml'
+import {
+  hashPages, lastmodFor, latestDate, pageSources, readContentDates, sitePageKey, utilityKey, DOCS_KEY, type ContentDates,
+} from './lastmod'
 import { readBlogManifest, readBlogPostSource, dropRepeatedTitle, isSafeSlug, type BlogPostMeta } from './blog'
 import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './changelog'
 import {
@@ -45,6 +48,8 @@ export interface BuildSeoOptions {
   ogConcurrency?: number
   /** Build timestamp for undated sitemap entries (default: now). */
   now?: Date
+  /** Recorded content dates for sitemap `lastmod` (default: `scripts/seo/lastmod.json` under `root`). */
+  contentDates?: ContentDates
   log?: (message: string) => void
   /** Utilities to publish (default: the generated manifest + examples). */
   manifest?: UtilityMeta[]
@@ -416,20 +421,29 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   // removable: this file is the next run's template
   writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest), year)))
 
+  // lastmod moves only when a page's content does (see ./lastmod.ts); the build
+  // date is the fallback for anything the record doesn't cover yet
   const buildDate = toIsoDate(now)
+  const contentDates = options.contentDates ?? readContentDates(root)
+  const hashes = hashPages(root, pageSources(root, manifest.map(m => m.id), SITE_PAGES))
+  const contentLastmod = (key: string) => lastmodFor(contentDates, key, hashes[key], buildDate)
+  const utilLastmods = manifest.map(m => contentLastmod(utilityKey(m.id)))
+  const postLastmods = posts.map(p => {
+    const changed = p.updated ?? p.date
+    return changed ? toIsoDate(changed) : buildDate
+  })
+  // the directory pages list every utility, so they change when any of them does
+  const directoryLastmod = latestDate(utilLastmods, buildDate)
   const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? buildDate
   const sitemapUrls: SitemapUrl[] = [
-    { loc: `${SITE}/`, lastmod: buildDate },
-    { loc: docsUrl, lastmod: buildDate },
-    { loc: utilitiesUrl, lastmod: buildDate },
-    ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: buildDate })),
-    { loc: blogUrl, lastmod: buildDate },
-    ...posts.map(p => {
-      const changed = p.updated ?? p.date
-      return { loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: changed ? toIsoDate(changed) : buildDate }
-    }),
+    { loc: `${SITE}/`, lastmod: directoryLastmod },
+    { loc: docsUrl, lastmod: contentLastmod(DOCS_KEY) },
+    { loc: utilitiesUrl, lastmod: directoryLastmod },
+    ...manifest.map((m, i) => ({ loc: `${SITE}/util/${m.id}/`, lastmod: utilLastmods[i] })),
+    { loc: blogUrl, lastmod: latestDate(postLastmods, buildDate) },
+    ...posts.map((p, i) => ({ loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: postLastmods[i] })),
     { loc: `${SITE}/changelog/`, lastmod: changelogLastmod },
-    ...SITE_PAGES.map(slug => ({ loc: `${SITE}/${slug}/`, lastmod: buildDate })),
+    ...SITE_PAGES.map(slug => ({ loc: `${SITE}/${slug}/`, lastmod: contentLastmod(sitePageKey(slug)) })),
   ]
   writeOut(outDir, 'sitemap.xml', buildSitemap(sitemapUrls))
 

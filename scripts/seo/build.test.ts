@@ -10,6 +10,7 @@ import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDes
 import { SITE_PAGES } from '../../src/lib/router'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import { resolveOg, resolveOutDir } from '../build-seo'
+import { hashPages, pageSources, sitePageKey, utilityKey, DOCS_KEY, type ContentDates } from './lastmod'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -380,6 +381,53 @@ describe('buildSeo with hostile utility metadata', () => {
     const bad = { ...MANIFEST[0], id: '../../pwned' }
     await expect(buildSeo({ outDir: dist, root: ROOT, og: false, log: silent, manifest: [bad] })).rejects.toThrow(/not safe/)
   })
+})
+
+describe('buildSeo sitemap lastmod', () => {
+  const trim = MANIFEST.find(m => m.id === 'trim')!
+  const pad = MANIFEST.find(m => m.id === 'pad')!
+  const lastmods = (dist: string) => Object.fromEntries([...xml(read(dist, 'sitemap.xml')).getElementsByTagName('url')].map(u => [
+    u.getElementsByTagName('loc')[0].textContent!.slice(SITE.length),
+    u.getElementsByTagName('lastmod')[0]?.textContent,
+  ]))
+
+  it('dates pages from the content record while their sources match, the build date otherwise', async () => {
+    const dist = fixtureDist()
+    const hashes = hashPages(ROOT, pageSources(ROOT, ['trim', 'pad'], SITE_PAGES))
+    const contentDates: ContentDates = {
+      [utilityKey('trim')]: { hash: hashes[utilityKey('trim')], date: '2025-11-01' },
+      // pad's sources changed since this was recorded
+      [utilityKey('pad')]: { hash: '0000000000000000', date: '2025-10-01' },
+      [DOCS_KEY]: { hash: hashes[DOCS_KEY], date: '2025-09-01' },
+      [sitePageKey('about')]: { hash: hashes[sitePageKey('about')], date: '2025-08-01' },
+    }
+    await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent, manifest: [trim, pad], examples: {}, contentDates })
+    const byPath = lastmods(dist)
+    expect(byPath['/util/trim/']).toBe('2025-11-01')
+    expect(byPath['/util/pad/']).toBe('2026-01-02')
+    expect(byPath['/docs/']).toBe('2025-09-01')
+    expect(byPath['/about/']).toBe('2025-08-01')
+    expect(byPath['/privacy/']).toBe('2026-01-02')
+    // the directories move with the newest utility they list
+    expect(byPath['/']).toBe('2026-01-02')
+    expect(byPath['/utilities/']).toBe('2026-01-02')
+  }, 60000)
+
+  it('dates the directories from their newest utility, and the blog index from its newest post', async () => {
+    const dist = fixtureDist()
+    const hashes = hashPages(ROOT, pageSources(ROOT, ['trim', 'pad'], []))
+    const contentDates: ContentDates = {
+      [utilityKey('trim')]: { hash: hashes[utilityKey('trim')], date: '2025-11-01' },
+      [utilityKey('pad')]: { hash: hashes[utilityKey('pad')], date: '2025-12-15' },
+    }
+    await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent, manifest: [trim, pad], examples: {}, contentDates })
+    const byPath = lastmods(dist)
+    expect(byPath['/']).toBe('2025-12-15')
+    expect(byPath['/utilities/']).toBe('2025-12-15')
+    const posts = Object.entries(byPath).filter(([p]) => /^\/blog\/.+\/$/.test(p)).map(([, d]) => d!)
+    expect(posts.length).toBeGreaterThan(0)
+    expect(byPath['/blog/']).toBe(posts.reduce((a, b) => (b > a ? b : a)))
+  }, 60000)
 })
 
 describe('buildSeo edge cases', () => {
