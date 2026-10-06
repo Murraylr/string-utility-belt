@@ -31,7 +31,7 @@ npm run build:extension
 This runs `vite build --config packages/extension/vite.config.ts`, producing
 `packages/extension/dist/`: the built `popup.html`/`options.html` with their
 code-split scripts, `background.js` (the service worker), `manifest.json`
-(`version` stamped from the root `package.json`), and `icons/`. `--outDir`
+(its `version` must equal the root `package.json`'s, or the build fails), and `icons/`. `--outDir`
 is honoured for all of it.
 
 `vite build --mode development` also accepts messages from

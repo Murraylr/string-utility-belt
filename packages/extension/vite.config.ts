@@ -81,11 +81,27 @@ function appMatches(manifest: { externally_connectable?: { matches?: string[] } 
 }
 
 /**
+ * The root `package.json` is the one source of the version. `manifest.json`
+ * repeats it (so the source folder stays a loadable extension), and a
+ * mismatch fails the build instead of shipping one version while the
+ * manifest shows another.
+ */
+export function checkManifestVersion(manifestVersion: unknown, packageVersion: string): void {
+  if (manifestVersion !== packageVersion) {
+    throw new Error(
+      `packages/extension/manifest.json has version ${JSON.stringify(manifestVersion)} but the root package.json has `
+      + `"${packageVersion}". Set the version in the root package.json (npm version <x.y.z> --no-git-tag-version) `
+      + `and give manifest.json the same value.`,
+    )
+  }
+}
+
+/**
  * After the popup/options pages are written: builds the service worker into
  * the same output directory, then copies `manifest.json` (its `version`
- * stamped from the repo root's `package.json`, so it never drifts; its
- * `externally_connectable` checked by `appMatches`) and `icons/`. Uses the
- * output dir Rollup actually wrote to, so `--outDir` works.
+ * checked against the root `package.json` by `checkManifestVersion`; its
+ * `externally_connectable` by `appMatches`) and `icons/`. Uses the output
+ * dir Rollup actually wrote to, so `--outDir` works.
  */
 function extensionAssets(): Plugin {
   let mode = 'production'
@@ -99,7 +115,7 @@ function extensionAssets(): Plugin {
       mkdirSync(outDir, { recursive: true })
       const rootPkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
       const manifest = JSON.parse(readFileSync(resolve(__dirname, 'manifest.json'), 'utf8'))
-      manifest.version = rootPkg.version
+      checkManifestVersion(manifest.version, rootPkg.version)
       appMatches(manifest, mode)
       writeFileSync(resolve(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
       cpSync(resolve(__dirname, 'icons'), resolve(outDir, 'icons'), { recursive: true })
