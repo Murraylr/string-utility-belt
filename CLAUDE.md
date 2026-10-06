@@ -85,8 +85,9 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
   `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
   `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
 - A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/docs/`, `/blog/…`, `/about/`…);
-  any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex` (the host's
-  SPA fallback answers it with index.html and a 200; `dist/404.html` is ready for `not_found_handling: "404-page"`).
+  any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex`. The host answers
+  it with `dist/404.html` and a 404 status (`not_found_handling: "404-page"`), so a new path-routed page must also be
+  pre-rendered by `scripts/seo/build.ts`, or it 404s on a direct load.
 - **Links use real paths, never `#/` routes** (search engines drop fragments): `href="/utilities/"`,
   `utilityPath(id)`, `/blog/<slug>/`. `AppShell`'s `useInAppLinks` turns plain clicks on any `isInAppPath`
   href into `navigateToPath` (pushState, no reload). It listens on `document`, so a link's click must bubble:

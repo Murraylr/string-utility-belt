@@ -8,11 +8,11 @@
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-09-27",
 	"assets": {
-		// unknown paths get index.html; the app shows "page not found" and sets noindex.
-		// build:seo also writes dist/404.html: once the live /sitemap.xml proves the deploy
-		// build runs it, "404-page" answers unknown paths with a real 404 status instead
-		// (with no build:seo output, "404-page" would 404 every /util/, /blog/… page)
-		"not_found_handling": "single-page-application",
+		// unknown paths get dist/404.html with a real 404 status (no soft 404s in search).
+		// Every in-app path (/util/<id>/, /utilities/, /blog/…, /docs/, site pages) is a
+		// pre-rendered page from build:seo (postbuild), so a deploy without that output
+		// would 404 those pages: `npm run build` must stay the deploy build.
+		"not_found_handling": "404-page",
 		"directory": "./dist",
 		"binding": "ASSETS",
 		// the HTTP API (worker/api.ts) must win over the SPA fallback for these paths

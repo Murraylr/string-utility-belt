@@ -1,6 +1,6 @@
 # @string-utility-belt/core
 
-The framework-free pipeline engine behind [String Utility Belt](https://stringutilitybelt.com) ([source](https://github.com/Murraylr/string-utility-belt)),
+The framework-free pipeline engine behind [String Utility Belt](https://stringutilitybelt.com/?utm_source=npm&utm_medium=referral&utm_campaign=core) ([source](https://github.com/Murraylr/string-utility-belt)),
 plus all of its 246 string/data utilities, packaged for use outside the browser:
 Node scripts, servers, CLIs, other bundlers.
 
