@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import type { UtilityMeta } from '../../src/core/registry'
 import { MANIFEST } from '../../src/utilities/_generated/manifest'
-import { buildSeo, SITE } from './build'
+import { buildRssItems, buildSeo, SITE } from './build'
 import { parseGuide } from '../../src/app/pages/guide'
 import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDescription, pageTitle } from '../../src/app/pages/seo'
 import { SITE_PAGES } from '../../src/lib/router'
@@ -318,7 +318,7 @@ describe('buildSeo over a built dist/', () => {
     expect(lastmods.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && d !== '1970-01-01')).toBe(true)
   })
 
-  it('writes a well-formed RSS feed: posts and releases, dated newest first, no invented dates', () => {
+  it('writes a well-formed RSS feed: posts and releases, dated newest first, no invented dates or empty items', () => {
     const doc = xml(read(dist, 'rss.xml'))
     const items = [...doc.getElementsByTagName('item')].map(item => ({
       title: item.getElementsByTagName('title')[0].textContent,
@@ -326,12 +326,13 @@ describe('buildSeo over a built dist/', () => {
       guid: item.getElementsByTagName('guid')[0].textContent,
     }))
     const shipped: Array<{ title: string }> = JSON.parse(read(ROOT, 'public/blog/_manifest.json'))
+    // the freshly cut, still empty "Unreleased" section has no item
     expect(items.map(i => i.title)).toEqual([
-      'Unreleased changes',
+      'Release 1.4.0',
       ...shipped.map(p => p.title),
       'Release 1.3.0',
     ])
-    expect(items[0].pubDate).toBe(NOW.toUTCString().replace(/\d\d:\d\d:\d\d/, '00:00:00'))
+    expect(items[0].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
     // undated release: no pubDate rather than the build date or the epoch
     expect(items[3].pubDate).toBeUndefined()
     expect(items[3].guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
@@ -422,5 +423,17 @@ describe('resolveOutDir', () => {
     expect(resolveOutDir([], {}, root)).toBe(path.join(root, 'dist'))
     const abs = path.resolve('/abs/out')
     expect(resolveOutDir(['--outDir', abs], {}, root)).toBe(abs)
+  })
+})
+
+describe('buildRssItems', () => {
+  const release = (version: string, bodyMd: string, date?: string) => ({ version, date, bodyMd })
+
+  it('dates a non-empty Unreleased section with the build date, and leaves an empty one out', () => {
+    const withChanges = buildRssItems([], [release('Unreleased', '### Added\n- a thing'), release('1.4.0', '- shipped', '2026-10-06')], '2026-10-07')
+    expect(withChanges.map(i => [i.title, i.pubDate])).toEqual([['Unreleased changes', '2026-10-07'], ['Release 1.4.0', '2026-10-06']])
+
+    const justCut = buildRssItems([], [release('Unreleased', '  \n'), release('1.4.0', '- shipped', '2026-10-06')], '2026-10-07')
+    expect(justCut.map(i => i.title)).toEqual(['Release 1.4.0'])
   })
 })

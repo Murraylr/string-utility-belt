@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { track } from '@/app/analytics/analytics'
 import { readPref, writePref } from '@/app/prefs'
 import IntegrationsNav from './IntegrationsNav'
-import { INTEGRATIONS_SEEN_PREF, VSCODE_MARKETPLACE_URL } from './links'
+import { CHROME_WEB_STORE_URL, INTEGRATIONS_SEEN_PREF, VSCODE_MARKETPLACE_URL } from './links'
 
 vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
 
@@ -19,17 +19,20 @@ describe('IntegrationsNav', () => {
   })
   afterEach(() => document.removeEventListener('click', holdNavigation))
 
-  it('links VS Code to its store page in a new tab, and the MCP server and CLI to their install sections', () => {
+  it('links Chrome and VS Code to their store pages in a new tab, and the MCP server and CLI to their install sections', () => {
     render(<IntegrationsNav />)
     const links = within(nav()).getAllByRole('link')
     expect(links.map(a => a.getAttribute('href'))).toEqual([
+      CHROME_WEB_STORE_URL,
       VSCODE_MARKETPLACE_URL,
       '/integrations/#mcp-server-for-ai-agents',
       '/integrations/#command-line-tool',
     ])
-    const [vscode, mcp, cli] = links
-    expect(vscode.getAttribute('target')).toBe('_blank')
-    expect(vscode.getAttribute('rel')).toBe('noopener')
+    const [chrome, vscode, mcp, cli] = links
+    for (const store of [chrome, vscode]) {
+      expect(store.getAttribute('target')).toBe('_blank')
+      expect(store.getAttribute('rel')).toBe('noopener')
+    }
     // in-site links stay in the tab, so the app's link handler navigates in place
     expect(mcp.hasAttribute('target')).toBe(false)
     expect(cli.hasAttribute('target')).toBe(false)
@@ -38,9 +41,10 @@ describe('IntegrationsNav', () => {
   it('names each link starting with its visible label, so voice control and screen readers agree', () => {
     render(<IntegrationsNav />)
     const names = within(nav()).getAllByRole('link').map(a => a.getAttribute('aria-label'))
-    expect(names[0]).toMatch(/^VS Code extension\b.*new tab/)
-    expect(names[1]).toMatch(/^MCP server/)
-    expect(names[2]).toMatch(/^CLI\b/)
+    expect(names[0]).toMatch(/^Chrome extension\b.*new tab/)
+    expect(names[1]).toMatch(/^VS Code extension\b.*new tab/)
+    expect(names[2]).toMatch(/^MCP server/)
+    expect(names[3]).toMatch(/^CLI\b/)
     for (const link of within(nav()).getAllByRole('link')) {
       expect(link.getAttribute('title')).toBe(link.getAttribute('aria-label'))
       expect(link.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')

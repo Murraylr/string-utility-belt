@@ -1,11 +1,17 @@
 ---
-title: Integrations — VS Code Extension, CLI and MCP Server
-description: Use String Utility Belt's 246 text tools outside the browser — a VS Code extension, the subelt command-line tool, an MCP server for AI agents and a Node.js library.
+title: Integrations — Browser & VS Code Extensions, CLI, MCP
+description: Use String Utility Belt's 246 text tools anywhere: a Chrome extension, a VS Code extension, the subelt command-line tool, an MCP server and a Node.js library.
 ---
 
 # Integrations
 
-The same 246 utilities and pipeline engine that power this site are available in your editor, your terminal, your AI assistant and your own code. They all run on your own device: your text is never sent to us.
+The same 246 utilities and pipeline engine that power this site are available in your browser's right-click menu, your editor, your terminal, your AI assistant and your own code. They all run on your own device: your text is never sent to us.
+
+## Browser extension
+
+Right-click selected text — or a text field you're typing in — to run a favourite utility or a saved pipeline on it: the result replaces the selection, or is copied when the text can't be edited. Pick your favourites and manage saved pipelines on the extension's options page, or use **save to extension** in the pipeline toolbar here to send the current pipeline and your starred utilities straight to it.
+
+- [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh) for Chrome, Edge, Brave and other Chromium browsers
 
 ## VS Code extension
 

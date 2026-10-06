@@ -23,10 +23,16 @@
   }
   h1 { font-size: 13px; margin: 0 0 10px; font-weight: 600; }
   label { display: block; font-size: 11px; color: var(--muted); margin: 10px 0 3px; }
+  :root { color-scheme: light dark; }
   textarea, select, input[type="text"], input[type="number"] {
-    width: 100%; font: inherit; color: inherit; background: transparent;
+    width: 100%; font: inherit; color: var(--fg); background: var(--bg);
     border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
   }
+  /* The open list of a <select> is drawn by the OS, which ignores a transparent
+     background: with the dark theme's light text it rendered light-on-white
+     (invisible) on Windows. Opaque colours on the list's own parts fix it. */
+  option, optgroup { background-color: var(--bg); color: var(--fg); }
+  optgroup { color: var(--muted); font-style: normal; }
   textarea { resize: vertical; min-height: 60px; font-family: ui-monospace, monospace; }
   #params { display: flex; flex-direction: column; gap: 2px; }
   #params:empty { display: none; }

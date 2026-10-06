@@ -1,4 +1,7 @@
 /** Thin promise wrappers around the callback-style `chrome.storage` API. */
+import { normalizePipelineName } from '../../../../src/core/extensionBridge'
+import { sanitizeSteps } from '../../../../src/core/serialize'
+import type { PipelineStep } from '../../../../src/types/utility'
 import { DEFAULT_BASE_URL, DEFAULT_MENU_UTILITIES } from './constants'
 
 type Area = chrome.storage.StorageArea
@@ -14,7 +17,7 @@ const set = (area: Area, items: Record<string, unknown>): Promise<void> =>
     else resolve()
   }))
 
-/** The context-menu utility ids the user has chosen; the built-in set until they save one (an empty list is a valid choice). */
+/** The favourite utility ids, in menu order — the context menu's "Apply:" items; the built-in set until the user saves one (an empty list is a valid choice). */
 export async function getMenuUtilities(): Promise<string[]> {
   const { menuUtilities } = await get(chrome.storage.sync, { menuUtilities: [...DEFAULT_MENU_UTILITIES] as unknown })
   return Array.isArray(menuUtilities)
@@ -73,3 +76,45 @@ export async function getLastError(): Promise<string> {
 }
 
 export const setLastError = (message: string): Promise<void> => set(chrome.storage.local, { lastError: message })
+
+/**
+ * A named pipeline on the context menu. Kept in `chrome.storage.local`, not
+ * `sync`: sync caps each item at 8 KB, which one pipeline with a lookup table or
+ * a long regex can exceed, and a quota failure there would lose the save.
+ */
+export interface SavedPipeline {
+  id: string
+  name: string
+  steps: PipelineStep[]
+  updatedAt: number
+}
+
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+
+/** Stored pipelines are re-validated on read: storage can be stale, hand-edited or from an older version. */
+function readPipelines(raw: unknown): SavedPipeline[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  const out: SavedPipeline[] = []
+  for (const item of raw) {
+    if (!isObj(item) || typeof item.id !== 'string' || !item.id || seen.has(item.id)) continue
+    const name = typeof item.name === 'string' ? normalizePipelineName(item.name) : ''
+    const steps = sanitizeSteps(item.steps)
+    if (!name || !steps.length) continue
+    seen.add(item.id)
+    out.push({ id: item.id, name, steps, updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : 0 })
+  }
+  return out
+}
+
+export async function getPipelines(): Promise<SavedPipeline[]> {
+  const { pipelines } = await get(chrome.storage.local, { pipelines: [] as unknown })
+  return readPipelines(pipelines)
+}
+
+export const setPipelines = (pipelines: SavedPipeline[]): Promise<void> => set(chrome.storage.local, { pipelines })
+
+/** A fresh pipeline id: random where the platform allows (every Chrome that runs MV3 does). */
+export function newPipelineId(): string {
+  return `p_${crypto.randomUUID()}`
+}

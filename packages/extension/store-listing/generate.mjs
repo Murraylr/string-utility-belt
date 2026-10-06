@@ -93,7 +93,7 @@ try {
   // Use the established S mark, normalized to the store's square icon safe area.
   await exportHtml('store-icon-128', html(`<img src="${icon}" style="position:absolute;left:16px;top:16px;width:96px;height:96px">`, 'html,body{background:transparent}'), 128, 128, true)
   // Keep the toolbar/package icons consistent with the corrected store artwork.
-  for (const size of [16, 48, 128]) {
+  for (const size of [16, 32, 48, 128]) {
     const padding = size === 128 ? 16 : 0
     await render.setViewportSize({ width: size, height: size })
     await render.setContent(html(`<img src="${icon}" style="position:absolute;left:${padding}px;top:${padding}px;width:${size - 2 * padding}px;height:${size - 2 * padding}px">`, 'html,body{background:transparent}'))

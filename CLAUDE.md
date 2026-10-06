@@ -126,6 +126,10 @@ npm run deploy       # build:site (build + build:seo) + wrangler deploy
   budget), `GET /api/fetch?url=` (same-origin fetch proxy with SSRF guards). Everything else is static assets.
 - `packages/core` is a build artifact over `src/core` + the static registry; `cli` (`subelt`), `mcp`
   (stdio server; runs jobs in killable child processes), `extension` (MV3), `vscode`. Each has a README.
+- App ↔ extension: `src/core/extensionBridge.ts` is the shared contract (messages, `BRIDGE_ORIGINS`, the store
+  extension id, which utilities the extension can run). The extension is `externally_connectable` from those origins
+  (no content script: a new install warning would disable the published extension); `src/app/extension/` pings it
+  with `chrome.runtime.sendMessage` and shows "save to extension" only when it answers.
 
 ## Categories
 

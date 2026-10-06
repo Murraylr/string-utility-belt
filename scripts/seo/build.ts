@@ -244,7 +244,11 @@ function loadPosts(blogDir: string, log: (m: string) => void): PublishedPost[] {
   return posts
 }
 
-/** Blog posts plus one item per changelog release; dated items newest first, undated after. */
+/**
+ * Blog posts plus one item per changelog release with something in it (the
+ * `Unreleased` heading sits empty right after a release is cut); dated items
+ * newest first, undated after.
+ */
 export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease[], buildDate: string): RssItem[] {
   const items: RssItem[] = [
     ...posts.map(p => ({
@@ -253,7 +257,7 @@ export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease
       description: p.description,
       pubDate: p.date,
     })),
-    ...releases.map(r => {
+    ...releases.filter(r => r.bodyMd.trim() !== '').map(r => {
       const unreleased = r.version.toLowerCase() === 'unreleased'
       return {
         title: unreleased ? 'Unreleased changes' : `Release ${r.version}`,

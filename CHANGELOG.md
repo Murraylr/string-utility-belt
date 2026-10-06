@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-06
+
 ### Added
 
 - **210 new utilities**, bringing the registry to 246 across 16 categories (counts from
@@ -43,9 +45,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   production build now ships the pre-rendered pages, sitemap and preview images; unknown addresses show a
   "page not found" notice and stay out of search results; structured data for the site name, blog posts
   and breadcrumbs.
+- **Browser extension: favourites and saved pipelines** — the right-click menu lists your favourite
+  utilities in your order, then saved pipelines that run with their saved settings (a failing step leaves the
+  page untouched). The options page reorders favourites and renames, reorders, deletes, opens or imports
+  (from a share link) pipelines; the toolbar popup lists both first and can run a pipeline.
+- **Save to extension** — with the browser extension installed, the pipeline toolbar offers "save to
+  extension" for the current pipeline (saving under an existing name updates it) and your starred utilities.
+- **Chrome extension in the header** — "Get it for" now links the Chrome Web Store listing, and the
+  integrations page has a browser extension section.
 
 ### Fixed
 
+- Browser extension: the popup's utility dropdown no longer shows invisible light-on-white text in dark mode,
+  and the toolbar icon gains a 32 px size for high-DPI screens.
 - The blog now ships from `public/blog/` instead of `./blog/`, which Vite never copied into `dist/` — in
   production, `/blog/_manifest.json` and every `/blog/<slug>.md` returned a 404.
 - **Accessibility & mobile** — no horizontal page scroll at 375 px on any screen, 40 px tap targets, AA text
