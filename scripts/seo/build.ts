@@ -400,8 +400,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     })
   }
 
-  // for any path that is not a page, once wrangler.jsonc switches not_found_handling
-  // to "404-page"; no canonical, and kept out of the index
+  // served with a 404 status for any path that is not a page (wrangler.jsonc
+  // not_found_handling: "404-page"); no canonical, and kept out of the index
   let notFound = setTitle(template, pageTitle('Page not found'))
   notFound = setMetaDescription(notFound, `There is no ${SITE_NAME} page at this address.`)
   notFound = setRobots(notFound, 'noindex')
