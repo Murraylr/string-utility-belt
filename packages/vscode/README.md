@@ -2,7 +2,7 @@
 
 Run String Utility Belt's string transforms — encoding, hashing, ciphers, formatting,
 generators and more — directly on your editor selection, or replay a whole saved
-pipeline, without leaving VS Code. Same engine and utilities as the web app.
+pipeline, without leaving VS Code. Same engine and utilities as the [web app](https://stringutilitybelt.com/?utm_source=vscode_marketplace&utm_medium=referral&utm_campaign=vscode).
 
 ## Features
 

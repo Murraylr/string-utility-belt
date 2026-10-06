@@ -1,6 +1,6 @@
 # subelt
 
-Run a [String Utility Belt](https://stringutilitybelt.com) pipeline from the shell — the same 246
+Run a [String Utility Belt](https://stringutilitybelt.com/?utm_source=npm&utm_medium=referral&utm_campaign=subelt) pipeline from the shell — the same 246
 utilities and pipeline engine as the web app, built on
 [`@string-utility-belt/core`](https://www.npmjs.com/package/@string-utility-belt/core).
 
