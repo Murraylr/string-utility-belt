@@ -1,0 +1,78 @@
+{
+  "assets": [
+    {
+      "file": "01-decode-base64.png",
+      "width": 1280,
+      "height": 800,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 292887
+    },
+    {
+      "file": "02-format-json.png",
+      "width": 1280,
+      "height": 800,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 322855
+    },
+    {
+      "file": "03-change-case.png",
+      "width": 1280,
+      "height": 800,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 306778
+    },
+    {
+      "file": "04-hash-text.png",
+      "width": 1280,
+      "height": 800,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 315390
+    },
+    {
+      "file": "05-customize-menu.png",
+      "width": 1280,
+      "height": 800,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 290501
+    },
+    {
+      "file": "marquee-promo-1400x560.png",
+      "width": 1400,
+      "height": 560,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 508872
+    },
+    {
+      "file": "small-promo-440x280.png",
+      "width": 440,
+      "height": 280,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 92861
+    },
+    {
+      "file": "store-icon-128.png",
+      "width": 128,
+      "height": 128,
+      "bitDepth": 8,
+      "colorType": 6,
+      "format": "RGBA PNG",
+      "bytes": 3050
+    }
+  ],
+  "shortDescriptionCharacters": 119,
+  "allPassed": true
+}
