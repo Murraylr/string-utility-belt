@@ -127,6 +127,8 @@ jobs:
       # the deploy build: the site plus pre-rendered pages, sitemap, RSS and OG images
       - run: npm run build:site
       - run: npm run check:bundle
+      # refuses when a newer app release exists: re-running an old job must not roll the site back
+      - run: npm run release -- preflight app
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy --tag "app-v$VERSION" --message "Release app $VERSION (${SHA:0:12})"
         env:
@@ -167,7 +169,7 @@ jobs:
       # the package's tests include smoke tests of the built dist/
       - run: npx vitest run packages/core
       - id: published
-        run: npm run release -- published core
+        run: npm run release -- preflight core
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
         run: |
@@ -208,7 +210,7 @@ jobs:
       - run: npm run build:cli
       - run: npx vitest run packages/cli
       - id: published
-        run: npm run release -- published cli
+        run: npm run release -- preflight cli
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
         run: |
@@ -250,7 +252,7 @@ jobs:
       - run: npm run build:mcp
       - run: npx vitest run packages/mcp
       - id: published
-        run: npm run release -- published mcp
+        run: npm run release -- preflight mcp
       # the MCP Registry entry points at the npm package, so npm goes first
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
@@ -324,6 +326,7 @@ jobs:
           zip="$RUNNER_TEMP/string-utility-belt-extension-$VERSION.zip"
           (cd packages/extension/dist && zip -q -r -X "$zip" .)
           echo "path=$zip" >> "$GITHUB_OUTPUT"
+      - run: npm run release -- preflight extension
       - id: google
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
@@ -376,7 +379,7 @@ jobs:
           npx --yes @vscode/vsce@4.0.0 package --no-dependencies --out "$vsix"
           echo "path=$vsix" >> "$GITHUB_OUTPUT"
       - id: published
-        run: npm run release -- published vscode
+        run: npm run release -- preflight vscode
       - if: steps.published.outputs.vscode_marketplace != 'true'
         uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:

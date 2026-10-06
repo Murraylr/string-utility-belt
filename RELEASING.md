@@ -35,7 +35,8 @@ at build time; there is no other copy to keep in step.
 4. **Deploy**, one job per target, in parallel: build from the release commit, run the package's
    tests against the built output, publish, then tag `<id>-v<version>` and create a GitHub release
    with notes generated from the pull requests since the previous tag. Every job asks its store
-   first and skips what is already there, so re-running never publishes twice.
+   first and skips what is already there, so re-running never publishes twice — and refuses to run
+   at all once a newer release of its target exists, so re-running an old job never downgrades.
 
 Pull requests get a **Release preview** check (`release-preview.yml`): the job summary lists what
 merging would release and at which versions. It also fails when version files disagree or fall
@@ -59,7 +60,9 @@ Each target's path rules live in [`scripts/release/targets.ts`](scripts/release/
 Label the pull request `release:minor` or `release:major`, or raise the version in the pull request
 (every version file of the target, e.g. `npm version 2.0.0 --no-git-tag-version` in the package
 directory plus its manifests). The release keeps a raised version as it is. Versions never go down:
-the plan fails when version files are below the last release tag.
+the plan fails when version files are below the last release tag. A version is only ever released
+with the content it was set for: if the target changes again before that version is released (say,
+its deploy failed and another pull request was merged meanwhile), the next release bumps it again.
 
 ## Failures, retries and rollbacks
 
@@ -180,5 +183,5 @@ releases only after its files change.
 ```bash
 npm run release -- plan                         # what a release from HEAD would do (read-only)
 npm run release -- plan --labels release:minor  # …if the pull request carried that label
-npm run release -- published mcp                # is the current mcp version on npm / the MCP Registry?
+npm run release -- preflight mcp                # is the current mcp version on npm / the MCP Registry?
 ```

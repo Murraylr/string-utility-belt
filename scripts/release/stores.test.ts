@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { GitHub } from './github'
 import { request, type Fetch } from './http'
-import { isPublished, marketplaceVersions, storeName } from './stores'
+import { marketplaceVersions, publishedVersions, storeName } from './stores'
 
 const noSleep = async () => {}
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -21,40 +21,47 @@ describe('storeName', () => {
   })
 })
 
-describe('isPublished', () => {
-  it('asks npm for the exact version, encoding a scoped name', async () => {
-    const fetch = fakeFetch(url => (url.endsWith('/1.3.0') ? status(200) : status(404)))
-    expect(await isPublished('npm', '@string-utility-belt/core', '1.3.0', { fetch })).toBe(true)
-    expect(await isPublished('npm', '@string-utility-belt/core', '1.3.1', { fetch })).toBe(false)
-    expect(fetch.mock.calls[0][0]).toBe('https://registry.npmjs.org/@string-utility-belt%2fcore/1.3.0')
+describe('publishedVersions', () => {
+  it('lists an npm package\'s versions from its abbreviated packument, encoding a scoped name', async () => {
+    const fetch = fakeFetch(url => (url.endsWith('%2fcore') ? json({ versions: { '1.3.0': {}, '0.0.0-stage': {} } }) : status(404)))
+    expect(await publishedVersions('npm', '@string-utility-belt/core', { fetch })).toEqual(['1.3.0', '0.0.0-stage'])
+    expect(await publishedVersions('npm', 'never-published', { fetch })).toEqual([])
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe('https://registry.npmjs.org/@string-utility-belt%2fcore')
+    expect((init?.headers as Record<string, string>).accept).toBe('application/vnd.npm.install-v1+json')
   })
 
-  it('asks the MCP Registry for the server version', async () => {
-    const fetch = fakeFetch(() => status(404))
-    expect(await isPublished('mcp-registry', 'com.stringutilitybelt/mcp', '1.3.4', { fetch })).toBe(false)
-    expect(fetch.mock.calls[0][0]).toBe('https://registry.modelcontextprotocol.io/v0/servers/com.stringutilitybelt%2Fmcp/versions/1.3.4')
+  it('lists the exact MCP Registry server\'s versions across result pages', async () => {
+    const fetch = fakeFetch(url => (url.includes('cursor=next')
+      ? json({ servers: [{ server: { name: 'com.x/mcp', version: '1.3.3' } }], metadata: {} })
+      : json({
+        servers: [{ server: { name: 'com.x/mcp', version: '1.3.0' } }, { server: { name: 'com.x/mcp-other', version: '9.0.0' } }],
+        metadata: { nextCursor: 'next' },
+      })))
+    expect(await publishedVersions('mcp-registry', 'com.x/mcp', { fetch })).toEqual(['1.3.0', '1.3.3'])
+    expect(fetch.mock.calls[0][0]).toBe('https://registry.modelcontextprotocol.io/v0/servers?search=com.x%2Fmcp&limit=100')
   })
 
-  it('asks Open VSX by namespace and name', async () => {
-    const fetch = fakeFetch(() => status(200))
-    expect(await isPublished('open-vsx', 'pub.ext', '1.0.0', { fetch })).toBe(true)
-    expect(fetch.mock.calls[0][0]).toBe('https://open-vsx.org/api/pub/ext/1.0.0')
+  it('lists Open VSX versions without its aliases', async () => {
+    const fetch = fakeFetch(() => json({ allVersions: { latest: 'u', 'pre-release': 'u', '1.0.0': 'u', '1.1.0': 'u' } }))
+    expect(await publishedVersions('open-vsx', 'pub.ext', { fetch })).toEqual(['1.0.0', '1.1.0'])
+    expect(fetch.mock.calls[0][0]).toBe('https://open-vsx.org/api/pub/ext')
   })
 
-  it('finds a version among the Marketplace extension\'s versions; a never-published extension has none', async () => {
+  it('lists a Marketplace extension\'s versions; a never-published extension has none', async () => {
     const fetch = fakeFetch((_url, init) => {
       const id = JSON.parse(String(init?.body)).filters[0].criteria[0].value
       return json({ results: [{ extensions: id === 'pub.ext' ? [{ versions: [{ version: '1.3.1' }, { version: '1.3.0' }] }] : [] }] })
     })
-    expect(await isPublished('vscode-marketplace', 'pub.ext', '1.3.0', { fetch })).toBe(true)
-    expect(await isPublished('vscode-marketplace', 'pub.ext', '1.3.2', { fetch })).toBe(false)
+    expect(await publishedVersions('vscode-marketplace', 'pub.ext', { fetch })).toEqual(['1.3.1', '1.3.0'])
     expect(await marketplaceVersions('pub.other', { fetch })).toEqual([])
   })
 
   it('throws rather than guessing on any other answer', async () => {
     const fetch = fakeFetch(() => status(403))
-    await expect(isPublished('npm', 'subelt', '1.0.0', { fetch, sleep: noSleep })).rejects.toThrow(/could not tell whether npm subelt@1\.0\.0 is published: HTTP 403/)
-    await expect(isPublished('vscode-marketplace', 'pub.ext', '1.0.0', { fetch, sleep: noSleep })).rejects.toThrow(/HTTP 403/)
+    await expect(publishedVersions('npm', 'subelt', { fetch, sleep: noSleep })).rejects.toThrow(/could not read the published versions of npm subelt: HTTP 403/)
+    await expect(publishedVersions('vscode-marketplace', 'pub.ext', { fetch, sleep: noSleep })).rejects.toThrow(/HTTP 403/)
+    await expect(publishedVersions('open-vsx', 'not-an-id', { fetch })).rejects.toThrow(/not a publisher\.name extension id/)
   })
 })
 

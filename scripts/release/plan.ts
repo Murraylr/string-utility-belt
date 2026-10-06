@@ -46,7 +46,8 @@ export interface PlanOptions {
  *   with older content, so it is never reused
  * - version files below the last release → refuse (an error, not a guess)
  * - version files above the last release → release that version as it is
- *   ("already incremented" by hand in the pull request, or by an earlier run)
+ *   ("already incremented" by hand in the pull request, or by an earlier run) —
+ *   unless shipped files changed after the commit that set it, which bump it again
  * - shipped files changed since the last release → release, bumping the version
  *   by the highest `release:*` label among the merged pull requests that touched it
  * - otherwise → nothing to release
@@ -100,26 +101,59 @@ export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
     }
     const changes = affectedBy(target, opts.git.diff(lastTag, 'HEAD'))
     if (order > 0) {
-      plans.push({ ...base, next: current, release: true, bump: null, changes, reason: `version already raised from ${previous}` })
+      // a version only ever ships the content it was set for: an earlier run may already have
+      // published it before failing, so anything shipped since then gets a version of its own
+      const setAt = versionSetAt(opts.git, target, lastTag)
+      if (!setAt || !affectedBy(target, opts.git.diff(setAt, 'HEAD')).length) {
+        plans.push({ ...base, next: current, release: true, bump: null, changes, reason: `version already raised from ${previous}` })
+        continue
+      }
+      const level = await levelSince(target, setAt)
+      plans.push({
+        ...base, next: bumpVersion(current, level), release: true, bump: level, changes,
+        reason: `changed since ${current} was set (${setAt.slice(0, 12)})`,
+      })
       continue
     }
     if (!changes.length) {
       plans.push({ ...base, next: current, release: false, bump: null, changes, reason: `unchanged since ${lastTag}` })
       continue
     }
-    const levels: BumpLevel[] = []
-    for (const sha of opts.git.firstParentCommits(lastTag)) {
-      if (!affectedBy(target, changeOf(sha)).length) continue
-      const level = await levelOf(sha)
-      if (level) levels.push(level)
-    }
-    const level = maxLevel(levels)
+    const level = await levelSince(target, lastTag)
     plans.push({
       ...base, next: bumpVersion(current, level), release: true, bump: level, changes,
       reason: `changed since ${lastTag}`,
     })
   }
   return plans
+
+  /** The highest label among the merged commits after `rev` that changed what `target` ships; patch by default. */
+  async function levelSince(target: Target, rev: string): Promise<BumpLevel> {
+    const levels: BumpLevel[] = []
+    for (const sha of opts.git.firstParentCommits(rev)) {
+      if (!affectedBy(target, changeOf(sha)).length) continue
+      const level = await levelOf(sha)
+      if (level) levels.push(level)
+    }
+    return maxLevel(levels)
+  }
+}
+
+/** The newest commit after `since` on HEAD's first-parent line that changed `target`'s version, or `null`. */
+function versionSetAt(git: Git, target: Target, since: string): string | null {
+  const file = target.versionFiles[0]
+  const versionAt = (rev: string) => {
+    const text = git.show(rev, file.path)
+    try {
+      return text === null ? null : readJsonVersion(text, file.pointer)
+    } catch {
+      return null
+    }
+  }
+  for (const sha of git.firstParentCommits(since)) {
+    if (versionAt(sha) !== versionAt(`${sha}^1`)) return sha
+  }
+  return null
 }
 
 /** The newest commit on `rev`'s first-parent line that a release run didn't push. */

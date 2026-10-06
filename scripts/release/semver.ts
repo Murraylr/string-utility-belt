@@ -39,3 +39,12 @@ export function maxLevel(levels: Iterable<BumpLevel>): BumpLevel {
   }
   return best
 }
+
+/** The highest of `versions` above `version` (others than major.minor.patch ignored), or `undefined`. */
+export function newestAbove(versions: Iterable<string>, version: string): string | undefined {
+  let best: string | undefined
+  for (const v of versions) {
+    if (isVersion(v) && compareVersions(v, version) > 0 && (!best || compareVersions(v, best) > 0)) best = v
+  }
+  return best
+}

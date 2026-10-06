@@ -137,6 +137,28 @@ describe('planRelease', () => {
     expect(plans.app.release).toBe(false)
   })
 
+  it('bumps a raised version again when the target changed after the version was set', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    // a release run bumps cli to 2.0.2 and pushes that, but its deploy fails: no cli-v2.0.2 tag
+    commit('cli fix', { 'packages/cli/main.ts': 'cli 2\n' })
+    releaseCommit((await plan()).filter(p => p.id === 'cli'))
+    // before anyone retries, another cli change is merged: 2.0.2 may be on npm with the older content
+    commit('cli feature', { 'packages/cli/main.ts': 'cli 3\n' }, ['release:minor'])
+    expect(byId(await plan()).cli).toMatchObject({ release: true, previous: '2.0.1', current: '2.0.2', next: '2.1.0', bump: 'minor' })
+  })
+
+  it('releases a raised version as it is when nothing it ships changed after it was set', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('cli fix', { 'packages/cli/main.ts': 'cli 2\n' })
+    releaseCommit((await plan()).filter(p => p.id === 'cli'))
+    commit('app only', { 'src/app.ts': 'app 2\n' })
+    expect(byId(await plan()).cli).toMatchObject({ release: true, current: '2.0.2', next: '2.0.2', bump: null })
+  })
+
   it('refuses version files that disagree, or that fall below the last release', async () => {
     const first = await plan()
     releaseCommit(first)

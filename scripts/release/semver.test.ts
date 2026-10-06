@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { bumpVersion, compareVersions, isVersion, maxLevel, parseVersion } from './semver'
+import { bumpVersion, compareVersions, isVersion, maxLevel, newestAbove, parseVersion } from './semver'
 
 describe('semver', () => {
   it('parses plain major.minor.patch versions only', () => {
@@ -27,5 +27,11 @@ describe('semver', () => {
     expect(maxLevel([])).toBe('patch')
     expect(maxLevel(['patch', 'minor'])).toBe('minor')
     expect(maxLevel(['major', 'minor', 'patch'])).toBe('major')
+  })
+
+  it('finds the newest version above another, ignoring anything that is not major.minor.patch', () => {
+    expect(newestAbove(['1.3.0', '1.3.10', '1.3.2', 'latest', '2.0.0-beta.1'], '1.3.1')).toBe('1.3.10')
+    expect(newestAbove(['1.3.0', '1.3.1'], '1.3.1')).toBeUndefined()
+    expect(newestAbove([], '0.0.1')).toBeUndefined()
   })
 })

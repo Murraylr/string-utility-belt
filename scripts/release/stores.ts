@@ -24,36 +24,50 @@ export function storeName(store: Store, manifest: Record<string, unknown>): stri
 }
 
 /**
- * Whether `name@version` is already on `store`. Only a definite answer counts:
- * anything but found / not found throws, so a release never guesses its way
- * into a duplicate publish or a skipped one.
+ * Every version of `name` on `store` (empty when it was never published). Only a
+ * definite answer counts: anything but found / not found throws, so a release
+ * never guesses its way into a duplicate publish, a skipped one, or a downgrade.
  */
-export async function isPublished(store: Store, name: string, version: string, opts: RequestOptions = {}): Promise<boolean> {
+export async function publishedVersions(store: Store, name: string, opts: RequestOptions = {}): Promise<string[]> {
   switch (store) {
     case 'npm': {
-      // a scoped name keeps its @ and encodes the slash: @scope%2fname
-      const res = await request(`${NPM_REGISTRY}/${name.replace('/', '%2f')}/${encodeURIComponent(version)}`, {
-        headers: { accept: 'application/json' },
+      // the abbreviated packument; a scoped name keeps its @ and encodes the slash: @scope%2fname
+      const res = await request(`${NPM_REGISTRY}/${name.replace('/', '%2f')}`, {
+        headers: { accept: 'application/vnd.npm.install-v1+json' },
       }, opts)
-      return foundOrNot(res, `npm ${name}@${version}`)
+      const doc = await jsonOrNotFound(res, `npm ${name}`) as { versions?: Record<string, unknown> } | null
+      return Object.keys(doc?.versions ?? {})
     }
     case 'mcp-registry': {
-      const res = await request(
-        `${MCP_REGISTRY}/v0/servers/${encodeURIComponent(name)}/versions/${encodeURIComponent(version)}`,
-        { headers: { accept: 'application/json' } }, opts,
-      )
-      return foundOrNot(res, `MCP Registry ${name}@${version}`)
+      const versions: string[] = []
+      let cursor: string | undefined
+      for (let page = 0; page < 50; page++) {
+        const query = `search=${encodeURIComponent(name)}&limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`
+        const res = await request(`${MCP_REGISTRY}/v0/servers?${query}`, { headers: { accept: 'application/json' } }, opts)
+        const doc = await jsonOrNotFound(res, `MCP Registry ${name}`) as {
+          servers?: { server?: { name?: string; version?: string } }[]
+          metadata?: { nextCursor?: string }
+        } | null
+        // search matches substrings; keep the exact server
+        for (const entry of doc?.servers ?? []) {
+          if (entry.server?.name === name && entry.server.version) versions.push(entry.server.version)
+        }
+        cursor = doc?.metadata?.nextCursor
+        if (!cursor) return versions
+      }
+      throw new Error(`MCP Registry ${name}: too many result pages`)
     }
     case 'open-vsx': {
       const [namespace, extension] = splitExtensionId(name)
-      const res = await request(
-        `${OPEN_VSX}/api/${encodeURIComponent(namespace)}/${encodeURIComponent(extension)}/${encodeURIComponent(version)}`,
-        { headers: { accept: 'application/json' } }, opts,
-      )
-      return foundOrNot(res, `Open VSX ${name}@${version}`)
+      const res = await request(`${OPEN_VSX}/api/${encodeURIComponent(namespace)}/${encodeURIComponent(extension)}`, {
+        headers: { accept: 'application/json' },
+      }, opts)
+      const doc = await jsonOrNotFound(res, `Open VSX ${name}`) as { allVersions?: Record<string, unknown> } | null
+      // allVersions also carries aliases such as "latest"
+      return Object.keys(doc?.allVersions ?? {}).filter(v => /^\d/.test(v))
     }
     case 'vscode-marketplace':
-      return (await marketplaceVersions(name, opts)).includes(version)
+      return marketplaceVersions(name, opts)
   }
 }
 
@@ -78,9 +92,14 @@ function splitExtensionId(id: string): [string, string] {
   return [id.slice(0, dot), id.slice(dot + 1)]
 }
 
-async function foundOrNot(res: Response, what: string): Promise<boolean> {
-  await res.body?.cancel()
-  if (res.status === 200) return true
-  if (res.status === 404) return false
-  throw new Error(`could not tell whether ${what} is published: HTTP ${res.status}`)
+async function jsonOrNotFound(res: Response, what: string): Promise<unknown> {
+  if (res.status === 404) {
+    await res.body?.cancel()
+    return null
+  }
+  if (res.status !== 200) {
+    await res.body?.cancel()
+    throw new Error(`could not read the published versions of ${what}: HTTP ${res.status}`)
+  }
+  return res.json()
 }

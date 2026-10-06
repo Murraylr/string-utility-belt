@@ -8,9 +8,10 @@
  *       version bumps and changelog promotion into the working tree. `--labels` stands in for the
  *       merged pull requests' labels (the pull request preview). Read-only and safe to run locally.
  *
- *   npm run release -- published <target>
- *       Whether the target's current version is already on each of its stores, as step outputs
- *       (`npm`, `mcp_registry`, `vscode_marketplace`, `open_vsx` = true | false).
+ *   npm run release -- preflight <target>
+ *       Before a deploy: fails when a newer release of the target exists (a stale re-run must not
+ *       downgrade a store or the site), then reports whether the current version is already on each
+ *       of its stores as step outputs (`npm`, `mcp_registry`, `vscode_marketplace`, `open_vsx`).
  *
  *   npm run release -- chrome-web-store <zip>
  *       Uploads the extension package and submits it for review (CWS_ACCESS_TOKEN, CWS_PUBLISHER_ID).
@@ -25,12 +26,13 @@ import { GitHub, annotate, appendSummary, setOutput } from './release/github'
 import {
   applyPlan, lastNonReleaseCommit, planRelease, planSummary, readTargetVersion, releaseCommitMessage, supersededReason,
 } from './release/plan'
-import { isPublished, storeName, type Store } from './release/stores'
-import { TARGETS, targetById, type TargetId } from './release/targets'
+import { newestAbove } from './release/semver'
+import { publishedVersions, storeName, type Store } from './release/stores'
+import { TARGETS, releaseTag, targetById, type TargetId } from './release/targets'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-/** The stores `published` checks, and the manifest each one's package name comes from. */
+/** The stores `preflight` checks, and the manifest each one's package name comes from. */
 const STORES: Partial<Record<TargetId, { store: Store; manifest: string }[]>> = {
   core: [{ store: 'npm', manifest: 'packages/core/package.json' }],
   cli: [{ store: 'npm', manifest: 'packages/cli/package.json' }],
@@ -115,23 +117,29 @@ async function plan(args: string[]): Promise<void> {
     console.log(files.length ? `updated ${files.join(', ')}` : 'no files to update')
   }
   setOutput('targets', JSON.stringify(released.map(p => p.id)))
-  setOutput('message', releaseCommitMessage(plans))
+  if (released.length) setOutput('message', releaseCommitMessage(plans))
   for (const p of released) setOutput(`${p.id}_version`, p.next)
 }
 
-async function published(args: string[]): Promise<void> {
+async function preflight(args: string[]): Promise<void> {
   const [id] = parseFlags(args, []).positional
-  if (!id) throw new Error('usage: published <target>')
+  if (!id) throw new Error('usage: preflight <target>')
   const target = targetById(id)
-  const stores = STORES[target.id]
-  if (!stores) throw new Error(`${target.id} has no store to check`)
   const version = readTargetVersion(target, file => readFileSync(path.join(ROOT, file), 'utf8'))
-  for (const { store, manifest } of stores) {
+  const newerTag = newestAbove(new Git(ROOT).tags(`${target.id}-v*`).map(t => t.slice(`${target.id}-v`.length)), version)
+  if (newerTag) {
+    throw new Error(`${releaseTag(target.id, newerTag)} is already released, so ${version} is out of date; this run must not deploy it`)
+  }
+  for (const { store, manifest } of STORES[target.id] ?? []) {
     const name = storeName(store, JSON.parse(readFileSync(path.join(ROOT, manifest), 'utf8')))
-    const found = await isPublished(store, name, version)
+    const versions = await publishedVersions(store, name)
+    const newer = newestAbove(versions, version)
+    if (newer) throw new Error(`${store} already has ${name}@${newer}, newer than ${version}; this run must not publish over it`)
+    const found = versions.includes(version)
     console.log(`${store}: ${name}@${version} ${found ? 'is already published' : 'is not published yet'}`)
     setOutput(store.replace(/-/g, '_'), String(found))
   }
+  console.log(`${target.id} ${version}: clear to deploy`)
 }
 
 async function chromeWebStore(args: string[]): Promise<void> {
@@ -151,7 +159,7 @@ async function chromeWebStore(args: string[]): Promise<void> {
 
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   plan,
-  published,
+  preflight,
   'chrome-web-store': chromeWebStore,
 }
 

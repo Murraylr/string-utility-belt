@@ -40,6 +40,11 @@ export class Git {
     return this.tryRun(['describe', '--tags', '--abbrev=0', '--match', pattern, rev])?.trim() || null
   }
 
+  /** Every tag matching `pattern` (a git glob). */
+  tags(pattern: string): string[] {
+    return lines(this.run(['tag', '--list', pattern]))
+  }
+
   /** Commits on `to`'s first-parent line after `from` (newest first): one per merged pull request. */
   firstParentCommits(from: string, to = 'HEAD'): string[] {
     return lines(this.run(['rev-list', '--first-parent', `${from}..${to}`]))
