@@ -1,5 +1,7 @@
 # @string-utility-belt/mcp
 
+[![smithery badge](https://smithery.ai/badge/string-utility-belt/string-utility-belt)](https://smithery.ai/servers/string-utility-belt/string-utility-belt)
+
 An [MCP](https://modelcontextprotocol.io) server that exposes String Utility Belt's 246
 string-transformation utilities — and its pipeline engine — as tools an AI agent can call
 directly, with no browser involved.

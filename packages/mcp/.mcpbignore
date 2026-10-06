@@ -1,0 +1,6 @@
+# Only what the server needs at runtime ships in the .mcpb.
+src/
+assets/screenshots/
+tsconfig.json
+vite.config.ts
+*.mcpb
