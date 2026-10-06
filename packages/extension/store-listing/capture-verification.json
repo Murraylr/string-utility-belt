@@ -1,0 +1,31 @@
+{
+  "extensionVersion": "1.3.0",
+  "source": "Real unpacked extension in isolated Chromium; no mocked Chrome APIs.",
+  "examples": [
+    {
+      "example": "base64_decode",
+      "input": "SGVsbG8sIGRldmVsb3BlciE=",
+      "output": "Hello, developer!",
+      "offeredUtilities": 242
+    },
+    {
+      "example": "json_pretty",
+      "input": "{\"name\":\"Ada\",\"role\":\"developer\",\"active\":true}",
+      "output": "{\n  \"name\": \"Ada\",\n  \"role\": \"developer\",\n  \"active\": true\n}",
+      "offeredUtilities": 242
+    },
+    {
+      "example": "case",
+      "input": "make every word count",
+      "output": "Make Every Word Count",
+      "offeredUtilities": 242
+    },
+    {
+      "example": "hash",
+      "input": "hello",
+      "output": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+      "offeredUtilities": 242
+    }
+  ],
+  "pageErrors": []
+}
