@@ -33,7 +33,7 @@ const page = {
 function installChromeMock() {
   const sync = makeArea()
   const local = makeArea()
-  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[] }
+  const listeners = { installed: [] as Listener[], startup: [] as Listener[], onChanged: [] as Listener[], clicked: [] as Listener[] }
   /** Models Chrome's menu registry: ids must be unique until removeAll. */
   const menu = new Map<string, Record<string, unknown>>()
   const runtime: { lastError?: { message: string }; onInstalled: unknown; onStartup: unknown } = {
@@ -53,7 +53,7 @@ function installChromeMock() {
       // Like the real API: applied in call order, callback later — so two
       // unserialized rebuilds would both clear, then both create (a union).
       removeAll: vi.fn((cb?: () => void) => { menu.clear(); setTimeout(() => cb?.(), 0) }),
-      onClicked: { addListener: vi.fn() },
+      onClicked: { addListener: (fn: Listener) => listeners.clicked.push(fn) },
     },
     tabs: { create: vi.fn() },
     action: { setBadgeText: vi.fn(), setBadgeBackgroundColor: vi.fn(), setTitle: vi.fn() },
@@ -107,7 +107,7 @@ describe('background: wiring', () => {
     expect(ctx.listeners.installed).toHaveLength(1)
     expect(ctx.listeners.startup).toHaveLength(1)
     expect(ctx.listeners.onChanged).toHaveLength(1)
-    expect(ctx.chromeMock.contextMenus.onClicked.addListener).toHaveBeenCalledWith(expect.any(Function))
+    expect(ctx.listeners.clicked).toHaveLength(1)
   })
 })
 
