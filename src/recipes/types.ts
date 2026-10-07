@@ -68,7 +68,7 @@ export interface RecipeMeta {
   category: RecipeCategory
   /** Every utility the recipe uses, nested branch steps included. */
   utilityIds: string[]
-  /** Display names of the top-level steps, in order. */
+  /** The top-level steps' labels (else their utilities' display names), in order. */
   chain: string[]
   /** Every step, nested ones included (`countSteps`). */
   stepCount: number

@@ -52,9 +52,11 @@ export function metaOfRecipe(recipe: Recipe): RecipeMeta {
     summary: recipe.summary,
     category: recipe.category,
     utilityIds: utilityIds(steps).sort(),
-    chain: steps.map(s => isUtilityStep(s) ? names.get(s.utilityId) ?? s.utilityId
-      : isBranchStep(s) ? `branch (${s.branches.length} lanes)`
-        : isMacroStep(s) ? s.name : 'step'),
+    // a step's own label first: it says what this use of the utility is for
+    chain: steps.map(s => s.label ? s.label
+      : isUtilityStep(s) ? names.get(s.utilityId) ?? s.utilityId
+        : isBranchStep(s) ? `branch (${s.branches.length} lanes)`
+          : isMacroStep(s) ? s.name : 'step'),
     stepCount: countSteps(steps),
     published: recipe.published,
     ...(recipe.updated ? { updated: recipe.updated } : {}),

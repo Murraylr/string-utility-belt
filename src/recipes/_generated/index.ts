@@ -17,8 +17,8 @@ export const RECIPE_INDEX: RecipeMeta[] = [
       "trim each line",
       "deduplicate lines",
       "sql escape",
-      "prefix / suffix lines",
-      "prefix / suffix lines"
+      "quote and join values",
+      "wrap in IN ( … )"
     ],
     "stepCount": 5,
     "published": "2026-10-07"

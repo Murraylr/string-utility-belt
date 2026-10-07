@@ -17,9 +17,11 @@ const recipe: Recipe = {
     step('escape', 'sql_escape', { flavor: 'ansi', wrap: false },
       "Doubles every apostrophe, so a value like O'Connor cannot end the string early and break (or inject into) the query."),
     step('quote', 'line_affix', { prefix: "'", suffix: "'", skipBlank: true, joinWith: ', ' },
-      'Wraps each value in single quotes and joins them with commas, skipping the blank cells between rows.'),
+      'Wraps each value in single quotes and joins them with commas, skipping the blank cells between rows.',
+      { label: 'quote and join values' }),
     step('wrap', 'line_affix', { prefix: 'IN (', suffix: ')', skipBlank: true, joinWith: '' },
-      'Adds the IN ( … ) around the list, so the result pastes straight after WHERE column_name in your query.'),
+      'Adds the IN ( … ) around the list, so the result pastes straight after WHERE column_name in your query.',
+      { label: 'wrap in IN ( … )' }),
   ],
   samples: [
     {

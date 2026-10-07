@@ -98,7 +98,8 @@ export interface RecipeWidgetProps {
 /**
  * The worked example, live: pick a sample or paste your own input, see the output,
  * then open the pipeline in the editor. Fixed-height panes, so the static render
- * and the live one occupy the same space.
+ * and the live one occupy the same space; shorter when stacked on a narrow screen,
+ * so "Open in the editor" stays near the top.
  */
 export function RecipeWidget(props: RecipeWidgetProps) {
   const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied } = props
@@ -118,7 +119,7 @@ export function RecipeWidget(props: RecipeWidgetProps) {
         <label className="grid gap-1 text-sm min-w-0">
           <span className="muted">Input — paste your own</span>
           <textarea
-            className="field mono text-xs h-64 resize-y"
+            className="field mono text-xs h-40 lg:h-64 resize-y"
             value={input}
             readOnly={!onInput}
             onChange={onInput && (e => onInput(e.target.value))}
@@ -132,7 +133,7 @@ export function RecipeWidget(props: RecipeWidgetProps) {
             role="status"
             aria-labelledby="recipe-output-label"
             aria-busy={running || undefined}
-            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-xl p-3 h-64 overflow-auto"
+            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-xl p-3 h-40 lg:h-64 overflow-auto"
           >{output}</pre>
         </div>
       </div>
