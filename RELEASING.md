@@ -141,10 +141,11 @@ commits past the protection. The job's built-in `GITHUB_TOKEN` (`github-actions[
 to a ruleset's bypass list, so a dedicated app is the way. **Don't** add an existing app (Claude,
 Dependabot, any integration) to the bypass list: it would let that app skip review on `main` too.
 
-**Create the app.** *Your avatar → Settings → Developer settings → GitHub Apps → New GitHub App*:
+**Create the app** under the organization, so it lives with the repository: *github.com/String-Utility-Belt →
+Settings → Developer settings → GitHub Apps → New GitHub App*:
 
 - **GitHub App name:** something unique, e.g. `string-utility-belt-release`.
-- **Homepage URL:** `https://github.com/Murraylr/string-utility-belt`.
+- **Homepage URL:** `https://github.com/String-Utility-Belt/string-utility-belt`.
 - **Webhook:** untick **Active**.
 - **Repository permissions → Contents:** **Read and write**. Nothing else (Metadata: read-only is added automatically).
 - **Where can this GitHub App be installed?** **Only on this account.**
@@ -155,7 +156,7 @@ Create it, then on its page:
 2. **Private keys → Generate a private key.** Paste the whole downloaded `.pem` file (including the
    `BEGIN`/`END` lines) into secret `RELEASE_APP_PRIVATE_KEY` in the `release` environment, then delete
    the file.
-3. **Install App** → your account → **Only select repositories** → `string-utility-belt`.
+3. **Install App** → `String-Utility-Belt` → **Only select repositories** → `string-utility-belt`.
 
 **Create the ruleset.** Repository *Settings → Rules → Rulesets → New ruleset → New branch ruleset*:
 
@@ -188,7 +189,7 @@ Check the token: `CLOUDFLARE_API_TOKEN=<token> npx wrangler whoami`.
 For each of `@string-utility-belt/core`, `subelt` and `@string-utility-belt/mcp` on npmjs.com:
 *package → Settings → Trusted Publisher → GitHub Actions*:
 
-- **Organization or user:** `Murraylr`
+- **Organization or user:** `String-Utility-Belt`
 - **Repository:** `string-utility-belt`
 - **Workflow filename:** `release.yml`
 - **Environment name:** `npm`
@@ -237,7 +238,7 @@ no Azure subscription is needed.
 2. From its **Overview**, save **Application (client) ID** as variable `AZURE_CLIENT_ID` and
    **Directory (tenant) ID** as variable `AZURE_TENANT_ID`, both in `vscode-marketplace`.
 3. **Certificates & secrets → Federated credentials → Add credential**. Scenario: **GitHub Actions
-   deploying Azure resources**. Organization `Murraylr`, repository `string-utility-belt`, entity
+   deploying Azure resources**. Organization `String-Utility-Belt`, repository `string-utility-belt`, entity
    type **Environment**, environment `vscode-marketplace`, name `release`. Add. (This trusts exactly
    one thing: this repository's jobs in that environment.)
 4. Make the app a member of the publisher. The Marketplace adds members by their Azure DevOps ID,
@@ -273,11 +274,11 @@ gcloud iam workload-identity-pools providers create-oidc string-utility-belt \
   --location=global --workload-identity-pool=github \
   --issuer-uri='https://token.actions.githubusercontent.com' \
   --attribute-mapping='google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.environment=assertion.environment' \
-  --attribute-condition="assertion.repository == 'Murraylr/string-utility-belt' && assertion.environment == 'chrome-web-store'"
+  --attribute-condition="assertion.repository == 'String-Utility-Belt/string-utility-belt' && assertion.environment == 'chrome-web-store'"
 
 gcloud iam service-accounts add-iam-policy-binding "cws-publisher@$PROJECT_ID.iam.gserviceaccount.com" \
   --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/Murraylr/string-utility-belt"
+  --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/String-Utility-Belt/string-utility-belt"
 
 echo "CWS_SERVICE_ACCOUNT=cws-publisher@$PROJECT_ID.iam.gserviceaccount.com"
 echo "CWS_WORKLOAD_IDENTITY_PROVIDER=projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/providers/string-utility-belt"

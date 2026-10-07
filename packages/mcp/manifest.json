@@ -7,7 +7,7 @@
   "author": {
     "name": "String Utility Belt",
     "email": "contact@stringutilitybelt.com",
-    "url": "https://github.com/Murraylr/string-utility-belt"
+    "url": "https://github.com/String-Utility-Belt/string-utility-belt"
   },
   "homepage": "https://stringutilitybelt.com",
   "documentation": "https://stringutilitybelt.com/docs/",
@@ -95,7 +95,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Murraylr/string-utility-belt.git"
+    "url": "git+https://github.com/String-Utility-Belt/string-utility-belt.git"
   },
   "user_config": {
     "timeout_ms": {

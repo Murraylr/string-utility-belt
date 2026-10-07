@@ -82,6 +82,19 @@ describe('release targets', () => {
     }
   })
 
+  it('points every published package at this repository (npm provenance refuses a mismatch)', () => {
+    const root = JSON.parse(read('package.json'))
+    const url = root.repository.url as string
+    const web = url.replace(/^git\+/, '').replace(/\.git$/, '')
+    for (const id of ['core', 'cli', 'mcp', 'vscode']) {
+      const pkg = JSON.parse(read(`packages/${id}/package.json`))
+      expect(pkg.repository, id).toEqual({ type: 'git', url, directory: `packages/${id}` })
+      expect(pkg.bugs, id).toEqual({ url: `${web}/issues` })
+    }
+    expect(JSON.parse(read('server.json')).repository.url).toBe(web)
+    expect(JSON.parse(read('packages/mcp/manifest.json')).repository.url).toBe(url)
+  })
+
   it('keeps the MCP Registry entry pointing at the npm package it publishes', () => {
     const server = JSON.parse(read('server.json'))
     const pkg = JSON.parse(read('packages/mcp/package.json'))

@@ -20,7 +20,7 @@ problems privately as described in [SECURITY.md](SECURITY.md) — not in a publi
 You need **Node.js 20.19+ or 22.12+** (Vite 7's minimum) and npm.
 
 ```bash
-git clone https://github.com/Murraylr/string-utility-belt.git
+git clone https://github.com/String-Utility-Belt/string-utility-belt.git
 cd string-utility-belt
 npm ci
 npm run dev        # regenerates the utility manifest, then starts Vite on http://localhost:5173

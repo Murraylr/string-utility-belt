@@ -3,7 +3,7 @@
   "name": "com.stringutilitybelt/mcp",
   "description": "MCP server exposing String Utility Belt's utilities and pipelines as tools for AI agents.",
   "repository": {
-    "url": "https://github.com/Murraylr/string-utility-belt",
+    "url": "https://github.com/String-Utility-Belt/string-utility-belt",
     "source": "github"
   },
   "websiteUrl": "https://stringutilitybelt.com",
