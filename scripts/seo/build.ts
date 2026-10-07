@@ -11,7 +11,7 @@ import { SITE_PAGES, type SitePageSlug } from '../../src/lib/router'
 import { renderChangelogHtml } from '../../src/app/pages/changelogHtml'
 import {
   setTitle, setMetaDescription, injectSeoHead, stripSeoHead, setRootContent, setRemovableRootContent,
-  stripRootContent, setRobots, jsonLdScript, seoMetaTags, rssLinkTag,
+  stripRootContent, setRobots, jsonLdScript, jsonDataScript, seoMetaTags, rssLinkTag,
 } from './html'
 import { buildSitemap, buildRss, toIsoDate, type SitemapUrl, type RssItem } from './xml'
 import { readBlogManifest, readBlogPostSource, dropRepeatedTitle, isSafeSlug, type BlogPostMeta } from './blog'
@@ -19,15 +19,20 @@ import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './chan
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
   renderChangelogContent, renderHomeContent, renderDocsContent, renderSitePageContent, renderNotFoundContent,
-  renderSiteChrome,
+  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
 import { relatedUtilities } from '../../src/app/pages/related'
+import { featuredRecipes, recipesUsing, relatedRecipes } from '../../src/app/pages/recipes/recipeHelpers'
+import { traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace } from '../../src/recipes/trace'
+import type { Recipe, RecipeMeta } from '../../src/recipes/types'
+import { metaOfRecipe } from '../gen-recipes'
 import { parseSitePage } from '../../src/app/pages/sitePages'
 import {
   SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
   BLOG_TITLE, BLOG_DESCRIPTION, CHANGELOG_TITLE, CHANGELOG_DESCRIPTION, DOCS_TITLE, DOCS_DESCRIPTION,
+  RECIPES_TITLE, recipesDescription,
 } from '../../src/app/pages/seo'
 
 export const SITE = SITE_URL
@@ -51,6 +56,8 @@ export interface BuildSeoOptions {
   examples?: Record<string, UtilityExample[]>
   /** Guide markdown by utility id (default: each `src/utilities/<id>/guide.md` under `root`). */
   guides?: Record<string, string>
+  /** Recipes to publish, each with its guide markdown (default: every `src/recipes/<slug>/` under `root`). */
+  recipes?: Array<{ recipe: Recipe; guide: string }>
 }
 
 export interface BuildSeoResult {
@@ -117,6 +124,26 @@ function webApplicationLd(meta: UtilityMeta, url: string, description: string) {
   }
 }
 
+/** A recipe page: a technical how-to whose subject is the utilities it chains. */
+function techArticleLd(recipe: Recipe, url: string, description: string, image: string, utilities: UtilityMeta[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: recipe.name,
+    description,
+    url,
+    mainEntityOfPage: url,
+    image,
+    inLanguage: 'en',
+    datePublished: recipe.published,
+    dateModified: recipe.updated ?? recipe.published,
+    author: ORGANIZATION,
+    publisher: ORGANIZATION,
+    isPartOf: WEBSITE,
+    about: utilities.map(u => ({ '@type': 'WebApplication', name: displayName(u.name), url: `${SITE}/util/${u.id}/` })),
+  }
+}
+
 /** A page about the site itself (`AboutPage`, `ContactPage`, or a plain `WebPage` such as the privacy policy). */
 function webPageLd(type: string, name: string, url: string, description: string) {
   return { '@context': 'https://schema.org', '@type': type, name, url, description, isPartOf: WEBSITE }
@@ -167,6 +194,8 @@ interface PageSpec {
   published?: string
   modified?: string
   jsonLd?: unknown[]
+  /** More trusted markup for the head block (a recipe page's embedded trace). */
+  head?: string[]
   content: string
 }
 
@@ -179,6 +208,7 @@ function buildPage(template: string, page: PageSpec, year: number): string {
       ogType: page.ogType, published: page.published, modified: page.modified,
     }),
     ...(page.jsonLd ?? []).map(jsonLdScript),
+    ...(page.head ?? []),
   ]
   html = injectSeoHead(html, head.join('\n'))
   return setRootContent(html, renderSiteChrome(page.content, year))
@@ -190,7 +220,7 @@ function readGuide(root: string, id: string): string | undefined {
   return existsSync(file) ? readFileSync(file, 'utf8') : undefined
 }
 
-function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[]): PageSpec {
+function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[]): PageSpec {
   // the guide's search-facing title/description, as `UtilityDocPage` also sets them
   const name = displayName(meta.name)
   const title = pageTitle(guide?.title ?? name)
@@ -205,7 +235,7 @@ function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | 
       webApplicationLd(meta, canonical, description),
       breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: `${SITE}/utilities/` }, { name, url: canonical }]),
     ],
-    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related }),
+    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes }),
   }
 }
 
@@ -276,6 +306,43 @@ export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease
   return items.sort((a, b) => time(b) - time(a))
 }
 
+/** Every recipe under `root` (`src/recipes/<slug>/`), with its guide markdown. */
+async function loadRecipes(root: string): Promise<Array<{ recipe: Recipe; guide: string }>> {
+  const { STATIC_RECIPES } = await import('../../src/recipes/_generated/static')
+  return STATIC_RECIPES.map(recipe => {
+    const file = path.join(root, 'src', 'recipes', recipe.slug, 'guide.md')
+    if (!existsSync(file)) throw new Error(`[build-seo] recipe ${recipe.slug} has no guide.md`)
+    return { recipe, guide: readFileSync(file, 'utf8') }
+  })
+}
+
+/**
+ * Each recipe's worked example, run in Node with the static registry: the step
+ * outputs the page shows and embeds. A first sample that no longer produces its
+ * expected output fails the build: the page would show a different result than
+ * the recipe promises (and than `recipes.test.ts` checks).
+ */
+async function traceRecipes(recipes: Recipe[]): Promise<Map<string, RecipeTrace>> {
+  const traces = new Map<string, RecipeTrace>()
+  if (recipes.length === 0) return traces
+  const [{ staticRegistry }, { runPipeline }] = await Promise.all([
+    import('../../src/utilities/static-registry'),
+    import('../../src/core/runner'),
+  ])
+  const run: PipelineRunner = (input, steps, previews) => runPipeline(input, steps, { load: staticRegistry.load, previews, env: 'node' })
+  for (const recipe of recipes) {
+    const trace = await traceRecipe(recipe, run)
+    const failed = trace.steps.find(s => s.error)
+    const hint = `run \`npm run check:recipes -- ${recipe.slug}\``
+    if (failed) throw new Error(`[build-seo] recipe ${recipe.slug}: step ${failed.id} fails on its first sample (${failed.error}) — ${hint}`)
+    if (trace.output !== recipe.samples[0].output) {
+      throw new Error(`[build-seo] recipe ${recipe.slug}: its first sample no longer produces its expected output — ${hint}`)
+    }
+    traces.set(recipe.slug, trace)
+  }
+  return traces
+}
+
 // ---------------------------------------------------------------------------
 // Build
 // ---------------------------------------------------------------------------
@@ -303,6 +370,12 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   for (const meta of manifest) {
     if (!isSafeSlug(meta.id)) throw new Error(`[build-seo] utility id ${JSON.stringify(meta.id)} is not safe as a path segment`)
   }
+  const recipes = options.recipes ?? await loadRecipes(root)
+  for (const { recipe } of recipes) {
+    if (!isSafeSlug(recipe.slug)) throw new Error(`[build-seo] recipe slug ${JSON.stringify(recipe.slug)} is not safe as a path segment`)
+  }
+  const recipeMetas = recipes.map(r => metaOfRecipe(r.recipe))
+  const traces = await traceRecipes(recipes.map(r => r.recipe))
   // a processed index.html (an earlier run's output) back to the bare `vite build` template
   const template = stripRootContent(stripSeoHead(readFileSync(indexHtmlPath, 'utf8')))
   const blogDir = path.join(outDir, 'blog')
@@ -321,7 +394,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const source = options.guides ? options.guides[meta.id] : readGuide(root, meta.id)
     const guide = source === undefined ? undefined : parseGuide(source)
     if (guide) guides++
-    page(path.join('util', meta.id, 'index.html'), utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest)))
+    page(path.join('util', meta.id, 'index.html'),
+      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas)))
   }
   if (guides < manifest.length) log(`[build-seo] warning: ${manifest.length - guides} of ${manifest.length} utilities have no guide.md`)
 
@@ -337,6 +411,51 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     ],
     content: renderUtilitiesIndexContent(manifest),
   })
+
+  const recipesUrl = `${SITE}/recipes/`
+  const recipesDesc = recipesDescription(recipes.length)
+  page(path.join('recipes', 'index.html'), {
+    title: RECIPES_TITLE,
+    description: recipesDesc,
+    canonical: recipesUrl,
+    ogImage: DEFAULT_OG,
+    jsonLd: [
+      webPageLd('CollectionPage', 'Recipes', recipesUrl, recipesDesc),
+      breadcrumbLd([HOME_CRUMB, { name: 'Recipes', url: recipesUrl }]),
+    ],
+    content: renderRecipesIndexContent(recipeMetas),
+  })
+  const utilityById = new Map(manifest.map(m => [m.id, m]))
+  for (const [i, { recipe, guide }] of recipes.entries()) {
+    const parsed = parseGuide(guide)
+    const url = `${SITE}/recipes/${recipe.slug}/`
+    const ogImage = `${SITE}/og/recipes/${recipe.slug}.png`
+    const description = parsed.description ?? recipe.summary
+    const trace = traces.get(recipe.slug)!
+    const utilities = recipeMetas[i].utilityIds.flatMap(id => utilityById.get(id) ?? [])
+    page(path.join('recipes', recipe.slug, 'index.html'), {
+      title: pageTitle(parsed.title ?? recipe.name),
+      description,
+      canonical: url,
+      ogImage,
+      ogType: 'article',
+      published: recipe.published,
+      modified: recipe.updated,
+      jsonLd: [
+        techArticleLd(recipe, url, description, ogImage, utilities),
+        breadcrumbLd([HOME_CRUMB, { name: 'Recipes', url: recipesUrl }, { name: recipe.name, url }]),
+      ],
+      // the app fills the page from this instead of re-running the pipeline on load
+      head: [jsonDataScript(TRACE_ELEMENT_ID, trace)],
+      content: renderRecipeContent({
+        recipe,
+        guideHtml: renderMarkdownDocument(guide),
+        trace,
+        utility: id => utilityById.get(id),
+        related: relatedRecipes(recipe, recipeMetas),
+      }),
+    })
+  }
 
   const blogUrl = `${SITE}/blog/`
   page(path.join('blog', 'index.html'), {
@@ -418,7 +537,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     jsonLdScript(homeApplicationLd(homeDesc)),
   ].join('\n'))
   // removable: this file is the next run's template
-  writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest), year)))
+  writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest, featuredRecipes(recipeMetas)), year)))
 
   const buildDate = toIsoDate(now)
   const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? buildDate
@@ -427,6 +546,9 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     { loc: docsUrl, lastmod: buildDate },
     { loc: utilitiesUrl, lastmod: buildDate },
     ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: buildDate })),
+    // the index changes when a recipe is added or revised; a recipe when it is revised
+    { loc: recipesUrl, lastmod: recipes.map(r => r.recipe.updated ?? r.recipe.published).sort().pop() ?? buildDate },
+    ...recipes.map(({ recipe }) => ({ loc: `${SITE}/recipes/${recipe.slug}/`, lastmod: recipe.updated ?? recipe.published })),
     { loc: blogUrl, lastmod: buildDate },
     ...posts.map(p => {
       const changed = p.updated ?? p.date
@@ -454,6 +576,10 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const onMissingGlyphs = (segment: string) => { for (const ch of segment) if (ch.trim()) missing.add(ch) }
     const cards = [
       ...manifest.map(m => ({ file: `${m.id}.png`, card: { name: displayName(m.name), category: m.category, description: m.description } })),
+      ...recipeMetas.map(r => ({
+        file: path.join('recipes', `${r.slug}.png`),
+        card: { name: r.name, category: `Recipe · ${r.stepCount} steps`, description: r.chain.join(' → ') },
+      })),
       {
         file: 'default.png',
         card: { name: SITE_NAME, category: 'Free online tool', description: 'Chain string transformations into visual pipelines with live previews.' },

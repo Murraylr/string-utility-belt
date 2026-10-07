@@ -10,15 +10,20 @@ import { POPULAR_UTILITY_IDS, SITE_NAME, displayName } from '../../src/app/pages
 import Docs from '../../src/components/Docs'
 import { en } from '../../src/app/i18n/locales/en'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
+import { RecipeArticle, RecipesIndex, RecipeWidget } from '../../src/app/pages/recipes/RecipeArticle'
+import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
+import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
+import type { RecipeTrace } from '../../src/recipes/trace'
+import { countSteps } from '../../src/core/steps'
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
 
 const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`
 
 // the app's header nav and footer (src/app/AppShell.tsx), as plain links
-const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
+const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/recipes/', 'Recipes'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
-  ['/utilities/', 'All utilities'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
+  ['/utilities/', 'All utilities'], ['/recipes/', 'Recipes'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
   ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'],
 ] as const
 
@@ -83,6 +88,8 @@ export interface UtilityContentExtras {
   guideHtml?: string
   /** Utilities to link to, by their crawlable `/util/<id>/` paths. */
   related?: UtilityMeta[]
+  /** Recipes that use this utility, linked by their `/recipes/<slug>/` paths. */
+  recipes?: RecipeMeta[]
 }
 
 /**
@@ -132,6 +139,15 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
       </div>`).join('')}
     </section>`
 
+  const recipes = extras.recipes ?? []
+  const recipesHtml = recipes.length === 0 ? '' : `
+    <section>
+      <h2>Recipes that use ${escapeHtml(displayName(meta.name))}</h2>
+      <ul>
+        ${recipes.map(r => `<li><a href="${escapeHtml(recipePath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
+      </ul>
+    </section>`
+
   const related = extras.related ?? []
   const relatedHtml = related.length === 0 ? '' : `
     <section>
@@ -152,6 +168,7 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
     ${guideHtml}
     ${paramsHtml}
     ${examplesHtml}
+    ${recipesHtml}
     ${relatedHtml}
     <p><a href="/utilities/">Browse all utilities</a></p>
   </article>`
@@ -182,15 +199,25 @@ export function renderUtilitiesIndexContent(manifest: UtilityMeta[]): string {
  * Static snapshot of the home page: the tool's heading and the popular-tools
  * list `HomeDirectory` renders below the editor (the editor itself needs JS).
  */
-export function renderHomeContent(manifest: UtilityMeta[]): string {
+export function renderHomeContent(manifest: UtilityMeta[], recipes: RecipeMeta[] = []): string {
   const byId = new Map(manifest.map(m => [m.id, m]))
   const popular = POPULAR_UTILITY_IDS.flatMap(id => byId.get(id) ?? [])
+  const recipesHtml = recipes.length === 0 ? '' : `
+    <section>
+      <h2>Recipes</h2>
+      <p>Ready-made pipelines for jobs one tool can't do alone. Each shows every step with its output.</p>
+      <ul>
+        ${recipes.map(r => `<li><a href="${escapeHtml(recipePath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
+      </ul>
+      <p><a href="/recipes/">Browse all recipes</a></p>
+    </section>`
   return `
   <article>
     <header>
       <h1>${escapeHtml(SITE_NAME)}</h1>
       <p>Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
     </header>
+    ${recipesHtml}
     <section>
       <h2>Popular tools</h2>
       <p>Every utility also has its own page with a guide, worked examples and a playground. They all run in your browser: nothing you paste is uploaded.</p>
@@ -263,4 +290,37 @@ export function renderBlogPostContent(meta: { title?: string; date?: string; upd
  */
 export function renderChangelogContent(bodyHtml: string): string {
   return `<article>${bodyHtml}</article>`
+}
+
+/**
+ * Static snapshot of a recipe page: `RecipeArticle` itself, rendered by React (so
+ * escaped, and identical to the page the app renders), with its live widget as a
+ * read-only copy showing the first sample and the build's trace of it.
+ */
+export function renderRecipeContent(opts: {
+  recipe: Recipe
+  guideHtml: string
+  trace: RecipeTrace
+  utility: (id: string) => UtilityMeta | undefined
+  related: RecipeMeta[]
+}): string {
+  const { recipe, guideHtml, trace, utility, related } = opts
+  const steps = toPipelineSteps(recipe.steps)
+  const first = recipe.samples[0]
+  const live = createElement(RecipeWidget, {
+    samples: recipe.samples,
+    sampleId: first.id,
+    input: first.input,
+    output: trace.output,
+    stepCount: countSteps(steps),
+    openHref: openInEditorHref(steps, recipe.name, first.input),
+  })
+  return renderToStaticMarkup(createElement(RecipeArticle, {
+    recipe, utility, guideHtml, steps: trace.steps, skip: trace.skip, live, related,
+  }))
+}
+
+/** Static snapshot of `RecipesIndexPage`: the shared `RecipesIndex`. */
+export function renderRecipesIndexContent(recipes: RecipeMeta[]): string {
+  return renderToStaticMarkup(createElement(RecipesIndex, { recipes }))
 }

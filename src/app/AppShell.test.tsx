@@ -32,7 +32,7 @@ describe('site links', () => {
   it('has a footer linking the about, privacy and contact pages by their paths', () => {
     render(<Footer />)
     const hrefs = within(screen.getByRole('navigation', { name: 'site' })).getAllByRole('link').map(a => a.getAttribute('href'))
-    expect(hrefs).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
+    expect(hrefs).toEqual(['/utilities/', '/recipes/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
   })
 
   it('follows a plain click on a path link in place, leaving modified clicks to the browser', async () => {

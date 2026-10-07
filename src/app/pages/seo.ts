@@ -56,3 +56,17 @@ export const POPULAR_UTILITY_IDS = [
   'timestamp_convert', 'json_to_yaml', 'csv_to_json', 'html_entity_encode', 'regex_explain', 'password_generator',
   'lorem_ipsum', 'line_sort', 'line_dedupe', 'text_stats', 'slug', 'sql_format',
 ] as const
+
+/** The recipe index (`/recipes/`): prebuilt multi-step pipelines for real tasks. */
+export const RECIPES_TITLE = pageTitle('Text Pipeline Recipes for Real Tasks')
+
+export const recipesDescription = (count: number): string =>
+  `${count} ready-made pipelines for real tasks, each step shown with its actual output. Edit any of them in your browser: nothing you paste is uploaded.`
+
+/**
+ * Recipes linked from the home page and the tool's directory, in order. Slugs that
+ * no longer exist are skipped.
+ */
+export const FEATURED_RECIPE_SLUGS = [
+  'excel-column-to-sql-in-clause',
+] as const
