@@ -82,13 +82,29 @@ export function preview(v: Value): Preview {
   return { kind: valueType(v) === 'json' ? 'json' : 'text', ...clip(full), size: full.length }
 }
 
-/** The first failing step, in pipeline order (nested steps included). */
+/** Longest error message shown on the page. */
+export const ERROR_MAX_CHARS = 300
+
+/**
+ * An error message fit to show (and to index): a parser's message can quote the
+ * start of its input, which for compressed data is binary read as text. Runs of
+ * replacement characters and control characters become one "…", and very long
+ * messages are cut.
+ */
+export function printable(message: string): string {
+  // matching control characters is the point here
+  // eslint-disable-next-line no-control-regex
+  const clean = message.replace(/[\uFFFD\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]+/g, '…')
+  return clean.length > ERROR_MAX_CHARS ? `${clean.slice(0, ERROR_MAX_CHARS - 1)}…` : clean
+}
+
+/** The first failing step, in pipeline order (nested steps included), with a printable message. */
 export function firstError(result: Pick<RunResult, 'err'>, steps: PipelineStep[]): { stepId: string; message: string } | undefined {
   let found: { stepId: string; message: string } | undefined
   walkSteps(steps, s => {
     const message = result.err[s.id]
     if (message === undefined) return
-    found = { stepId: s.id, message }
+    found = { stepId: s.id, message: printable(message) }
     return false
   })
   return found

@@ -208,8 +208,9 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
                     <StepUtilities step={s} utility={utility} />
                     {s.condition?.kind === 'regex' && (
                       <p className="text-xs text-muted">
-                        Runs only when its input matches <code className="mono">{s.condition.pattern}</code>
-                        {s.condition.negate ? ' does not match' : ''}; otherwise the input passes through.
+                        {s.condition.negate
+                          ? <>Skipped (its input passes through) when the input matches <code className="mono">{s.condition.pattern}</code>.</>
+                          : <>Runs only when its input matches <code className="mono">{s.condition.pattern}</code>; otherwise the input passes through.</>}
                       </p>
                     )}
                     <ParamList params={changedParams(s, utility)} />

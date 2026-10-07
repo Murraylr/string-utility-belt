@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { runPipeline } from '../core/runner'
 import { staticRegistry } from '../utilities/static-registry'
 import { branch, laneStep, step } from './define'
-import { firstError, preview, PREVIEW_BYTES, PREVIEW_MAX_CHARS, PREVIEW_MAX_LINES, stepTraces, traceRecipe, type PipelineRunner } from './trace'
+import { ERROR_MAX_CHARS, firstError, preview, printable, PREVIEW_BYTES, PREVIEW_MAX_CHARS, PREVIEW_MAX_LINES, stepTraces, traceRecipe, type PipelineRunner } from './trace'
 import { toPipelineSteps, type Recipe } from './types'
 
 const run: PipelineRunner = (input, steps, previews) => runPipeline(input, steps, { load: staticRegistry.load, previews, env: 'node' })
@@ -96,5 +96,19 @@ describe('stepTraces / firstError', () => {
     const [trace] = stepTraces(steps, result)
     expect(trace.error).toBe(result.err.bad)
     expect(trace.output).toBeUndefined()
+  })
+})
+
+describe('printable', () => {
+  it('turns binary read as text into one ellipsis per run, and keeps ordinary text, tabs and newlines', () => {
+    expect(printable('malformed XML: unterminated tag <o��\u0010�A>')).toBe('malformed XML: unterminated tag <o…A>')
+    expect(printable('Unexpected token \'x\', "x�%�Aj�0\u0010E"... is not valid JSON')).toBe('Unexpected token \'x\', "x…%…Aj…0…E"... is not valid JSON')
+    expect(printable('line 1\n\tline 2')).toBe('line 1\n\tline 2')
+  })
+
+  it('cuts a very long message', () => {
+    const cut = printable('x'.repeat(ERROR_MAX_CHARS + 50))
+    expect(cut).toHaveLength(ERROR_MAX_CHARS)
+    expect(cut.endsWith('…')).toBe(true)
   })
 })
