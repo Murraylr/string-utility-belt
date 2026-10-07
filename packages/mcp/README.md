@@ -83,3 +83,9 @@ npx vitest run packages/mcp/src --minWorkers=1 --maxWorkers=2
 npm run build:mcp
 npx vitest run packages/mcp/src/bin.smoke.test.ts --minWorkers=1 --maxWorkers=1
 ```
+
+## Source and issues
+
+@string-utility-belt/mcp is developed in the [String Utility Belt repository](https://github.com/String-Utility-Belt/string-utility-belt/tree/main/packages/mcp) on GitHub,
+alongside the web app and the other integrations. Report bugs or request features in its
+[issue tracker](https://github.com/String-Utility-Belt/string-utility-belt/issues). MIT licensed.

@@ -7,11 +7,11 @@
   "homepage": "https://stringutilitybelt.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Murraylr/string-utility-belt.git",
+    "url": "git+https://github.com/String-Utility-Belt/string-utility-belt.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/Murraylr/string-utility-belt/issues"
+    "url": "https://github.com/String-Utility-Belt/string-utility-belt/issues"
   },
   "keywords": [
     "cli",
