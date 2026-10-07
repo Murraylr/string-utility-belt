@@ -130,8 +130,9 @@ Commit messages are written in the imperative mood and describe the change and i
 ## Releases
 
 Releases are automatic: once a pull request is merged and CI passes on `main`, every target whose
-shipped files changed (the site, `core`, `cli`, `mcp`, the browser extension, the VS Code
-extension) gets a new version and is deployed — nothing else is. Changes ship as a **patch** unless
+shipped files changed (the site, `core`, `cli`, `mcp`, the VS Code extension) gets a new version and
+is deployed — nothing else is. The browser extension is released by a maintainer when its changes
+are worth a Chrome Web Store review. Changes ship as a **patch** unless
 the pull request carries the `release:minor` or `release:major` label, or raises the version itself.
 The **Release preview** check on the pull request shows what merging it would release. Details,
 store setup and rollbacks: [RELEASING.md](RELEASING.md).

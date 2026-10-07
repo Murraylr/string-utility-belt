@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { affectedBy, type ChangeSet } from './changes'
 import type { Git } from './git'
+import { importGraph } from './imports'
 import { bumpVersion, compareVersions, isVersion, maxLevel, type BumpLevel } from './semver'
 import { LEVEL_LABELS, RELEASE_COMMIT_PREFIX, releaseTag, type Target, type TargetId } from './targets'
 import { formatPointer, promoteUnreleased, readJsonVersion, writeJsonVersion } from './version-files'
@@ -22,6 +23,8 @@ export interface TargetPlan {
   reason: string
   /** The changes that affect the target (paths, or a summary of a manifest change). */
   changes: string[]
+  /** A manual target with changes this run doesn't release: they wait for a run that asks for it. */
+  waiting: boolean
 }
 
 export interface PlanOptions {
@@ -36,6 +39,8 @@ export interface PlanOptions {
   tested?: string
   /** Labels of the pull request(s) that produced a commit. */
   labels(sha: string): Promise<readonly string[]>
+  /** The `manual` targets this run releases (when they changed); the others only report what waits. */
+  manual?: ReadonlySet<TargetId>
 }
 
 /**
@@ -51,6 +56,9 @@ export interface PlanOptions {
  * - shipped files changed since the last release → release, bumping the version
  *   by the highest `release:*` label among the merged pull requests that touched it
  * - otherwise → nothing to release
+ *
+ * A `manual` target goes through the same decision, but only releases when the
+ * run asks for it (`manual`); otherwise its plan reports the changes waiting.
  */
 export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
   const head = opts.git.revParse('HEAD')
@@ -69,6 +77,20 @@ export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
 
   const plans: TargetPlan[] = []
   for (const target of opts.targets) {
+    const plan = await decide(target)
+    // a manual target's changes wait for a run that asks for it
+    plans.push(target.trigger === 'manual' && plan.release && !opts.manual?.has(target.id)
+      ? {
+        ...plan, release: false, waiting: true, next: plan.current, bump: null,
+        reason: `waiting for a manual release (would be ${plan.next}: ${plan.reason})`,
+      }
+      : plan)
+  }
+  return plans
+
+  async function decide(target: Target): Promise<TargetPlan> {
+    const bundled = target.rootManifest === 'bundled' ? importGraph(opts.root, target.entries).packages : undefined
+    const affected = (change: ChangeSet) => affectedBy(target, change, bundled)
     const current = readTargetVersion(target, file => readFileSync(path.join(opts.root, file), 'utf8'))
     const lastTag = opts.git.nearestTag(`${target.id}-v*`)
 
@@ -80,58 +102,49 @@ export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
         if (text === null) throw new Error(`${file} does not exist at ${tested}`)
         return text
       })
-      const base = { id: target.id, title: target.title, previous: null, current, changes: [] }
+      const base = { id: target.id, title: target.title, previous: null, current, changes: [], waiting: false }
       if (compareVersions(current, testedVersion) > 0) {
-        plans.push({ ...base, next: current, release: true, bump: null, reason: 'first tagged release (version already raised)' })
-      } else {
-        const level = (await levelOf(tested)) ?? 'patch'
-        plans.push({
-          ...base, next: bumpVersion(current, level), release: true, bump: level,
-          reason: `first tagged release (no ${target.id}-v* tag yet)`,
-        })
+        return { ...base, next: current, release: true, bump: null, reason: 'first tagged release (version already raised)' }
       }
-      continue
+      const level = (await levelOf(tested)) ?? 'patch'
+      return {
+        ...base, next: bumpVersion(current, level), release: true, bump: level,
+        reason: `first tagged release (no ${target.id}-v* tag yet)`,
+      }
     }
 
     const previous = versionFromTag(target.id, lastTag)
-    const base = { id: target.id, title: target.title, previous, current }
     const order = compareVersions(current, previous)
     if (order < 0) {
       throw new Error(`${target.id}: the version files say ${current}, lower than the last release ${lastTag}`)
     }
-    const changes = affectedBy(target, opts.git.diff(lastTag, 'HEAD'))
+    const changes = affected(opts.git.diff(lastTag, 'HEAD'))
+    const base = { id: target.id, title: target.title, previous, current, changes, waiting: false }
     if (order > 0) {
       // a version only ever ships the content it was set for: an earlier run may already have
       // published it before failing, so anything shipped since then gets a version of its own
       const setAt = versionSetAt(opts.git, target, lastTag)
-      if (!setAt || !affectedBy(target, opts.git.diff(setAt, 'HEAD')).length) {
-        plans.push({ ...base, next: current, release: true, bump: null, changes, reason: `version already raised from ${previous}` })
-        continue
+      if (!setAt || !affected(opts.git.diff(setAt, 'HEAD')).length) {
+        return { ...base, next: current, release: true, bump: null, reason: `version already raised from ${previous}` }
       }
-      const level = await levelSince(target, setAt)
-      plans.push({
-        ...base, next: bumpVersion(current, level), release: true, bump: level, changes,
+      const level = await levelSince(setAt, affected)
+      return {
+        ...base, next: bumpVersion(current, level), release: true, bump: level,
         reason: `changed since ${current} was set (${setAt.slice(0, 12)})`,
-      })
-      continue
+      }
     }
     if (!changes.length) {
-      plans.push({ ...base, next: current, release: false, bump: null, changes, reason: `unchanged since ${lastTag}` })
-      continue
+      return { ...base, next: current, release: false, bump: null, reason: `unchanged since ${lastTag}` }
     }
-    const level = await levelSince(target, lastTag)
-    plans.push({
-      ...base, next: bumpVersion(current, level), release: true, bump: level, changes,
-      reason: `changed since ${lastTag}`,
-    })
+    const level = await levelSince(lastTag, affected)
+    return { ...base, next: bumpVersion(current, level), release: true, bump: level, reason: `changed since ${lastTag}` }
   }
-  return plans
 
-  /** The highest label among the merged commits after `rev` that changed what `target` ships; patch by default. */
-  async function levelSince(target: Target, rev: string): Promise<BumpLevel> {
+  /** The highest label among the merged commits after `rev` that changed what a target ships; patch by default. */
+  async function levelSince(rev: string, affected: (change: ChangeSet) => string[]): Promise<BumpLevel> {
     const levels: BumpLevel[] = []
     for (const sha of opts.git.firstParentCommits(rev)) {
-      if (!affectedBy(target, changeOf(sha)).length) continue
+      if (!affected(changeOf(sha)).length) continue
       const level = await levelOf(sha)
       if (level) levels.push(level)
     }
@@ -245,7 +258,8 @@ export function planSummary(plans: readonly TargetPlan[], heading: string): stri
       ? p.bump ? `${p.current} → **${p.next}** (${p.bump})` : `**${p.next}**`
       : p.current
     const changes = p.changes.length ? p.changes.map(c => `\`${c}\``).join('<br>') : ''
-    return `| ${p.title} | ${p.release ? '🚀 release' : '—'} | ${version} | ${p.reason} | ${changes} |`
+    const action = p.release ? '🚀 release' : p.waiting ? '⏸ manual' : '—'
+    return `| ${p.title} | ${action} | ${version} | ${p.reason} | ${changes} |`
   })
   return [
     `### ${heading}`,

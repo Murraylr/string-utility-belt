@@ -188,12 +188,16 @@ GitHub Actions (`.github/workflows/ci.yml`): tests, typecheck (app, worker, e2e,
 ## Releases (`RELEASING.md`)
 
 - `.github/workflows/release.yml` runs after CI passes on `main`: it releases only the targets (`app`, `core`, `cli`,
-  `mcp`, `extension`, `vscode`) whose shipped files changed since their last `<id>-v<version>` tag, bumps versions the
-  merged PR didn't (patch; `release:minor` / `release:major` labels), pushes a `chore(release): … [skip ci]` commit,
-  then deploys each target, tags it and creates a GitHub release. Every deploy checks its store first (idempotent).
-- Tooling: `scripts/release.ts` + `scripts/release/`. Path rules per target live in `scripts/release/targets.ts`; a test
-  walks each package's imports and fails when a bundled file isn't covered — extend the globs when a package starts
-  importing from a new directory. `release-preview.yml` shows each PR's would-be release in its job summary.
+  `mcp`, `vscode`) whose shipped files changed since their last `<id>-v<version>` tag, bumps versions the merged PR
+  didn't (patch; `release:minor` / `release:major` labels), pushes a `chore(release): … [skip ci]` commit, then deploys
+  each target, tags it and creates a GitHub release. Every deploy checks its store first (idempotent) and refuses when a
+  newer release exists. The browser extension (`trigger: 'manual'`) only releases from a manual run with
+  "Release the browser extension" ticked; until then plans list it as waiting.
+- Tooling: `scripts/release.ts` + `scripts/release/`. Per target, `targets.ts` holds the path rules and build `entries`;
+  `imports.ts` walks the entries' imports, and `lockfile.ts` resolves the npm packages they import (plus their
+  dependencies) so a dependency update releases only the packages that bundle it. Tests fail when a bundled file isn't
+  covered by a target's globs — extend them when a package starts importing from a new directory.
+  `release-preview.yml` shows each PR's would-be release in its job summary.
 - Versions: every version file of a target must agree (tested). The CLI's `VERSION` and the MCP server's version are
   imported from their `package.json`; the extension's version is `manifest.json` alone (no longer the root's).
   Raise a version by hand only to pick it yourself (all of the target's files at once); never lower one.

@@ -1,12 +1,14 @@
 /**
  * Release tooling for `.github/workflows/release.yml` (see RELEASING.md).
  *
- *   npm run release -- plan [--tested <sha>|auto] [--apply] [--labels <a,b>]
+ *   npm run release -- plan [--tested <sha>|auto] [--apply] [--labels <a,b>] [--manual <ids>]
  *       Which targets changed since their last `<id>-v<version>` tag, and the version each
  *       releases. `--tested` refuses to release anything but a CI-verified commit (`auto`: the
  *       newest non-release commit of HEAD, checked against the GitHub API). `--apply` writes the
  *       version bumps and changelog promotion into the working tree. `--labels` stands in for the
- *       merged pull requests' labels (the pull request preview). Read-only and safe to run locally.
+ *       merged pull requests' labels (the pull request preview). `--manual` also releases those
+ *       manually-triggered targets (comma-separated, e.g. `extension`) if they changed. Without
+ *       `--apply`, read-only and safe to run locally.
  *
  *   npm run release -- preflight <target>
  *       Before a deploy: fails when a newer release of the target exists (a stale re-run must not
@@ -28,7 +30,7 @@ import {
 } from './release/plan'
 import { newestAbove } from './release/semver'
 import { publishedVersions, storeName, type Store } from './release/stores'
-import { TARGETS, releaseTag, targetById, type TargetId } from './release/targets'
+import { MANUAL_TARGETS, TARGETS, releaseTag, targetById, type TargetId } from './release/targets'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -47,6 +49,11 @@ const STORES: Partial<Record<TargetId, { store: Store; manifest: string }[]>> = 
 }
 
 interface Flags { values: Map<string, string>; switches: Set<string>; positional: string[] }
+
+/** A comma-separated option value as a list (empty for none). */
+function list(value: string | undefined): string[] {
+  return (value ?? '').split(',').map(v => v.trim()).filter(Boolean)
+}
 
 function parseFlags(args: string[], withValue: readonly string[]): Flags {
   const flags: Flags = { values: new Map(), switches: new Set(), positional: [] }
@@ -83,7 +90,14 @@ async function resolveTested(git: Git, tested: string, github: GitHub | null): P
 }
 
 async function plan(args: string[]): Promise<void> {
-  const flags = parseFlags(args, ['--tested', '--labels'])
+  const flags = parseFlags(args, ['--tested', '--labels', '--manual'])
+  const manual = new Set(list(flags.values.get('--manual')).map(id => {
+    const target = targetById(id)
+    if (target.trigger !== 'manual') {
+      throw new Error(`--manual ${id}: ${id} is released automatically (manual targets: ${MANUAL_TARGETS.join(', ') || 'none'})`)
+    }
+    return target.id
+  }))
   const git = new Git(ROOT)
   const github = GitHub.fromEnv()
 
@@ -97,14 +111,13 @@ async function plan(args: string[]): Promise<void> {
     tested = resolved
   }
 
-  const given = flags.values.get('--labels')
-  const fixedLabels = given === undefined ? null : given.split(',').map(l => l.trim()).filter(Boolean)
+  const fixedLabels = flags.values.has('--labels') ? list(flags.values.get('--labels')) : null
   if (fixedLabels === null && !github) {
     annotate('warning', 'no GITHUB_TOKEN/GITHUB_REPOSITORY: pull request labels are not read, every bump is a patch')
   }
   const labels = async (sha: string) => fixedLabels ?? (github ? github.pullRequestLabels(sha) : [])
 
-  const plans = await planRelease({ targets: TARGETS, git, root: ROOT, tested, labels })
+  const plans = await planRelease({ targets: TARGETS, git, root: ROOT, tested, labels, manual })
   const apply = flags.switches.has('--apply')
   const summary = planSummary(plans, apply ? 'Release plan' : 'Release preview (what merging this would release)')
   console.log(summary)

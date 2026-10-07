@@ -5,6 +5,8 @@ name: Release
 # bumped (patch, or minor/major from the `release:minor` / `release:major` labels) in a release
 # commit pushed to main; then each changed target deploys and is tagged. Every deploy checks its
 # store first, so re-running a failed job (or the whole workflow, by hand) never publishes twice.
+# The browser extension is released by hand only: Actions → Release → Run workflow, with
+# "Release the browser extension" ticked. Until then its changes wait (shown in every run's summary).
 # Setup — secrets, variables, store accounts: RELEASING.md.
 on:
   workflow_run:
@@ -12,6 +14,11 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      extension:
+        description: Release the browser extension to the Chrome Web Store (if it changed since its last release)
+        type: boolean
+        default: false
 
 # every job asks for exactly what it needs
 permissions: {}
@@ -32,6 +39,9 @@ jobs:
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # holds the release GitHub App's key; limit the environment to main (RELEASING.md) so no other
+    # branch's workflow can use it to push past main's protection
+    environment: release
     permissions:
       contents: write       # push the release commit (version bumps, changelog) to main
       pull-requests: read   # release:minor / release:major labels on the merged pull requests
@@ -49,10 +59,10 @@ jobs:
       # optional: a GitHub App allowed to bypass main's branch protection (RELEASING.md); without
       # one, the job's own token pushes the release commit, which only works while main is unprotected
       - id: app-token
-        if: vars.RELEASE_APP_ID != ''
-        uses: actions/create-github-app-token@v2
+        if: vars.RELEASE_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v4
         with:
@@ -67,10 +77,12 @@ jobs:
       # no install scripts in a job that can push to main
       - run: npm ci --ignore-scripts
       - id: plan
-        run: npm run release -- plan --tested "$TESTED" --apply
+        run: npm run release -- plan --tested "$TESTED" --manual "$MANUAL" --apply
         env:
           # the commit CI just verified; a manual run finds the newest one and checks CI passed on it
           TESTED: ${{ github.event.workflow_run.head_sha || 'auto' }}
+          # manually-triggered targets this run releases
+          MANUAL: ${{ inputs.extension && 'extension' || '' }}
           GITHUB_TOKEN: ${{ github.token }}
       - id: commit
         env:
@@ -386,6 +398,16 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
+      # the Entra ID identity must be a Contributor on the publisher; until it is, say which identity to add
+      - name: Check Marketplace access
+        if: steps.published.outputs.vscode_marketplace != 'true'
+        run: |
+          if npx --yes @vscode/vsce@4.0.0 verify-pat --azure-credential stringutilitybelt; then exit 0; fi
+          profile="$(az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+            --url 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.3' \
+            --query id --output tsv || true)"
+          echo "::error::This identity can't publish as stringutilitybelt. Add member ID ${profile:-(unknown)} to the publisher as a Contributor (RELEASING.md, VS Code Marketplace), then re-run this job."
+          exit 1
       - name: Publish to the VS Code Marketplace
         if: steps.published.outputs.vscode_marketplace != 'true'
         run: npx --yes @vscode/vsce@4.0.0 publish --azure-credential --packagePath "$VSIX"

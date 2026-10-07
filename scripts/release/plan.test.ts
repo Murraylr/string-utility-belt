@@ -13,15 +13,22 @@ import type { Target } from './targets'
 
 const TARGETS: Target[] = [
   {
-    id: 'app', title: 'App', include: ['src/**', 'CHANGELOG.md'], exclude: ['**/*.test.ts'], rootManifest: 'all',
+    id: 'app', title: 'App', trigger: 'auto', include: ['src/**', 'CHANGELOG.md'], exclude: ['**/*.test.ts'],
+    rootManifest: 'all', entries: [],
     versionFiles: [{ path: 'package.json', pointer: ['version'] }], changelog: 'CHANGELOG.md',
   },
   {
-    id: 'cli', title: 'CLI', include: ['src/core/**', 'packages/cli/**'], exclude: ['**/*.test.ts'], rootManifest: 'runtime',
+    id: 'cli', title: 'CLI', trigger: 'auto', include: ['src/core/**', 'packages/cli/**'], exclude: ['**/*.test.ts'],
+    rootManifest: 'bundled', entries: ['packages/cli/main.ts'],
     versionFiles: [
       { path: 'packages/cli/package.json', pointer: ['version'] },
       { path: 'packages/cli/manifest.json', pointer: ['meta', 'version'] },
     ],
+  },
+  {
+    id: 'extension', title: 'Extension', trigger: 'manual', include: ['src/core/**', 'packages/extension/**'], exclude: [],
+    rootManifest: 'bundled', entries: ['packages/extension/main.ts'],
+    versionFiles: [{ path: 'packages/extension/manifest.json', pointer: ['version'] }],
   },
 ]
 
@@ -49,7 +56,13 @@ const versions = (app: string, cli: string) => ({
   'packages/cli/package.json': `{\n  "name": "cli",\n  "version": "${cli}"\n}\n`,
   'packages/cli/manifest.json': `{ "meta": { "version": "${cli}" }, "list": ["a", "b"] }\n`,
 })
-const plan = (tested?: string) => planRelease({ targets: TARGETS, git, root: dir, tested, labels: async sha => labels.get(sha) ?? [] })
+const lockfile = (packages: Record<string, string>) => `${JSON.stringify({
+  name: 'app', lockfileVersion: 3,
+  packages: Object.fromEntries(Object.entries(packages).map(([name, version]) => [`node_modules/${name}`, { version }])),
+}, null, 2)}\n`
+const plan = (tested?: string, manual: string[] = []) => planRelease({
+  targets: TARGETS, git, root: dir, tested, labels: async sha => labels.get(sha) ?? [], manual: new Set(manual as Target['id'][]),
+})
 const byId = (plans: TargetPlan[]) => Object.fromEntries(plans.map(p => [p.id, p]))
 /** What the release workflow does after deploying: tag each released target on HEAD. */
 const tagReleased = (plans: TargetPlan[]) => plans.filter(p => p.release).forEach(p => sh('tag', `${p.id}-v${p.next}`))
@@ -73,7 +86,10 @@ beforeEach(() => {
     ...versions('1.0.0', '2.0.0'),
     'src/app.ts': 'app\n',
     'src/core/engine.ts': 'engine\n',
-    'packages/cli/main.ts': 'cli\n',
+    'packages/cli/main.ts': "import { parse } from 'yaml'\nimport '../../src/core/engine'\n",
+    'packages/extension/main.ts': "import '../../src/core/engine'\n",
+    'packages/extension/manifest.json': '{ "version": "1.4.0" }\n',
+    'package-lock.json': lockfile({ yaml: '2.8.0', react: '18.2.0' }),
     'CHANGELOG.md': '# Changelog\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n- First.\n',
   })
 })
@@ -86,6 +102,8 @@ describe('planRelease', () => {
     expect(plans.app).toMatchObject({ release: true, previous: null, current: '1.0.0', next: '1.0.1', bump: 'patch' })
     expect(plans.cli).toMatchObject({ release: true, previous: null, current: '2.0.0', next: '2.0.1', bump: 'patch' })
     expect(plans.app.reason).toMatch(/no app-v\* tag/)
+    expect(plans.extension).toMatchObject({ release: false, waiting: true, next: '1.4.0', bump: null })
+    expect(plans.extension.reason).toMatch(/^waiting for a manual release \(would be 1\.4\.1: first tagged release/)
   })
 
   it('does not bump twice when a first release is retried after its bump commit was pushed', async () => {
@@ -159,7 +177,37 @@ describe('planRelease', () => {
     expect(byId(await plan()).cli).toMatchObject({ release: true, current: '2.0.2', next: '2.0.2', bump: null })
   })
 
-  it('refuses version files that disagree, or that fall below the last release', async () => {
+  it('releases a package for a lockfile change only when the change is in what it bundles', async () => {
+    const first = await plan()
+    releaseCommit(first)
+    tagReleased(first)
+    commit('bump react', { 'package-lock.json': lockfile({ yaml: '2.8.0', react: '18.3.0' }) })
+    let plans = byId(await plan())
+    expect(plans.app).toMatchObject({ release: true, changes: ['package-lock.json (package: react)'] })
+    expect(plans.cli).toMatchObject({ release: false })
+
+    commit('bump yaml', { 'package-lock.json': lockfile({ yaml: '2.9.0', react: '18.3.0' }) })
+    plans = byId(await plan())
+    expect(plans.cli).toMatchObject({ release: true, next: '2.0.2', changes: ['package-lock.json (bundled package: yaml)'] })
+  })
+
+  it('holds a manual target\'s changes until a run asks for it', async () => {
+    const first = await plan(undefined, ['extension'])
+    expect(byId(first).extension).toMatchObject({ release: true, waiting: false, next: '1.4.1' })
+    releaseCommit(first)
+    tagReleased(first)
+
+    commit('extension fix', { 'packages/extension/main.ts': "import '../../src/core/engine'\n// fix\n" }, ['release:minor'])
+    const held = byId(await plan())
+    expect(held.extension).toMatchObject({ release: false, waiting: true, current: '1.4.1', next: '1.4.1', bump: null })
+    expect(held.extension.reason).toBe('waiting for a manual release (would be 1.5.0: changed since extension-v1.4.1)')
+    expect(planSummary(Object.values(held), 'x')).toContain('| Extension | ⏸ manual | 1.4.1 |')
+    expect(releaseCommitMessage(Object.values(held))).not.toContain('extension')
+
+    expect(byId(await plan(undefined, ['extension'])).extension).toMatchObject({ release: true, next: '1.5.0', bump: 'minor' })
+  })
+
+    it('refuses version files that disagree, or that fall below the last release', async () => {
     const first = await plan()
     releaseCommit(first)
     tagReleased(first)

@@ -65,28 +65,49 @@ describe('affectedBy', () => {
     expect(affectedBy(cli, c)).toEqual([])
   })
 
-  it('counts any other root package.json change for the app, but only runtime dependencies for packages', () => {
+  it('counts any other root package.json change for the app, but only the dependencies a package bundles', () => {
     const scripts = change(['package.json'],
       { 'package.json': { scripts: { a: '1' }, devDependencies: { vite: '7' } } },
       { 'package.json': { scripts: { a: '2' }, devDependencies: { vite: '8' } } })
     expect(affectedBy(app, scripts)).toEqual(['package.json'])
-    expect(affectedBy(cli, scripts)).toEqual([])
+    expect(affectedBy(cli, scripts, new Set(['yaml']))).toEqual([])
 
-    const deps = change(['package.json'], { 'package.json': { dependencies: { yaml: '2.8' } } }, { 'package.json': { dependencies: { yaml: '2.9' } } })
-    expect(affectedBy(cli, deps)).toEqual(['package.json (dependencies)'])
+    const deps = change(['package.json'],
+      { 'package.json': { dependencies: { yaml: '2.8', react: '18.2' }, devDependencies: { fflate: '0.8.2' } } },
+      { 'package.json': { dependencies: { yaml: '2.9', react: '18.3' }, devDependencies: { fflate: '0.8.3' } } })
+    // a bundled devDependency counts like any other; react isn't in this build
+    expect(affectedBy(cli, deps, new Set(['yaml', 'fflate']))).toEqual(['package.json (yaml, fflate)'])
+    expect(affectedBy(cli, deps, new Set(['zod']))).toEqual([])
   })
 
-  it('reads package-lock.json: dev-only packages matter to the app alone, runtime ones to everyone', () => {
-    const devOnly = change(['package-lock.json'],
-      { 'package-lock.json': lock({ '': { version: '1.0.0' }, 'node_modules/vite': { version: '7.0.0', dev: true } }) },
-      { 'package-lock.json': lock({ '': { version: '1.0.0' }, 'node_modules/vite': { version: '7.1.0', dev: true } }) })
-    expect(affectedBy(app, devOnly)).toEqual(['package-lock.json (package: vite)'])
-    expect(affectedBy(cli, devOnly)).toEqual([])
+  it('reads package-lock.json: any package matters to the app, only bundled ones and their dependencies to a package', () => {
+    const before = lock({
+      '': { version: '1.0.0', dependencies: { yaml: '^2', react: '^18' } },
+      'node_modules/yaml': { version: '2.8.0', dependencies: { 'yaml-helper': '^1' } },
+      'node_modules/yaml-helper': { version: '1.0.0' },
+      'node_modules/react': { version: '18.2.0' },
+      'node_modules/vite': { version: '7.0.0', dev: true },
+    })
+    const bump = (pkgs: Record<string, string>) => {
+      const after = structuredClone(before) as { packages: Record<string, { version: string }> }
+      for (const [key, version] of Object.entries(pkgs)) after.packages[key].version = version
+      return change(['package-lock.json'], { 'package-lock.json': before }, { 'package-lock.json': after })
+    }
+    const bundlesYaml = new Set(['yaml'])
 
-    const runtime = change(['package-lock.json'],
-      { 'package-lock.json': lock({ 'node_modules/yaml': { version: '2.8.0' }, 'node_modules/@scope/x/node_modules/y': { version: '1.0.0' } }) },
-      { 'package-lock.json': lock({ 'node_modules/yaml': { version: '2.9.0' } }) })
-    expect(affectedBy(cli, runtime)).toEqual(['package-lock.json (runtime packages: yaml, y)'])
+    expect(affectedBy(app, bump({ 'node_modules/vite': '7.1.0' }))).toEqual(['package-lock.json (package: vite)'])
+    expect(affectedBy(cli, bump({ 'node_modules/vite': '7.1.0' }), bundlesYaml)).toEqual([])
+    expect(affectedBy(cli, bump({ 'node_modules/react': '18.3.0' }), bundlesYaml)).toEqual([])
+    expect(affectedBy(cli, bump({ 'node_modules/yaml-helper': '1.0.1' }), bundlesYaml)).toEqual(['package-lock.json (bundled package: yaml-helper)'])
+    expect(affectedBy(cli, bump({ 'node_modules/yaml': '2.9.0', 'node_modules/react': '18.3.0' }), bundlesYaml))
+      .toEqual(['package-lock.json (bundled package: yaml)'])
+  })
+
+  it('counts a bundled package\'s dependency that a change removes', () => {
+    const before = lock({ 'node_modules/yaml': { version: '2.8.0', dependencies: { old: '^1' } }, 'node_modules/old': { version: '1.0.0' } })
+    const after = lock({ 'node_modules/yaml': { version: '2.8.0' } })
+    expect(affectedBy(cli, change(['package-lock.json'], { 'package-lock.json': before }, { 'package-lock.json': after }), new Set(['yaml'])))
+      .toEqual(['package-lock.json (bundled packages: yaml, old)'])
   })
 
   it('ignores the lockfile\'s own copy of the root version', () => {
@@ -94,12 +115,12 @@ describe('affectedBy', () => {
       { 'package-lock.json': { ...lock({ '': { name: 'x', version: '1.0.0' } }), version: '1.0.0' } },
       { 'package-lock.json': { ...lock({ '': { name: 'x', version: '1.0.1' } }), version: '1.0.1' } })
     expect(affectedBy(app, c)).toEqual([])
-    expect(affectedBy(cli, c)).toEqual([])
+    expect(affectedBy(cli, c, new Set(['yaml']))).toEqual([])
   })
 
   it('treats a manifest added or removed like any other change', () => {
     const added = change(['package.json'], {}, { 'package.json': { dependencies: { a: '1' } } })
-    expect(affectedBy(cli, added)).toEqual(['package.json (dependencies)'])
+    expect(affectedBy(cli, added, new Set(['a']))).toEqual(['package.json (a)'])
   })
 })
 
