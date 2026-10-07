@@ -10,6 +10,7 @@
 import { runPipeline } from '../../../src/core/index'
 import { getSandbox, setSandbox } from '../../../src/core/sandbox'
 import { staticRegistry } from '../../../src/utilities/static-registry'
+import { version } from '../package.json'
 import { UsageError, parseArgv, type CliIo } from './args'
 import { checkUnsupported, resolveInput, resolvePipelineDoc } from './pipeline'
 import { createNodeSandbox } from './sandbox-node'
@@ -19,8 +20,8 @@ import {
 
 export type { CliIo }
 
-/** Bump alongside the version in the repo root's package.json. */
-export const VERSION = '1.3.0'
+/** The published package's version (packages/cli/package.json, which releases bump). */
+export const VERSION: string = version
 
 export const HELP = `subelt ${VERSION} — run a String Utility Belt pipeline from the shell
 

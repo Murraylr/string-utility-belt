@@ -81,17 +81,19 @@ function appMatches(manifest: { externally_connectable?: { matches?: string[] } 
 }
 
 /**
- * The root `package.json` is the one source of the version. `manifest.json`
- * repeats it (so the source folder stays a loadable extension), and a
- * mismatch fails the build instead of shipping one version while the
- * manifest shows another.
+ * `manifest.json` is the one source of the extension's version (releases bump it
+ * on their own schedule, independent of the site's). The Chrome Web Store only
+ * takes one to four dot-separated integers from 0 to 65535 without leading
+ * zeros, so anything else fails the build instead of the store upload.
  */
-export function checkManifestVersion(manifestVersion: unknown, packageVersion: string): void {
-  if (manifestVersion !== packageVersion) {
+export function checkManifestVersion(manifestVersion: unknown): void {
+  const parts = typeof manifestVersion === 'string' ? manifestVersion.split('.') : []
+  const valid = parts.length >= 1 && parts.length <= 4
+    && parts.every(p => /^(0|[1-9]\d{0,4})$/.test(p) && Number(p) <= 65535)
+  if (!valid) {
     throw new Error(
-      `packages/extension/manifest.json has version ${JSON.stringify(manifestVersion)} but the root package.json has `
-      + `"${packageVersion}". Set the version in the root package.json (npm version <x.y.z> --no-git-tag-version) `
-      + `and give manifest.json the same value.`,
+      `packages/extension/manifest.json has version ${JSON.stringify(manifestVersion)}; Chrome needs 1-4 dot-separated `
+      + 'integers from 0 to 65535 without leading zeros (e.g. "1.4.0").',
     )
   }
 }
@@ -99,7 +101,7 @@ export function checkManifestVersion(manifestVersion: unknown, packageVersion: s
 /**
  * After the popup/options pages are written: builds the service worker into
  * the same output directory, then copies `manifest.json` (its `version`
- * checked against the root `package.json` by `checkManifestVersion`; its
+ * checked by `checkManifestVersion`; its
  * `externally_connectable` by `appMatches`) and `icons/`. Uses the output
  * dir Rollup actually wrote to, so `--outDir` works.
  */
@@ -113,9 +115,8 @@ function extensionAssets(): Plugin {
       const outDir = options.dir ?? resolve(__dirname, 'dist')
       await build(backgroundBuild(outDir, mode))
       mkdirSync(outDir, { recursive: true })
-      const rootPkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
       const manifest = JSON.parse(readFileSync(resolve(__dirname, 'manifest.json'), 'utf8'))
-      checkManifestVersion(manifest.version, rootPkg.version)
+      checkManifestVersion(manifest.version)
       appMatches(manifest, mode)
       writeFileSync(resolve(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
       cpSync(resolve(__dirname, 'icons'), resolve(outDir, 'icons'), { recursive: true })
