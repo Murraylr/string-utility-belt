@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { MANIFEST } from '@/utilities/_generated/manifest'
-import { changedParams, describeString, revealInvisible, stringPairs } from './recipeHelpers'
+import type { PipelineStep } from '@/types/utility'
+import { changedParams, describeString, revealInvisible, stepTitle, stringPairs } from './recipeHelpers'
 
 const metas = new Map(MANIFEST.map(m => [m.id, m]))
+
+describe('stepTitle', () => {
+  it('names a run-on-each step by what it splits into, unless it has a label', () => {
+    const each: PipelineStep = { id: 'e', type: 'each', split: { mode: 'json-values' }, steps: [] }
+    expect(stepTitle(each, id => metas.get(id))).toBe('Run on each value')
+    expect(stepTitle({ ...each, split: { mode: 'lines' as const } }, id => metas.get(id))).toBe('Run on each line')
+    expect(stepTitle({ ...each, label: 'decode every value' }, id => metas.get(id))).toBe('decode every value')
+  })
+})
 
 describe('revealInvisible', () => {
   it('draws carriage returns, special spaces, zero-width characters and trailing whitespace as symbols, with a legend', () => {

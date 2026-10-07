@@ -8,7 +8,7 @@
  * its prose). `npm run gen` writes `_generated/` from them; the rules every
  * recipe must pass are in `check.ts`.
  */
-import type { BranchStep, MacroStep, PipelineStep, UtilityStep } from '../types/utility'
+import type { BranchStep, EachStep, MacroStep, PipelineStep, UtilityStep } from '../types/utility'
 
 /** Hub sections, in display order. */
 export const RECIPE_CATEGORIES = [
@@ -23,8 +23,8 @@ export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number]
 /** The reason a top-level step is in the recipe, shown beside its output on the page. */
 interface Why { why: string }
 
-/** A top-level step: any pipeline step plus its reason. Steps inside a branch carry no reason. */
-export type RecipeStep = (UtilityStep & Why) | (BranchStep & Why) | (MacroStep & Why)
+/** A top-level step: any pipeline step plus its reason. Steps inside a branch, macro or each carry no reason. */
+export type RecipeStep = (UtilityStep & Why) | (BranchStep & Why) | (MacroStep & Why) | (EachStep & Why)
 
 /** One worked input. The first sample is the one the page opens with. */
 export interface RecipeSample {

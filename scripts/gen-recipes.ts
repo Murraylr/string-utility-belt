@@ -12,7 +12,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { MANIFEST } from '../src/utilities/_generated/manifest'
-import { isBranchStep, isMacroStep, isUtilityStep, utilityIds } from '../src/core/steps'
+import { isBranchStep, isEachStep, isMacroStep, isUtilityStep, utilityIds } from '../src/core/steps'
+import { itemNoun } from '../src/core/split'
 import { displayName } from '../src/app/pages/seo'
 import { toPipelineSteps, type Recipe, type RecipeMeta } from '../src/recipes/types'
 
@@ -56,7 +57,8 @@ export function metaOfRecipe(recipe: Recipe): RecipeMeta {
     chain: steps.map(s => s.label ? s.label
       : isUtilityStep(s) ? names.get(s.utilityId) ?? s.utilityId
         : isBranchStep(s) ? `branch (${s.branches.length} lanes)`
-          : isMacroStep(s) ? s.name : 'step'),
+          : isMacroStep(s) ? s.name
+            : isEachStep(s) ? `run on each ${itemNoun(s.split.mode, 1)}` : 'step'),
     stepCount: steps.length,
     published: recipe.published,
     ...(recipe.updated ? { updated: recipe.updated } : {}),

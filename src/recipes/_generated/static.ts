@@ -5,13 +5,14 @@ import r1 from '../clean-chatgpt-text/recipe'
 import r2 from '../decode-cloudwatch-logs-data/recipe'
 import r3 from '../decode-flask-session-cookie/recipe'
 import r4 from '../decode-helm-release-secret/recipe'
-import r5 from '../decode-saml-request/recipe'
-import r6 from '../excel-column-to-sql-in-clause/recipe'
-import r7 from '../fix-bash-bad-interpreter/recipe'
-import r8 from '../fix-pdf-line-breaks/recipe'
-import r9 from '../nested-json-to-csv/recipe'
-import r10 from '../spring-boot-yaml-to-env-vars/recipe'
-import r11 from '../unescape-stringified-json/recipe'
+import r5 from '../decode-kubernetes-secret/recipe'
+import r6 from '../decode-saml-request/recipe'
+import r7 from '../excel-column-to-sql-in-clause/recipe'
+import r8 from '../fix-bash-bad-interpreter/recipe'
+import r9 from '../fix-pdf-line-breaks/recipe'
+import r10 from '../nested-json-to-csv/recipe'
+import r11 from '../spring-boot-yaml-to-env-vars/recipe'
+import r12 from '../unescape-stringified-json/recipe'
 
 export const STATIC_RECIPES: Recipe[] = [
   r0,
@@ -26,4 +27,5 @@ export const STATIC_RECIPES: Recipe[] = [
   r9,
   r10,
   r11,
+  r12,
 ]

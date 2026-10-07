@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   toolbar, or select steps and choose *Run on each line*. On error decides what a failed item becomes, the
   card counts failed items, and nested previews show the first item that failed. It works in share links,
   embeds, the library, the HTTP API (`"type": "each"`), the CLI, the MCP server and the editor extensions.
+- Recipe: **decode a Kubernetes Secret** — every value under `data` decoded at once, keys kept, from
+  `kubectl get secret -o yaml` or `-o json` (the first recipe built on run on each).
 
 ### Changed
 

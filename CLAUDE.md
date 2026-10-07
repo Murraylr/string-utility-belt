@@ -88,8 +88,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Recipes (`src/recipes/`) — pre-rendered pipeline pages
 - A recipe is a hand-picked multi-step pipeline for one real task, published at `/recipes/<slug>/` (index: `/recipes/`).
-  Folder per recipe: `recipe.ts` (default export `Recipe`: steps built with `step()`/`branch()`/`laneStep()` from
-  `define.ts`, each top-level step with a `why`; 2+ `samples` with golden outputs, the first is the page's worked
+  Folder per recipe: `recipe.ts` (default export `Recipe`: steps built with `step()`/`branch()`/`each()`/`laneStep()` from
+  `define.ts`, each top-level step with a `why`; `each()` runs `laneStep()`s on every line or JSON value; 2+ `samples` with golden outputs, the first is the page's worked
   example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
   example blocks). `npm run gen` also writes `src/recipes/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
   per recipe with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.

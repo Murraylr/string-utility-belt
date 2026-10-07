@@ -8,7 +8,8 @@
  */
 import React from 'react'
 import type { PipelineStep } from '@/types/utility'
-import { isBranchStep, isMacroStep, isUtilityStep, utilityIds } from '@/core/steps'
+import { childSequences, isBranchStep, isEachStep, isUtilityStep, utilityIds } from '@/core/steps'
+import { itemNoun } from '@/core/split'
 import { RECIPE_CATEGORIES, RECIPES_PATH, recipePath, type Recipe, type RecipeMeta, type RecipeSample } from '@/recipes/types'
 import type { Preview, SkipTrace, StepTrace } from '@/recipes/trace'
 import { utilityPath } from '../related'
@@ -68,17 +69,18 @@ function PreviewBlock({ preview, label }: { preview: Preview; label: string }) {
   )
 }
 
-/** Links to the utilities a step uses (a branch's lanes, a macro's steps). */
+/** Links to the utilities a step uses (a branch's lanes, a macro's or an each step's body). */
 function StepUtilities({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
   if (isUtilityStep(step)) {
     return <a className="text-sm underline underline-offset-2" href={utilityPath(step.utilityId)}>{nameOf(step.utilityId, utility)}</a>
   }
-  const lanes = isBranchStep(step) ? step.branches : isMacroStep(step) ? [step.steps] : []
+  const lanes = childSequences(step)
   return (
     <ol className="grid gap-1 text-sm">
       {lanes.map((lane, i) => (
         <li key={i} className="flex flex-wrap items-baseline gap-1">
           {isBranchStep(step) && <span className="text-muted">lane {i + 1}:</span>}
+          {isEachStep(step) && <span className="text-muted">on each {itemNoun(step.split.mode, 1)}:</span>}
           {lane.map((s, j) => (
             <React.Fragment key={s.id}>
               {j > 0 && <span aria-hidden className="text-muted">→</span>}
