@@ -8,7 +8,8 @@ import { formatForDisplay, valueType } from '../../../../src/core/coerce'
 import { canRunInExtension, extensionUnsupportedSteps } from '../../../../src/core/extensionBridge'
 import type { UtilityMeta } from '../../../../src/core/registry'
 import { runPipeline } from '../../../../src/core/runner'
-import { walkSteps } from '../../../../src/core/steps'
+import { itemNoun } from '../../../../src/core/split'
+import { isEachStep, walkSteps } from '../../../../src/core/steps'
 import type { Params, PipelineStep, Utility, Value } from '../../../../src/types/utility'
 import { MANIFEST } from '../../../../src/utilities/_generated/manifest'
 import { LOADERS } from '../../../../src/utilities/_generated/loaders'
@@ -60,6 +61,7 @@ function stepName(step: PipelineStep): string {
   if (step.label) return step.label
   if (step.type === 'branch') return 'branch'
   if (step.type === 'macro') return step.name
+  if (step.type === 'each') return `run on each ${itemNoun(step.split.mode, 1)}`
   return byId.get(step.utilityId)?.name ?? step.utilityId
 }
 
@@ -68,7 +70,9 @@ function stepName(step: PipelineStep): string {
  * whole, so the page is never written with half-transformed text: any error in
  * a step that kept the default error policy, and any halt (`onError: 'stop'`).
  * A step with an explicit `passthrough` or `empty` policy failing is the
- * pipeline working as its author designed, and its result is kept.
+ * pipeline working as its author designed, and its result is kept — and so is
+ * a failure inside a "run on each" step with such a policy, which decides what
+ * a failed item becomes.
  */
 export async function runPipelineSteps(steps: PipelineStep[], input: Value): Promise<Value> {
   const unsupported = extensionUnsupportedSteps(steps, getUtilityMeta)
@@ -78,9 +82,10 @@ export async function runPipelineSteps(steps: PipelineStep[], input: Value): Pro
   }
   const result = await runPipeline(input, steps, { load: loadUtility })
   let failure: string | undefined
-  walkSteps(steps, step => {
+  const designed = (s: PipelineStep) => s.onError !== undefined && s.onError !== 'stop'
+  walkSteps(steps, (step, parents) => {
     const err = result.err[step.id]
-    if (err === undefined || (step.onError !== undefined && step.onError !== 'stop')) return
+    if (err === undefined || designed(step) || parents.some(p => isEachStep(p) && designed(p))) return
     failure = `${stepName(step)}: ${err}`
     return false
   })

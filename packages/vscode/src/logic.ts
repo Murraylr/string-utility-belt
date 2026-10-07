@@ -2,7 +2,7 @@
  * Editor-independent helpers for the extension: none of this touches the `vscode`
  * API, so it is tested directly without mocking anything.
  */
-import { isBranchStep, isMacroStep, isUtilityStep, valueType, walkSteps } from '../../../src/core'
+import { isUtilityStep, mapChildSequences, valueType, walkSteps } from '../../../src/core'
 import type { ParamSpec, PipelineStep, UtilityEnv, UtilityMeta, Utility, Value } from '../../../src/core'
 
 export const errorMessage = (e: unknown): string => (e as any)?.message || String(e)
@@ -115,30 +115,20 @@ export function extractSharePayload(raw: string): string {
   return s
 }
 
-function findCodeSteps(steps: PipelineStep[]): string[] {
-  const ids: string[] = []
-  const visit = (seq: PipelineStep[]) => {
-    for (const s of seq) {
-      if (isUtilityStep(s) && CODE_UTILITY_IDS.has(s.utilityId)) ids.push(s.id)
-      else if (isBranchStep(s)) s.branches.forEach(visit)
-      else if (isMacroStep(s)) visit(s.steps)
-    }
-  }
-  visit(steps)
-  return ids
-}
+const isCodeStep = (s: PipelineStep) => isUtilityStep(s) && CODE_UTILITY_IDS.has(s.utilityId)
 
-/** Disable every `custom_js` step so a pipeline from a link or file can't run code unasked. */
+/**
+ * Disable every `custom_js` step, at any depth (branch lanes, macro and "run on each"
+ * bodies), so a pipeline from a link or file can't run code unasked. Walks by step
+ * type rather than by id, so it holds even when ids collide.
+ */
 export function quarantine(steps: PipelineStep[]): { steps: PipelineStep[]; quarantined: string[] } {
-  const ids = new Set(findCodeSteps(steps))
-  if (!ids.size) return { steps, quarantined: [] }
-  const walk = (seq: PipelineStep[]): PipelineStep[] => seq.map(s => {
-    if (ids.has(s.id)) return { ...s, enabled: false }
-    if (isBranchStep(s)) return { ...s, branches: s.branches.map(walk) }
-    if (isMacroStep(s)) return { ...s, steps: walk(s.steps) }
-    return s
-  })
-  return { steps: walk(steps), quarantined: [...ids] }
+  const quarantined: string[] = []
+  walkSteps(steps, s => { if (isCodeStep(s)) quarantined.push(s.id) })
+  if (!quarantined.length) return { steps, quarantined }
+  const walk = (seq: PipelineStep[]): PipelineStep[] =>
+    seq.map(s => (isCodeStep(s) ? { ...s, enabled: false } : mapChildSequences(s, walk)))
+  return { steps: walk(steps), quarantined }
 }
 
 /** A parsed JSON file is either a library export (`{ entries: [...] }`) or a single pipeline doc. */

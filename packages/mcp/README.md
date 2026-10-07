@@ -11,7 +11,7 @@ directly, with no browser involved.
 - **`list_utilities`** — `{ category?, query?, limit? }` → `{ items: [{ id, name, category, description }], total, categories }`, best matches first. `query` is a set of words that must all match (in any order) somewhere in the id, name, tags, aliases or description. Start here.
 - **`describe_utility`** — `{ id }` → a utility's full doc: params (kind, default, options/bounds, description), what it accepts/produces, tags, aliases, worked examples, and the runtime capabilities it needs.
 - **`run_utility`** — `{ id, input, inputEncoding?, params? }` → `{ output, outputEncoding? }`. Text output is returned as-is; JSON output is pretty-printed text; byte output is base64 with `outputEncoding: "base64"`. Params are validated against the utility's spec. A failing utility comes back as `isError: true` with the message, never a thrown exception.
-- **`run_pipeline`** — `{ steps?, share?, input, inputEncoding? }` → `{ output, outputEncoding?, errors, timings, skipped, halted }` for a whole pipeline (the v2 schema: utility steps, branches, macros, conditions, per-step error policy). Pass exactly one of `steps` (`[]` is the identity pipeline) or `share` (a `#/p/<payload>` link, a URL containing one, or the bare payload). Unknown utility ids and invalid params on enabled steps are rejected up front.
+- **`run_pipeline`** — `{ steps?, share?, input, inputEncoding? }` → `{ output, outputEncoding?, errors, timings, skipped, halted }` for a whole pipeline (the v3 schema: utility steps, branches, macros, "run on each" steps, conditions, per-step error policy). Pass exactly one of `steps` (`[]` is the identity pipeline) or `share` (a `#/p/<payload>` link, a URL containing one, or the bare payload). Unknown utility ids and invalid params on enabled steps are rejected up front.
 - **`detect_format`** — `{ input, inputEncoding? }` → `{ candidates: [{ format, confidence, note }] }`, best first (JSON, YAML, base64, JWT, gzip, …).
 
 `inputEncoding` is `"text"` (default), `"base64"` (standard or URL-safe, padding optional),
@@ -27,7 +27,7 @@ directly, with no browser involved.
 
 - Input is capped at 1 MB per call (a `share` link at 1M characters).
 - Output past 1M characters is cut off and flagged `truncated: true` with the untruncated `fullLength`.
-- A pipeline is capped at 100 steps (branches/macros counted).
+- A pipeline is capped at 100 steps (nested steps counted).
 - Every call is stopped after 20 s — set `SUBELT_MCP_TIMEOUT_MS` to change that.
 - Utility code runs in pooled child processes (up to 4, 512 MB heap each), not in the server:
   a call that blocks (a catastrophic regex, bcrypt at cost 31) is killed at the deadline, one

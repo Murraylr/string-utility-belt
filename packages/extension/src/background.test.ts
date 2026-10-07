@@ -329,8 +329,8 @@ describe('background: messages from the web app', () => {
     new Promise<unknown>(resolve => mod.handleAppMessage({ source: 'subelt-app', protocol: 1, ...body }, sender, resolve))
   const send = (request: unknown, sender: chrome.runtime.MessageSender = trusted) => message({ type: 'request', request }, sender)
 
-  it('answers a ping with its version, so the app can offer "save to extension"', async () => {
-    expect(await message({ type: 'ping' })).toEqual({ protocol: 1, version: '1.2.3' })
+  it('answers a ping with its version and the step types it can save, so the app can offer "save to extension"', async () => {
+    expect(await message({ type: 'ping' })).toEqual({ protocol: 1, version: '1.2.3', stepTypes: ['utility', 'branch', 'macro', 'each'] })
   })
 
   it('refuses a request from a newer or older protocol', async () => {

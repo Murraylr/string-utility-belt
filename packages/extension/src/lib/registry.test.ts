@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { EachStep } from '../../../../src/types/utility'
 import { edgeSafeUtilities, getEdgeSafeUtilityMeta, isEdgeSafe, resultToText, runPipelineSteps, runUtilityById } from './registry'
 
 // Importing this module transforms the generated utility manifest, which can
@@ -116,6 +117,14 @@ describe('runPipelineSteps', () => {
   it('keeps going past a step whose author chose passthrough or empty', async () => {
     expect(await runPipelineSteps([step('a', 'json_pretty', { onError: 'passthrough' }), step('b', 'case', { params: { mode: 'upper' } })], 'nope')).toBe('NOPE')
     expect(await runPipelineSteps([step('a', 'json_pretty', { onError: 'empty' })], 'nope')).toBe('')
+  })
+
+  it('runs "run on each" steps, and fails rather than write half-decoded text when an item fails', async () => {
+    const each = (extra: Partial<EachStep> = {}): EachStep =>
+      ({ id: 'e', type: 'each', split: { mode: 'lines' }, steps: [step('d', 'base64_decode')], ...extra })
+    expect(await runPipelineSteps([each()], 'aGk=\nYnll')).toBe('hi\nbye')
+    await expect(runPipelineSteps([each()], 'aGk=\n!!')).rejects.toThrow(/^run on each line: 1 of 2 lines failed \(line 2: /)
+    expect(await runPipelineSteps([each({ onError: 'empty' })], 'aGk=\n!!')).toBe('hi\n')
   })
 
   it('refuses steps the extension cannot run, even disabled or nested ones', async () => {

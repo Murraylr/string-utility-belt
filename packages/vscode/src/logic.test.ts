@@ -166,6 +166,16 @@ describe('quarantine', () => {
     expect(quarantined.sort()).toEqual(['s2', 's4'])
   })
 
+  it('reaches into "run on each" bodies, nested ones too', () => {
+    const steps: PipelineStep[] = [{
+      id: 'e1', type: 'each', split: { mode: 'lines' },
+      steps: [{ id: 'e2', type: 'each', split: { mode: 'json-array' }, steps: [{ id: 's5', utilityId: 'custom_js' }] }],
+    }]
+    const { steps: out, quarantined } = quarantine(steps)
+    expect(quarantined).toEqual(['s5'])
+    expect((out[0] as any).steps[0].steps[0]).toMatchObject({ id: 's5', enabled: false })
+  })
+
   it('is a no-op when there is nothing to quarantine', () => {
     const steps: PipelineStep[] = [{ id: 's1', utilityId: 'trim' }]
     const { steps: out, quarantined } = quarantine(steps)

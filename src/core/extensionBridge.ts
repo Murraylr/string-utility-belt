@@ -11,10 +11,17 @@
  */
 import type { PipelineStep, UtilityEnv } from '../types/utility'
 import type { UtilityMeta } from './registry'
-import { isUtilityStep, walkSteps } from './steps'
+import { isUtilityStep, stepTypeOf, walkSteps } from './steps'
 
 /** Bumped only for a breaking change to the messages below. */
 export const BRIDGE_PROTOCOL = 1
+
+/**
+ * Step types an extension understands when its ping answer does not list them: every
+ * build before "run on each" steps. Such a build drops a step it cannot read while
+ * sanitising a saved pipeline, so the app must not send it one.
+ */
+export const LEGACY_STEP_TYPES: readonly string[] = ['utility', 'branch', 'macro']
 
 /** `source` of every message the app sends. */
 export const APP_SOURCE = 'subelt-app'
@@ -44,8 +51,12 @@ export type AppMessage =
   | { source: typeof APP_SOURCE; protocol: number; type: 'ping' }
   | { source: typeof APP_SOURCE; protocol: number; type: 'request'; request: AppRequest }
 
-/** The extension's answer to a ping. */
-export interface ExtensionHello { protocol: number; version: string }
+/**
+ * The extension's answer to a ping. `stepTypes` (added without a protocol bump: older
+ * apps ignore it, and its absence means LEGACY_STEP_TYPES) lists the step types the
+ * extension can save and run.
+ */
+export interface ExtensionHello { protocol: number; version: string; stepTypes?: string[] }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 
@@ -79,6 +90,19 @@ export function parseAppRequest(raw: unknown): AppRequest | null {
 /** A pipeline name as stored: single-spaced, trimmed, capped. '' when nothing usable is left. */
 export function normalizePipelineName(name: string): string {
   return name.replace(/\s+/g, ' ').trim().slice(0, MAX_PIPELINE_NAME).trim()
+}
+
+/** The step types an extension's ping answer says it understands. */
+export function helloStepTypes(hello: ExtensionHello): readonly string[] {
+  const listed = Array.isArray(hello.stepTypes) ? hello.stepTypes.filter((t): t is string => typeof t === 'string') : []
+  return listed.length ? listed : LEGACY_STEP_TYPES
+}
+
+/** Step types used anywhere in `steps` (disabled ones included) that are not in `known`. */
+export function unknownStepTypes(steps: PipelineStep[], known: readonly string[]): string[] {
+  const out = new Set<string>()
+  walkSteps(steps, s => { const t = stepTypeOf(s); if (!known.includes(t)) out.add(t) })
+  return [...out]
 }
 
 export const canRunInExtension = (meta: Pick<UtilityMeta, 'env'>): boolean =>

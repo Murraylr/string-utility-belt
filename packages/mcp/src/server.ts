@@ -230,22 +230,26 @@ export function createServer(opts: ServerOptions = {}): McpServer {
   server.registerTool('run_pipeline', {
     title: 'Run pipeline',
     description:
-      "Run a whole pipeline — an ordered list of steps, in the string-utility-belt v2 schema, which may " +
-      'include branches (parallel forks merged back together) and macros (named sub-pipelines) — on `input`. ' +
+      "Run a whole pipeline — an ordered list of steps, in the string-utility-belt v3 schema, which may " +
+      'include branches (parallel forks merged back together), macros (named sub-pipelines) and "run on each" ' +
+      'steps (a sub-pipeline run on every line, delimited piece, JSON array element or JSON object value) — on `input`. ' +
       'Returns {output, outputEncoding?, errors, timings, skipped, halted}: `errors` maps step id to its error ' +
       'message, `timings` maps step id to milliseconds. Provide exactly one of `steps` or `share` (a ' +
       '`#/p/<payload>` share link, a full URL containing one, or the bare payload). Untrusted step data is ' +
       'sanitized first, so malformed entries are dropped rather than rejected. Refused outright: pipelines with ' +
-      `more than ${MAX_PIPELINE_STEPS} steps (branches/macros counted), unknown utility ids, enabled steps with ` +
+      `more than ${MAX_PIPELINE_STEPS} steps (nested steps counted), unknown utility ids, enabled steps with ` +
       'invalid params, and any step that would run arbitrary user JavaScript (e.g. "custom_js") — LLM-driven ' +
       `code execution is out of scope. ${limitsNote}`,
     annotations: { readOnlyHint: true, openWorldHint: false },
     inputSchema: {
       steps: z.array(z.record(z.string(), z.unknown())).optional().describe(
-        'Pipeline steps (v2 schema). Each entry is either a utility step ' +
+        'Pipeline steps (v3 schema). Each entry is either a utility step ' +
         '{id, utilityId, params?, enabled?, condition?, onError?}, a fork ' +
         '{type:"branch", id, branches:[[...steps], [...steps]], merge:{mode:"concat"|"zip"|"json"|"pick", ...}}, ' +
-        'or a sub-pipeline {type:"macro", id, name, steps:[...steps]}. `condition` gates a step on its input ' +
+        'a sub-pipeline {type:"macro", id, name, steps:[...steps]}, or a map ' +
+        '{type:"each", id, split:{mode:"lines"|"json-array"|"json-values"} or {mode:"delimiter", separator}, ' +
+        'steps:[...steps], skipEmpty?} that runs `steps` on every item and puts the results back in place ' +
+        '(on an each step, `onError` also decides what a failed item becomes). `condition` gates a step on its input ' +
         '({kind:"always"|"nonEmpty"|"regex"|"type", ...}); `onError` is "passthrough" (default: record the ' +
         'error, pass the input on), "stop" or "empty". Use [] for the identity pipeline; omit when using `share`.',
       ),
