@@ -93,6 +93,8 @@ export interface RecipeWidgetProps {
   onOpen?: (e: React.MouseEvent<HTMLAnchorElement>) => void
   onCopy?: () => void
   copied?: boolean
+  /** Why the output is not (or only partly) for the current input, and the button that fixes it. */
+  notice?: { text: string; action: string; onAction?: () => void }
 }
 
 /**
@@ -102,7 +104,7 @@ export interface RecipeWidgetProps {
  * so "Open in the editor" stays near the top.
  */
 export function RecipeWidget(props: RecipeWidgetProps) {
-  const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied } = props
+  const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied, notice } = props
   return (
     <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-try-h">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -128,14 +130,23 @@ export function RecipeWidget(props: RecipeWidgetProps) {
           />
         </label>
         <div className="grid gap-1 text-sm min-w-0 content-start">
-          <span className="muted" id="recipe-output-label">Output</span>
+          <span className="muted"><span id="recipe-output-label">Output</span>{running ? ' — running…' : ''}</span>
           <pre
             role="status"
             aria-labelledby="recipe-output-label"
             aria-busy={running || undefined}
-            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-xl p-3 h-40 lg:h-64 overflow-auto"
+            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-xl p-3 h-40 lg:h-64 overflow-auto transition-opacity aria-busy:opacity-60"
           >{output}</pre>
         </div>
+      </div>
+      {/* always mounted: text injected together with a brand-new live region is not reliably announced */}
+      <div role="status" className={notice ? 'card flex flex-wrap items-center justify-between gap-3 px-3 py-2 text-sm' : 'sr-only'}>
+        {notice && (
+          <>
+            <span>{notice.text}</span>
+            <button type="button" className="btn" onClick={notice.onAction}>{notice.action}</button>
+          </>
+        )}
       </div>
       {error && <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl p-2">{error}</p>}
       <div className="flex flex-wrap items-center gap-3">
@@ -163,9 +174,11 @@ export interface RecipeArticleProps {
   related: RecipeMeta[]
   /** An ad unit, placed after the worked example and before the guide (app only). */
   ad?: React.ReactNode
+  /** A run is in progress: the step outputs shown are about to change. */
+  running?: boolean
 }
 
-export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, ad }: RecipeArticleProps) {
+export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, ad, running }: RecipeArticleProps) {
   const traceOf = new Map(steps.map(s => [s.id, s]))
   const skipOf = new Map((skip ?? []).map(s => [s.id, s]))
   const index = new Map(recipe.steps.map((s, i) => [s.id, i + 1]))
@@ -196,7 +209,7 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
 
       <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-steps-h">
         <h2 id="recipe-steps-h" className="text-lg font-medium">Step by step</h2>
-        <ol className="grid gap-5">
+        <ol className="grid gap-5 transition-opacity aria-busy:opacity-60" aria-busy={running || undefined}>
           {recipe.steps.map((s, i) => {
             const trace = traceOf.get(s.id)
             return (

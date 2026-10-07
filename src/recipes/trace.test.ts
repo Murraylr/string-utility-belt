@@ -35,6 +35,9 @@ describe('preview', () => {
     const byLines = preview(lines)
     expect(byLines.truncated).toBe(true)
     expect(byLines.text.split('\n')).toHaveLength(PREVIEW_MAX_LINES)
+    // exactly the line limit, ending in a newline as files do: nothing is missing
+    const exact = Array.from({ length: PREVIEW_MAX_LINES }, (_, i) => `line ${i}\n`).join('')
+    expect(preview(exact)).toMatchObject({ truncated: false, text: exact })
     const byChars = preview('x'.repeat(PREVIEW_MAX_CHARS + 1))
     expect(byChars).toMatchObject({ truncated: true, size: PREVIEW_MAX_CHARS + 1 })
     expect(byChars.text).toHaveLength(PREVIEW_MAX_CHARS)

@@ -67,7 +67,8 @@ function clip(text: string): { text: string; truncated: boolean } {
   let end = text.length
   let lines = 0
   for (let i = 0; i < text.length && i < end; i++) {
-    if (text[i] === '\n' && ++lines === PREVIEW_MAX_LINES) end = i
+    // the last allowed line ends here; a cut only if more text follows
+    if (text[i] === '\n' && ++lines === PREVIEW_MAX_LINES && i + 1 < text.length) end = i
   }
   end = Math.min(end, PREVIEW_MAX_CHARS)
   return end < text.length ? { text: text.slice(0, end), truncated: true } : { text, truncated: false }

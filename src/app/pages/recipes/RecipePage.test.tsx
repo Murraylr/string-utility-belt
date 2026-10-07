@@ -99,6 +99,45 @@ describe('RecipePage', () => {
     expect(track).toHaveBeenCalledWith('recipe_sample_select', { recipe_id: SLUG, sample_id: second.id })
   })
 
+  it('holds back a very large input instead of showing an earlier result next to it, until asked to run it', async () => {
+    render(<RecipePage slug={SLUG} />)
+    await waitFor(() => expect(output().textContent).toBe(main.output))
+    const big = 'a@example.com\n'.repeat(80_000) // 1.12 million characters: over the live-run size guard
+    fireEvent.change(input(), { target: { value: big } })
+    expect((await screen.findByText(/Large input \(1\.1 MB\): the live preview is paused\./)).textContent).toMatch(/paused/)
+    expect(output().textContent).toBe('')
+    fireEvent.click(screen.getByRole('button', { name: 'Run full input' }))
+    await waitFor(() => expect(output().textContent).toBe("IN ('a@example.com')"))
+    expect(screen.queryByRole('button', { name: 'Run full input' })).toBeNull()
+  })
+
+  it('brings an example back when it is clicked after the visitor typed their own text', async () => {
+    render(<RecipePage slug={SLUG} />)
+    await screen.findByRole('heading', { level: 1, name: recipe.name })
+    fireEvent.change(input(), { target: { value: 'mine' } })
+    const chip = screen.getByRole('button', { name: main.title })
+    expect(chip.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(chip)
+    expect(chip.getAttribute('aria-pressed')).toBe('true')
+    expect(input().value).toBe(main.input)
+    await waitFor(() => expect(output().textContent).toBe(main.output))
+  })
+
+  it('clears the output when a run fails, rather than leaving an earlier result beside the error', async () => {
+    render(<RecipePage slug={SLUG} />)
+    await waitFor(() => expect(output().textContent).toBe(main.output))
+    vi.mocked(execute).mockRejectedValue(new Error('worker crashed'))
+    try {
+      fireEvent.change(input(), { target: { value: 'x' } })
+      expect((await screen.findByRole('alert')).textContent).toBe('The pipeline could not run: worker crashed')
+      expect(output().textContent).toBe('')
+    } finally {
+      vi.mocked(execute).mockReset()
+      const real = await vi.importActual<typeof import('@/app/engine/executor')>('@/app/engine/executor')
+      vi.mocked(execute).mockImplementation(real.execute)
+    }
+  })
+
   it('reports a failing step in words, with its number and name', async () => {
     render(<RecipePage slug={SLUG} />)
     await screen.findByRole('heading', { level: 1, name: recipe.name })

@@ -102,8 +102,25 @@ function RecipeView({ data }: { data: RecipeData }) {
   // runs nothing until the visitor changes something, when the build's trace is there
   const [live, setLive] = useState(!embedded)
   const run = useRunner(input, steps, { previews: true, live })
-  const result = live ? run.result : null
+  // the example the input is (sampleId '' once the visitor has typed their own)
   const sample = recipe.samples.find(s => s.id === sampleId) ?? main
+
+  // Input over the runner's size guard is not run on every change (see useRunner): until
+  // the visitor asks for a full run of this very input, show no output rather than the
+  // result of an earlier input. `fullRunFor` is the input such a run was asked for.
+  const [fullRunFor, setFullRunFor] = useState<string | null>(null)
+  const large = live ? run.largeInput : null
+  const held = !!large?.paused && fullRunFor !== input
+  const failed = live && !!run.failure
+  const result = live && !held && !failed ? run.result : null
+  const runFull = () => { setFullRunFor(input); run.runNow() }
+  const notice = large && (held || (result?.partial && fullRunFor !== input))
+    ? {
+      text: `Large input (${(large.size / (1024 * 1024)).toFixed(1)} MB): ${held ? 'the live preview is paused.' : 'the output is for the first 64 KB only.'}`,
+      action: 'Run full input',
+      onAction: runFull,
+    }
+    : undefined
 
   const [skip, setSkip] = useState<SkipTrace[] | null>(embedded?.skip ?? null)
   useEffect(() => {
@@ -117,8 +134,12 @@ function RecipeView({ data }: { data: RecipeData }) {
     return () => { cancelled = true }
   }, [recipe, embedded])
 
-  const output = result ? formatForDisplay(result.out) : embedded?.output ?? ''
-  const stepOutputs = useMemo(() => (result ? stepTraces(steps, result) : embedded?.steps ?? []), [result, embedded, steps])
+  const blank = held || failed
+  const output = blank ? '' : result ? formatForDisplay(result.out) : embedded?.output ?? ''
+  const stepOutputs = useMemo(
+    () => (blank ? [] : result ? stepTraces(steps, result) : embedded?.steps ?? []),
+    [blank, result, embedded, steps],
+  )
   const error = useMemo(() => {
     if (run.failure && live) return `The pipeline could not run: ${run.failure}`
     const failed = result && firstError(result, steps)
@@ -135,6 +156,8 @@ function RecipeView({ data }: { data: RecipeData }) {
       track('recipe_input_edit', { recipe_id: recipe.slug })
     }
     setLive(true)
+    // custom text: no example is selected any more, so clicking one brings it back
+    setSampleId('')
     setInput(value)
   }
   const onSample = (id: string) => {
@@ -181,6 +204,7 @@ function RecipeView({ data }: { data: RecipeData }) {
       skip={skip}
       related={relatedRecipes(recipe, RECIPE_INDEX)}
       ad={<AdSlot placement="recipe-page" />}
+      running={live && run.running}
       live={(
         <RecipeWidget
           samples={recipe.samples}
@@ -196,6 +220,7 @@ function RecipeView({ data }: { data: RecipeData }) {
           onOpen={onOpen}
           onCopy={onCopy}
           copied={copied}
+          notice={notice}
         />
       )}
     />
