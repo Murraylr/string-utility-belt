@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { runPipeline, evalCondition, mergeOutputs, MAX_VALUE_SIZE } from './runner'
-import type { PipelineStep, Utility } from '../types/utility'
+import { runPipeline, evalCondition, mergeOutputs, MAX_EACH_ITEMS, MAX_VALUE_SIZE } from './runner'
+import type { EachStep, PipelineStep, SplitSpec, Utility } from '../types/utility'
 
 const u = (id: string, apply: Utility['apply'], extra: Partial<Utility> = {}): Utility =>
   ({ id, name: id, category: 'Test', params: {}, apply, ...extra })
@@ -16,6 +16,8 @@ const UTILS: Record<string, Utility> = {
   wantBytes: u('wantBytes', x => String((x as Uint8Array).length), { accepts: 'bytes' }),
   ctx: u('ctx', (_x, _p, c) => `${c?.env}:${c?.signal ? 'signal' : 'none'}`),
   withParam: u('withParam', (x, p) => `${x}:${p.n}`, { params: { n: { kind: 'number', label: 'n', default: 7 } } }),
+  failOn: u('failOn', x => { if (String(x).includes('bad')) throw new Error('bad item'); return String(x).toUpperCase() }),
+  json: u('json', x => ({ v: String(x) }), { produces: 'json' }),
 }
 const load = (id: string) => {
   const util = UTILS[id]
@@ -186,6 +188,192 @@ describe('runPipeline', () => {
       const r = await runPipeline('hey', [m, step('after', 'len')], { load, previews: true })
       expect(r.previews.m).toBe('HEY!')
       expect(r.out).toBe('4')
+    })
+  })
+
+  describe('run on each', () => {
+    const each = (steps: PipelineStep[], extra: Partial<EachStep> = {}, split: SplitSpec = { mode: 'lines' }): PipelineStep =>
+      ({ id: 'ea', type: 'each', enabled: true, split, steps, ...extra }) as PipelineStep
+
+    it('runs the steps on every line on its own and rejoins them', async () => {
+      const r = await runPipeline('ab\ncd\nef', [each([step('i', 'rev'), step('j', 'upper')])], { load })
+      expect(r.out).toBe('BA\nDC\nFE')
+      expect(r.err).toEqual({})
+      expect(r.items?.ea).toEqual({ total: 3, ran: 3, failed: 0, sample: 'line 1' })
+    })
+
+    it('keeps CRLF endings, a trailing newline and unicode', async () => {
+      const r = await runPipeline('café\r\nñ🎉\n', [each([step('i', 'upper')])], { load })
+      expect(r.out).toBe('CAFÉ\r\nÑ🎉\n')
+    })
+
+    it('leaves empty lines alone by default, and runs on them when asked', async () => {
+      expect((await runPipeline('a\n\nb', [each([step('i', 'exclaim')])], { load })).out).toBe('a!\n\nb!')
+      const all = await runPipeline('a\n\nb', [each([step('i', 'exclaim')], { skipEmpty: false })], { load })
+      expect(all.out).toBe('a!\n!\nb!')
+      expect(all.items?.ea.ran).toBe(3)
+    })
+
+    it('runs on each element of a JSON array and each value of an object, keeping the shape', async () => {
+      const arr = await runPipeline('["ab", 7, {"k": 1}]', [each([step('i', 'rev')], {}, { mode: 'json-array' })], { load })
+      expect(arr.out).toEqual(['ba', 7, '}1:"k"{'])
+      const obj = await runPipeline({ user: 'ann', role: 'admin' }, [each([step('i', 'upper')], {}, { mode: 'json-values' })], { load })
+      expect(obj.out).toEqual({ user: 'ANN', role: 'ADMIN' })
+    })
+
+    it('writes a JSON result into a line as compact JSON', async () => {
+      expect((await runPipeline('a\nb', [each([step('i', 'json')])], { load })).out).toBe('{"v":"a"}\n{"v":"b"}')
+    })
+
+    it('splits on a literal delimiter', async () => {
+      const r = await runPipeline('a;b;c', [each([step('i', 'upper')], {}, { mode: 'delimiter', separator: ';' })], { load })
+      expect(r.out).toBe('A;B;C')
+    })
+
+    it('passes every item through unchanged with no steps', async () => {
+      expect((await runPipeline('x\r\ny\n', [each([])], { load })).out).toBe('x\r\ny\n')
+    })
+
+    describe('item failures', () => {
+      it('passthrough (default): a failed item keeps what its steps produced; the others still run', async () => {
+        const r = await runPipeline('ok\nbad\nfine', [each([step('i', 'failOn'), step('j', 'exclaim')])], { load })
+        expect(r.out).toBe('OK!\nbad!\nFINE!')
+        expect(r.err.ea).toBe('1 of 3 lines failed (line 2: bad item)')
+        expect(r.err.i).toBe('line 2: bad item')
+        expect(r.items?.ea).toEqual({ total: 3, ran: 3, failed: 1, sample: 'line 2' })
+        expect(r.halted).toBe(false)
+      })
+
+      it('counts every failure and names the first', async () => {
+        const r = await runPipeline('bad1\nok\nbad2', [each([step('i', 'failOn')])], { load })
+        expect(r.err.ea).toBe('2 of 3 lines failed (first: line 1: bad item)')
+      })
+
+      it('empty: a failed item becomes empty', async () => {
+        const r = await runPipeline('ok\nbad\nfine', [each([step('i', 'failOn')], { onError: 'empty' })], { load })
+        expect(r.out).toBe('OK\n\nFINE')
+        expect(r.err.ea).toMatch(/^1 of 3 lines failed/)
+      })
+
+      it('stop: the first failed item fails the step and halts the pipeline', async () => {
+        const r = await runPipeline('ok\nbad\nfine', [each([step('i', 'failOn')], { onError: 'stop' }), step('after', 'exclaim')], { load })
+        expect(r.err.ea).toBe('line 2: bad item')
+        expect(r.out).toBe('ok\nbad\nfine')
+        expect(r.halted).toBe(true)
+        expect(r.skipped.after).toBe('halted')
+        expect(r.items?.ea.ran).toBe(2)
+      })
+
+      it('fails as a whole, under its own policy, when the input does not fit the split', async () => {
+        const r = await runPipeline('not json', [each([step('i', 'upper')], {}, { mode: 'json-array' }), step('after', 'exclaim')], { load })
+        expect(r.err.ea).toMatch(/^the input is not valid JSON/)
+        expect(r.out).toBe('not json!')
+      })
+    })
+
+    describe('previews', () => {
+      it('show the first item that ran, when none failed', async () => {
+        const r = await runPipeline('\nab\ncd', [each([step('i', 'upper')])], { load, previews: true })
+        expect(r.inputs.i).toBe('ab')
+        expect(r.previews.i).toBe('AB')
+        expect(r.previews.ea).toBe('\nAB\nCD')
+        expect(r.items?.ea.sample).toBe('line 2')
+      })
+
+      it('show the first item that failed, with every nested step describing that same item', async () => {
+        const r = await runPipeline('ok\nbad\nbad2', [each([step('i', 'exclaim'), step('j', 'failOn')])], { load, previews: true })
+        expect(r.inputs.i).toBe('bad')
+        expect(r.previews.i).toBe('bad!')
+        expect(r.err.j).toBe('line 2: bad item')
+        expect(r.items?.ea.sample).toBe('line 2')
+      })
+
+      it('are not recorded unless asked', async () => {
+        const r = await runPipeline('a', [each([step('i', 'upper')])], { load })
+        expect(r.previews).toEqual({})
+      })
+    })
+
+    it('evaluates its own condition on the whole input and nested conditions per item', async () => {
+      const digits = { kind: 'regex', pattern: '^\\d+$' } as const
+      const r = await runPipeline('12\nab\n34', [each([step('i', 'exclaim', { condition: digits })])], { load })
+      expect(r.out).toBe('12!\nab\n34!')
+      const gated = await runPipeline('12\nab', [each([step('i', 'exclaim')], { condition: digits })], { load })
+      expect(gated.skipped.ea).toBe('condition')
+      expect(gated.out).toBe('12\nab')
+    })
+
+    it('runs macros, branches and nested each steps per item', async () => {
+      const macro: PipelineStep = { id: 'm', type: 'macro', name: 'shout', enabled: true, steps: [step('m1', 'upper'), step('m2', 'exclaim')] }
+      expect((await runPipeline('a\nb', [each([macro])], { load })).out).toBe('A!\nB!')
+      const branch: PipelineStep = {
+        id: 'br', type: 'branch', enabled: true, merge: { mode: 'concat', separator: '=' },
+        branches: [[step('b1', 'upper')], [step('b2', 'len')]],
+      }
+      expect((await runPipeline('ab\nc', [each([branch])], { load })).out).toBe('AB=2\nC=1')
+      const inner: PipelineStep = { id: 'in', type: 'each', enabled: true, split: { mode: 'delimiter', separator: ',' }, steps: [step('x', 'rev')] }
+      expect((await runPipeline('ab,cd\nef', [each([inner])], { load })).out).toBe('ba,dc\nfe')
+    })
+
+    it('limits the items one run may process, nested each steps included', async () => {
+      const r = await runPipeline('a\nb\nc', [each([step('i', 'upper')])], { load, maxEachItems: 2 })
+      expect(r.err.ea).toBe('the input has 3 lines; one run can process at most 2')
+      expect(r.out).toBe('a\nb\nc')
+      // 2 lines, then 2 items in each: 2 + 2 + 2 > 5, so the second line's inner each is refused
+      const inner: PipelineStep = { id: 'in', type: 'each', enabled: true, split: { mode: 'delimiter', separator: ',' }, steps: [step('x', 'upper')] }
+      const nested = await runPipeline('a,b\nc,d', [each([inner])], { load, maxEachItems: 5 })
+      expect(nested.out).toBe('A,B\nc,d')
+      expect(nested.err.ea).toBe('1 of 2 lines failed (line 2: too many items in this run: 4 already processed, and 2 more would pass the limit of 5)')
+      expect(MAX_EACH_ITEMS).toBe(100_000)
+    })
+
+    it('stops as soon as the joined items outgrow maxValueSize', async () => {
+      const r = await runPipeline('abc\ndef\nghi', [each([step('i', 'upper')])], { load, maxValueSize: 5 })
+      expect(r.err.ea).toMatch(/output is too large \(6 characters; the limit is 5 characters\)/)
+      expect(r.items?.ea.ran).toBe(2)
+    })
+
+    it('stops between items once aborted and drops the partial result', async () => {
+      const ac = new AbortController()
+      const stopper = u('stopper', x => { if (x === 'b') ac.abort(); return String(x).toUpperCase() })
+      const r = await runPipeline('a\nb\nc', [each([step('i', 'stopper')]), step('after', 'exclaim')],
+        { load: id => (id === 'stopper' ? stopper : load(id)), signal: ac.signal })
+      expect(r.aborted).toBe(true)
+      expect(r.out).toBe('a\nb\nc')
+      expect(r.skipped.ea).toBe('aborted')
+      expect(r.skipped.after).toBe('aborted')
+      expect(r.items?.ea.ran).toBe(2)
+    })
+
+    it('loads each utility once, not once per item', async () => {
+      let loads = 0
+      const r = await runPipeline('a\nb\nc\nd', [each([step('i', 'upper'), step('j', 'exclaim')])],
+        { load: id => { loads++; return load(id) } })
+      expect(r.out).toBe('A!\nB!\nC!\nD!')
+      expect(loads).toBe(2)
+    })
+
+    it('reports an unknown utility on every item as a failure, not a rejection', async () => {
+      const r = await runPipeline('a\nb', [each([step('i', 'nope')])], { load })
+      expect(r.err.ea).toBe('2 of 2 lines failed (first: line 1: unknown utility: nope)')
+      expect(r.out).toBe('a\nb')
+    })
+
+    it('gives the host a turn between items once a time slice has passed', async () => {
+      let turns = 0
+      const r = await runPipeline('a\nb\nc', [each([step('i', 'slow')])],
+        { load, yieldToHost: async () => { turns++ } })
+      expect(r.out).toBe('a\nb\nc')
+      expect(turns).toBeGreaterThanOrEqual(1)
+    })
+
+    it('sums nested timings over items and reports nested steps once, after the items', async () => {
+      let t = 0
+      const events: string[] = []
+      const r = await runPipeline('a\nb\nc', [each([step('i', 'upper'), step('j', 'boom', { enabled: false })])],
+        { load, clock: () => (t += 5), onStep: e => events.push(`${e.id}:${e.status}`) })
+      expect(r.timings.i).toBe(15)
+      expect(events).toEqual(['ea:start', 'i:done', 'j:skipped', 'ea:done'])
     })
   })
 

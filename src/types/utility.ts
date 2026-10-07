@@ -162,11 +162,42 @@ export interface MacroStep extends StepBase {
   macroId?: string;
 }
 
-export type PipelineStep = UtilityStep | BranchStep | MacroStep;
+/** How a "run on each" step cuts its input into items, and so how it puts them back together. */
+export type SplitSpec =
+  /** Every line; a CRLF line's `\r` is set aside and restored, a final newline is not an extra item. */
+  | { mode: 'lines' }
+  /** Pieces between occurrences of a literal, non-empty separator. */
+  | { mode: 'delimiter'; separator: string }
+  /** Every element of a top-level JSON array; the output is an array of the same length. */
+  | { mode: 'json-array' }
+  /** Every value of a top-level JSON object (not recursive); keys and their order are kept. */
+  | { mode: 'json-values' };
 
-/** A whole pipeline as stored, shared, and exchanged with the CLI/API. */
+export type SplitMode = SplitSpec['mode'];
+
+/**
+ * Map: split the input into items, run `steps` on every item on its own, and put
+ * the results back where the items came from. `onError` also decides what a failed
+ * item becomes: `passthrough` keeps what its steps produced, `empty` blanks it, and
+ * `stop` fails the whole step.
+ */
+export interface EachStep extends StepBase {
+  type: 'each';
+  split: SplitSpec;
+  steps: PipelineStep[];
+  /** Leave empty items as they are instead of running `steps` on them. Default true. */
+  skipEmpty?: boolean;
+}
+
+export type PipelineStep = UtilityStep | BranchStep | MacroStep | EachStep;
+
+/**
+ * A whole pipeline as stored, shared, and exchanged with the CLI/API. `v` is the
+ * oldest schema that can read it: 3 once any step is a "run on each" step, else 2,
+ * so builds that predate a feature refuse a document instead of dropping its steps.
+ */
 export interface PipelineDoc {
-  v: 2;
+  v: 2 | 3;
   name?: string;
   description?: string;
   steps: PipelineStep[];
