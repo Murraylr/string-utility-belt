@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Recipes in the browser extension** — every recipe page offers "Save to extension" when the String Utility
+  Belt extension is installed, saving the recipe under its name to the right-click menu in one click. In a
+  desktop Chrome, Edge or other Chromium browser without it, the page links to the extension's Chrome Web
+  Store listing instead; other browsers and phones, which can't install it, see neither.
+
 ### Fixed
 
 - CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it

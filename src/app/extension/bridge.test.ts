@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { APP_SOURCE, BRIDGE_PROTOCOL, LEGACY_STEP_TYPES, STORE_EXTENSION_ID } from '@/core/extensionBridge'
-import { __resetExtensionBridgeForTests, extensionIds, getExtension, sendToExtension, useExtension } from './bridge'
+import { __resetExtensionBridgeForTests, extensionIds, getExtension, sendToExtension, useExtension, useExtensionStatus } from './bridge'
 import { installFakeExtension } from './fakeExtension'
 
 beforeEach(() => {
@@ -48,6 +48,27 @@ describe('extension presence', () => {
     await waitFor(() => expect(fake.sent).toHaveLength(1))
     await new Promise(r => setTimeout(r, 0))
     expect(getExtension()).toBeNull()
+  })
+})
+
+describe('extension status', () => {
+  it('is absent at once when the page has no chrome.runtime', () => {
+    const { result } = renderHook(() => useExtensionStatus())
+    expect(result.current).toBe('absent')
+  })
+
+  it('is checking while the ping is out, then the extension that answered', async () => {
+    installFakeExtension({ version: '2.0.0' })
+    const { result } = renderHook(() => useExtensionStatus())
+    expect(result.current).toBe('checking')
+    await waitFor(() => expect(result.current).toEqual({ id: STORE_EXTENSION_ID, version: '2.0.0', stepTypes: LEGACY_STEP_TYPES }))
+  })
+
+  it('is checking while the ping is out, then absent when no extension answers', async () => {
+    installFakeExtension({ id: 'some-other-extension' })
+    const { result } = renderHook(() => useExtensionStatus())
+    expect(result.current).toBe('checking')
+    await waitFor(() => expect(result.current).toBe('absent'))
   })
 })
 
