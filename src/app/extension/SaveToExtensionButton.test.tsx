@@ -86,6 +86,29 @@ describe('SaveToExtensionButton', () => {
     expect(screen.getByRole('button', { name: 'save pipeline' })).toBeDisabled()
   })
 
+  describe('"run on each" steps', () => {
+    const withEach: PipelineStep[] = [
+      ...STEPS,
+      { id: 'e', enabled: true, type: 'each', split: { mode: 'lines' }, skipEmpty: true, steps: [{ id: 'd', enabled: true, utilityId: 'trim', params: {} }] },
+    ]
+
+    it('are refused up front by an extension that does not list them (it would drop them while saving)', async () => {
+      await openDialog(withEach, 'Per line')
+      expect(screen.getByRole('alert')).toHaveTextContent(/can't save "run on each" steps\. Update the extension/)
+      expect(screen.getByRole('button', { name: 'save pipeline' })).toBeDisabled()
+    })
+
+    it('are saved by an extension that lists them', async () => {
+      vi.unstubAllGlobals()
+      __resetExtensionBridgeForTests()
+      fake = installFakeExtension({ stepTypes: ['utility', 'branch', 'macro', 'each'] })
+      const user = await openDialog(withEach, 'Per line')
+      expect(screen.queryByRole('alert')).toBeNull()
+      await user.click(screen.getByRole('button', { name: 'save pipeline' }))
+      expect(lastRequest()).toEqual({ type: 'save-pipeline', name: 'Per line', steps: withEach })
+    })
+  })
+
   it('cannot save an empty pipeline', async () => {
     await openDialog([], 'Nothing')
     expect(screen.getByText(/add some steps/i)).toBeInTheDocument()

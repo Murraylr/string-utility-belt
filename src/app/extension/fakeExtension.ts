@@ -13,8 +13,12 @@ export interface FakeExtension {
   respond(fn: (request: Record<string, any>) => BridgeResult | undefined): void
 }
 
-/** Installs `chrome.runtime` with an extension (by default the store one) answering pings with `version`. */
-export function installFakeExtension({ id = 'onmlbgadajghegkcpkkhlmmognihjfbh', version = '1.0.0' } = {}): FakeExtension {
+/**
+ * Installs `chrome.runtime` with an extension (by default the store one) answering pings
+ * with `version`, and with `stepTypes` when given (omitted: an extension that predates it).
+ */
+export function installFakeExtension({ id = 'onmlbgadajghegkcpkkhlmmognihjfbh', version = '1.0.0', stepTypes }:
+  { id?: string; version?: string; stepTypes?: string[] } = {}): FakeExtension {
   let responder: (request: Record<string, any>) => BridgeResult | undefined = () => ({ ok: true, message: 'ok' })
   const runtime: { lastError?: { message: string }; sendMessage: ReturnType<typeof vi.fn> } = {
     sendMessage: vi.fn((target: string, message: Record<string, any>, callback: (response: unknown) => void) => {
@@ -26,7 +30,7 @@ export function installFakeExtension({ id = 'onmlbgadajghegkcpkkhlmmognihjfbh', 
           delete runtime.lastError
           return
         }
-        const answer = message.type === 'ping' ? { protocol: 1, version } : responder(message.request)
+        const answer = message.type === 'ping' ? { protocol: 1, version, ...(stepTypes ? { stepTypes } : {}) } : responder(message.request)
         if (answer !== undefined) callback(answer)
       })
     }),

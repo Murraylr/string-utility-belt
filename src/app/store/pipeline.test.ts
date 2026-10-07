@@ -105,6 +105,75 @@ describe('pipelineReducer', () => {
     expect(ids(st)).toEqual(['a', 'b', 'c'])
   })
 
+  describe('run on each', () => {
+    const each = (steps: PipelineStep[] = [], id = 'ea'): PipelineStep =>
+      ({ id, type: 'each', enabled: true, split: { mode: 'lines' }, skipEmpty: true, steps })
+
+    it('adds an each step that splits on lines by default, or as given', () => {
+      let st = r(start(s('a')), { type: 'ADD_EACH', id: 'e1' })
+      expect(st.steps[1]).toEqual({ id: 'e1', type: 'each', enabled: true, split: { mode: 'lines' }, skipEmpty: true, steps: [] })
+      st = r(st, { type: 'ADD_EACH', id: 'e2', split: { mode: 'json-values' }, target: { afterId: 'a' } })
+      expect(ids(st)).toEqual(['a', 'e2', 'e1'])
+      expect((st.steps[1] as any).split).toEqual({ mode: 'json-values' })
+    })
+
+    it('adds, moves, removes and reorders steps inside its body, and inside an each nested in a branch', () => {
+      const br: PipelineStep = { id: 'br', type: 'branch', enabled: true, merge: { mode: 'concat' }, branches: [[], [each([s('n1')], 'inner')]] }
+      let st = r(start(each([s('x'), s('y')]), br), { type: 'ADD_STEP', utilityId: 'case', id: 'z', target: { parentId: 'ea', afterId: 'x' } })
+      expect((st.steps[0] as any).steps.map((x: any) => x.id)).toEqual(['x', 'z', 'y'])
+      st = r(st, { type: 'MOVE_STEP', id: 'y', direction: 'up' })
+      expect((st.steps[0] as any).steps.map((x: any) => x.id)).toEqual(['x', 'y', 'z'])
+      st = r(st, { type: 'REORDER', ids: ['z', 'x', 'y'], parentId: 'ea' })
+      expect((st.steps[0] as any).steps.map((x: any) => x.id)).toEqual(['z', 'x', 'y'])
+      st = r(st, { type: 'REMOVE_STEP', id: 'x' })
+      expect((st.steps[0] as any).steps.map((x: any) => x.id)).toEqual(['z', 'y'])
+      st = r(st, { type: 'ADD_STEP', utilityId: 'trim', id: 'n2', target: { parentId: 'inner' } })
+      expect((findStep(st.steps, 'inner') as any).steps.map((x: any) => x.id)).toEqual(['n1', 'n2'])
+      st = r(st, { type: 'SET_PARAMS', id: 'n2', params: { mode: 'both' } })
+      expect((findStep(st.steps, 'n2') as any).params).toEqual({ mode: 'both' })
+    })
+
+    it('patches the split and the empty-item rule as undoable edits', () => {
+      let st = r(start(each([s('x')])), { type: 'UPDATE_STEP', id: 'ea', patch: { split: { mode: 'delimiter', separator: ',' } } })
+      st = r(st, { type: 'UPDATE_STEP', id: 'ea', patch: { skipEmpty: false } })
+      expect(st.steps[0]).toMatchObject({ split: { mode: 'delimiter', separator: ',' }, skipEmpty: false })
+      st = r(st, { type: 'UNDO' })
+      expect((st.steps[0] as any).skipEmpty).toBe(true)
+      st = r(st, { type: 'UNDO' })
+      expect((st.steps[0] as any).split).toEqual({ mode: 'lines' })
+      st = r(st, { type: 'REDO' })
+      expect((st.steps[0] as any).split).toEqual({ mode: 'delimiter', separator: ',' })
+    })
+
+    it('wraps a contiguous run into an each step, unwraps it, and undoes both', () => {
+      let st = r(start(s('a'), s('b'), s('c')), { type: 'WRAP', ids: ['b', 'c'], as: 'each', split: { mode: 'json-array' } })
+      expect(st.steps).toHaveLength(2)
+      expect(st.steps[1]).toMatchObject({ type: 'each', split: { mode: 'json-array' }, skipEmpty: true })
+      expect((st.steps[1] as any).steps.map((x: any) => x.id)).toEqual(['b', 'c'])
+      const wrappedId = st.steps[1].id
+      st = r(st, { type: 'UNWRAP', id: wrappedId })
+      expect(ids(st)).toEqual(['a', 'b', 'c'])
+      st = r(st, { type: 'UNDO' })
+      expect(ids(st)).toEqual(['a', wrappedId])
+      st = r(st, { type: 'UNDO' })
+      expect(ids(st)).toEqual(['a', 'b', 'c'])
+    })
+
+    it('bulk-toggles steps inside an each body, still never enabling custom code', () => {
+      const st = r(start(each([s('x', 'trim', { enabled: false }), s('js', 'custom_js', { enabled: false })])), { type: 'SET_ALL_ENABLED', enabled: true })
+      expect(findStep(st.steps, 'x')?.enabled).toBe(true)
+      expect(findStep(st.steps, 'js')?.enabled).toBe(false)
+    })
+
+    it('duplicates an each step with fresh ids throughout', () => {
+      const st = r(start(each([s('x')])), { type: 'DUPLICATE_STEP', id: 'ea' })
+      expect(st.steps).toHaveLength(2)
+      expect(st.steps[1].id).not.toBe('ea')
+      expect((st.steps[1] as any).steps[0].id).not.toBe('x')
+      expect((st.steps[1] as any).split).toEqual({ mode: 'lines' })
+    })
+  })
+
   it('refuses to wrap a non-contiguous selection', () => {
     const base = start(s('a'), s('b'), s('c'))
     expect(r(base, { type: 'WRAP', ids: ['a', 'c'], as: 'macro' })).toBe(base)

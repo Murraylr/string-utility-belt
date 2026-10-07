@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'react'
 import type { PipelineStep } from '@/types/utility'
-import { sanitizeSteps, SCHEMA_VERSION } from '@/core/serialize'
+import { sanitizeSteps, schemaVersionFor, SCHEMA_VERSION } from '@/core/serialize'
 import { stepId } from '@/core/steps'
 import { quarantineUntrusted } from '@/app/share/trust'
 
@@ -53,6 +53,14 @@ function storedVersion(): number {
   }
 }
 
+/**
+ * The oldest schema that can read every entry: a library without "run on each" steps
+ * stays v2, so a tab still running an older build can keep writing to it (it would
+ * lose nothing), while one holding such steps is refused by that tab instead of
+ * being rewritten without them.
+ */
+const libraryVersion = (entries: LibraryEntry[]) => Math.max(2, ...entries.map(e => schemaVersionFor(e.steps)))
+
 function writeAll(entries: LibraryEntry[]) {
   // A newer build (another tab, after a deploy) owns this document: rewriting it here
   // would silently drop every field this build does not know about.
@@ -60,7 +68,7 @@ function writeAll(entries: LibraryEntry[]) {
     throw new LibraryWriteError('Your library was saved by a newer version of String Utility Belt. Reload the page to update before changing it.')
   }
   try {
-    localStorage.setItem(LIBRARY_KEY, JSON.stringify({ v: SCHEMA_VERSION, entries }))
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify({ v: libraryVersion(entries), entries }))
   } catch {
     throw new LibraryWriteError('Could not save to your library: browser storage is full or disabled.')
   }
@@ -135,7 +143,8 @@ export function deleteEntry(id: string): void {
 
 /** The whole library as a portable JSON document. */
 export function exportLibrary(): string {
-  return JSON.stringify({ v: SCHEMA_VERSION, entries: readAll() }, null, 2)
+  const entries = readAll()
+  return JSON.stringify({ v: libraryVersion(entries), entries }, null, 2)
 }
 
 /**

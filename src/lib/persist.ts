@@ -1,5 +1,5 @@
 import type { PipelineStep } from '@/types/utility'
-import { migratePipeline, SCHEMA_VERSION } from '@/core/serialize'
+import { migratePipeline, schemaVersionFor } from '@/core/serialize'
 
 const CURRENT_KEY = 'string-utility-belt'
 
@@ -11,10 +11,12 @@ export interface PersistedState {
   libraryId?: string
 }
 
+/** Stored with the oldest schema that can read it, like every pipeline document (see `schemaVersionFor`). */
 export function saveState(state: Partial<PersistedState>) {
+  const steps = state?.steps ?? []
   const safe = {
-    v: SCHEMA_VERSION,
-    steps: state?.steps ?? [],
+    v: schemaVersionFor(steps),
+    steps,
     showPreviews: !!state?.showPreviews,
     ...(state?.name ? { name: state.name } : {}),
     ...(state?.libraryId ? { libraryId: state.libraryId } : {}),
@@ -23,8 +25,8 @@ export function saveState(state: Partial<PersistedState>) {
 }
 
 /**
- * Load the working pipeline. Accepts every stored shape (v1 `{steps, showPreviews}`
- * and v2), and drops entries that would crash the render — anything else, e.g. an
+ * Load the working pipeline. Accepts every stored shape (v1 `{steps, showPreviews}`,
+ * v2 and v3), and drops entries that would crash the render — anything else, e.g. an
  * unknown utilityId, degrades gracefully to a step error.
  */
 export function loadState(): PersistedState {

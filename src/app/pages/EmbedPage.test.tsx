@@ -65,6 +65,24 @@ describe('EmbedPage', { timeout: 30_000 }, () => {
     expect(localStorage.length).toBe(0)
   })
 
+  it('runs a "run on each" step per line, lists it by what it does, and quarantines custom code inside it', async () => {
+    const payload = encodeShare({
+      v: 3,
+      steps: [{
+        id: 'e', type: 'each', enabled: true, split: { mode: 'lines' }, skipEmpty: true,
+        steps: [
+          { id: 'd', utilityId: 'base64_decode', enabled: true, params: {} },
+          { id: 'js', utilityId: 'custom_js', enabled: true, params: { code: 'return "ran"' } },
+        ],
+      }],
+      input: 'aGk=\r\n\nYnll\n',
+    })
+    render(<EmbedPage payload={payload} />)
+    expect(screen.getByRole('list', { name: 'steps' })).toHaveTextContent('run on each line (2 steps)')
+    expect(screen.getByText(/custom code.*disabled/i)).toBeInTheDocument()
+    await waitFor(() => expect(result().textContent).toBe('hi\r\n\nbye\n'), RUN)
+  })
+
   it('shows a step error instead of an empty result', async () => {
     const payload = encodeShare({
       v: 2,

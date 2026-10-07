@@ -9,9 +9,11 @@ export interface AdvancedSectionProps {
   onError?: ErrorPolicy
   /** Receives `{ condition }` or `{ onError }`; `undefined` values mean "back to the default". */
   onUpdate: (patch: Record<string, unknown>) => void
+  /** What the error policy means for this kind of step, when it means more than usual. */
+  errorHint?: string
 }
 
-export default function AdvancedSection({ condition, onError, onUpdate }: AdvancedSectionProps) {
+export default function AdvancedSection({ condition, onError, onUpdate, errorHint }: AdvancedSectionProps) {
   const [open, setOpen] = useState(false)
   const panelId = useId()
   return (
@@ -29,6 +31,7 @@ export default function AdvancedSection({ condition, onError, onUpdate }: Advanc
           <div>
             <div className="muted text-xs mb-1">error policy</div>
             <ErrorPolicySelect value={onError} onChange={v => onUpdate({ onError: v })} />
+            {errorHint && <p className="text-xs muted mt-1">{errorHint}</p>}
           </div>
         </div>
       )}

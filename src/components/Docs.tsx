@@ -1,11 +1,13 @@
 import React from 'react'
 import { DOCS_DESCRIPTION, DOCS_TITLE } from '@/app/pages/seo'
 import { useDocumentMeta } from '@/app/pages/useDocumentMeta'
+import { MAX_EACH_ITEMS } from '@/core/runner'
 
 const SECTIONS = [
   { id: 'pipeline', title: 'Build a pipeline' },
   { id: 'steps', title: 'Work with steps' },
   { id: 'advanced', title: 'Branches, macros and conditions' },
+  { id: 'each', title: 'Run steps on each line or value' },
   { id: 'previews', title: 'Previews and errors' },
   { id: 'types', title: 'Strings, bytes and JSON' },
   { id: 'output', title: 'Get the result out' },
@@ -21,6 +23,13 @@ const STEP_CONTROLS: [string, string][] = [
   ['Step menu', 'Rename, duplicate, move, solo or delete the step.'],
   ['utility dropdown', 'Swaps the step to a different utility. The new utility starts at its defaults.'],
   ['Parameter fields', 'Settings for the utility, such as case mode, regex pattern or max length. Each field starts at a sensible default.'],
+]
+
+const SPLIT_MODES: [string, string][] = [
+  ['line', 'Every line. Windows (CRLF) line endings are kept, and a final newline does not count as an extra empty line.'],
+  ['piece between separators', 'The text between each occurrence of a separator you type, such as a comma.'],
+  ['JSON array element', 'Every element of a top-level JSON array. The result is an array of the same length.'],
+  ['JSON object value', 'Every value of a top-level JSON object. Keys stay as they are; nested objects are not split further.'],
 ]
 
 const EXAMPLE: [string, string, string][] = [
@@ -120,6 +129,34 @@ export default function Docs() {
             <li><strong>branch</strong> forks the pipeline into parallel lanes that each get the same input. Their outputs are merged with a separator you choose.</li>
             <li>Select a run of neighbouring steps to group them into a <strong>macro</strong>: one reusable step you can save to your library.</li>
             <li>In a step's advanced settings, a <strong>run condition</strong> skips the step unless the input is non-empty, matches a regex or is a given type.</li>
+          </ul>
+        </Section>
+
+        <Section id="each" title="Run steps on each line or value">
+          <p>
+            Most steps work on the whole input at once. A <strong>run on each</strong> step splits its input into items,
+            runs the steps inside it on every item on its own, and puts the results back where the items came from. Use
+            it to base64-decode every value of a Kubernetes Secret, decode one JWT per log line, or slugify a list of
+            titles.
+          </p>
+          <p>Add one with the <strong>each</strong> button, or select steps and choose <strong>Run on each line</strong>. Then pick how to split:</p>
+          <Table head={['Split into each…', 'Items']} rows={SPLIT_MODES} />
+          <ul className="list-disc pl-5 grid gap-1">
+            <li><strong>skip empty</strong> (on by default) leaves empty lines and empty values as they are.</li>
+            <li>
+              A result that is JSON goes back into a line as one line of compact JSON. In JSON mode, a number, true, false
+              or null stays one if its result still reads as one.
+            </li>
+            <li>
+              When the steps fail on an item, the step's <strong>on error</strong> setting decides what that item becomes:
+              by default it keeps whatever its steps produced, <em>empty output</em> blanks it, and <em>stop</em> fails the
+              whole step. The other items are never affected. The card counts the items that failed.
+            </li>
+            <li>With previews on, the steps inside show one item: the first that failed, or else the first that ran.</li>
+            <li>
+              One run can process up to {MAX_EACH_ITEMS.toLocaleString('en-US')} items, counting those of each steps nested
+              in others (the HTTP API allows fewer).
+            </li>
           </ul>
         </Section>
 

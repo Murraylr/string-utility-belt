@@ -36,13 +36,26 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - Framework-free: relative imports only, no DOM/React. Consumed by the app, the Worker API and every package.
 - `coerce` (value types, `coerceInputFor`, `isBytes`, display formatting), `params` (resolve defaults,
   declarative validation), `registry` (metadata + lazy loader, env/capability checks), `runner`
-  (`runPipeline(source, steps, { load, previews, signal, env, onStep })`), `serialize` (schema v2,
-  migration, `#/p/…` share links bounded by `MAX_SHARE_CHARS`), `steps`, `sandbox`, `streaming`, `detect`.
+  (`runPipeline(source, steps, { load, previews, signal, env, onStep })`), `serialize` (schema v3,
+  migration, `#/p/…` share links bounded by `MAX_SHARE_CHARS`), `steps`, `split`, `sandbox`, `streaming`, `detect`.
 - The runner enforces declared number/range bounds as step errors and caps any step's output at
   `MAX_VALUE_SIZE` (64 MiB; `maxValueSize` overrides it — the Worker uses 8 MiB), checking a branch's
   lanes before merging them. Steps can be utility steps, `branch` steps (parallel, merged
-  concat/zip/json/pick) or `macro` steps, each with an optional `condition` and `onError` policy
+  concat/zip/json/pick), `macro` steps or `each` steps, each with an optional `condition` and `onError` policy
   (`passthrough` default, `stop`, `empty`).
+- `each` ("run on each") splits its input (`split.ts`: lines, a literal delimiter, JSON array elements, JSON
+  object values), runs its `steps` on every item in a scratch result, and rejoins. Its `onError` also decides
+  what a failed item becomes. One run shares an item budget (`MAX_EACH_ITEMS`, 100 000; `maxEachItems`
+  overrides it — the Worker uses 10 000), yields to the host between items (`yieldToHost`) so a cancel lands,
+  loads each utility once per each step, and records previews for one sample item (`RunResult.items`). Never
+  chunked (`canChunk`).
+- A new step type goes through `steps.ts`: its guard, `childSequences` and `mapChildSequences` (where it
+  keeps nested steps). Tree walks and rebuilds (`walkSteps`, `updateStep`, `cloneWithNewIds`, quarantine,
+  bulk enable) use those, so they need no change; `sanitizeSteps` must parse it strictly (and drops any
+  unknown `type`).
+- Documents carry the oldest schema that can read them (`schemaVersionFor`): v3 only when an `each` step is
+  present, else v2. Every reader refuses `v > SCHEMA_VERSION`, so an older build asks to reload rather than
+  drop steps it cannot read. Write `schemaVersionFor(steps)`, never `SCHEMA_VERSION`, into stored documents.
 
 ### Utility system (`src/utilities/`)
 - Each utility lives in `src/utilities/<id>/index.ts` as a default export of type `Utility`.
@@ -130,7 +143,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - `packages/core` is a build artifact over `src/core` + the static registry; `cli` (`subelt`), `mcp`
   (stdio server; runs jobs in killable child processes), `extension` (MV3), `vscode`. Each has a README.
 - App ↔ extension: `src/core/extensionBridge.ts` is the shared contract (messages, `BRIDGE_ORIGINS`, the store
-  extension id, which utilities the extension can run). The extension is `externally_connectable` from those origins
+  extension id, which utilities the extension can run, and — via `stepTypes` in its ping answer — which step
+  types it can save; an answer without it means `LEGACY_STEP_TYPES`). The extension is `externally_connectable` from those origins
   (no content script: a new install warning would disable the published extension); `src/app/extension/` pings it
   with `chrome.runtime.sendMessage` and shows "save to extension" only when it answers.
 

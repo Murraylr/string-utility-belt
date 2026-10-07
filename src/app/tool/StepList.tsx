@@ -1,7 +1,7 @@
 /**
- * Renders a sequence of steps (the top level, a branch lane, or a macro body) and
- * wires each card to the store. Recursive: branch lanes and macro bodies are
- * StepLists of their own, addressed by `parentId` / `lane`.
+ * Renders a sequence of steps (the top level, a branch lane, or a macro or "run on
+ * each" body) and wires each card to the store. Recursive: branch lanes and macro and
+ * each bodies are StepLists of their own, addressed by `parentId` / `lane`.
  *
  * Owns drag-and-drop reordering (framer-motion `Reorder`) and selection mode
  * (`SelectionProvider`, scoped to this one sequence) for its direct children.
@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { Reorder, useDragControls, useReducedMotion } from 'framer-motion'
 import { GripVertical } from 'lucide-react'
 import type { PipelineStep } from '@/types/utility'
-import { isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
 import { defaultParams } from '@/core/params'
 import StepCard from '@/components/StepCard'
 import Select from '@/components/Select'
@@ -19,6 +19,7 @@ import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useTool } from '@/app/ToolContext'
 import { trackUtilityAdd } from '@/app/analytics/analytics'
 import BranchCard from './steps/BranchCard'
+import EachCard from './steps/EachCard'
 import MacroCard from './steps/MacroCard'
 import { SelectionProvider } from './steps/SelectionContext'
 import { useSelection } from './steps/selection'
@@ -29,6 +30,8 @@ export interface StepListProps {
   steps: PipelineStep[]
   parentId?: string
   lane?: number
+  /** Names a nested sequence in accessible labels ("lane 2", "macro"); defaults from `lane`. */
+  scope?: string
 }
 
 export default function StepList(props: StepListProps) {
@@ -39,7 +42,8 @@ export default function StepList(props: StepListProps) {
   )
 }
 
-function StepListInner({ steps, parentId, lane }: StepListProps) {
+function StepListInner({ steps, parentId, lane, scope }: StepListProps) {
+  const scopeLabel = parentId ? (lane !== undefined ? `lane ${lane + 1}` : scope ?? 'macro') : undefined
   const { dispatch } = useTool()
   const ids = useMemo(() => steps.map(s => s.id), [steps])
   const idsKey = ids.join('\u0000')
@@ -93,8 +97,7 @@ function StepListInner({ steps, parentId, lane }: StepListProps) {
 
   return (
     <div className="grid gap-3">
-      <SelectionBar order={ids} parentId={parentId} lane={lane}
-        scopeLabel={parentId ? (lane !== undefined ? `lane ${lane + 1}` : 'macro') : undefined} />
+      <SelectionBar order={ids} parentId={parentId} lane={lane} scopeLabel={scopeLabel} />
       <Reorder.Group as="div" axis="y" values={order} onReorder={setOrder} className="grid gap-3">
         {rendered.map((step, i) => (
           <ReorderableStep key={step.id} step={step} index={i} total={rendered.length}
@@ -102,7 +105,7 @@ function StepListInner({ steps, parentId, lane }: StepListProps) {
             onRemoving={() => { focusAfterRemove.current = i }} />
         ))}
       </Reorder.Group>
-      {parentId && <AddInto parentId={parentId} lane={lane} />}
+      {parentId && <AddInto parentId={parentId} lane={lane} label={lane !== undefined ? `lane ${lane + 1}` : `this ${scopeLabel}`} />}
       <span role="status" aria-live="polite" className="sr-only">{moveMsg}</span>
     </div>
   )
@@ -197,6 +200,11 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
       <MacroCard step={step} index={index} onDelete={common.onDelete} onToggle={common.onToggle}
         onUnwrap={() => { onRemoving(); dispatch({ type: 'UNWRAP', id: step.id }) }} />
     )
+  } else if (isEachStep(step)) {
+    card = (
+      <EachCard step={step} index={index} onDelete={common.onDelete} onToggle={common.onToggle}
+        onUnwrap={() => { onRemoving(); dispatch({ type: 'UNWRAP', id: step.id }) }} />
+    )
   }
 
   return (
@@ -220,12 +228,12 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
   )
 }
 
-function AddInto({ parentId, lane }: { parentId: string; lane?: number }) {
+function AddInto({ parentId, lane, label }: { parentId: string; lane?: number; label: string }) {
   const { dispatch } = useTool()
   const options = React.useMemo(() => [{ label: '+ add step…', value: '' }, ...utilityOptionGroups()], [])
   return (
     <Select className="text-sm w-full" value="" options={options as any}
-      aria-label={lane !== undefined ? `add a step to lane ${lane + 1}` : 'add a step to this macro'}
+      aria-label={`add a step to ${label}`}
       onChange={id => {
         if (!id) return
         dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)), target: { parentId, lane } })
