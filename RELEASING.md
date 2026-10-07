@@ -260,7 +260,7 @@ no Azure subscription is needed.
 4. Make the app a member of the publisher. The Marketplace adds members by their Azure DevOps ID,
    which only the app itself can look up, so let the workflow do it: run a release (any run that
    includes `vscode`). Its **Check Marketplace access** step fails with *Add member ID `<id>` to the
-   publisher*. Open
+   publisher*: the app's Azure DevOps identity, not its client ID. Open
    [the publisher's page](https://marketplace.visualstudio.com/manage/publishers/stringutilitybelt) →
    **Members → Add**, paste the ID, role **Contributor**, add, and **Re-run failed jobs**. If the
    `stringutilitybelt` publisher doesn't exist yet, create it there first.
