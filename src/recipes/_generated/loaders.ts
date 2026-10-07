@@ -3,5 +3,16 @@ import type { Recipe } from '../types'
 
 /** One chunk per recipe: its definition and its guide markdown. */
 export const RECIPE_LOADERS: Record<string, () => Promise<{ recipe: Recipe; guide: string }>> = {
+  "bulk-utm-link-builder": () => Promise.all([import('../bulk-utm-link-builder/recipe'), import('../bulk-utm-link-builder/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "clean-chatgpt-text": () => Promise.all([import('../clean-chatgpt-text/recipe'), import('../clean-chatgpt-text/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "decode-cloudwatch-logs-data": () => Promise.all([import('../decode-cloudwatch-logs-data/recipe'), import('../decode-cloudwatch-logs-data/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "decode-flask-session-cookie": () => Promise.all([import('../decode-flask-session-cookie/recipe'), import('../decode-flask-session-cookie/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "decode-helm-release-secret": () => Promise.all([import('../decode-helm-release-secret/recipe'), import('../decode-helm-release-secret/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "decode-saml-request": () => Promise.all([import('../decode-saml-request/recipe'), import('../decode-saml-request/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "excel-column-to-sql-in-clause": () => Promise.all([import('../excel-column-to-sql-in-clause/recipe'), import('../excel-column-to-sql-in-clause/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "fix-bash-bad-interpreter": () => Promise.all([import('../fix-bash-bad-interpreter/recipe'), import('../fix-bash-bad-interpreter/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "fix-pdf-line-breaks": () => Promise.all([import('../fix-pdf-line-breaks/recipe'), import('../fix-pdf-line-breaks/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "nested-json-to-csv": () => Promise.all([import('../nested-json-to-csv/recipe'), import('../nested-json-to-csv/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "spring-boot-yaml-to-env-vars": () => Promise.all([import('../spring-boot-yaml-to-env-vars/recipe'), import('../spring-boot-yaml-to-env-vars/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "unescape-stringified-json": () => Promise.all([import('../unescape-stringified-json/recipe'), import('../unescape-stringified-json/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
 }

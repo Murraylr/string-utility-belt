@@ -68,5 +68,6 @@ export const recipesDescription = (count: number): string =>
  * no longer exist are skipped.
  */
 export const FEATURED_RECIPE_SLUGS = [
-  'excel-column-to-sql-in-clause',
+  'decode-saml-request', 'excel-column-to-sql-in-clause', 'fix-pdf-line-breaks',
+  'decode-helm-release-secret', 'unescape-stringified-json', 'nested-json-to-csv',
 ] as const

@@ -9,6 +9,7 @@ const recipe: Recipe = {
   category: 'Data & Spreadsheets',
   primaryQuery: 'excel column to sql in clause',
   published: '2026-10-07',
+  related: ['nested-json-to-csv'],
   steps: [
     step('trim', 'trim_lines', { side: 'both', characters: '' },
       'Cells copied from a spreadsheet often carry leading or trailing spaces, tabs or non-breaking spaces, which would end up inside the quotes.'),
