@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import util from './index'
+import csvToJson from '../csv_to_json/index'
 
 const CSV = 'First Name,Last  Name,E-Mail\nAda,Lovelace,ada@example.com'
 
@@ -71,6 +72,47 @@ describe('csv_normalize_headers', () => {
     expect(await util.apply('"a,b",c\n1,2', { style: 'lower' })).toBe('"a,b",c\n1,2')
     expect(await util.apply('A B,C\r\n1,2', {})).toBe('a_b,c\r\n1,2')
     expect(await util.apply('A B,C\n1,2\n', {})).toBe('a_b,c\n1,2\n')
+  })
+
+  describe('blank lines', () => {
+    it('keeps an empty value in a one-column table, written as ""', async () => {
+      const out = String(await util.apply('Email Address\na@example.com\n\nb@example.com\n', {}))
+      expect(out).toBe('email_address\na@example.com\n""\nb@example.com\n')
+      expect(JSON.parse(String(await csvToJson.apply(out, {})))).toEqual([
+        { email_address: 'a@example.com' },
+        { email_address: '' },
+        { email_address: 'b@example.com' },
+      ])
+    })
+
+    it('does not turn a trailing newline into a phantom row', async () => {
+      expect(await util.apply('Email\na\nb\n', {})).toBe('email\na\nb\n')
+      expect(await util.apply('Email\na\n', {})).toBe('email\na\n')
+    })
+
+    it('keeps an empty value with CRLF line endings and a trailing CRLF', async () => {
+      expect(await util.apply('Email\r\na\r\n\r\nb\r\n', {})).toBe('email\r\na\r\n""\r\nb\r\n')
+    })
+
+    it('keeps an empty value when there is no trailing newline', async () => {
+      expect(await util.apply('Email\na\n\nb', {})).toBe('email\na\n""\nb')
+      expect(await util.apply('Email\na\n""', {})).toBe('email\na\n""')
+    })
+
+    it('keeps a final empty value followed by the trailing newline', async () => {
+      expect(await util.apply('Email\na\n\n', {})).toBe('email\na\n""\n')
+    })
+
+    it('skips blank lines before the header', async () => {
+      expect(await util.apply('\n\nEmail\na\n', {})).toBe('email\na\n')
+    })
+
+    it('still drops blank lines in a multi-column table', async () => {
+      expect(await util.apply('A B,C\n1,2\n\n3,4\n\n', {})).toBe('a_b,c\n1,2\n3,4\n')
+      expect(await util.apply('A B,C\r\n1,2\r\n\r\n3,4', {})).toBe('a_b,c\r\n1,2\r\n3,4')
+      expect(await util.apply('A B\tC\n1\t2\n\n3\t4\n', {})).toBe('a_b\tc\n1\t2\n3\t4\n')
+      expect(await util.apply('A B,C\n,\n1,2\n', {})).toBe('a_b,c\n,\n1,2\n')
+    })
   })
 
   it('handles empty input without throwing', async () => {

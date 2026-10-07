@@ -146,8 +146,12 @@ const util: Utility = {
       data = input
     }
 
-    const serialize = (rows: string[][]): string =>
-      rows.map((r) => r.map((f) => quoteField(f, delimiter)).join(delimiter)).join(eol)
+    // A row of one empty field is written as `""`, not as a bare blank line: RFC 4180 allows
+    // both, but readers (csv_to_json among them, and pandas by default) skip blank lines, so
+    // only the quoted form keeps an empty value in a one-column table.
+    const serializeRow = (r: string[]): string =>
+      r.length === 1 && r[0] === '' ? '""' : r.map((f) => quoteField(f, delimiter)).join(delimiter)
+    const serialize = (rows: string[][]): string => rows.map(serializeRow).join(eol)
 
     // Shape 1: an array of arrays is already a matrix of cells, with row 0 as the header.
     if (Array.isArray(data) && data.length > 0 && data.every((r) => Array.isArray(r))) {

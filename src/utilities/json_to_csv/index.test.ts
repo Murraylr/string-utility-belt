@@ -115,6 +115,19 @@ describe('json_to_csv', () => {
     expect(JSON.parse(String(await csvToJson.apply(numCsv, { typed: true })))).toEqual(numbers)
   })
 
+  it('writes an empty value in a one-column table as "" so it is not read as a blank line', async () => {
+    const original = [{ email: 'a' }, { email: '' }, { email: 'b' }, { email: '' }]
+    const csv = String(await util.apply(JSON.stringify(original), {}))
+    expect(csv).toBe('email\na\n""\nb\n""')
+    expect(JSON.parse(String(await csvToJson.apply(csv, {})))).toEqual(original)
+
+    expect(await util.apply('[{"email":""}]', { eol: 'crlf' })).toBe('email\r\n""')
+    expect(await util.apply('[{"":"x"}]', {})).toBe('""\nx')
+    expect(await util.apply('[["h"],[""],["x"]]', {})).toBe('h\n""\nx')
+    // two or more columns already carry a delimiter, so they stay unquoted
+    expect(await util.apply('[{"a":"","b":""}]', {})).toBe('a,b\n,')
+  })
+
   it('round-trips crlf and tab-delimited output', async () => {
     const original = [{ a: 'one', b: 'two' }]
     const csv = String(await util.apply(JSON.stringify(original), { eol: 'crlf', delimiter: '\\t' }))

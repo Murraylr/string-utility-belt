@@ -326,16 +326,18 @@ describe('buildSeo over a built dist/', () => {
       guid: item.getElementsByTagName('guid')[0].textContent,
     }))
     const shipped: Array<{ title: string }> = JSON.parse(read(ROOT, 'public/blog/_manifest.json'))
-    // the freshly cut, still empty "Unreleased" section has no item
-    expect(items.map(i => i.title)).toEqual([
+    // The real CHANGELOG's "Unreleased" section fills up between releases (every PR adds to it), so its
+    // item comes and goes; buildRssItems' own tests cover when it appears and how it is dated.
+    const released = items.filter(i => i.title !== 'Unreleased changes')
+    expect(released.map(i => i.title)).toEqual([
       'Release 1.4.0',
       ...shipped.map(p => p.title),
       'Release 1.3.0',
     ])
-    expect(items[0].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
+    expect(released[0].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
     // undated release: no pubDate rather than the build date or the epoch
-    expect(items[3].pubDate).toBeUndefined()
-    expect(items[3].guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
+    expect(released[3].pubDate).toBeUndefined()
+    expect(released[3].guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
   })
 
   it('is idempotent: a second run over its own output changes nothing', async () => {

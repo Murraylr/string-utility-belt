@@ -24,12 +24,19 @@ function unescapeDelimiter(raw: string): string {
   return out
 }
 
-/** RFC 4180 parser: quoted fields, embedded newlines, `""` escapes. Blank lines are skipped. */
+/**
+ * RFC 4180 parser: quoted fields, embedded newlines, `""` escapes. Returns every record,
+ * blank lines included (as a single empty field); a trailing line terminator ends the last
+ * record rather than starting an empty one, so it never yields a phantom row.
+ */
 function parseCsv(text: string, delimiter: string): Row[] {
   const rows: Row[] = []
   let row: Row = []
   let field = ''
   let inQuotes = false
+  // Where the current record began: any text after the last line terminator is a record,
+  // even one that leaves `field` empty (a final `""`).
+  let recordStart = 0
   let i = 0
   while (i < text.length) {
     const c = text[i]
@@ -65,17 +72,23 @@ function parseCsv(text: string, delimiter: string): Row[] {
       rows.push(row)
       row = []
       i += c === '\r' && text[i + 1] === '\n' ? 2 : 1
+      recordStart = i
       continue
     }
     field += c
     i++
   }
   if (inQuotes) throw new Error('unterminated quoted field in CSV input')
-  if (field !== '' || row.length > 0) {
+  if (recordStart < text.length) {
     row.push(field)
     rows.push(row)
   }
-  return rows.filter((r) => r.length > 1 || r[0] !== '')
+  return rows
+}
+
+/** A record of one empty field: what a blank line (or a lone `""`) parses to. */
+function isBlankRow(row: Row): boolean {
+  return row.length === 1 && row[0] === ''
 }
 
 /** Score each candidate delimiter by how consistently it splits the rows. */
@@ -85,7 +98,7 @@ function detectDelimiter(text: string): string {
   for (const candidate of DELIMITER_CANDIDATES) {
     let rows: Row[]
     try {
-      rows = parseCsv(text, candidate)
+      rows = parseCsv(text, candidate).filter((r) => !isBlankRow(r))
     } catch {
       continue
     }
@@ -119,6 +132,16 @@ function csvField(value: string, delimiter: string): string {
     return '"' + value.replace(/"/g, '""') + '"'
   }
   return value
+}
+
+/**
+ * A record of one empty field is written as `""`, not as a bare blank line. RFC 4180 allows
+ * both, but readers (csv_to_json among them, and pandas by default) skip blank lines, so only
+ * the quoted form keeps the record when the output is read back.
+ */
+function csvRow(row: Row, delimiter: string): string {
+  if (isBlankRow(row)) return '""'
+  return row.map((cell) => csvField(cell, delimiter)).join(delimiter)
 }
 
 /** Split into words on case boundaries and non-alphanumerics (Unicode aware). */
@@ -217,11 +240,19 @@ const util: Utility = {
     if (text.trim() === '') return ''
 
     const delim = resolveDelimiter(delimiter, text)
-    const rows = parseCsv(text, delim)
-    if (rows.length === 0) return ''
+    const records = parseCsv(text, delim)
+    const headerAt = records.findIndex((r) => !isBlankRow(r))
+    if (headerAt < 0) return ''
+
+    // Blank lines before the header are skipped. After it, a one-column table's blank line is
+    // a record whose only value is empty, so it is kept; in a wider table a blank line cannot
+    // be a record and is dropped as a stray separator.
+    const header = records[headerAt]
+    const body = records.slice(headerAt + 1)
+    const data = header.length === 1 ? body : body.filter((r) => !isBlankRow(r))
 
     const used = new Set<string>()
-    const headers = rows[0].map((cell, index) => {
+    const headers = header.map((cell, index) => {
       let base = styleName(cell, style)
       if (base === '') base = styleName(`column_${index + 1}`, style)
       if (dedupe === false) return base
@@ -235,12 +266,10 @@ const util: Utility = {
       return name
     })
 
-    const out = [headers, ...rows.slice(1)]
+    const out = [headers, ...data]
     const eol = /\r\n/.test(text) ? '\r\n' : '\n'
     const trailing = /(\r\n|\n|\r)$/.test(text) ? eol : ''
-    return (
-      out.map((row) => row.map((cell) => csvField(cell, delim)).join(delim)).join(eol) + trailing
-    )
+    return out.map((row) => csvRow(row, delim)).join(eol) + trailing
   }
 }
 
