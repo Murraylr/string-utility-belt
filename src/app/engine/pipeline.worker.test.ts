@@ -10,7 +10,16 @@ const scope: { onmessage: ((ev: { data: unknown }) => void) | null; postMessage:
 
 /** A real worker handles each incoming message as its own task, never mid-microtask. */
 const deliver = (data: unknown) => scope.onmessage!({ data })
-const deliverLater = (data: unknown) => setTimeout(() => deliver(data), 0)
+/**
+ * Delivers as a posted message, the way a real worker receives it: queued behind the
+ * run's pending yield and ahead of every later one. Not setTimeout(0), a >=1ms timer
+ * in Node that a warm chain of cached utilities can outrun, cancel arriving too late.
+ */
+const deliverLater = (data: unknown) => {
+  const { port1, port2 } = new MessageChannel()
+  port1.onmessage = () => { port1.close(); deliver(data) }
+  port2.postMessage(null)
+}
 
 const resultFor = async (id: string) => {
   await vi.waitFor(() => { if (!posted.some(m => m.id === id)) throw new Error('no reply yet') }, { timeout: 15_000 })

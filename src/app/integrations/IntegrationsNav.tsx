@@ -1,13 +1,13 @@
 import React from 'react'
-import { Chrome, SquareTerminal } from 'lucide-react'
+import { SquareTerminal } from 'lucide-react'
 import { usePref } from '@/app/prefs'
 import { track } from '@/app/analytics/analytics'
 import { useT } from '@/app/i18n/useT'
 import { INTEGRATION_LINKS, INTEGRATIONS_SEEN_PREF, type IntegrationId } from './links'
-import { McpIcon, VsCodeIcon } from './icons'
+import { ChromeIcon, McpIcon, VsCodeIcon } from './icons'
 
 const ICONS: Record<IntegrationId, React.ComponentType<{ size?: number; className?: string }>> = {
-  chrome: ({ size, className }) => <Chrome size={size} className={className} aria-hidden="true" focusable="false" />,
+  chrome: ChromeIcon,
   vscode: VsCodeIcon,
   mcp: McpIcon,
   cli: ({ size, className }) => <SquareTerminal size={size} className={className} aria-hidden="true" focusable="false" />,

@@ -2,7 +2,7 @@
 
 [![smithery badge](https://smithery.ai/badge/string-utility-belt/string-utility-belt)](https://smithery.ai/servers/string-utility-belt/string-utility-belt)
 
-An [MCP](https://modelcontextprotocol.io) server that exposes String Utility Belt's 246
+An [MCP](https://modelcontextprotocol.io) server that exposes [String Utility Belt](https://stringutilitybelt.com/?utm_source=npm&utm_medium=referral&utm_campaign=mcp)'s 246
 string-transformation utilities — and its pipeline engine — as tools an AI agent can call
 directly, with no browser involved.
 
@@ -83,3 +83,9 @@ npx vitest run packages/mcp/src --minWorkers=1 --maxWorkers=2
 npm run build:mcp
 npx vitest run packages/mcp/src/bin.smoke.test.ts --minWorkers=1 --maxWorkers=1
 ```
+
+## Source and issues
+
+@string-utility-belt/mcp is developed in the [String Utility Belt repository](https://github.com/String-Utility-Belt/string-utility-belt/tree/main/packages/mcp) on GitHub,
+alongside the web app and the other integrations. Report bugs or request features in its
+[issue tracker](https://github.com/String-Utility-Belt/string-utility-belt/issues). MIT licensed.

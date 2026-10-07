@@ -1,18 +1,18 @@
 {
   "name": "@string-utility-belt/mcp",
   "description": "MCP server exposing String Utility Belt's utilities and pipelines as tools for AI agents.",
-  "version": "1.3.1",
+  "version": "1.3.5",
   "mcpName": "com.stringutilitybelt/mcp",
   "author": "String Utility Belt",
   "license": "MIT",
   "homepage": "https://stringutilitybelt.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Murraylr/string-utility-belt.git",
+    "url": "git+https://github.com/String-Utility-Belt/string-utility-belt.git",
     "directory": "packages/mcp"
   },
   "bugs": {
-    "url": "https://github.com/Murraylr/string-utility-belt/issues"
+    "url": "https://github.com/String-Utility-Belt/string-utility-belt/issues"
   },
   "keywords": [
     "mcp",

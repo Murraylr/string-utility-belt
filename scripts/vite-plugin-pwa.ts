@@ -9,8 +9,7 @@
  * `public/` files (manifest, icons) are copied verbatim by Vite under their
  * literal names, so they're passed in as `extra` rather than discovered from the bundle.
  */
-import type { Plugin } from 'vite'
-import type { OutputBundle, OutputChunk } from 'rollup'
+import type { Plugin, Rolldown } from 'vite'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -265,7 +264,7 @@ self.addEventListener('fetch', (event) => {
 `
 }
 
-function extractChunkInfo(bundle: OutputBundle): ChunkInfo[] {
+function extractChunkInfo(bundle: Rolldown.OutputBundle): ChunkInfo[] {
   // Vite emits a module worker's own bundle as plain `.js` assets (no chunk
   // metadata); the chunk that spawns it holds its URL as a string literal.
   const scriptAssets = Object.values(bundle)
@@ -274,7 +273,7 @@ function extractChunkInfo(bundle: OutputBundle): ChunkInfo[] {
   const infos: ChunkInfo[] = []
   for (const file of Object.values(bundle)) {
     if (file.type !== 'chunk') continue
-    const chunk = file as OutputChunk
+    const chunk = file as Rolldown.OutputChunk
     infos.push({
       fileName: chunk.fileName,
       isEntry: chunk.isEntry,

@@ -1,6 +1,15 @@
 import type { Plugin, ViteDevServer } from 'vite'
 import { spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import path from 'node:path'
+
+/** vite-node's CLI script, read from its `bin` so a release that moves the file doesn't break regeneration. */
+function viteNodeCli(root: string): string {
+  const manifestPath = createRequire(path.join(root, 'package.json')).resolve('vite-node/package.json')
+  const { bin } = JSON.parse(readFileSync(manifestPath, 'utf8')) as { bin: string | Record<string, string> }
+  return path.resolve(path.dirname(manifestPath), typeof bin === 'string' ? bin : bin['vite-node'])
+}
 
 /**
  * Dev-server only: regenerate the utility manifest and the recipe index when a
@@ -13,12 +22,14 @@ export function utilityManifest(): Plugin {
   let timer: ReturnType<typeof setTimeout> | undefined
   let running = false
   let pending = false
+  let cli: string | undefined
 
   const run = (server: ViteDevServer) => {
     if (running) { pending = true; return }
     running = true
     const root = server.config.root
-    const child = spawn(process.execPath, [path.join(root, 'node_modules/vite-node/vite-node.mjs'), 'scripts/gen.ts'], {
+    cli ??= viteNodeCli(root)
+    const child = spawn(process.execPath, [cli, 'scripts/gen.ts'], {
       cwd: root, stdio: ['ignore', 'inherit', 'inherit'],
     })
     child.on('exit', () => {

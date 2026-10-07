@@ -26,7 +26,20 @@ export default defineConfig(async ({ mode }) => {
     plugins,
     // `pipeline.worker.ts` is a code-split module worker (`new Worker(url, { type: 'module' })`);
     // Rollup can't code-split into the default 'iife' worker format, so builds fail without this.
-    worker: { format: 'es' as const },
+    worker: {
+      format: 'es' as const,
+      // The worker and the app lazy-load the same utility chunks. Vite gives the app's bundle these
+      // output options but not the worker's, so the two minify the same module differently, the
+      // content hashes differ and every utility ships twice (+~470 KB gzip, and fetched twice).
+      // Matching them makes the outputs byte-identical, so each chunk is emitted once and shared.
+      rolldownOptions: {
+        output: {
+          topLevelVar: true,
+          generatedCode: { preset: 'es2015' as const },
+          comments: { annotation: false, jsdoc: false, legal: false },
+        },
+      },
+    },
     // Vitest config (so it doesn't try to bring in the CF plugin)
     test: {
       environment: 'jsdom',

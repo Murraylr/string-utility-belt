@@ -13,7 +13,7 @@ extension and the VS Code extension).
 
 Report them privately instead, either:
 
-- through GitHub's [private vulnerability reporting](https://github.com/Murraylr/string-utility-belt/security/advisories/new), or
+- through GitHub's [private vulnerability reporting](https://github.com/String-Utility-Belt/string-utility-belt/security/advisories/new), or
 - by email to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com) with "Security" in the subject.
 
 Include what is affected (site, HTTP API, a package or an extension), the steps or a proof of concept

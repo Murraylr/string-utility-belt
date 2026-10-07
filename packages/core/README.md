@@ -1,6 +1,6 @@
 # @string-utility-belt/core
 
-The framework-free pipeline engine behind [String Utility Belt](https://stringutilitybelt.com) ([source](https://github.com/Murraylr/string-utility-belt)),
+The framework-free pipeline engine behind [String Utility Belt](https://stringutilitybelt.com/?utm_source=npm&utm_medium=referral&utm_campaign=core) ([source](https://github.com/String-Utility-Belt/string-utility-belt)),
 plus all of its 246 string/data utilities, packaged for use outside the browser:
 Node scripts, servers, CLIs, other bundlers.
 
@@ -16,7 +16,7 @@ npm install @string-utility-belt/core
 ```
 
 Requires Node.js 20 or later. To build it from a checkout of the
-[monorepo](https://github.com/Murraylr/string-utility-belt) instead:
+[monorepo](https://github.com/String-Utility-Belt/string-utility-belt) instead:
 
 ```bash
 npm run build:core                       # emits dist/index.mjs (+ lazily loaded chunks)
@@ -120,3 +120,9 @@ node -e "import('./packages/core/dist/index.mjs').then(async m => \
   console.log((await m.run('  hi  ', [{ id: 'a', utilityId: 'trim' }])).out))"
 # -> hi
 ```
+
+## Source and issues
+
+@string-utility-belt/core is developed in the [String Utility Belt repository](https://github.com/String-Utility-Belt/string-utility-belt/tree/main/packages/core) on GitHub,
+alongside the web app and the other integrations. Report bugs or request features in its
+[issue tracker](https://github.com/String-Utility-Belt/string-utility-belt/issues). MIT licensed.

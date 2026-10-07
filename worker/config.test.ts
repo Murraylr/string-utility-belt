@@ -26,12 +26,12 @@ function parseJsonc(text: string): any {
 const config = parseJsonc(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'))
 
 describe('wrangler.jsonc', () => {
-  it('runs this worker for the API and serves ./dist as an SPA otherwise', () => {
+  it('runs this worker for the API and serves ./dist with a real 404 page otherwise', () => {
     expect(config.main).toBe('worker/index.ts')
     expect(config.assets).toMatchObject({
       directory: './dist',
       binding: 'ASSETS',
-      not_found_handling: 'single-page-application',
+      not_found_handling: '404-page',
     })
   })
 

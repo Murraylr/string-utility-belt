@@ -1,6 +1,6 @@
 # subelt
 
-Run a [String Utility Belt](https://stringutilitybelt.com) pipeline from the shell — the same 246
+Run a [String Utility Belt](https://stringutilitybelt.com/?utm_source=npm&utm_medium=referral&utm_campaign=subelt) pipeline from the shell — the same 246
 utilities and pipeline engine as the web app, built on
 [`@string-utility-belt/core`](https://www.npmjs.com/package/@string-utility-belt/core).
 
@@ -10,7 +10,7 @@ echo hi | subelt base64_encode
 # aGkK
 ```
 
-Requires Node.js 20 or later. From a checkout of the [monorepo](https://github.com/Murraylr/string-utility-belt), build and
+Requires Node.js 20 or later. From a checkout of the [monorepo](https://github.com/String-Utility-Belt/string-utility-belt), build and
 run it in place instead:
 
 ```bash
@@ -169,3 +169,9 @@ built-ins are imported, so the published package needs no `dependencies`. The
 libraries utilities load on demand (yaml, sql-formatter, hash-wasm, …) stay in
 their own chunks, so a run only parses what its steps use. Ship the whole
 `dist/` directory (the package's `files` does).
+
+## Source and issues
+
+subelt is developed in the [String Utility Belt repository](https://github.com/String-Utility-Belt/string-utility-belt/tree/main/packages/cli) on GitHub,
+alongside the web app and the other integrations. Report bugs or request features in its
+[issue tracker](https://github.com/String-Utility-Belt/string-utility-belt/issues). MIT licensed.
