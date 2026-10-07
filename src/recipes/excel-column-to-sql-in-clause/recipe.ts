@@ -16,7 +16,7 @@ const recipe: Recipe = {
     step('dedupe', 'line_dedupe', { caseSensitive: true },
       'Repeated values make the list longer without changing the result. Exact matches only, so values that differ in case stay distinct.'),
     step('escape', 'sql_escape', { flavor: 'ansi', wrap: false },
-      "Doubles every apostrophe, so a value like O'Connor cannot end the string early and break (or inject into) the query."),
+      "Doubles every apostrophe, the standard SQL escape, so O'Connor stays one value in PostgreSQL, SQL Server, Oracle and SQLite. On MySQL or MariaDB, set this step's flavor to mysql."),
     step('quote', 'line_affix', { prefix: "'", suffix: "'", skipBlank: true, joinWith: ', ' },
       'Wraps each value in single quotes and joins them with commas, skipping the blank cells between rows.',
       { label: 'quote and join values' }),
@@ -28,8 +28,8 @@ const recipe: Recipe = {
     {
       id: 'email-column',
       title: 'Email column',
-      input: "  dana.whitfield@northwind.com\nmarcus.oneil@contoso.com\n\nPriya.Raman@fabrikam.io \ndana.whitfield@northwind.com\nsean.o'connor@adventure-works.com\n\tleo.martins@contoso.com\nmarcus.oneil@contoso.com\n",
-      output: "IN ('dana.whitfield@northwind.com', 'marcus.oneil@contoso.com', 'Priya.Raman@fabrikam.io', 'sean.o''connor@adventure-works.com', 'leo.martins@contoso.com')",
+      input: "  dana.whitfield@example.com\nmarcus.oneil@example.org\n\nPriya.Raman@example.net \ndana.whitfield@example.com\nsean.o'connor@example.com\n\tleo.martins@example.org\nmarcus.oneil@example.org\n",
+      output: "IN ('dana.whitfield@example.com', 'marcus.oneil@example.org', 'Priya.Raman@example.net', 'sean.o''connor@example.com', 'leo.martins@example.org')",
     },
     {
       id: 'windows-copy',

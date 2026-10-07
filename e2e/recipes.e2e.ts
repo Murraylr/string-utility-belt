@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test'
 import { isSameDocument, markDocument, result, stepCard } from './utils'
 
 const SLUG = 'excel-column-to-sql-in-clause'
-const EXAMPLE_OUTPUT = "IN ('dana.whitfield@northwind.com', 'marcus.oneil@contoso.com', 'Priya.Raman@fabrikam.io', 'sean.o''connor@adventure-works.com', 'leo.martins@contoso.com')"
+const EXAMPLE_OUTPUT = "IN ('dana.whitfield@example.com', 'marcus.oneil@example.org', 'Priya.Raman@example.net', 'sean.o''connor@example.com', 'leo.martins@example.org')"
 
 test.describe('recipe pages', () => {
   test('are pre-rendered: heading, worked example and every step with its output are in the raw HTML', async ({ request }) => {

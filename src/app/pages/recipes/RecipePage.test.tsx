@@ -8,6 +8,7 @@ import { traceRecipe, TRACE_ELEMENT_ID, type RecipeTrace } from '@/recipes/trace
 import recipe from '@/recipes/excel-column-to-sql-in-clause/recipe'
 import { execute } from '@/app/engine/executor'
 import { track } from '@/app/analytics/analytics'
+import * as openInEditor from './openInEditor'
 import RecipePage from './RecipePage'
 
 vi.mock('@/app/engine/executor', async importOriginal => {
@@ -131,6 +132,23 @@ describe('RecipePage', () => {
     expect(loadState().name).toBe(recipe.name)
     expect(sessionStorage.getItem('sub:handoff-input')).toBe('mine')
     expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe', recipe_id: SLUG, step_count: recipe.steps.length })
+  })
+
+  it('follows the share link instead when storage refuses the recipe, counting it as a share-link load', async () => {
+    history.replaceState(null, '', `/recipes/${SLUG}/`)
+    const follow = vi.spyOn(openInEditor, 'followLink').mockImplementation(() => {})
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError') })
+    try {
+      render(<RecipePage slug={SLUG} />)
+      await screen.findByRole('heading', { level: 1, name: recipe.name })
+      const open = screen.getByRole('link', { name: 'Open in the editor' })
+      fireEvent.click(open)
+      expect(follow).toHaveBeenCalledWith(open.getAttribute('href'))
+      expect(location.pathname).toBe(`/recipes/${SLUG}/`)
+      expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe_share_link', recipe_id: SLUG, step_count: recipe.steps.length })
+    } finally {
+      vi.restoreAllMocks()
+    }
   })
 
   it('leaves a modified click (new tab) to the browser', async () => {

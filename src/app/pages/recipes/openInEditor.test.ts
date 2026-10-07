@@ -22,7 +22,7 @@ describe('openPipelineInEditor', () => {
   it('saves the old pipeline to the library, makes the recipe the working pipeline and opens the editor with the input', () => {
     saveState({ steps: mine, showPreviews: false })
     history.replaceState(null, '', '/recipes/demo/')
-    expect(openPipelineInEditor({ steps: recipeSteps, input: 'hello', name: 'Demo recipe' })).toBe(true)
+    expect(openPipelineInEditor({ steps: recipeSteps, input: 'hello', name: 'Demo recipe' })).toBe('opened')
 
     const saved = loadState()
     expect(saved.name).toBe('Demo recipe')
@@ -41,7 +41,7 @@ describe('openPipelineInEditor', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     history.replaceState(null, '', '/recipes/demo/')
 
-    expect(openPipelineInEditor({ steps: recipeSteps, input: 'hello', name: 'Demo recipe' })).toBe(false)
+    expect(openPipelineInEditor({ steps: recipeSteps, input: 'hello', name: 'Demo recipe' })).toBe('kept')
     expect(confirm).toHaveBeenCalledOnce()
     expect(loadState().steps.map(s => s.id)).toEqual(['m'])
     expect(location.pathname).toBe('/recipes/demo/')
@@ -51,8 +51,19 @@ describe('openPipelineInEditor', () => {
     saveState({ steps: mine, showPreviews: false })
     vi.spyOn(autosave, 'autosavePreviousPipeline').mockImplementation(() => { throw new Error('quota') })
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    expect(openPipelineInEditor({ steps: recipeSteps, input: '', name: 'Demo recipe' })).toBe(true)
+    expect(openPipelineInEditor({ steps: recipeSteps, input: '', name: 'Demo recipe' })).toBe('opened')
     expect(loadState().steps).toHaveLength(2)
     expect(sessionStorage.getItem('sub:handoff-input')).toBeNull()
+  })
+
+  it('reports failure, and stays put, when storage refuses the recipe (the editor would open without it)', () => {
+    saveState({ steps: mine, showPreviews: false })
+    history.replaceState(null, '', '/recipes/demo/')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('full', 'QuotaExceededError') })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    expect(openPipelineInEditor({ steps: recipeSteps, input: 'hello', name: 'Demo recipe' })).toBe('failed')
+    expect(location.pathname).toBe('/recipes/demo/')
+    expect(loadState().steps.map(s => s.id)).toEqual(['m'])
   })
 })

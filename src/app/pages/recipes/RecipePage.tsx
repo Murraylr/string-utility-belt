@@ -19,7 +19,7 @@ import { useNoindex } from '../useNoindex'
 import { RecipeArticle, RecipeWidget } from './RecipeArticle'
 import { openInEditorHref, relatedRecipes, stepTitle } from './recipeHelpers'
 import { loadRecipeData, peekRecipeData, type RecipeData } from './recipeData'
-import { openPipelineInEditor } from './openInEditor'
+import { followLink, openPipelineInEditor } from './openInEditor'
 
 type Load = { status: 'loading' } | { status: 'missing' } | { status: 'error' } | { status: 'ok'; data: RecipeData }
 
@@ -150,8 +150,13 @@ function RecipeView({ data }: { data: RecipeData }) {
   const onOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainLeftClick(e, e.currentTarget)) return
     e.preventDefault()
-    track('pipeline_load', { method: 'recipe', recipe_id: recipe.slug, step_count: countSteps(steps) })
-    openPipelineInEditor({ steps, input, name: recipe.name })
+    const outcome = openPipelineInEditor({ steps, input, name: recipe.name })
+    if (outcome === 'kept') return
+    // without storage the editor cannot be handed the recipe: its share link carries the
+    // steps and the example input (never typed text), and runs without storage
+    const method = outcome === 'opened' ? 'recipe' : 'recipe_share_link'
+    track('pipeline_load', { method, recipe_id: recipe.slug, step_count: countSteps(steps) })
+    if (outcome === 'failed') followLink(openHref)
   }
 
   const [copied, setCopied] = useState(false)

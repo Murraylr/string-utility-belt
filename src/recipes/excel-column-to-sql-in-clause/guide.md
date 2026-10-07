@@ -17,6 +17,8 @@ The [trim each line](/util/trim_lines/) step removes leading and trailing whites
 
 ## Things to check before you run the query
 
+The escape step uses the standard SQL rule, which is right for PostgreSQL, SQL Server, Oracle and SQLite. MySQL and MariaDB also treat a backslash inside a string as an escape character by default, so there a value ending in a backslash (`C:\Temp\`) swallows its closing quote and breaks the list, and a crafted value can end the list early: set the step's flavor to `mysql`, which escapes backslashes as well. If the values come from other people rather than your own spreadsheet, do not paste them into SQL at all; pass them as query parameters or load them into a temporary table.
+
 If you copied the header cell along with the column, it ends up in the list as a value: delete the first line of the input, or deselect the header before copying. Numeric IDs come out quoted. Most databases cast `'42'` to a number when comparing it with an integer column, but if yours does not, clear the quote step's prefix and suffix.
 
 Very long lists have limits. Oracle accepts at most 1,000 expressions in one `IN` list, and every database slows down as the list grows into the thousands. For lists that size, load the values into a temporary table and join against it, or pass them as an array parameter (`= ANY($1)` in PostgreSQL). For a quick one-off query from a spreadsheet, though, this recipe gives you a list that is correct the first time.
