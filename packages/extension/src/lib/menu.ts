@@ -14,13 +14,16 @@ type MenuItemType = `${chrome.contextMenus.ItemType}`
 
 const CONTEXTS: [MenuContext, ...MenuContext[]] = ['selection', 'editable']
 
-export interface MenuItemDescriptor {
+interface MenuItemBase {
   id: string
   parentId?: string
-  title?: string
-  type?: MenuItemType
   contexts: [MenuContext, ...MenuContext[]]
 }
+
+/** Mirrors `chrome.contextMenus.CreateProperties`: a title is required unless the item is a separator. */
+export type MenuItemDescriptor =
+  | (MenuItemBase & { type: 'separator'; title?: undefined })
+  | (MenuItemBase & { type?: Exclude<MenuItemType, 'separator'>; title: string })
 
 /**
  * Chrome replaces `%s` in a menu title with the selected text; a user-named
