@@ -43,6 +43,9 @@ export default defineConfig({
         entryFileNames: 'subelt.mjs',
         chunkFileNames: 'chunks/[name]-[hash].mjs',
         banner: chunk => (chunk.isEntry ? '#!/usr/bin/env node' : ''),
+        // unminified output keeps dependencies' JSDoc, e.g. franc-min's `@typedef {import('trigram-utils')…}`:
+        // dead weight in the package that reads like an unbundled import (licence comments are kept)
+        comments: { jsdoc: false },
       },
     },
   },
