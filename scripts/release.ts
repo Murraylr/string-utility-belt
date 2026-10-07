@@ -19,7 +19,7 @@
  *       Uploads the extension package and submits it for review (CWS_ACCESS_TOKEN, CWS_PUBLISHER_ID).
  *
  *   npm run release -- wait-for-npm <package dir> [--minutes <n>]
- *       After a publish: waits (30 minutes by default) until npm serves the package's version. npm
+ *       After a publish: waits (an hour by default) until npm serves the package's version. npm
  *       accepts a publish before it serves it (it scans each new version first), and what comes next
  *       (the MCP Registry, the tag and the GitHub release) needs the version installable.
  *
@@ -187,12 +187,12 @@ async function waitForNpm(args: string[]): Promise<void> {
   const flags = parseFlags(args, ['--minutes'])
   const [packageDir] = flags.positional
   if (!packageDir) throw new Error('usage: wait-for-npm <package dir> [--minutes <n>]')
-  const minutes = Number(flags.values.get('--minutes') ?? 30)
+  const minutes = Number(flags.values.get('--minutes') ?? 60)
   if (!(minutes > 0)) throw new Error('--minutes must be a positive number')
   const { name, version } = JSON.parse(readFileSync(path.resolve(packageDir, 'package.json'), 'utf8')) as { name: string; version: string }
   const served = await poll(async elapsed => {
     if (await npmServes(name, version)) return true
-    console.log(`npm is still processing ${name}@${version} (${Math.floor(elapsed / 60_000)} min so far; usually a few minutes)`)
+    console.log(`npm is still processing ${name}@${version} (${Math.floor(elapsed / 60_000)} min so far; npm scans each new version first, which can take over half an hour)`)
     return false
   }, { timeoutMs: minutes * 60_000, intervalMs: 30_000 })
   if (!served) {

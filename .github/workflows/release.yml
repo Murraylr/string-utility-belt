@@ -159,7 +159,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"core"')
     runs-on: ubuntu-latest
-    timeout-minutes: 50   # includes waiting for npm to serve the new version
+    timeout-minutes: 75   # includes up to an hour waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
@@ -199,7 +199,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"cli"')
     runs-on: ubuntu-latest
-    timeout-minutes: 50   # includes waiting for npm to serve the new version
+    timeout-minutes: 75   # includes up to an hour waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
@@ -238,7 +238,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"mcp"')
     runs-on: ubuntu-latest
-    timeout-minutes: 55   # includes waiting for npm to serve the new version
+    timeout-minutes: 80   # includes up to an hour waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
