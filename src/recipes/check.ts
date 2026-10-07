@@ -15,7 +15,7 @@ import type { UtilityMeta } from '../core/registry'
 import { formatForDisplay } from '../core/coerce'
 import { validateParams } from '../core/params'
 import { sanitizeSteps } from '../core/serialize'
-import { isBranchStep, isMacroStep, isUtilityStep, walkSteps } from '../core/steps'
+import { isUtilityStep, stepTypeOf, walkSteps } from '../core/steps'
 import { parseGuide } from '../app/pages/guide'
 import { proseLines, proseWords } from '../utilities/guideCheck'
 import { RECIPE_CATEGORIES, toPipelineSteps, type Recipe } from './types'
@@ -47,7 +47,10 @@ export const RECIPE_RULES = {
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
-/** Tidying steps: useful, but no recipe on their own. A page needs two real steps besides these (or a branch). */
+/**
+ * Tidying steps: useful, but no recipe on their own. A page needs two real steps besides
+ * these, or a container (branch, macro or "run on each") holding the work.
+ */
 export const HELPER_UTILITIES: ReadonlySet<string> = new Set([
   'trim', 'trim_lines', 'remove_blank_lines', 'collapse_whitespace', 'normalize_line_endings',
 ])
@@ -80,7 +83,7 @@ function sameData(a: unknown, b: unknown): boolean {
 
 function stepName(step: PipelineStep, ctx: RecipeCheckContext): string {
   if (isUtilityStep(step)) return `${step.id} (${ctx.meta(step.utilityId)?.name ?? step.utilityId})`
-  return `${step.id} (${isBranchStep(step) ? 'branch' : 'macro'})`
+  return `${step.id} (${stepTypeOf(step)})`
 }
 
 function checkFields(recipe: Recipe, folder: string, ctx: RecipeCheckContext): string[] {
@@ -136,8 +139,8 @@ function checkSteps(recipe: Recipe, steps: PipelineStep[], ctx: RecipeCheckConte
   if (!sameData(sanitizeSteps(steps), steps)) problems.push('steps change when sanitized (as share links and the library store them): use plain JSON params')
 
   const real = recipe.steps.filter(s => !isUtilityStep(s) || !HELPER_UTILITIES.has(s.utilityId))
-  if (!recipe.steps.some(s => isBranchStep(s) || isMacroStep(s)) && real.length < 2) {
-    problems.push(`needs ≥ 2 steps besides ${[...HELPER_UTILITIES].join('/')} (or a branch): one utility is its own page, at /util/<id>/`)
+  if (!recipe.steps.some(s => !isUtilityStep(s)) && real.length < 2) {
+    problems.push(`needs ≥ 2 steps besides ${[...HELPER_UTILITIES].join('/')} (or a branch, macro or each step): one utility is its own page, at /util/<id>/`)
   }
   for (const s of recipe.steps) {
     const n = words(s.why ?? '')

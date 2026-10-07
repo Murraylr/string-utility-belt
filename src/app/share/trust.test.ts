@@ -94,6 +94,31 @@ describe('untrusted pipelines', () => {
     expect(out[2].enabled).toBe(true)
   })
 
+  it('quarantines custom code inside "run on each" bodies arriving by share link, nested ones too', () => {
+    const doc: PipelineDoc = {
+      v: 3,
+      steps: [
+        { id: 'e', type: 'each', enabled: true, split: { mode: 'lines' }, steps: [util('e1'), js('inEach')] },
+        {
+          id: 'br', type: 'branch', enabled: true, merge: { mode: 'concat' },
+          branches: [[{
+            id: 'm', type: 'macro', name: 'm', enabled: true,
+            steps: [{ id: 'e2', type: 'each', enabled: true, split: { mode: 'json-values' }, steps: [{ id: 'e3', type: 'each', enabled: true, split: { mode: 'delimiter', separator: ',' }, steps: [js('deep')] }] }],
+          }]],
+        },
+      ],
+    }
+    const decoded = decodeShare(encodeShare(doc))
+    expect(enabledOf(decoded.steps, 'deep')).toBe(true)
+    const { steps, quarantined } = quarantineUntrusted(decoded.steps)
+    expect(quarantined.sort()).toEqual(['deep', 'inEach'])
+    expect(enabledOf(steps, 'inEach')).toBe(false)
+    expect(enabledOf(steps, 'deep')).toBe(false)
+    for (const id of ['e', 'e1', 'br', 'm', 'e2', 'e3']) expect(enabledOf(steps, id)).toBe(true)
+    // the split survives the rebuild
+    expect((findStep(steps, 'e3') as any).split).toEqual({ mode: 'delimiter', separator: ',' })
+  })
+
   it('returns the same array when there is no custom code', () => {
     const steps = [util('a'), util('b', 'base64_encode')]
     const r = quarantineUntrusted(steps)

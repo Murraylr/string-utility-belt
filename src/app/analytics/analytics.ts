@@ -22,7 +22,7 @@ import { getRoute, onRouteChange, type Route } from '@/lib/router'
 import { readPref, writePref } from '@/app/prefs'
 import { registry } from '@/app/registry'
 import { isBytes, isEmptyValue } from '@/core/coerce'
-import { countSteps, findStep, isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { countSteps, findStep, isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
 import type { PipelineStep, Value } from '@/types/utility'
 
 export const MEASUREMENT_ID = 'G-EFVMEMB86E'
@@ -129,13 +129,18 @@ export function campaignQuery(search: string): string {
   return q ? `?${q}` : ''
 }
 
-/** The enabled steps as `a>b>[c|d]>(e)` — branches in brackets, macros in parentheses. */
+/**
+ * The enabled steps as `a>b>[c|d]>(e)>{lines:f}` — branches in brackets, macros in
+ * parentheses, "run on each" steps in braces with their split mode. Ids and modes only:
+ * never a delimiter, which is text the user typed.
+ */
 export function pipelineSignature(steps: PipelineStep[]): string {
   const sig = (seq: PipelineStep[]): string => seq
     .filter(s => s.enabled !== false)
     .map(s => (isUtilityStep(s) ? s.utilityId
       : isBranchStep(s) ? `[${s.branches.map(sig).join('|')}]`
-        : isMacroStep(s) ? `(${sig(s.steps)})` : '?'))
+        : isMacroStep(s) ? `(${sig(s.steps)})`
+          : isEachStep(s) ? `{${s.split.mode}:${sig(s.steps)}}` : '?'))
     .join('>')
   return clip(sig(steps))
 }

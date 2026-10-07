@@ -88,6 +88,16 @@ describe('pipelineSignature', () => {
     expect(pipelineSignature(steps)).toBe('base64_decode>[md5|sha256>upper]>(json_format)')
   })
 
+  it('shows "run on each" steps in braces with their split mode, never the delimiter text the user typed', () => {
+    const steps: PipelineStep[] = [
+      { id: 'e', type: 'each', split: { mode: 'delimiter', separator: 'secret-token' }, steps: [u('base64_decode'), u('trim', false)] } as PipelineStep,
+      { id: 'j', type: 'each', split: { mode: 'json-values' }, steps: [{ id: 'm', type: 'macro', name: 'm', steps: [u('upper')] } as PipelineStep] } as PipelineStep,
+    ]
+    const sig = pipelineSignature(steps)
+    expect(sig).toBe('{delimiter:base64_decode}>{json-values:(upper)}')
+    expect(sig).not.toContain('secret')
+  })
+
   it('fits GA’s 100-character limit', () => {
     const long = Array.from({ length: 30 }, (_, i) => u(`utility_${i}`))
     const sig = pipelineSignature(long)

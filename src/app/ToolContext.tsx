@@ -13,7 +13,7 @@ import { useRunner, type RunState } from './engine/useRunner'
 import { loadState, saveState } from '@/lib/persist'
 import { usePref } from './prefs'
 import { canRunInWorker } from '@/core/registry'
-import { isBranchStep, isMacroStep } from '@/core/steps'
+import { mapChildSequences } from '@/core/steps'
 import { registry } from './registry'
 import { usePipelineRunTracking } from './analytics/analytics'
 
@@ -82,10 +82,7 @@ export interface ToolProviderProps {
 
 /** Steps that will actually run: a disabled (e.g. quarantined) step never forces the main thread. */
 const enabledOnly = (steps: PipelineStep[]): PipelineStep[] =>
-  steps.filter(s => s.enabled !== false).map(s =>
-    isBranchStep(s) ? { ...s, branches: s.branches.map(enabledOnly) }
-      : isMacroStep(s) ? { ...s, steps: enabledOnly(s.steps) }
-        : s)
+  steps.filter(s => s.enabled !== false).map(s => mapChildSequences(s, enabledOnly))
 
 const workerOnly = (steps: PipelineStep[]) => canRunInWorker(enabledOnly(steps), id => registry.get(id))
 

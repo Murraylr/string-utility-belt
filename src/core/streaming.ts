@@ -9,7 +9,7 @@
  */
 import type { PipelineStep } from '../types/utility'
 import { asText } from './coerce'
-import { isBranchStep, isMacroStep, isUtilityStep } from './steps'
+import { isBranchStep, isEachStep, isMacroStep, isUtilityStep } from './steps'
 import { runPipeline, type RunOptions, type RunResult, type SkipReason } from './runner'
 
 /** The slice of UtilityMeta canChunk actually needs, so it doesn't depend on the registry shape. */
@@ -26,12 +26,18 @@ export interface StreamableLookup {
  * inside a macro too. An `always` condition never looks at content, so it is
  * ignored. Disabled steps (and everything inside them) pass through unchanged, so
  * they never affect the answer.
+ *
+ * An enabled "run on each" step disqualifies it too, although its items are
+ * independent: chunked, its item failures and item numbers would be counted per
+ * chunk ("line 3" of the second chunk), `onError: 'stop'` would fail one chunk
+ * instead of the step, and each chunk would get its own item budget. Unchunked it
+ * still runs off the main thread and yields between items, so it stays cancellable.
  */
 export function canChunk(steps: PipelineStep[], lookup: StreamableLookup): boolean {
   return steps.every(step => {
     if (step.enabled === false) return true
     if (step.condition && step.condition.kind !== 'always') return false
-    if (isBranchStep(step)) return false
+    if (isBranchStep(step) || isEachStep(step)) return false
     if (isMacroStep(step)) return canChunk(step.steps, lookup)
     if (isUtilityStep(step)) return !!lookup(step.utilityId)?.streamable
     return false

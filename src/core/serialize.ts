@@ -2,12 +2,23 @@
 // named exports on it, so take the default and destructure.
 import LZString from 'lz-string'
 import type {
-  Condition, ErrorPolicy, MergeSpec, PipelineDoc, PipelineStep, ValueType,
+  Condition, ErrorPolicy, MergeSpec, PipelineDoc, PipelineStep, SplitSpec, ValueType,
 } from '../types/utility'
-import { stepId } from './steps'
+import { isEachStep, someStep, stepId } from './steps'
 import { decompressUriSafe } from './lzBounded'
+import { MAX_SEPARATOR_LENGTH } from './split'
 
-export const SCHEMA_VERSION = 2 as const
+/**
+ * Newest pipeline schema this build reads. v3 adds "run on each" steps to v2; a
+ * document is written with the oldest version that can read it (`schemaVersionFor`),
+ * so a pipeline without them still opens in builds that only know v2.
+ */
+export const SCHEMA_VERSION = 3 as const
+
+/** The oldest schema that can read `steps`: 3 once any step, nested or disabled, is a "run on each" step. */
+export function schemaVersionFor(steps: PipelineStep[]): PipelineDoc['v'] {
+  return someStep(steps, isEachStep) ? 3 : 2
+}
 
 /** Anything larger is refused: a share link is not a file-transfer mechanism. */
 export const MAX_STEPS = 500
@@ -43,6 +54,25 @@ function sanitizeMerge(raw: unknown): MergeSpec {
     case 'json': return { mode: 'json' }
     case 'pick': return { mode: 'pick', index: Number.isInteger(raw.index) ? (raw.index as number) : 0 }
     default: return { mode: 'concat', separator: str(raw.separator, 50) ?? '\n' }
+  }
+}
+
+/**
+ * A split is never guessed: an unknown mode, or a separator that is missing, empty or
+ * too long (truncating it would change what it splits on), makes the step unreadable.
+ */
+function sanitizeSplit(raw: unknown): SplitSpec | undefined {
+  if (!isObj(raw)) return undefined
+  switch (raw.mode) {
+    case 'lines': return { mode: 'lines' }
+    case 'delimiter': {
+      const { separator } = raw
+      if (typeof separator !== 'string' || !separator || separator.length > MAX_SEPARATOR_LENGTH) return undefined
+      return { mode: 'delimiter', separator }
+    }
+    case 'json-array': return { mode: 'json-array' }
+    case 'json-values': return { mode: 'json-values' }
+    default: return undefined
   }
 }
 
@@ -85,6 +115,13 @@ export function sanitizeSteps(raw: unknown, depth = 0, seen: Set<string> = new S
       out.push({ ...base, type: 'branch', branches: branches.map(b => sanitizeSteps(b, depth + 1, seen)), merge: sanitizeMerge(item.merge) } as PipelineStep)
     } else if (item.type === 'macro') {
       out.push({ ...base, type: 'macro', name: str(item.name, 120) || 'macro', steps: sanitizeSteps(item.steps, depth + 1, seen), ...(str(item.macroId, 100) ? { macroId: str(item.macroId, 100) } : {}) } as PipelineStep)
+    } else if (item.type === 'each') {
+      const split = sanitizeSplit(item.split)
+      if (!split || !Array.isArray(item.steps)) continue
+      out.push({ ...base, type: 'each', split, skipEmpty: item.skipEmpty !== false, steps: sanitizeSteps(item.steps, depth + 1, seen) } as PipelineStep)
+    } else if (item.type !== undefined && item.type !== 'utility') {
+      // a step type from a newer build: dropping it beats running its fields as a utility step
+      continue
     } else {
       const utilityId = str(item.utilityId, 100)
       if (!utilityId) continue
@@ -95,15 +132,19 @@ export function sanitizeSteps(raw: unknown, depth = 0, seen: Set<string> = new S
 }
 
 /**
- * Accept every shape a pipeline has ever been stored in and return schema v2:
- * - v2 docs (`{ v: 2, steps, … }`)
+ * Accept every shape a pipeline has ever been stored in and return the current schema:
+ * - v2 and v3 docs (`{ v: 2, steps, … }`)
  * - v1 localStorage state (`{ steps, showPreviews }`, no version)
  * - a bare array of steps (early export files)
  */
 export function migratePipeline(raw: unknown): PipelineDoc {
-  if (Array.isArray(raw)) return { v: SCHEMA_VERSION, steps: sanitizeSteps(raw) }
-  if (!isObj(raw)) return { v: SCHEMA_VERSION, steps: [] }
-  const doc: PipelineDoc = { v: SCHEMA_VERSION, steps: sanitizeSteps(raw.steps) }
+  if (Array.isArray(raw)) {
+    const steps = sanitizeSteps(raw)
+    return { v: schemaVersionFor(steps), steps }
+  }
+  if (!isObj(raw)) return { v: 2, steps: [] }
+  const steps = sanitizeSteps(raw.steps)
+  const doc: PipelineDoc = { v: schemaVersionFor(steps), steps }
   const name = str(raw.name, 120); if (name) doc.name = name
   const description = str(raw.description, 1000); if (description) doc.description = description
   if (typeof raw.input === 'string') doc.input = raw.input
@@ -112,7 +153,7 @@ export function migratePipeline(raw: unknown): PipelineDoc {
 
 /** Compact, URL-safe encoding of a pipeline (lz-string, then URI-safe alphabet). */
 export function encodeShare(doc: PipelineDoc): string {
-  const payload: PipelineDoc = { v: SCHEMA_VERSION, steps: doc.steps }
+  const payload: PipelineDoc = { v: schemaVersionFor(doc.steps), steps: doc.steps }
   if (doc.name) payload.name = doc.name
   if (doc.description) payload.description = doc.description
   if (doc.input !== undefined) payload.input = doc.input

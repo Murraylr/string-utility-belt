@@ -320,6 +320,20 @@ describe('subelt MCP server', () => {
       expect(Object.keys(body.timings)).toEqual(expect.arrayContaining(['fork', 'enc', 'm', 'up']))
     })
 
+    it('runs a "run on each" step per item, and refuses custom_js inside one', async () => {
+      const body = json(await call('run_pipeline', {
+        input: '{"user":"YWRtaW4=","pass":"czNjcjN0"}',
+        steps: [{ type: 'each', id: 'e', split: { mode: 'json-values' }, steps: [{ id: 'd', utilityId: 'base64_decode' }] }],
+      }))
+      expect(JSON.parse(body.output)).toEqual({ user: 'admin', pass: 's3cr3t' })
+      expect(body.errors).toEqual({})
+      const nested = await call('run_pipeline', {
+        input: 'x', steps: [{ type: 'each', id: 'e', split: { mode: 'lines' }, steps: [{ id: 'c', utilityId: 'custom_js' }] }],
+      })
+      expect(nested.isError).toBe(true)
+      expect(text(nested)).toMatch(/custom_js/)
+    })
+
     it('returns bytes from the last step as base64', async () => {
       const body = json(await call('run_pipeline', { input: 'hi', steps: [{ id: 'b', utilityId: 'get_bytes' }] }))
       expect(body).toMatchObject({ output: b64('hi'), outputEncoding: 'base64' })

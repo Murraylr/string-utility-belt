@@ -5,24 +5,17 @@
  * `quarantineUntrusted` before it reaches the editor.
  */
 import type { PipelineStep } from '@/types/utility'
-import { isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { isUtilityStep, mapChildSequences, walkSteps } from '@/core/steps'
 
 /** Utility ids whose params contain code that runs. */
 export const CODE_UTILITIES = new Set(['custom_js'])
 
 const isCodeStep = (s: PipelineStep) => isUtilityStep(s) && CODE_UTILITIES.has(s.utilityId)
-const lanes = (s: PipelineStep): PipelineStep[][] =>
-  isBranchStep(s) ? (Array.isArray(s.branches) ? s.branches : []) : isMacroStep(s) && Array.isArray(s.steps) ? [s.steps] : []
 
+/** Ids of every code-running step, at any depth (branch lanes, macro and "run on each" bodies). */
 export function untrustedCodeSteps(steps: PipelineStep[]): string[] {
   const out: string[] = []
-  const visit = (seq: PipelineStep[]) => {
-    for (const s of seq) {
-      if (isCodeStep(s)) out.push(s.id)
-      else lanes(s).forEach(visit)
-    }
-  }
-  visit(steps)
+  walkSteps(steps, s => { if (isCodeStep(s)) out.push(s.id) })
   return out
 }
 
@@ -33,11 +26,7 @@ export function untrustedCodeSteps(steps: PipelineStep[]): string[] {
 export function quarantineUntrusted(steps: PipelineStep[]): { steps: PipelineStep[]; quarantined: string[] } {
   const quarantined = untrustedCodeSteps(steps)
   if (!quarantined.length) return { steps, quarantined }
-  const walk = (seq: PipelineStep[]): PipelineStep[] => seq.map(s => {
-    if (isCodeStep(s)) return { ...s, enabled: false }
-    if (isBranchStep(s)) return { ...s, branches: lanes(s).map(walk) }
-    if (isMacroStep(s)) return { ...s, steps: walk(lanes(s)[0] ?? []) }
-    return s
-  })
+  const walk = (seq: PipelineStep[]): PipelineStep[] =>
+    seq.map(s => (isCodeStep(s) ? { ...s, enabled: false } : mapChildSequences(s, walk)))
   return { steps: walk(steps), quarantined }
 }

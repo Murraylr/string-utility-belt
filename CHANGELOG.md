@@ -18,6 +18,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `/bin/bash^M: bad interpreter`; unescape stringified JSON; nested JSON to CSV; an Excel column to a SQL
   `IN` clause; fix line breaks in text copied from a PDF; remove ChatGPT formatting; a bulk UTM link builder.
 - `npm run check:recipes -- <slug…>` checks recipes with the engine the build uses.
+- **Run on each** — a new pipeline step that splits its input into lines, pieces between a separator, the
+  elements of a JSON array or the values of a JSON object, runs the steps inside it on every item on its
+  own, and puts the results back in place (CRLF line endings and a final newline kept). Add one from the
+  toolbar, or select steps and choose *Run on each line*. On error decides what a failed item becomes, the
+  card counts failed items, and nested previews show the first item that failed. It works in share links,
+  embeds, the library, the HTTP API (`"type": "each"`), the CLI, the MCP server and the editor extensions.
+- Recipe: **decode a Kubernetes Secret** — every value under `data` decoded at once, keys kept, from
+  `kubectl get secret -o yaml` or `-o json` (the first recipe built on run on each).
+
+### Changed
+
+- Pipelines that use a run-on-each step are saved and shared as schema v3. Pipelines without one are still
+  written as v2, so they keep opening in older builds; a v3 link opened in an older build asks to reload
+  instead of dropping the step.
 
 ### Fixed
 

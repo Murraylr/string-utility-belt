@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { formatForDisplay } from '@/core/coerce'
-import { isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { countSteps, isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { itemNoun } from '@/core/split'
 import { decodeShare } from '@/core/serialize'
 import type { PipelineDoc, PipelineStep } from '@/types/utility'
 import { ToolProvider, useTool } from '@/app/ToolContext'
@@ -11,6 +12,10 @@ function stepLabel(step: PipelineStep): string {
   if (isUtilityStep(step)) return step.label || registry.get(step.utilityId)?.name || step.utilityId
   if (isBranchStep(step)) return step.label || `branch (${step.branches.length} lanes)`
   if (isMacroStep(step)) return step.label || step.name
+  if (isEachStep(step)) {
+    const n = countSteps(step.steps)
+    return step.label || `run on each ${itemNoun(step.split.mode, 1)} (${n} ${n === 1 ? 'step' : 'steps'})`
+  }
   return 'step'
 }
 

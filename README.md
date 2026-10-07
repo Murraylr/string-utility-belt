@@ -17,7 +17,8 @@ extension and a VS Code extension.
 
 - **Pipelines** — add, reorder (drag and drop), duplicate, disable/solo steps; undo/redo; per-step
   previews, diffs, timings and error policies (pass through / stop / empty); conditional steps;
-  parallel branches with concat/zip/json/pick merges; macros (collapse a sub-chain into one step).
+  parallel branches with concat/zip/json/pick merges; macros (collapse a sub-chain into one step);
+  "run on each" steps (run a sub-chain on every line, delimited piece, JSON array element or object value).
 - **Share and save** — pipelines (and optionally the input) as compressed `#/p/…` links, a named
   pipeline library with JSON import/export, a preset gallery, an embeddable `#/embed/…` widget.
 - **Magic** — detects the input's format (base64, JWT, gzip, JSON, …) and suggests or appends the

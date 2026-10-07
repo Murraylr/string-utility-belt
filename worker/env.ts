@@ -36,6 +36,8 @@ export interface ApiOptions {
   maxValueSize?: number
   /** PBKDF2 work one request may ask for, in HMAC blocks (iterations × blocks per key). */
   pbkdf2Budget?: number
+  /** Items "run on each" steps may process in one request (the engine's default is far higher). */
+  maxEachItems?: number
   runTimeoutMs?: number
   /** Step-timing clock handed to the runner. */
   clock?: () => number

@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import LZString from 'lz-string'
-import { decodeShare, encodeShare, migratePipeline, sanitizeSteps, shareHash, SCHEMA_VERSION } from './serialize'
-import type { PipelineDoc } from '../types/utility'
+import {
+  decodeShare, encodeShare, migratePipeline, sanitizeSteps, schemaVersionFor, shareHash, MAX_SHARE_CHARS, SCHEMA_VERSION,
+} from './serialize'
+import type { PipelineDoc, PipelineStep } from '../types/utility'
 
 const doc: PipelineDoc = {
   v: 2,
@@ -52,6 +54,96 @@ describe('share encoding', () => {
   it('refuses a pipeline from a newer schema', () => {
     const future = LZString.compressToEncodedURIComponent(JSON.stringify({ v: SCHEMA_VERSION + 1, steps: [] }))
     expect(() => decodeShare(future)).toThrow(/newer version/)
+  })
+})
+
+describe('run-on-each steps (schema v3)', () => {
+  const eachDoc: PipelineDoc = {
+    v: 3,
+    name: 'decode secrets',
+    steps: [
+      { id: 'p', utilityId: 'json_parse', enabled: true, params: {} },
+      {
+        id: 'e', type: 'each', enabled: true, label: 'every value', onError: 'empty', split: { mode: 'json-values' }, skipEmpty: false,
+        steps: [
+          { id: 'd', utilityId: 'base64_decode', enabled: true, params: {} },
+          { id: 'n', type: 'each', enabled: true, split: { mode: 'delimiter', separator: ', ' }, skipEmpty: true, steps: [] },
+        ],
+      },
+    ],
+  }
+
+  it('round-trips through a share link', () => {
+    expect(decodeShare(encodeShare(eachDoc))).toEqual(eachDoc)
+  })
+
+  it('writes the oldest schema that can read the pipeline, so links without each still open in v2 builds', () => {
+    const v = (payload: string) => JSON.parse(LZString.decompressFromEncodedURIComponent(payload)).v
+    expect(v(encodeShare(eachDoc))).toBe(3)
+    expect(v(encodeShare(doc))).toBe(2)
+    expect(SCHEMA_VERSION).toBe(3)
+    // a nested or disabled each still needs v3 to be read back
+    const hidden: PipelineStep[] = [{ id: 'm', type: 'macro', name: 'm', enabled: false, steps: [eachDoc.steps[1]] }]
+    expect(schemaVersionFor(hidden)).toBe(3)
+    expect(migratePipeline({ steps: hidden }).v).toBe(3)
+    expect(migratePipeline({ steps: doc.steps }).v).toBe(2)
+  })
+
+  it('refuses a v4 link instead of guessing at it', () => {
+    const future = LZString.compressToEncodedURIComponent(JSON.stringify({ v: 4, steps: [] }))
+    expect(() => decodeShare(future)).toThrow(/newer version \(v4\)/)
+  })
+
+  it('keeps a long each pipeline within the share bound like any other', () => {
+    const steps = Array.from({ length: 40 }, (_, i) => ({ id: `e${i}`, type: 'each', split: { mode: 'lines' }, steps: [{ id: `u${i}`, utilityId: 'trim' }] }))
+    const payload = encodeShare({ v: 3, steps: sanitizeSteps(steps) })
+    expect(decodeShare(payload).steps).toHaveLength(40)
+    expect(() => decodeShare(payload, 100)).toThrow(/too large to open safely/)
+    expect(MAX_SHARE_CHARS).toBe(2_000_000)
+  })
+
+  it('normalises skipEmpty to an explicit boolean (default true)', () => {
+    const [a, b] = sanitizeSteps([
+      { id: 'a', type: 'each', split: { mode: 'lines' }, steps: [] },
+      { id: 'b', type: 'each', split: { mode: 'lines' }, steps: [], skipEmpty: 'no' },
+    ]) as any[]
+    expect(a.skipEmpty).toBe(true)
+    expect(b.skipEmpty).toBe(true)
+    expect((sanitizeSteps([{ id: 'c', type: 'each', split: { mode: 'lines' }, steps: [], skipEmpty: false }]) as any[])[0].skipEmpty).toBe(false)
+  })
+
+  it('drops an each step whose split or body cannot be read, rather than guessing', () => {
+    const bad = [
+      { id: 'a', type: 'each', steps: [] },
+      { id: 'b', type: 'each', split: { mode: 'words' }, steps: [] },
+      { id: 'c', type: 'each', split: { mode: 'delimiter' }, steps: [] },
+      { id: 'd', type: 'each', split: { mode: 'delimiter', separator: '' }, steps: [] },
+      { id: 'e', type: 'each', split: { mode: 'delimiter', separator: 'x'.repeat(51) }, steps: [] },
+      { id: 'f', type: 'each', split: { mode: 'delimiter', separator: 5 }, steps: [] },
+      { id: 'g', type: 'each', split: { mode: 'lines' } },
+      { id: 'h', type: 'each', split: { mode: 'lines' }, steps: 'trim' },
+      { id: 'i', type: 'each', split: 'lines', steps: [] },
+    ]
+    expect(sanitizeSteps(bad)).toEqual([])
+    expect(sanitizeSteps([{ id: 'ok', type: 'each', split: { mode: 'delimiter', separator: 'x'.repeat(50) }, steps: [] }])).toHaveLength(1)
+  })
+
+  it('sanitises the body like any nested sequence: junk dropped, hostile ids re-minted, depth bounded', () => {
+    const [e] = sanitizeSteps(JSON.parse(JSON.stringify([
+      { id: 'e', type: 'each', split: { mode: 'lines' }, steps: [null, { id: 'constructor', utilityId: 'trim', params: { x: 1 } }, { id: 'junk' }] },
+    ]))) as any[]
+    expect(e.steps).toHaveLength(1)
+    expect(e.steps[0].id in Object.prototype).toBe(false)
+    let deep: any = { id: 'leaf', utilityId: 'trim' }
+    for (let i = 0; i < 20; i++) deep = { id: `e${i}`, type: 'each', split: { mode: 'lines' }, steps: [deep] }
+    let depth = 0
+    let cur = (sanitizeSteps([deep]) as any[])[0]
+    while (cur?.steps?.length) { depth++; cur = cur.steps[0] }
+    expect(depth).toBeLessThanOrEqual(9)
+  })
+
+  it('drops a step of a type this build does not know instead of running it as a utility', () => {
+    expect(sanitizeSteps([{ id: 'x', type: 'loop', utilityId: 'trim' }, { id: 'y', type: 'utility', utilityId: 'trim' }]).map(s => s.id)).toEqual(['y'])
   })
 })
 

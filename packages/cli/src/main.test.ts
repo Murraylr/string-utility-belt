@@ -366,6 +366,26 @@ describe('step errors in nested steps', () => {
   })
 })
 
+describe('"run on each" steps', () => {
+  const doc = (onError?: 'empty'): PipelineDoc => ({
+    v: 3,
+    steps: [{ id: 'e', type: 'each', split: { mode: 'lines' }, ...(onError ? { onError } : {}), steps: [{ id: 'd', utilityId: 'base64_decode' }] }],
+  })
+
+  it('run their steps on every line of the input', async () => {
+    const { io, outText } = makeIo({ stdin: enc('aGk=\r\nYnll\n') })
+    expect(await main(['-s', encodeShare(doc())], io)).toBe(0)
+    expect(outText()).toBe('hi\r\nbye\n')
+  })
+
+  it('exit 1 when an item fails, naming the step and the item', async () => {
+    const { io, errText } = makeIo({ stdin: enc('aGk=\n!!') })
+    expect(await main(['-s', encodeShare(doc())], io)).toBe(1)
+    expect(errText()).toMatch(/step 1 \(each\) failed: 1 of 2 lines failed \(line 2: /)
+    expect(errText()).toMatch(/step 1\.1 \(base64_decode\) failed: line 2: /)
+  })
+})
+
 describe('--json with a bytes result', () => {
   it('encodes bytes as base64 so the summary stays valid JSON', async () => {
     const { io, outText } = makeIo({ stdin: enc('hi') })

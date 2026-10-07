@@ -6,6 +6,7 @@
 import {
   BRIDGE_ORIGINS, BRIDGE_PROTOCOL, isAppMessage, parseAppRequest, type BridgeResult, type ExtensionHello,
 } from '../../../src/core/extensionBridge'
+import { STEP_TYPES } from '../../../src/core/steps'
 import type { Value } from '../../../src/types/utility'
 import { MENU_OPEN_ID } from './lib/constants'
 import { handleAppRequest } from './lib/library'
@@ -150,7 +151,7 @@ export function handleAppMessage(
     return false
   }
   if (message.type === 'ping') {
-    sendResponse({ protocol: BRIDGE_PROTOCOL, version: chrome.runtime.getManifest().version })
+    sendResponse({ protocol: BRIDGE_PROTOCOL, version: chrome.runtime.getManifest().version, stepTypes: [...STEP_TYPES] })
     return false
   }
   if (message.protocol !== BRIDGE_PROTOCOL) {

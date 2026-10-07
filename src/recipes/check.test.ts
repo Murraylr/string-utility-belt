@@ -3,7 +3,7 @@ import { runPipeline } from '../core/runner'
 import { staticRegistry, STATIC_UTILITIES } from '../utilities/static-registry'
 import { MANIFEST } from '../utilities/_generated/manifest'
 import { checkRecipe, checkRecipeSet, overlap, shingles, type RecipeCheckContext } from './check'
-import { branch, laneStep, step } from './define'
+import { branch, each, laneStep, step } from './define'
 import type { Recipe } from './types'
 
 const byId = new Map(STATIC_UTILITIES.map(u => [u.id, u]))
@@ -116,6 +116,27 @@ describe('checkRecipe', () => {
       ],
     }), 'upper-slugs', guide(), ctx())
     expect(problems).toEqual([])
+  })
+
+  it('accepts a "run on each" step as the multi-step part, sanitised unchanged', async () => {
+    const perLine = each('per-line', { mode: 'lines' }, [laneStep('l1', 'reverse'), laneStep('l2', 'case', { mode: 'upper' })],
+      'Reverses and uppercases every line on its own, so the lines keep their order.')
+    const problems = await checkRecipe(recipe({
+      steps: [perLine],
+      samples: [
+        { id: 'a', title: 'A', input: 'ab\ncd', output: 'BA\nDC' },
+        { id: 'b', title: 'B', input: 'xy\n\nz', output: 'YX\n\nZ' },
+      ],
+    }), 'upper-slugs', guide(), ctx())
+    expect(problems).toEqual([])
+  })
+
+  it('names an each step by its type when it changes nothing', async () => {
+    const r = recipe()
+    r.steps.push(each('noop', { mode: 'lines' }, [laneStep('n1', 'case', { mode: 'upper' })],
+      'Uppercases every line again, which can never change anything here.'))
+    const problems = await checkRecipe(r, 'upper-slugs', guide(), ctx())
+    expect(problems).toContain('step noop (each) changes nothing on any sample: remove it, or add a sample that needs it')
   })
 
   it('needs a reason of sensible length on every top-level step', async () => {

@@ -114,6 +114,24 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "decode-kubernetes-secret",
+    "name": "Decode a Kubernetes Secret",
+    "summary": "Paste a Secret from kubectl get secret -o yaml or -o json and read every value under data in plain text, with the keys kept, instead of decoding each one with base64 by hand.",
+    "category": "DevOps & Config",
+    "utilityIds": [
+      "base64_decode",
+      "jsonpath",
+      "yaml_to_json"
+    ],
+    "chain": [
+      "yaml to json",
+      "keep data",
+      "decode every value"
+    ],
+    "stepCount": 3,
+    "published": "2026-10-07"
+  },
+  {
     "slug": "decode-saml-request",
     "name": "Decode a SAML request or response",
     "summary": "Paste a SAML redirect URL, a POST form body, a copied cURL command or a bare SAMLRequest or SAMLResponse value and read the message as indented XML, deflated (Redirect binding) or not (POST).",

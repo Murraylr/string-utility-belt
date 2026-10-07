@@ -65,6 +65,13 @@ describe('canChunk', () => {
     expect(canChunk([macro], lookup)).toBe(false)
   })
 
+  it('is false for an enabled "run on each" step, even over lines with streamable steps; a disabled one is skipped', () => {
+    const each = { id: 'e', type: 'each', split: { mode: 'lines' }, steps: [step('upper')] } as PipelineStep
+    expect(canChunk([each], lookup)).toBe(false)
+    expect(canChunk([{ ...each, enabled: false }], lookup)).toBe(true)
+    expect(canChunk([{ id: 'm', type: 'macro', name: 'm', steps: [each] } as PipelineStep], lookup)).toBe(false)
+  })
+
   it('is false for a branch nested inside a macro', () => {
     const branch = { id: 'b', type: 'branch', branches: [[step('upper')]], merge: { mode: 'concat' } } as PipelineStep
     const macro = { id: 'm', type: 'macro', name: 'm', steps: [step('upper'), branch] } as PipelineStep

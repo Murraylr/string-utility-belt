@@ -6,6 +6,7 @@
  */
 import type { PipelineStep } from '@/types/utility'
 import { sanitizeSteps } from '@/core/serialize'
+import { mapChildSequences } from '@/core/steps'
 import { listEntries, saveEntry, type LibraryEntry } from './storage'
 
 /** JSON.stringify with keys sorted at every level, so two structurally-equal steps
@@ -23,10 +24,8 @@ function stableStringify(v: unknown): string {
 /** Steps as stored (sanitised: explicit `enabled`, JSON-clean params) with every id removed. */
 function withoutIds(steps: PipelineStep[]): Record<string, unknown>[] {
   return steps.map(s => {
-    const rest: Record<string, unknown> = { ...s }
+    const rest: Record<string, unknown> = { ...mapChildSequences(s, seq => withoutIds(seq) as unknown as PipelineStep[]) }
     delete rest.id
-    if (Array.isArray(rest.branches)) rest.branches = (rest.branches as PipelineStep[][]).map(withoutIds)
-    if (rest.type === 'macro' && Array.isArray(rest.steps)) rest.steps = withoutIds(rest.steps as PipelineStep[])
     return rest
   })
 }

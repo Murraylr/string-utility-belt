@@ -9,7 +9,7 @@ export const MAX_SHARE_CHARS = 1_000_000
 /** Output text past this many characters is cut off and flagged `truncated` — no agent context can use more. */
 export const MAX_OUTPUT_CHARS = 1_000_000
 
-/** A `run_pipeline` request with more steps than this (nested branches/macros included) is refused. */
+/** A `run_pipeline` request with more steps than this (steps nested in branches, macros and "run on each" steps included) is refused. */
 export const MAX_PIPELINE_STEPS = 100
 
 /** Wall-clock budget for one tool call (a single utility, or a whole pipeline). */

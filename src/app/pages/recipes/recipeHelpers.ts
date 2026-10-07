@@ -4,7 +4,8 @@
  */
 import type { UtilityMeta } from '@/core/registry'
 import type { ParamSpec, PipelineStep } from '@/types/utility'
-import { isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { itemNoun } from '@/core/split'
 import { encodeShare, SCHEMA_VERSION } from '@/core/serialize'
 import type { Recipe, RecipeMeta } from '@/recipes/types'
 import { displayName, FEATURED_RECIPE_SLUGS } from '../seo'
@@ -19,6 +20,7 @@ export function stepTitle(step: PipelineStep, utility: UtilityLookup): string {
   if (isUtilityStep(step)) return nameOf(step.utilityId, utility)
   if (isBranchStep(step)) return `Branch into ${step.branches.length} lanes`
   if (isMacroStep(step)) return step.name
+  if (isEachStep(step)) return `Run on each ${itemNoun(step.split.mode, 1)}`
   return 'Step'
 }
 

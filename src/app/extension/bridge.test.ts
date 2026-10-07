@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { APP_SOURCE, BRIDGE_PROTOCOL, STORE_EXTENSION_ID } from '@/core/extensionBridge'
+import { APP_SOURCE, BRIDGE_PROTOCOL, LEGACY_STEP_TYPES, STORE_EXTENSION_ID } from '@/core/extensionBridge'
 import { __resetExtensionBridgeForTests, extensionIds, getExtension, sendToExtension, useExtension } from './bridge'
 import { installFakeExtension } from './fakeExtension'
 
@@ -25,8 +25,15 @@ describe('extension presence', () => {
     const fake = installFakeExtension({ version: '2.0.0' })
     const { result } = renderHook(() => useExtension())
     expect(result.current).toBeNull()
-    await waitFor(() => expect(result.current).toEqual({ id: STORE_EXTENSION_ID, version: '2.0.0' }))
+    // an extension that predates step-type listing is assumed to know the original three
+    await waitFor(() => expect(result.current).toEqual({ id: STORE_EXTENSION_ID, version: '2.0.0', stepTypes: LEGACY_STEP_TYPES }))
     expect(fake.sent).toEqual([{ id: STORE_EXTENSION_ID, message: { source: APP_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'ping' } }])
+  })
+
+  it('records the step types an extension says it can save', async () => {
+    installFakeExtension({ version: '2.1.0', stepTypes: ['utility', 'branch', 'macro', 'each'] })
+    const { result } = renderHook(() => useExtension())
+    await waitFor(() => expect(result.current?.stepTypes).toEqual(['utility', 'branch', 'macro', 'each']))
   })
 
   it('stays null when no extension is reachable from the page (no chrome.runtime)', async () => {

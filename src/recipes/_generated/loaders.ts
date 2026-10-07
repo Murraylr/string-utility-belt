@@ -8,6 +8,7 @@ export const RECIPE_LOADERS: Record<string, () => Promise<{ recipe: Recipe; guid
   "decode-cloudwatch-logs-data": () => Promise.all([import('../decode-cloudwatch-logs-data/recipe'), import('../decode-cloudwatch-logs-data/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "decode-flask-session-cookie": () => Promise.all([import('../decode-flask-session-cookie/recipe'), import('../decode-flask-session-cookie/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "decode-helm-release-secret": () => Promise.all([import('../decode-helm-release-secret/recipe'), import('../decode-helm-release-secret/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "decode-kubernetes-secret": () => Promise.all([import('../decode-kubernetes-secret/recipe'), import('../decode-kubernetes-secret/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "decode-saml-request": () => Promise.all([import('../decode-saml-request/recipe'), import('../decode-saml-request/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "excel-column-to-sql-in-clause": () => Promise.all([import('../excel-column-to-sql-in-clause/recipe'), import('../excel-column-to-sql-in-clause/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "fix-bash-bad-interpreter": () => Promise.all([import('../fix-bash-bad-interpreter/recipe'), import('../fix-bash-bad-interpreter/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),

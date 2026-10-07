@@ -239,13 +239,13 @@ describe('storage: hostile timestamps and versions', () => {
   })
 
   it('refuses a library file written by a newer schema version instead of silently dropping what it cannot read', () => {
-    const doc = JSON.stringify({ v: 3, entries: [{ id: 'e1', kind: 'pipeline', name: 'new', steps: [] }] })
+    const doc = JSON.stringify({ v: 4, entries: [{ id: 'e1', kind: 'pipeline', name: 'new', steps: [] }] })
     expect(() => importLibrary(doc)).toThrow(/newer version/i)
     expect(listEntries()).toHaveLength(0)
   })
 
   it('will not overwrite a library that a newer version of the app wrote (e.g. a stale tab after a deploy)', () => {
-    const newer = JSON.stringify({ v: 3, entries: [{ id: 'e1', kind: 'pipeline', name: 'from v3', steps: [], futureField: 1 }] })
+    const newer = JSON.stringify({ v: 4, entries: [{ id: 'e1', kind: 'pipeline', name: 'from v4', steps: [], futureField: 1 }] })
     localStorage.setItem(LIBRARY_KEY, newer)
     expect(() => saveEntry({ kind: 'pipeline', name: 'x', steps: [step('a')] })).toThrow(/newer version/i)
     expect(localStorage.getItem(LIBRARY_KEY)).toBe(newer)
@@ -258,10 +258,20 @@ describe('storage: hostile timestamps and versions', () => {
     expect(entry.steps.map(s => (s as any).utilityId)).toEqual(['trim', 'upper'])
   })
 
-  it('stores and exports the library as a schema v2 document', () => {
+  it('stores and exports the library as a schema v2 document while nothing needs v3', () => {
     saveEntry({ kind: 'pipeline', name: 'p', steps: [step('a')] })
     expect(JSON.parse(localStorage.getItem(LIBRARY_KEY)!).v).toBe(2)
     expect(JSON.parse(exportLibrary()).v).toBe(2)
+  })
+
+  it('marks the library v3 once an entry has a "run on each" step, so an older tab refuses to rewrite it without it', () => {
+    saveEntry({ kind: 'pipeline', name: 'p', steps: [step('a')] })
+    const each = saveEntry({ kind: 'macro', name: 'per line', steps: [{ id: 'e', type: 'each', enabled: true, split: { mode: 'lines' }, steps: [step('b')] }] })
+    expect(JSON.parse(localStorage.getItem(LIBRARY_KEY)!).v).toBe(3)
+    expect(JSON.parse(exportLibrary()).v).toBe(3)
+    expect((getEntry(each.id)!.steps[0] as any).split).toEqual({ mode: 'lines' })
+    deleteEntry(each.id)
+    expect(JSON.parse(localStorage.getItem(LIBRARY_KEY)!).v).toBe(2)
   })
 
   it('renaming an entry to the name it already has is a no-op (it does not jump to the top)', async () => {

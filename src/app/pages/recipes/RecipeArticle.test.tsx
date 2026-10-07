@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MANIFEST } from '@/utilities/_generated/manifest'
-import { step } from '@/recipes/define'
+import { each, laneStep, step } from '@/recipes/define'
 import type { Recipe } from '@/recipes/types'
 import { RecipeArticle } from './RecipeArticle'
 
@@ -25,6 +25,17 @@ const recipe: Recipe = {
 }
 
 describe('RecipeArticle', () => {
+  it('names a run-on-each step by its split and links the utilities it runs on each item', () => {
+    const perValue: Recipe = {
+      ...recipe,
+      steps: [each('values', { mode: 'json-values' }, [laneStep('b64', 'base64_decode')], 'Decodes every value of the object on its own.')],
+    }
+    render(<RecipeArticle recipe={perValue} utility={id => metas.get(id)} guideHtml="" steps={[]} skip={[]} live={null} related={[]} />)
+    expect(screen.getAllByText('Run on each value').length).toBeGreaterThan(0)
+    expect(screen.getByText('on each value:')).toBeInTheDocument()
+    expect(screen.getAllByRole('link').some(a => a.getAttribute('href') === '/util/base64_decode/')).toBe(true)
+  })
+
   it('words a condition by what it does: runs on a match, or is skipped on a match', () => {
     render(<RecipeArticle recipe={recipe} utility={id => metas.get(id)} guideHtml="" steps={[]} skip={[]} live={null} related={[]} />)
     expect(screen.getByText(/Runs only when its input matches/).textContent)
