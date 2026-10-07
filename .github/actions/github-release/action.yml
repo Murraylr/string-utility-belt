@@ -1,0 +1,55 @@
+name: Tag and GitHub release
+description: >-
+  Tags a released target as <target>-v<version> on the release commit and publishes a GitHub release
+  for it, with notes generated from the pull requests merged since that target's previous release.
+  Safe to re-run: an existing release only gets its files re-uploaded.
+
+inputs:
+  target:
+    description: Release target id (app, core, cli, mcp, extension, vscode)
+    required: true
+  version:
+    description: The version released
+    required: true
+  sha:
+    description: The release commit to tag
+    required: true
+  title:
+    description: Human-readable name of the target, used in the release title
+    required: true
+  files:
+    description: Files to attach, one per line
+    required: false
+    default: ''
+  latest:
+    description: Whether this becomes the repository's "latest" release
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        TARGET: ${{ inputs.target }}
+        VERSION: ${{ inputs.version }}
+        SHA: ${{ inputs.sha }}
+        TITLE: ${{ inputs.title }}
+        FILES: ${{ inputs.files }}
+        LATEST: ${{ inputs.latest }}
+      run: |
+        set -euo pipefail
+        tag="$TARGET-v$VERSION"
+        mapfile -t assets < <(printf '%s\n' "$FILES" | sed '/^[[:space:]]*$/d')
+        if gh release view "$tag" > /dev/null 2>&1; then
+          echo "::notice::$tag is already released"
+          if [ "${#assets[@]}" -gt 0 ]; then gh release upload "$tag" "${assets[@]}" --clobber; fi
+          exit 0
+        fi
+        args=(--target "$SHA" --title "$TITLE $VERSION" --generate-notes "--latest=$LATEST")
+        previous="$(git describe --tags --abbrev=0 --match "$TARGET-v*" "$SHA^" 2> /dev/null || true)"
+        if [ -n "$previous" ]; then args+=(--notes-start-tag "$previous"); fi
+        gh release create "$tag" "${args[@]}" "${assets[@]}"
+        echo "### Released $TITLE $VERSION (\`$tag\`)" >> "$GITHUB_STEP_SUMMARY"

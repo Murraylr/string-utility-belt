@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getSandbox, setSandbox } from '../../../src/core/sandbox'
 import { encodeShare } from '../../../src/core/serialize'
 import type { PipelineDoc } from '../../../src/types/utility'
+import pkg from '../package.json'
 import type { CliIo } from './args'
 import { main } from './main'
 
@@ -251,7 +252,8 @@ describe('exit codes', () => {
 
     const version = makeIo()
     expect(await main(['--version'], version.io)).toBe(0)
-    expect(version.outText().trim()).toMatch(/^\d+\.\d+\.\d+$/)
+    // the version releases bump, so `subelt --version` always names the published package
+    expect(version.outText().trim()).toBe(pkg.version)
   })
 })
 

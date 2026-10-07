@@ -6,10 +6,10 @@
     "homepage": "https://stringutilitybelt.com",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Murraylr/string-utility-belt.git"
+        "url": "git+https://github.com/String-Utility-Belt/string-utility-belt.git"
     },
     "bugs": {
-        "url": "https://github.com/Murraylr/string-utility-belt/issues"
+        "url": "https://github.com/String-Utility-Belt/string-utility-belt/issues"
     },
     "private": true,
     "type": "module",
@@ -41,7 +41,8 @@
         "test:e2e": "playwright test",
         "build:seo:fast": "vite-node scripts/build-seo.ts -- --no-og",
         "check:guides": "vite-node scripts/check-guides.ts",
-        "build:site": "npm run build && npm run build:seo"
+        "build:site": "npm run build && npm run build:seo",
+        "release": "vite-node scripts/release.ts"
     },
     "dependencies": {
         "@codemirror/lang-html": "^6.4.12",

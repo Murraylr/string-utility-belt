@@ -62,4 +62,4 @@ npm install @string-utility-belt/core
 
 ## Source code
 
-String Utility Belt is open source under the MIT license. The web app, the engine and every integration live in one repository: [Murraylr/string-utility-belt on GitHub](https://github.com/Murraylr/string-utility-belt).
+String Utility Belt is open source under the MIT license. The web app, the engine and every integration live in one repository: [String-Utility-Belt/string-utility-belt on GitHub](https://github.com/String-Utility-Belt/string-utility-belt).
