@@ -61,26 +61,36 @@ function call(extensionId: string, message: AppMessage, timeoutMs: number): Prom
   })
 }
 
+/**
+ * Where detection stands: `'checking'` while a ping is out, `'absent'` once no extension
+ * answered (at once when the page has no `chrome.runtime`, as in browsers without one),
+ * else the extension that answered.
+ */
+export type ExtensionStatus = 'checking' | 'absent' | ExtensionInfo
+
 let extension: ExtensionInfo | null = null
 let detection: Promise<void> | null = null
+let detected = false
 const subscribers = new Set<() => void>()
 
 /** Pings each known id in turn, once per page load; the first to answer is the extension. */
 function detect(): Promise<void> {
   detection ??= (async () => {
-    if (!pageRuntime()) return
-    for (const id of extensionIds()) {
-      const hello = await call(id, { source: APP_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'ping' }, PING_TIMEOUT_MS)
-      if (!isExtensionHello(hello)) continue
-      extension = { id, version: hello.version, stepTypes: helloStepTypes(hello) }
-      subscribers.forEach(notify => notify())
-      return
+    if (pageRuntime()) {
+      for (const id of extensionIds()) {
+        const hello = await call(id, { source: APP_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'ping' }, PING_TIMEOUT_MS)
+        if (!isExtensionHello(hello)) continue
+        extension = { id, version: hello.version, stepTypes: helloStepTypes(hello) }
+        break
+      }
     }
+    detected = true
+    subscribers.forEach(notify => notify())
   })()
   return detection
 }
 
-/** `useSyncExternalStore`-shaped: `notify` runs when the extension is found. */
+/** `useSyncExternalStore`-shaped: `notify` runs once detection settles. */
 export function subscribeExtension(notify: () => void): () => void {
   subscribers.add(notify)
   void detect()
@@ -89,9 +99,17 @@ export function subscribeExtension(notify: () => void): () => void {
 
 export const getExtension = (): ExtensionInfo | null => extension
 
+export const getExtensionStatus = (): ExtensionStatus =>
+  extension ?? (detected || !pageRuntime() ? 'absent' : 'checking')
+
 /** The installed extension, or null until (unless) it answers. */
 export function useExtension(): ExtensionInfo | null {
   return useSyncExternalStore(subscribeExtension, getExtension, () => null)
+}
+
+/** Like `useExtension`, but tells "not installed" apart from "still asking". */
+export function useExtensionStatus(): ExtensionStatus {
+  return useSyncExternalStore(subscribeExtension, getExtensionStatus, () => 'checking')
 }
 
 /** Sends `request` to the extension found by `detect`. Never rejects: no extension or no answer is an error result. */
@@ -106,5 +124,6 @@ export async function sendToExtension(request: AppRequest, timeoutMs: number = R
 export function __resetExtensionBridgeForTests(): void {
   extension = null
   detection = null
+  detected = false
   subscribers.clear()
 }

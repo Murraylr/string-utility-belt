@@ -113,6 +113,8 @@ export interface RecipeWidgetProps {
   copied?: boolean
   /** Why the output is not (or only partly) for the current input, and the button that fixes it. */
   notice?: { text: string; action: string; onAction?: () => void }
+  /** The browser-extension strip (app only: the pre-render has no extension to ask). */
+  extension?: React.ReactNode
 }
 
 /**
@@ -122,7 +124,7 @@ export interface RecipeWidgetProps {
  * so "Open in the editor" stays near the top.
  */
 export function RecipeWidget(props: RecipeWidgetProps) {
-  const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied, notice } = props
+  const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied, notice, extension } = props
   return (
     <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-try-h">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -174,6 +176,7 @@ export function RecipeWidget(props: RecipeWidgetProps) {
           {stepCount} steps, every one editable. Runs in your browser: nothing you paste is uploaded.
         </span>
       </div>
+      {extension}
     </section>
   )
 }
