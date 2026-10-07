@@ -18,6 +18,11 @@
  *   npm run release -- chrome-web-store <zip>
  *       Uploads the extension package and submits it for review (CWS_ACCESS_TOKEN, CWS_PUBLISHER_ID).
  *
+ *   npm run release -- wait-for-npm <package dir> [--minutes <n>]
+ *       After a publish: waits (an hour by default) until npm serves the package's version. npm
+ *       accepts a publish before it serves it (it scans each new version first), and what comes next
+ *       (the MCP Registry, the tag and the GitHub release) needs the version installable.
+ *
  *   npm run release -- npm-auth-report <package dir> <npm logs dir>
  *       After a refused `npm publish --logs-dir <npm logs dir>`: npm's account of its trusted-publishing
  *       token exchange, and the fields the package's trusted publisher on npmjs.com must hold to match
@@ -30,12 +35,13 @@ import { STORE_EXTENSION_ID } from '../src/core/extensionBridge'
 import { publishToChromeWebStore } from './release/chrome-web-store'
 import { Git } from './release/git'
 import { GitHub, annotate, appendSummary, setOutput } from './release/github'
+import { poll } from './release/http'
 import { githubPublisherIdentity, npmAuthReport, npmOidcLog } from './release/npm-auth'
 import {
   applyPlan, lastNonReleaseCommit, planRelease, planSummary, readTargetVersion, releaseCommitMessage, supersededReason,
 } from './release/plan'
 import { newestAbove } from './release/semver'
-import { publishedVersions, storeName, type Store } from './release/stores'
+import { npmServes, publishedVersions, storeName, type Store } from './release/stores'
 import { MANUAL_TARGETS, TARGETS, releaseTag, targetById, type TargetId } from './release/targets'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -154,7 +160,8 @@ async function preflight(args: string[]): Promise<void> {
     const versions = await publishedVersions(store, name)
     const newer = newestAbove(versions, version)
     if (newer) throw new Error(`${store} already has ${name}@${newer}, newer than ${version}; this run must not publish over it`)
-    const found = versions.includes(version)
+    // the packument is cached for minutes after a publish; the version document isn't
+    const found = versions.includes(version) || (store === 'npm' && await npmServes(name, version))
     console.log(`${store}: ${name}@${version} ${found ? 'is already published' : 'is not published yet'}`)
     setOutput(store.replace(/-/g, '_'), String(found))
   }
@@ -176,6 +183,25 @@ async function chromeWebStore(args: string[]): Promise<void> {
   setOutput('result', result)
 }
 
+async function waitForNpm(args: string[]): Promise<void> {
+  const flags = parseFlags(args, ['--minutes'])
+  const [packageDir] = flags.positional
+  if (!packageDir) throw new Error('usage: wait-for-npm <package dir> [--minutes <n>]')
+  const minutes = Number(flags.values.get('--minutes') ?? 60)
+  if (!(minutes > 0)) throw new Error('--minutes must be a positive number')
+  const { name, version } = JSON.parse(readFileSync(path.resolve(packageDir, 'package.json'), 'utf8')) as { name: string; version: string }
+  const served = await poll(async elapsed => {
+    if (await npmServes(name, version)) return true
+    console.log(`npm is still processing ${name}@${version} (${Math.floor(elapsed / 60_000)} min so far; npm scans each new version first, which can take over half an hour)`)
+    return false
+  }, { timeoutMs: minutes * 60_000, intervalMs: 30_000 })
+  if (!served) {
+    throw new Error(`npm accepted ${name}@${version} but has not served it after ${minutes} minutes. npm scans every new version `
+      + 'before serving it; check the version on npmjs.com. Once it is listed there, re-run this job: it skips the publish and carries on.')
+  }
+  console.log(`npm serves ${name}@${version}`)
+}
+
 async function npmAuth(args: string[]): Promise<void> {
   const [packageDir, logsDir] = parseFlags(args, []).positional
   if (!packageDir || !logsDir) throw new Error('usage: npm-auth-report <package dir> <npm logs dir>')
@@ -190,6 +216,7 @@ const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   plan,
   preflight,
   'chrome-web-store': chromeWebStore,
+  'wait-for-npm': waitForNpm,
   'npm-auth-report': npmAuth,
 }
 
