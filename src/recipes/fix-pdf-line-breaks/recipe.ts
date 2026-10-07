@@ -115,6 +115,32 @@ const recipe: Recipe = {
         '\n' +
         'Writers who get a brief before they start need fewer revision rounds, and the published piece stays on topic.',
     },
+    {
+      id: 'docs-bullets-and-clauses',
+      title: 'Google Docs bullets and contract clauses',
+      input:
+        'Our onboarding covers three areas:\n' +
+        '\u25cf Account setup and billing\n' +
+        '\u25cf Importing contacts from a CSV\n' +
+        'file or another CRM\n' +
+        '\u25cf Building the first campaign\n' +
+        '\n' +
+        'The Supplier shall:\n' +
+        '(a) deliver the goods within 30 days of the\n' +
+        'order date;\n' +
+        '(b) replace defective goods at its own cost; and\n' +
+        '(c) keep records for six years.\n',
+      output:
+        'Our onboarding covers three areas:\n' +
+        '\u25cf Account setup and billing\n' +
+        '\u25cf Importing contacts from a CSV file or another CRM\n' +
+        '\u25cf Building the first campaign\n' +
+        '\n' +
+        'The Supplier shall:\n' +
+        '(a) deliver the goods within 30 days of the order date;\n' +
+        '(b) replace defective goods at its own cost; and\n' +
+        '(c) keep records for six years.',
+    },
   ],
 }
 export default recipe

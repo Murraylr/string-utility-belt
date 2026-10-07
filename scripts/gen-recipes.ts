@@ -12,7 +12,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { MANIFEST } from '../src/utilities/_generated/manifest'
-import { countSteps, isBranchStep, isMacroStep, isUtilityStep, utilityIds } from '../src/core/steps'
+import { isBranchStep, isMacroStep, isUtilityStep, utilityIds } from '../src/core/steps'
 import { displayName } from '../src/app/pages/seo'
 import { toPipelineSteps, type Recipe, type RecipeMeta } from '../src/recipes/types'
 
@@ -57,7 +57,7 @@ export function metaOfRecipe(recipe: Recipe): RecipeMeta {
       : isUtilityStep(s) ? names.get(s.utilityId) ?? s.utilityId
         : isBranchStep(s) ? `branch (${s.branches.length} lanes)`
           : isMacroStep(s) ? s.name : 'step'),
-    stepCount: countSteps(steps),
+    stepCount: steps.length,
     published: recipe.published,
     ...(recipe.updated ? { updated: recipe.updated } : {}),
   }

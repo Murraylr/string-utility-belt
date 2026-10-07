@@ -27,7 +27,7 @@ For SMS, add a rule to step 5 that turns • into a hyphen. The bullet is the on
 
 ## What it does not handle
 
-- Emoji built from several code points. Step 1 removes zero-width joiners and variation selectors, so ❤️ loses its emoji-style selector and a family emoji splits into separate people. For such text, turn step 1 off and add a rule to step 5 that deletes `​`.
+- Emoji built from several code points. Step 1 removes zero-width joiners and variation selectors, so ❤️ loses its emoji-style selector and a family emoji splits into separate people. For such text, replace step 1 with a [replace](/util/replace/) step that removes only the zero-width space, byte order mark and soft hyphen: pattern `[\u200B\uFEFF\u00AD]`, regex on, empty replacement. Keep it first, for the same reason step 1 is first.
 - Code. The list and table rules ignore code fences: in a code block, a YAML `- name` line becomes `• name`, a `---` line disappears and a line starting `1.` keeps its backslash (`1\.`). Copy code out separately.
 - An em dash that cuts off speech or ends a line leaves a stray comma: `“Wait—”` comes out as `"Wait, "`.
 - `5*3*2` is read as italics and comes out as 532, and lists numbered `1)` lose their numbers.

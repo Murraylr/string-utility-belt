@@ -110,7 +110,7 @@ export const RECIPE_INDEX: RecipeMeta[] = [
       "gzip decompress",
       "values and manifest"
     ],
-    "stepCount": 10,
+    "stepCount": 5,
     "published": "2026-10-07"
   },
   {
@@ -234,7 +234,7 @@ export const RECIPE_INDEX: RecipeMeta[] = [
       "remove dashes from keys",
       ".env and Kubernetes env:"
     ],
-    "stepCount": 8,
+    "stepCount": 4,
     "published": "2026-10-07"
   },
   {

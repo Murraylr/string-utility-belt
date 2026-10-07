@@ -19,7 +19,7 @@ The [sed script](/util/sed/) step isolates the payload. Its first command remove
 
 [deflate decompress](/util/deflate_decompress/) inflates the zlib stream and verifies its Adler-32 checksum, so a value cut short or altered in copying stops with an error rather than yielding wrong JSON. Its condition runs it only when the first byte is `x` (0x78, the zlib header byte). An uncompressed payload starts with `{` and passes straight through, as in the Cookie header sample.
 
-[json pretty](/util/json_pretty/) indents the JSON. By default Flask writes it with sorted keys and non-ASCII characters escaped, so `zurück` is stored as `zurück`; the formatted output shows the characters themselves.
+[json pretty](/util/json_pretty/) indents the JSON. By default Flask writes it with sorted keys and non-ASCII characters escaped, so `zurück` is stored as `zur\u00fcck`; the formatted output shows the characters themselves.
 
 ## Reading the decoded session
 

@@ -33,6 +33,16 @@ describe('RecipeArticle', () => {
       .toBe('Skipped (its input passes through) when the input matches ^\\s*<.')
   })
 
+  it('shows invisible characters in step outputs as symbols, and rule tables as raw find → replace rows', () => {
+    const rules = { ...recipe, steps: [step('dashes', 'multi_replace', { rules: [['(^|\\n) *— *', '$1- '], [' ', '']], regex: true }, 'Rewrites dashes at line starts and drops spaces.')] }
+    render(<RecipeArticle recipe={rules} utility={id => metas.get(id)} guideHtml="" live={null} related={[]} skip={[]}
+      steps={[{ id: 'dashes', output: { kind: 'text', text: 'a\u00A0b\r\n', size: 5, truncated: false } }]} />)
+    expect(screen.getByText('a⍽b␍', { exact: false })).toBeTruthy()
+    expect(screen.getByText(/Shown as symbols: ⍽ no-break or other special space, ␍ carriage return\./)).toBeTruthy()
+    const cells = screen.getAllByRole('cell').map(c => c.textContent)
+    expect(cells).toEqual(['(^|\\n) *— *', '→', '$1- ', '(one space)', '→', '(empty)'])
+  })
+
   it('leaves out the skip section when it could not be worked out, and shows a placeholder while it is', () => {
     const { rerender } = render(<RecipeArticle recipe={recipe} utility={id => metas.get(id)} guideHtml="" steps={[]} skip={[]} live={null} related={[]} />)
     expect(screen.queryByRole('heading', { name: 'What if you skip a step?' })).toBeNull()

@@ -70,7 +70,7 @@ export interface RecipeMeta {
   utilityIds: string[]
   /** The top-level steps' labels (else their utilities' display names), in order. */
   chain: string[]
-  /** Every step, nested ones included (`countSteps`). */
+  /** Top-level steps: the numbered steps on the page (a branch counts once). */
   stepCount: number
   published: string
   updated?: string

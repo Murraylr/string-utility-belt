@@ -16,7 +16,7 @@ const recipe: Recipe = {
     step('dedupe', 'line_dedupe', { caseSensitive: true },
       'Repeated values make the list longer without changing the result. Exact matches only, so values that differ in case stay distinct.'),
     step('escape', 'sql_escape', { flavor: 'ansi', wrap: false },
-      "Doubles every apostrophe, the standard SQL escape, so O'Connor stays one value in PostgreSQL, SQL Server, Oracle and SQLite. On MySQL or MariaDB, set this step's flavor to mysql."),
+      "Doubles every apostrophe, the standard SQL escape, so O'Connor stays one value in PostgreSQL, SQL Server, Oracle and SQLite. MySQL, MariaDB and Snowflake also need backslashes doubled first."),
     step('quote', 'line_affix', { prefix: "'", suffix: "'", skipBlank: true, joinWith: ', ' },
       'Wraps each value in single quotes and joins them with commas, skipping the blank cells between rows.',
       { label: 'quote and join values' }),

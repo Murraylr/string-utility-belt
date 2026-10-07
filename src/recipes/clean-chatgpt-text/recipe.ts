@@ -11,8 +11,8 @@ const LISTS = [
   String.raw`s/^(\s*)[-*+]\s+/\1• /`,
   '# write 1. as 1\\. so strip markdown keeps the number',
   String.raw`s/^(\s*\d+)\.\s+/\1\\. /`,
-  '# **Label** — text becomes **Label**: text',
-  String.raw`s/\*\* *— */**: /g`,
+  '# a bold label opening a line or list item: **Label** — text becomes **Label**: text',
+  String.raw`s/^(\s*(?:• |\d+\\\. )?\*\*[^*]+\*\*) *— */\1: /`,
 ].join('\n')
 
 const recipe: Recipe = {
@@ -31,7 +31,7 @@ const recipe: Recipe = {
       'Turns no-break (U+00A0), narrow no-break (U+202F) and other Unicode spaces into ordinary ones. They look like spaces but stop lines from wrapping, and the dash rules after this step match plain spaces only. Collapsing and trimming are off so indented sub-lists keep their indent.',
       { label: 'no-break spaces to plain spaces' }),
     step('lists', 'sed', { script: LISTS, perLine: true },
-      'Strip markdown deletes list markers, numbers included, so this runs first: bullets become • with their indent kept, 1. becomes 1\\. so the number survives, divider rows and horizontal rules go, table rows lose their outer pipes, and an em dash after a bold label becomes a colon.',
+      'Strip markdown deletes list markers, numbers included, so this runs first: bullets become • with their indent kept, 1. becomes 1\\. so the number survives, divider rows and horizontal rules go, table rows lose their outer pipes, and an em dash after a bold label that opens a line or list item becomes a colon.',
       { label: 'keep lists, tables and labels readable' }),
     step('markdown', 'markdown_strip', { keepLinkUrls: true, keepCodeBlocks: true },
       'Removes the remaining Markdown: ** and * emphasis, ### headings, > quote markers, backticks and code fences (the code itself stays), and turns 1\\. back into 1. Links keep their URL in parentheses after the link text.'),
@@ -107,6 +107,20 @@ const recipe: Recipe = {
         '"If it takes more than one scroll, nobody reads it."\n' +
         '- our head of lifecycle marketing\n\n' +
         '#emailmarketing #saas',
+    },
+    {
+      id: 'bold-mid-sentence',
+      title: 'Bold phrase before a dash',
+      input:
+        'Pick a topic you can write about **every week**\u2014not just once.\n' +
+        '\n' +
+        '- **Consistency** \u2014 the habit matters more than the length.\n' +
+        '- Start with **Team**\u2014the best value per seat.\n',
+      output:
+        'Pick a topic you can write about every week, not just once.\n' +
+        '\n' +
+        '\u2022 Consistency: the habit matters more than the length.\n' +
+        '\u2022 Start with Team, the best value per seat.',
     },
   ],
 }

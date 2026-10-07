@@ -22,12 +22,16 @@ export function stepTitle(step: PipelineStep, utility: UtilityLookup): string {
   return 'Step'
 }
 
-/** Params that differ from the utility's defaults: what the recipe actually sets. */
-export function changedParams(step: PipelineStep, utility: UtilityLookup): Array<[string, unknown]> {
+/**
+ * Params that differ from the utility's defaults: what the recipe actually sets,
+ * each with the label the editor shows for it.
+ */
+export function changedParams(step: PipelineStep, utility: UtilityLookup): Array<{ key: string; label: string; value: unknown }> {
   if (!isUtilityStep(step)) return []
   const spec: Record<string, ParamSpec> = utility(step.utilityId)?.params ?? {}
-  return Object.entries(step.params ?? {}).filter(([key, value]) =>
-    JSON.stringify((spec[key] as { default?: unknown } | undefined)?.default) !== JSON.stringify(value))
+  return Object.entries(step.params ?? {})
+    .filter(([key, value]) => JSON.stringify((spec[key] as { default?: unknown } | undefined)?.default) !== JSON.stringify(value))
+    .map(([key, value]) => ({ key, label: spec[key]?.label || key, value }))
 }
 
 /**
@@ -54,3 +58,54 @@ export const featuredRecipes = (all: RecipeMeta[]): RecipeMeta[] =>
 /** Recipes that use a utility, for its doc page. */
 export const recipesUsing = (utilityId: string, all: RecipeMeta[], limit = 3): RecipeMeta[] =>
   all.filter(r => r.utilityIds.includes(utilityId)).slice(0, limit)
+
+/** Characters a reader cannot see, and what a step preview shows instead. */
+const MARKS: Array<{ test: RegExp; legend: string; show: (ch: string) => string }> = [
+  { test: /\r/, legend: '␍ carriage return', show: () => '␍' },
+  { test: /[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/, legend: '⍽ no-break or other special space', show: () => '⍽' },
+  { test: /[\u200B\u2060\uFEFF\u00AD]/, legend: '⟨…⟩ invisible character', show: ch => `⟨${{ '\u200B': 'ZWSP', '\u2060': 'WJ', '\uFEFF': 'BOM', '\u00AD': 'SHY' }[ch]}⟩` },
+  // eslint-disable-next-line no-control-regex -- control characters are what this matches
+  { test: /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/, legend: '⟨…⟩ control character', show: ch => (ch === '\u001B' ? '⟨ESC⟩' : `⟨U+${ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')}⟩`) },
+]
+
+// trailing spaces/tabs (before a line break or the end), or any one character from MARKS
+// eslint-disable-next-line no-control-regex -- control characters are what this matches
+const INVISIBLE = /([ \t]+)(?=\r?\n|$)|[\r\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\u200B\u2060\uFEFF\u00AD\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
+
+/**
+ * A step preview with its invisible characters drawn as symbols, and a legend for
+ * the ones present. Several recipes exist to remove exactly these characters (a
+ * carriage return, a no-break space, a byte order mark), so a preview that showed
+ * them raw would look identical before and after the step. Emoji joiners and
+ * variation selectors are left alone: they are part of the characters they join.
+ */
+export function revealInvisible(text: string): { text: string; legend: string[] } {
+  const legend = new Set<string>()
+  const shown = text.replace(INVISIBLE, (match: string, trailing?: string) => {
+    if (trailing) {
+      legend.add('· trailing space or ⇥ tab')
+      return trailing.replace(/ /g, '·').replace(/\t/g, '⇥')
+    }
+    const mark = MARKS.find(m => m.test.test(match))!
+    legend.add(mark.legend)
+    return mark.show(match)
+  })
+  return { text: shown, legend: [...legend] }
+}
+
+/** A string param as a reader can see it: an empty or all-whitespace value is named. */
+export function describeString(value: string): string {
+  if (value === '') return '(empty)'
+  if (/^ +$/.test(value)) return value.length === 1 ? '(one space)' : `(${value.length} spaces)`
+  if (value === '\t') return '(tab)'
+  if (value === '\n') return '(newline)'
+  return value
+}
+
+/** Rule tables (`keyvalue` params, such as multi replace's find → replace pairs), or null for any other value. */
+export function stringPairs(value: unknown): Array<[string, string]> | null {
+  return Array.isArray(value) && value.length > 0
+    && value.every(p => Array.isArray(p) && p.length === 2 && typeof p[0] === 'string' && typeof p[1] === 'string')
+    ? (value as Array<[string, string]>)
+    : null
+}

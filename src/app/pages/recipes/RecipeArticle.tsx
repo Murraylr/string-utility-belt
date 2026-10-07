@@ -12,28 +12,42 @@ import { isBranchStep, isMacroStep, isUtilityStep, utilityIds } from '@/core/ste
 import { RECIPE_CATEGORIES, RECIPES_PATH, recipePath, type Recipe, type RecipeMeta, type RecipeSample } from '@/recipes/types'
 import type { Preview, SkipTrace, StepTrace } from '@/recipes/trace'
 import { utilityPath } from '../related'
-import { changedParams, nameOf, stepTitle, type UtilityLookup } from './recipeHelpers'
+import { changedParams, describeString, nameOf, revealInvisible, stepTitle, stringPairs, type UtilityLookup } from './recipeHelpers'
 
-const showValue = (v: unknown) => (typeof v === 'string' ? v : JSON.stringify(v))
+/** One param value, as the recipe runs it: strings raw (never JSON-escaped), rule tables as rows. */
+function ParamValue({ value }: { value: unknown }) {
+  const pairs = stringPairs(value)
+  if (pairs) {
+    return (
+      <table className="mono text-xs border-separate border-spacing-x-2">
+        <tbody>
+          {pairs.map(([find, replace], i) => (
+            <tr key={i}>
+              <td className="wrap-anywhere"><code className="bg-surface-2 rounded px-1">{describeString(find)}</code></td>
+              <td aria-label="becomes" className="text-muted">→</td>
+              <td className="wrap-anywhere"><code className="bg-surface-2 rounded px-1">{describeString(replace)}</code></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+  const shown = typeof value === 'string' ? describeString(value) : JSON.stringify(value)
+  return shown.includes('\n') || shown.length > 60
+    ? <pre className="mono whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">{shown}</pre>
+    : <code className="mono bg-surface-2 rounded px-1 wrap-anywhere">{shown}</code>
+}
 
-function ParamList({ params }: { params: Array<[string, unknown]> }) {
+function ParamList({ params }: { params: Array<{ key: string; label: string; value: unknown }> }) {
   if (params.length === 0) return null
   return (
     <dl className="grid gap-1 text-xs">
-      {params.map(([key, value]) => {
-        const shown = showValue(value)
-        const block = shown.includes('\n') || shown.length > 60
-        return (
-          <div key={key} className={block ? 'grid gap-1' : 'flex flex-wrap items-baseline gap-2'}>
-            <dt className="text-muted">{key}</dt>
-            <dd className="min-w-0">
-              {block
-                ? <pre className="mono whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">{shown}</pre>
-                : <code className="mono bg-surface-2 rounded px-1 wrap-anywhere">{shown === '' ? '(empty)' : shown}</code>}
-            </dd>
-          </div>
-        )
-      })}
+      {params.map(({ key, label, value }) => (
+        <div key={key} className="grid gap-1">
+          <dt className="text-muted">{label}</dt>
+          <dd className="min-w-0 overflow-auto"><ParamValue value={value} /></dd>
+        </div>
+      ))}
     </dl>
   )
 }
@@ -42,12 +56,14 @@ function PreviewBlock({ preview, label }: { preview: Preview; label: string }) {
   const note = preview.kind === 'bytes'
     ? `${preview.size} bytes${preview.truncated ? ', first shown as hex' : ', as hex'}`
     : preview.truncated ? `first part of ${preview.size.toLocaleString('en-US')} characters` : null
+  const shown = preview.kind === 'bytes' ? { text: preview.text, legend: [] } : revealInvisible(preview.text)
   return (
     <figure className="grid gap-1 min-w-0">
       <figcaption className="text-xs text-muted">{label}{note ? ` (${note})` : ''}</figcaption>
       <pre className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2 max-h-72 overflow-auto">
-        {preview.text}{preview.truncated ? '\n…' : ''}
+        {shown.text}{preview.truncated ? '\n…' : ''}
       </pre>
+      {shown.legend.length > 0 && <p className="text-xs text-muted">Shown as symbols: {shown.legend.join(', ')}.</p>}
     </figure>
   )
 }

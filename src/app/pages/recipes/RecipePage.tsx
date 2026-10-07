@@ -213,7 +213,7 @@ function RecipeView({ data }: { data: RecipeData }) {
           output={output}
           error={error}
           running={live && run.running}
-          stepCount={countSteps(steps)}
+          stepCount={recipe.steps.length}
           openHref={openHref}
           onSample={onSample}
           onInput={onInput}

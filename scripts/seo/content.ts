@@ -14,7 +14,6 @@ import { RecipeArticle, RecipesIndex, RecipeWidget } from '../../src/app/pages/r
 import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
 import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
 import type { RecipeTrace } from '../../src/recipes/trace'
-import { countSteps } from '../../src/core/steps'
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
 
@@ -312,7 +311,7 @@ export function renderRecipeContent(opts: {
     sampleId: first.id,
     input: first.input,
     output: trace.output,
-    stepCount: countSteps(steps),
+    stepCount: recipe.steps.length,
     openHref: openInEditorHref(steps, recipe.name, first.input),
   })
   return renderToStaticMarkup(createElement(RecipeArticle, {
