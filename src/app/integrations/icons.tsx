@@ -23,3 +23,21 @@ export function McpIcon({ size = 16, className }: IconProps) {
     </svg>
   )
 }
+
+/**
+ * Chrome mark, from Lucide 0.424 (`chrome`, ISC, https://lucide.dev) — kept here because
+ * Lucide 1.0 dropped its brand icons. Google Chrome is a trademark of Google LLC; the mark
+ * only identifies the browser the linked extension is for.
+ */
+export function ChromeIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
+      <line x1="21.17" x2="12" y1="8" y2="8" />
+      <line x1="3.95" x2="8.54" y1="6.06" y2="14" />
+      <line x1="10.88" x2="15.46" y1="21.94" y2="14" />
+    </svg>
+  )
+}
