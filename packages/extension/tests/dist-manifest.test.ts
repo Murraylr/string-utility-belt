@@ -131,9 +131,12 @@ describeIfBuilt('built extension (dist/)', () => {
     beforeAll(() => {
       const code = read('background.js')
         .replace(/export\s*\{[^}]*\}\s*;?\s*$/, '')
-        .replaceAll('import.meta.url', JSON.stringify(pathToFileURL(resolve(distDir, 'background.js')).href))
+        // `import.meta` is a syntax error outside a module; stand in for it with just a `url`, so
+        // code that feature-detects `import.meta.resolve` takes its `new URL(…, import.meta.url)` path
+        .replaceAll('import.meta', '__importMeta')
       expect(typeof (globalThis as { document?: unknown }).document).toBe('undefined')
-      new Function('chrome', `"use strict";\n${code}`)(chromeMock)
+      const importMeta = { url: pathToFileURL(resolve(distDir, 'background.js')).href }
+      new Function('chrome', '__importMeta', `"use strict";\n${code}`)(chromeMock, importMeta)
     })
 
     it('registers its listeners at top level and builds the default menu on install', async () => {
