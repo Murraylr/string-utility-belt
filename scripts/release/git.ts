@@ -45,9 +45,13 @@ export class Git {
     return lines(this.run(['tag', '--list', pattern]))
   }
 
-  /** Commits on `to`'s first-parent line after `from` (newest first): one per merged pull request. */
-  firstParentCommits(from: string, to = 'HEAD'): string[] {
-    return lines(this.run(['rev-list', '--first-parent', `${from}..${to}`]))
+  /**
+   * Commits on `to`'s first-parent line after `from` (all of them for `null`), newest first: one per
+   * merged pull request. With `paths`, only the commits that changed one of them.
+   */
+  firstParentCommits(from: string | null, to = 'HEAD', paths: readonly string[] = []): string[] {
+    const range = from ? `${from}..${to}` : to
+    return lines(this.run(['rev-list', '--first-parent', range, ...(paths.length ? ['--', ...paths] : [])]))
   }
 
   /** Every commit reachable from `to` but not from `from`. */

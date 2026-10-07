@@ -89,7 +89,9 @@ its deploy failed and another pull request was merged meanwhile), the next relea
 
 - **A deploy job failed** (store outage, expired credential): fix the cause, then **Re-run failed
   jobs** on that workflow run. The release commit and the other targets are untouched; the job
-  publishes what is missing and tags the release.
+  publishes what is missing and tags the release. A re-run uses the workflow as it was for that run:
+  to pick up a fix to the workflow or the release tooling, merge it instead. The release run after
+  that retries the same versions, as long as nothing those targets ship has changed.
 - **Run the whole release again** — *Actions → Release → Run workflow*. It releases the newest
   commit on `main` that CI passed on, and continues where an earlier run stopped (a version an
   earlier run already bumped is released as it is, not bumped again).
@@ -193,11 +195,18 @@ For each of `@string-utility-belt/core`, `subelt` and `@string-utility-belt/mcp`
 - **Repository:** `string-utility-belt`
 - **Workflow filename:** `release.yml`
 - **Environment name:** `npm`
+- **Allowed actions:** tick **`npm publish`**. Trusted publishers created since 2026-09-03 allow only
+  `npm stage publish` until you do, and this workflow publishes directly.
 
-Save. Nothing is stored in GitHub: each publish exchanges the job's OIDC token for a short-lived npm
-token and attaches provenance. Once the first release has published through it, set *Settings →
-Publishing access* to **Require two-factor authentication and disallow tokens**, so nothing but this
-workflow can publish.
+Every field is case-sensitive (`String-Utility-Belt`, not `string-utility-belt`), and npm checks none
+of them when you save. Save. Nothing is stored in GitHub: each publish exchanges the job's OIDC token
+for a short-lived npm token and attaches provenance. Once the first release has published through it,
+set *Settings → Publishing access* to **Require two-factor authentication and disallow tokens**, so
+nothing but this workflow can publish.
+
+If a publish fails with `ENEEDAUTH`, npm refused the token exchange. It doesn't say why, so the
+publish step (`.github/actions/npm-publish`) adds a report to the job log and summary: npm's own
+account of the exchange, and the exact values the trusted publisher has to hold for that job.
 
 ### 5. MCP Registry
 

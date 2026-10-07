@@ -17,6 +17,11 @@
  *
  *   npm run release -- chrome-web-store <zip>
  *       Uploads the extension package and submits it for review (CWS_ACCESS_TOKEN, CWS_PUBLISHER_ID).
+ *
+ *   npm run release -- npm-auth-report <package dir> <npm logs dir>
+ *       After a refused `npm publish --logs-dir <npm logs dir>`: npm's account of its trusted-publishing
+ *       token exchange, and the fields the package's trusted publisher on npmjs.com must hold to match
+ *       this job's OIDC identity (job log, summary and an error annotation).
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -25,6 +30,7 @@ import { STORE_EXTENSION_ID } from '../src/core/extensionBridge'
 import { publishToChromeWebStore } from './release/chrome-web-store'
 import { Git } from './release/git'
 import { GitHub, annotate, appendSummary, setOutput } from './release/github'
+import { githubPublisherIdentity, npmAuthReport, npmOidcLog } from './release/npm-auth'
 import {
   applyPlan, lastNonReleaseCommit, planRelease, planSummary, readTargetVersion, releaseCommitMessage, supersededReason,
 } from './release/plan'
@@ -170,10 +176,21 @@ async function chromeWebStore(args: string[]): Promise<void> {
   setOutput('result', result)
 }
 
+async function npmAuth(args: string[]): Promise<void> {
+  const [packageDir, logsDir] = parseFlags(args, []).positional
+  if (!packageDir || !logsDir) throw new Error('usage: npm-auth-report <package dir> <npm logs dir>')
+  const { name } = JSON.parse(readFileSync(path.resolve(packageDir, 'package.json'), 'utf8')) as { name: string }
+  const report = npmAuthReport(name, npmOidcLog(path.resolve(logsDir)), await githubPublisherIdentity())
+  console.log(report)
+  appendSummary(report)
+  annotate('error', `npm refused to publish ${name}: the job summary says why, and what its trusted publisher on npmjs.com must read`)
+}
+
 const COMMANDS: Record<string, (args: string[]) => Promise<void>> = {
   plan,
   preflight,
   'chrome-web-store': chromeWebStore,
+  'npm-auth-report': npmAuth,
 }
 
 async function main(): Promise<void> {

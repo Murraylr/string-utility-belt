@@ -184,12 +184,10 @@ jobs:
         run: npm run release -- preflight core
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
-        run: |
-          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
-          npm publish ./packages/core --provenance --access public
-        env:
-          # empty with trusted publishing (OIDC); the fallback for a classic automation token
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: ./.github/actions/npm-publish
+        with:
+          package: ./packages/core
+          token: ${{ secrets.NPM_TOKEN }}   # empty with trusted publishing (OIDC)
       - uses: ./.github/actions/github-release
         with:
           target: core
@@ -225,11 +223,10 @@ jobs:
         run: npm run release -- preflight cli
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
-        run: |
-          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
-          npm publish ./packages/cli --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: ./.github/actions/npm-publish
+        with:
+          package: ./packages/cli
+          token: ${{ secrets.NPM_TOKEN }}   # empty with trusted publishing (OIDC)
       - uses: ./.github/actions/github-release
         with:
           target: cli
@@ -268,11 +265,10 @@ jobs:
       # the MCP Registry entry points at the npm package, so npm goes first
       - name: Publish to npm
         if: steps.published.outputs.npm != 'true'
-        run: |
-          npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
-          npm publish ./packages/mcp --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        uses: ./.github/actions/npm-publish
+        with:
+          package: ./packages/mcp
+          token: ${{ secrets.NPM_TOKEN }}   # empty with trusted publishing (OIDC)
       - name: Publish to the MCP Registry
         if: steps.published.outputs.mcp_registry != 'true'
         env:
