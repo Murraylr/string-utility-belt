@@ -187,20 +187,46 @@ GitHub Actions (`.github/workflows/ci.yml`): tests, typecheck (app, worker, e2e,
 
 ## Releases (`RELEASING.md`)
 
-- `.github/workflows/release.yml` runs after CI passes on `main`: it releases only the targets (`app`, `core`, `cli`,
-  `mcp`, `vscode`) whose shipped files changed since their last `<id>-v<version>` tag, bumps versions the merged PR
-  didn't (patch; `release:minor` / `release:major` labels), pushes a `chore(release): … [skip ci]` commit, then deploys
-  each target, tags it and creates a GitHub release. Every deploy checks its store first (idempotent) and refuses when a
-  newer release exists. The browser extension (`trigger: 'manual'`) only releases from a manual run with
-  "Release the browser extension" ticked; until then plans list it as waiting.
-- Tooling: `scripts/release.ts` + `scripts/release/`. Per target, `targets.ts` holds the path rules and build `entries`;
-  `imports.ts` walks the entries' imports, and `lockfile.ts` resolves the npm packages they import (plus their
-  dependencies) so a dependency update releases only the packages that bundle it. Tests fail when a bundled file isn't
-  covered by a target's globs — extend them when a package starts importing from a new directory.
-  `release-preview.yml` shows each PR's would-be release in its job summary.
-- Versions: every version file of a target must agree (tested). The CLI's `VERSION` and the MCP server's version are
-  imported from their `package.json`; the extension's version is `manifest.json` alone (no longer the root's).
-  Raise a version by hand only to pick it yourself (all of the target's files at once); never lower one.
+Nothing is published by hand: merging to `main` releases what changed. Never push to `main`, create or move
+`<id>-v*` tags, edit `chore(release)` commits, or start the Release workflow unless the user asks.
+
+- **How it works.** `.github/workflows/release.yml` runs after CI passes on `main` and releases only the targets
+  (`app`, `core`, `cli`, `mcp`, `vscode`) whose shipped files changed since their last `<id>-v<version>` tag. It bumps
+  versions the merged PR didn't (see labels below), pushes one `chore(release): … [skip ci]` commit, then deploys each
+  target (Cloudflare Workers, npm, MCP Registry, VS Code Marketplace), tags it and creates a GitHub release. Every deploy
+  checks its store first (idempotent) and refuses when a newer release exists. The browser extension
+  (`trigger: 'manual'`) only releases from a manual run with "Release the browser extension" ticked (Chrome Web Store
+  reviews every submission); until then plans list it as waiting.
+- **Tooling.** `scripts/release.ts` + `scripts/release/`. Per target, `targets.ts` holds the path rules and build
+  `entries`; `imports.ts` walks the entries' imports and `lockfile.ts` resolves the npm packages they import (plus their
+  dependencies), so a dependency update releases only the packages that bundle it (the site counts every dependency
+  change). Tests fail when a bundled file isn't covered by a target's globs — extend them when a package starts
+  importing from a new directory. `npm run release -- plan [--labels release:minor] [--manual extension]` previews a
+  release locally; `release-preview.yml` posts the same table in each PR's job summary.
+- **Versions.** Every version file of a target must agree (tested). The CLI's `VERSION` and the MCP server's version are
+  imported from their `package.json`; the extension's version is `manifest.json` alone (not the root's). Don't edit
+  versions in a PR — label it instead. Raise one by hand only when the user picks a specific version (every version
+  file of that target at once); never lower one. User-visible changes go under `## [Unreleased]` in `CHANGELOG.md`;
+  the app's release turns that section into the new version's.
+
+### Labelling pull requests (do this for every PR you open)
+
+The label sets the version bump for every target the PR changes — the highest one wins across a release. `create_pull_request`
+takes no labels: add them right after with `issue_write` (method `update`, `labels`) or `gh pr edit --add-label`. Labels
+`release:minor` and `release:major` exist; also add `enhancement` for a new feature (it doesn't affect releases).
+
+| Label | When | Examples |
+| --- | --- | --- |
+| none (patch) | nothing a user relies on changes, or a fix | bug fix (even if output now matches the documented behaviour), performance, refactor, tests, CI, release tooling, docs, guides/SEO copy, dependency update without behaviour change |
+| `release:minor` | new capability; existing pipelines, commands and imports behave as before | new utility; new param whose default keeps old behaviour; new CLI flag, MCP tool or tool field, `@string-utility-belt/core` export; new site page or feature; new extension feature |
+| `release:major` | something that worked before now fails or gives a different result | removing or renaming a utility id or param; changing a param's default or meaning; changing an existing utility's output beyond a fix; share-link/pipeline schema change without migration (`SCHEMA_VERSION` in `serialize.ts`); removed or changed CLI flag, exit code or output format; MCP tool rename or schema change; removed core export; higher Node `engines` floor; `BRIDGE_PROTOCOL` bump |
+
+- When unsure between two levels, ask the user rather than guess; say in the PR description which label you chose and why.
+- Check the PR's **Release preview** job summary: it lists the targets that will release and their versions. A PR that
+  only touches tests, CI or release tooling releases nothing — leave it unlabelled.
+- If the PR changes the browser extension (or `src/core/extensionBridge.ts`), say in the description that the extension
+  needs a manual release after merging; a bridge change reaches site users before the extension updates.
+- Don't add `release:*` labels to Dependabot PRs unless the update changes what users get.
 
 ## Path aliases
 
