@@ -11,4 +11,6 @@
 - [ ] `npm test`, `npm run typecheck` and `npm run lint` pass
 - [ ] New utilities have `index.test.ts`, `guide.md` (`npm run check:guides -- <id>`) and regenerated `_generated/` files (`npm run gen`)
 - [ ] User-visible changes are noted under `## [Unreleased]` in `CHANGELOG.md`
+- [ ] Labelled `release:minor` (new features) or `release:major` (breaking changes) if a patch release
+      isn't right — the **Release preview** check shows what merging would release
 - [ ] If the change affects what data leaves the browser, the privacy policy is updated

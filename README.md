@@ -1,6 +1,6 @@
 # String Utility Belt
 
-[![CI](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml/badge.svg)](https://github.com/Murraylr/string-utility-belt/actions/workflows/ci.yml)
+[![CI](https://github.com/String-Utility-Belt/string-utility-belt/actions/workflows/ci.yml/badge.svg)](https://github.com/String-Utility-Belt/string-utility-belt/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![npm: subelt](https://img.shields.io/npm/v/subelt?label=subelt)](https://www.npmjs.com/package/subelt)
 [![smithery badge](https://smithery.ai/badge/string-utility-belt/string-utility-belt)](https://smithery.ai/servers/string-utility-belt/string-utility-belt)
@@ -52,7 +52,7 @@ echo -n hello | npx subelt trim base64_encode hash   # SHA-256 of the base64
 Requires Node.js 20.19+ or 22.12+.
 
 ```bash
-git clone https://github.com/Murraylr/string-utility-belt.git
+git clone https://github.com/String-Utility-Belt/string-utility-belt.git
 cd string-utility-belt
 npm ci
 npm run dev          # generates the utility manifest, then starts Vite
@@ -71,7 +71,8 @@ npm run typecheck
 | `npm run build:tools` | Build `packages/*` (core, CLI, MCP server, browser extension, VS Code extension) |
 | `npm run test:e2e` | Playwright end-to-end tests against a production build |
 | `npm run bench` | Large-input benchmarks (`vitest bench`) |
-| `npm run deploy` | `build:site`, then `wrangler deploy` (Cloudflare Workers: static assets + `/api/*`) |
+| `npm run deploy` | `build:site`, then `wrangler deploy` (Cloudflare Workers: static assets + `/api/*`) — releases normally deploy from CI |
+| `npm run release -- plan` | What a release from `HEAD` would ship, and at which versions ([RELEASING.md](RELEASING.md)) |
 
 ## Other surfaces
 

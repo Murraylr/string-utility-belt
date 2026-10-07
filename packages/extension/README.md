@@ -31,8 +31,9 @@ npm run build:extension
 This runs `vite build --config packages/extension/vite.config.ts`, producing
 `packages/extension/dist/`: the built `popup.html`/`options.html` with their
 code-split scripts, `background.js` (the service worker), `manifest.json`
-(its `version` must equal the root `package.json`'s, or the build fails), and `icons/`. `--outDir`
-is honoured for all of it.
+(the one source of the extension's version — releases bump it, see
+[RELEASING.md](../../RELEASING.md); the build fails on a version the Chrome Web Store would
+reject), and `icons/`. `--outDir` is honoured for all of it.
 
 `vite build --mode development` also accepts messages from
 `http://localhost` and `http://127.0.0.1` (any port), for trying "save to
