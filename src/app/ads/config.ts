@@ -2,7 +2,7 @@
 export const ADSENSE_CLIENT = 'ca-pub-2227752612794222'
 
 /** Where manual ad units may appear: content pages only, never the pipeline editor or an embed. */
-export type AdPlacement = 'doc-page' | 'blog-post' | 'utilities-index'
+export type AdPlacement = 'doc-page' | 'blog-post' | 'utilities-index' | 'recipe-page'
 
 /**
  * Display ad unit ids ("data-ad-slot") by placement, from AdSense → Ads → By ad
@@ -13,4 +13,6 @@ export const AD_SLOTS: Record<AdPlacement, string | undefined> = {
   'doc-page': undefined,
   'blog-post': undefined,
   'utilities-index': undefined,
+  // after a recipe's worked example and steps, never inside its live widget
+  'recipe-page': undefined,
 }

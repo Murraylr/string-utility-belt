@@ -50,6 +50,15 @@ export function jsonLdScript(data: unknown): string {
   return `<script type="application/ld+json">${json}</script>`
 }
 
+/**
+ * A JSON data block (`<script type="application/json" id="…">`) for the app to read
+ * on mount, escaped like `jsonLdScript` so no value can close the tag.
+ */
+export function jsonDataScript(id: string, data: unknown): string {
+  const json = JSON.stringify(data).replace(/</g, `${BACKSLASH}u003c`)
+  return `<script type="application/json" id="${escapeAttr(id)}">${json}</script>`
+}
+
 /** Replaces the sole `<title>` element (or adds one to `<head>`). */
 export function setTitle(html: string, title: string): string {
   const tag = `<title>${escapeHtml(title)}</title>`

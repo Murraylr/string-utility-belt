@@ -41,6 +41,7 @@
         "test:e2e": "playwright test",
         "build:seo:fast": "vite-node scripts/build-seo.ts -- --no-og",
         "check:guides": "vite-node scripts/check-guides.ts",
+        "check:recipes": "vite-node scripts/check-recipes.ts",
         "build:site": "npm run build && npm run build:seo",
         "release": "vite-node scripts/release.ts"
     },

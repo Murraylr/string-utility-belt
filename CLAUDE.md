@@ -24,6 +24,7 @@ npm run build        # production build, then (postbuild) build:seo — OG image
                      # npm run check:bundle enforces bundle-budget.json
 npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
 npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
+npm run check:recipes -- <slug…>  # check recipes with the build's engine (no slugs = all, plus cross-recipe rules)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
@@ -72,6 +73,28 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `file`, `color`, `date`, `multiselect`, `range`. Numbers/ranges that multiply output size or work
   (counts, widths, iterations) must declare `max` — the runner rejects out-of-range values.
 
+### Recipes (`src/recipes/`) — pre-rendered pipeline pages
+- A recipe is a hand-picked multi-step pipeline for one real task, published at `/recipes/<slug>/` (index: `/recipes/`).
+  Folder per recipe: `recipe.ts` (default export `Recipe`: steps built with `step()`/`branch()`/`laneStep()` from
+  `define.ts`, each top-level step with a `why`; 2+ `samples` with golden outputs, the first is the page's worked
+  example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
+  example blocks). `npm run gen` also writes `src/recipes/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
+  per recipe with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.
+- Rules (`check.ts`, run by `recipes.test.ts` and `check:recipes`): real utilities/params, no `dom`/`main`/`eval`
+  steps (the build runs recipes in Node, the page in a worker), every sample reproduces its output on every run and
+  at any date, **every top-level step changes some sample's output when left out** (no padding), 2+ real steps or a
+  branch, title/description/primaryQuery unique across recipes and utility guides, `primaryQuery` not a utility
+  guide title's head term (no competing with `/util/<id>/`), ≥300 words of guide prose, no near-copied prose.
+- `trace.ts` turns a run into what the page shows (each step's output, what leaving each step out does).
+  `scripts/seo/build.ts` traces every recipe with the static registry, **fails the build** if the first sample's
+  output drifted, renders `RecipeArticle` with `renderToStaticMarkup` and embeds the trace as
+  `<script type="application/json" id="recipe-trace">`. `RecipePage` reads that trace, so nothing runs on load; the
+  first edit runs live (worker). `main.tsx` preloads a recipe route's chunk and data before mounting
+  (`preloadable`, capped at 2.5s) so React replaces the static HTML with the same page, not "Loading…".
+- "Open in the editor" (`openInEditor.ts`) autosaves the visitor's pipeline to the library, saves the recipe as the
+  working pipeline and hands off the input; its href is a `#/p/` share link carrying only the example input.
+- A `<textarea>` turns CRLF into LF: pasted Windows line endings never reach a recipe, only the samples' own text.
+
 ### App (`src/app/`)
 - `AppShell.tsx` — header/nav, lazy route pages, command palette, shortcuts help, theme, PWA install/update, frame-busting.
 - `ToolContext.tsx` + `store/pipeline.ts` — pure reducer with undo/redo (coalesced edits); persisted pipeline.
@@ -84,9 +107,9 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
+  `#/util/:id`, `#/recipes`, `#/recipes/:slug`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
   `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
-- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/docs/`, `/blog/…`, `/about/`…);
+- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/recipes/<slug>/`, `/docs/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex`. The host answers
   it with `dist/404.html` and a 404 status (`not_found_handling: "404-page"`), so a new path-routed page must also be
   pre-rendered by `scripts/seo/build.ts`, or it 404s on a direct load.
@@ -114,6 +137,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `location.href`, and share links carry the user's input in the fragment.
 - Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
   params only) — GA's own history-based page views are off in the stream settings.
+- Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`;
+  page views carry `recipe_id` (register it as a custom dimension).
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
   counts and size buckets only, never input/output text. New params need a custom dimension in GA
   (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
@@ -179,6 +204,17 @@ const util: Utility = {
 }
 export default util
 ```
+
+## Adding a recipe
+
+1. Pick a task people search for that needs 2+ utilities, and check no utility page already owns the search:
+   `grep -ih "^title:" src/utilities/*/guide.md | grep -i "<query>"` must print nothing
+2. Create `src/recipes/<slug>/recipe.ts` (see `src/recipes/excel-column-to-sql-in-clause/` and `types.ts`): steps
+   with a true `why` each (verify against the utility source), 2–4 realistic samples (example.com, RFC 5737 IPs,
+   vendor test vectors — never real data or secrets); generate encoded/compressed sample data with a script
+3. Write `guide.md`: why single tools fail at this, what each step does and why the order matters, honest limits,
+   how to do it elsewhere; link utilities as `[name](/util/<id>/)`
+4. `npm run check:recipes -- <slug>` until it passes, then `npm run gen`
 
 ## CI
 

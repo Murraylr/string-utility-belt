@@ -146,6 +146,7 @@ export const commands: Command[] = [
   { id: 'shortcuts', title: 'Keyboard shortcuts', group: 'Help', keywords: ['shortcuts', 'help', 'keys'], run: fire(EVENT_OPEN_SHORTCUTS) },
   { id: 'goto-tool', title: 'Go to Tool', group: 'Navigate', keywords: ['tool', 'home', 'pipeline'], run: goToTool },
   { id: 'goto-utilities', title: 'Go to Utilities', group: 'Navigate', keywords: ['utilities', 'browse', 'index'], run: () => { location.hash = '#/utilities' } },
+  { id: 'goto-recipes', title: 'Go to Recipes', group: 'Navigate', keywords: ['recipes', 'examples', 'how to', 'pipelines'], run: () => { location.hash = '#/recipes' } },
   { id: 'goto-blog', title: 'Go to Blog', group: 'Navigate', keywords: ['blog'], run: () => { location.hash = '#/blog' } },
   { id: 'goto-changelog', title: 'Go to Changelog', group: 'Navigate', keywords: ['changelog', 'history'], run: () => { location.hash = '#/changelog' } },
 ]

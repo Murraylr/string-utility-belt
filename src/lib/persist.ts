@@ -11,7 +11,8 @@ export interface PersistedState {
   libraryId?: string
 }
 
-export function saveState(state: Partial<PersistedState>) {
+/** Saves the working pipeline; false when storage refused the write (quota, disabled storage). */
+export function saveState(state: Partial<PersistedState>): boolean {
   const safe = {
     v: SCHEMA_VERSION,
     steps: state?.steps ?? [],
@@ -19,7 +20,12 @@ export function saveState(state: Partial<PersistedState>) {
     ...(state?.name ? { name: state.name } : {}),
     ...(state?.libraryId ? { libraryId: state.libraryId } : {}),
   }
-  try { localStorage.setItem(CURRENT_KEY, JSON.stringify(safe)) } catch { /* quota or disabled storage */ }
+  try {
+    localStorage.setItem(CURRENT_KEY, JSON.stringify(safe))
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**

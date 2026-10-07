@@ -15,7 +15,9 @@ import IntegrationsNav from './integrations/IntegrationsNav'
 import { useShareTarget } from './pwa/useShareTarget'
 import { useT } from './i18n/useT'
 import { useDocumentMeta } from './pages/useDocumentMeta'
+import { useNoindex } from './pages/useNoindex'
 import { pageTitle } from './pages/seo'
+import { RecipePage, RecipesIndexPage } from './pages/recipes/routes'
 
 // Only the tool ships in the entry chunk; every other route is fetched on first visit.
 const BlogIndex = lazy(() => import('@/components/BlogIndex'))
@@ -27,6 +29,8 @@ const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SitePage = lazy(() => import('./pages/SitePage'))
 const HomeDirectory = lazy(() => import('./pages/HomeDirectory'))
 const Docs = lazy(() => import('@/components/Docs'))
+// RecipePage / RecipesIndexPage (./pages/recipes/routes) are preloadable: main.tsx fetches
+// them before mounting, so a pre-rendered recipe page never flashes "Loading…"
 
 const PageLoading = () => <div className="muted" role="status">Loading…</div>
 
@@ -36,12 +40,14 @@ const NAV = [
   { href: '/', key: 'nav.tool', routes: ['home', 'pipeline', 'notFound'] },
   { href: '/docs/', key: 'nav.docs', routes: ['docs'] },
   { href: '/utilities/', key: 'nav.utilities', routes: ['utilities', 'utility'] },
+  { href: '/recipes/', key: 'nav.recipes', routes: ['recipes', 'recipe'] },
   { href: '/blog/', key: 'nav.blog', routes: ['blogIndex', 'blogPost'] },
   { href: '/changelog/', key: 'nav.changelog', routes: ['changelog'] },
 ] as const satisfies ReadonlyArray<{ href: string; key: string; routes: ReadonlyArray<Route['name']> }>
 
 const FOOTER_LINKS = [
   { href: '/utilities/', key: 'footer.utilities' },
+  { href: '/recipes/', key: 'nav.recipes' },
   { href: '/blog/', key: 'nav.blog' },
   { href: '/changelog/', key: 'nav.changelog' },
   { href: '/integrations/', key: 'footer.integrations' },
@@ -132,20 +138,8 @@ function FramedNotice() {
 /** Above the tool for an address that is not a page. */
 function NotFoundNotice() {
   useDocumentMeta(pageTitle('Page not found'))
-  // the host answers unknown paths with index.html and a 200 (an SPA fallback): without
-  // this, search engines would index every mistyped URL as a copy of the home page
-  useEffect(() => {
-    let tag = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
-    const created = !tag
-    if (!tag) {
-      tag = document.createElement('meta')
-      tag.name = 'robots'
-      document.head.appendChild(tag)
-    }
-    const prev = tag.content
-    tag.content = 'noindex'
-    return () => { if (created) tag.remove(); else tag.content = prev }
-  }, [])
+  // without this, search engines would index every mistyped URL as a copy of the home page
+  useNoindex()
   return (
     <p role="status" className="card p-4 text-sm">
       <strong>Page not found.</strong> There is nothing at this address, so here is the pipeline tool instead —
@@ -197,6 +191,8 @@ export default function AppShell() {
           {route.name === 'blogPost' && <BlogPost slug={route.params.slug} />}
           {route.name === 'utilities' && <UtilitiesIndexPage />}
           {route.name === 'utility' && <UtilityDocPage id={route.params.id} />}
+          {route.name === 'recipes' && <RecipesIndexPage />}
+          {route.name === 'recipe' && <RecipePage key={route.params.slug} slug={route.params.slug} />}
           {route.name === 'changelog' && <ChangelogPage />}
           {route.name === 'page' && <SitePage slug={route.params.slug as SitePageSlug} />}
           {route.name === 'docs' && <Docs />}
