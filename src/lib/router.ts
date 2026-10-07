@@ -12,6 +12,10 @@ export type RouteName =
   | 'utilities'
   /** One utility's documentation: `#/util/<id>`, or the pre-rendered `/util/<id>` */
   | 'utility'
+  /** Index of every recipe (prebuilt multi-step pipeline): `/recipes/`, or `#/recipes` */
+  | 'recipes'
+  /** One recipe: the pre-rendered `/recipes/<slug>/`, or `#/recipes/<slug>` */
+  | 'recipe'
   | 'changelog'
   /** A site page (about, privacy policy, contact): `/<slug>/` or `#/<slug>` */
   | 'page'
@@ -38,6 +42,14 @@ const utilityRoute = (raw: string): Route => {
   return id === null ? NOT_FOUND : { name: 'utility', params: { id } }
 }
 
+/** Recipe slugs are lowercase words joined by single hyphens; anything else is no page. */
+const RECIPE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+const recipeRoute = (raw: string): Route => {
+  const slug = safeDecode(raw)
+  return slug !== null && RECIPE_SLUG.test(slug) ? { name: 'recipe', params: { slug } } : NOT_FOUND
+}
+
 /**
  * A blog slug becomes a path under `/blog/` (`fetch('/blog/<slug>.md')`), so none of
  * its segments may be a dot segment or smuggle a separator, encoded or not.
@@ -57,6 +69,8 @@ function routeFromPath(pathname: string): Route | null {
   const parts = pathname.split('/').filter(Boolean)
   if (parts[0] === 'util' && parts[1]) return utilityRoute(parts[1])
   if (parts[0] === 'utilities' && parts.length === 1) return { name: 'utilities', params: {} }
+  if (parts[0] === 'recipes' && parts.length === 1) return { name: 'recipes', params: {} }
+  if (parts[0] === 'recipes' && parts.length === 2) return recipeRoute(parts[1])
   if (parts[0] === 'docs' && parts.length === 1) return { name: 'docs', params: {} }
   if (parts[0] === 'blog' && parts.length === 1) return { name: 'blogIndex', params: {} }
   if (parts[0] === 'blog' && parts[1]) return blogRoute(parts.slice(1))
@@ -99,6 +113,8 @@ export function getRoute(): Route {
   if (head === 'blog') return blogRoute(parts.slice(1))
   if (head === 'utilities' && parts.length === 1) return { name: 'utilities', params: {} }
   if (head === 'util' && parts[1]) return utilityRoute(parts[1])
+  if (head === 'recipes' && parts.length === 1) return { name: 'recipes', params: {} }
+  if (head === 'recipes' && parts.length === 2) return recipeRoute(parts[1])
   if (head === 'changelog') return { name: 'changelog', params: {} }
   if (parts.length === 1 && isSitePage(head)) return { name: 'page', params: { slug: head } }
   return { name: 'notFound', params: {} }
@@ -146,7 +162,7 @@ export function scrollToFragment(): boolean {
 // and `/blog/_manifest.json` are files beside the posts, not pages. A pre-rendered page
 // may carry an in-page anchor; the home page may not (its fragment is a route).
 const IN_APP_PATH = new RegExp(
-  `^/(?:|(?:docs/?|utilities/?|util/[^/?#]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)(?:#[A-Za-z][\\w-]*)?)$`,
+  `^/(?:|(?:docs/?|utilities/?|util/[^/?#]+/?|recipes/?|recipes/[a-z0-9-]+/?|blog/?|blog/[^?#]+/|changelog/?|(?:${SITE_PAGES.join('|')})/?)(?:#[A-Za-z][\\w-]*)?)$`,
 )
 
 /**

@@ -43,6 +43,13 @@ describe('canonicalPath / contentGroup', () => {
     expect(contentGroup({ name: 'utility', params: { id: 'x' } })).toBe('utility_docs')
   })
 
+  it('reports recipe pages by their pre-rendered paths, in their own content groups', () => {
+    expect(canonicalPath({ name: 'recipes', params: {} }, '/')).toBe('/recipes/')
+    expect(canonicalPath({ name: 'recipe', params: { slug: 'decode-saml-request' } }, '/')).toBe('/recipes/decode-saml-request/')
+    expect(contentGroup({ name: 'recipes', params: {} })).toBe('recipe_index')
+    expect(contentGroup({ name: 'recipe', params: { slug: 'x' } })).toBe('recipe')
+  })
+
   it('reports an unknown path as-is, and an unknown hash route as /404/', () => {
     expect(canonicalPath({ name: 'notFound', params: {} }, '/wp-admin/')).toBe('/wp-admin/')
     expect(canonicalPath({ name: 'notFound', params: {} }, '/')).toBe('/404/')
@@ -79,6 +86,16 @@ describe('pipelineSignature', () => {
       { id: 'm', type: 'macro', name: 'mine', steps: [u('json_format')] } as PipelineStep,
     ]
     expect(pipelineSignature(steps)).toBe('base64_decode>[md5|sha256>upper]>(json_format)')
+  })
+
+  it('shows "run on each" steps in braces with their split mode, never the delimiter text the user typed', () => {
+    const steps: PipelineStep[] = [
+      { id: 'e', type: 'each', split: { mode: 'delimiter', separator: 'secret-token' }, steps: [u('base64_decode'), u('trim', false)] } as PipelineStep,
+      { id: 'j', type: 'each', split: { mode: 'json-values' }, steps: [{ id: 'm', type: 'macro', name: 'm', steps: [u('upper')] } as PipelineStep] } as PipelineStep,
+    ]
+    const sig = pipelineSignature(steps)
+    expect(sig).toBe('{delimiter:base64_decode}>{json-values:(upper)}')
+    expect(sig).not.toContain('secret')
   })
 
   it('fits GA’s 100-character limit', () => {

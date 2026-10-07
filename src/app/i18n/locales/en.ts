@@ -15,6 +15,7 @@ export const en = {
     tool: 'Tool',
     docs: 'Docs',
     utilities: 'Utilities',
+    recipes: 'Recipes',
     blog: 'Blog',
     changelog: 'Changelog',
   },

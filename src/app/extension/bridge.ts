@@ -7,13 +7,15 @@
  */
 import { useSyncExternalStore } from 'react'
 import {
-  APP_SOURCE, BRIDGE_PROTOCOL, STORE_EXTENSION_ID, isBridgeResult, isExtensionHello,
+  APP_SOURCE, BRIDGE_PROTOCOL, STORE_EXTENSION_ID, helloStepTypes, isBridgeResult, isExtensionHello,
   type AppMessage, type AppRequest, type BridgeResult,
 } from '@/core/extensionBridge'
 
 export interface ExtensionInfo {
   id: string
   version: string
+  /** Step types it can save and run (older builds don't say: `LEGACY_STEP_TYPES`). */
+  stepTypes: readonly string[]
 }
 
 /** The slice of `chrome.runtime` Chrome exposes to a page an extension is externally connectable from. */
@@ -70,7 +72,7 @@ function detect(): Promise<void> {
     for (const id of extensionIds()) {
       const hello = await call(id, { source: APP_SOURCE, protocol: BRIDGE_PROTOCOL, type: 'ping' }, PING_TIMEOUT_MS)
       if (!isExtensionHello(hello)) continue
-      extension = { id, version: hello.version }
+      extension = { id, version: hello.version, stepTypes: helloStepTypes(hello) }
       subscribers.forEach(notify => notify())
       return
     }

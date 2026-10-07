@@ -6,8 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Recipes** — ready-made multi-step pipelines for real tasks, each with its own page at
+  `/recipes/<slug>/` (index at `/recipes/`, linked from the header, the home page and the pages of the
+  utilities they use). A page opens with the worked example running live, shows every step's output and
+  why it is there, what leaving each step out does, then a guide; "Open in the editor" loads the steps and
+  your input into the tool. Pages are pre-rendered for search engines, with the step outputs computed at
+  build time. Twelve to start: decode a SAML request, a Flask session cookie, CloudWatch Logs subscription
+  data and a Helm release secret; Spring Boot `application.yml` to environment variables; fix
+  `/bin/bash^M: bad interpreter`; unescape stringified JSON; nested JSON to CSV; an Excel column to a SQL
+  `IN` clause; fix line breaks in text copied from a PDF; remove ChatGPT formatting; a bulk UTM link builder.
+- `npm run check:recipes -- <slug…>` checks recipes with the engine the build uses.
+- **Run on each** — a new pipeline step that splits its input into lines, pieces between a separator, the
+  elements of a JSON array or the values of a JSON object, runs the steps inside it on every item on its
+  own, and puts the results back in place (CRLF line endings and a final newline kept). Add one from the
+  toolbar, or select steps and choose *Run on each line*. On error decides what a failed item becomes, the
+  card counts failed items, and nested previews show the first item that failed. It works in share links,
+  embeds, the library, the HTTP API (`"type": "each"`), the CLI, the MCP server and the editor extensions.
+- Recipe: **decode a Kubernetes Secret** — every value under `data` decoded at once, keys kept, from
+  `kubectl get secret -o yaml` or `-o json` (the first recipe built on run on each).
+
+### Changed
+
+- Pipelines that use a run-on-each step are saved and shared as schema v3. Pipelines without one are still
+  written as v2, so they keep opening in older builds; a v3 link opened in an older build asks to reload
+  instead of dropping the step.
+
 ### Fixed
 
+- **unwrap** keeps list items that start with the bullets text copied from a PDF carries (`●`, `○`, `■`,
+  Word's private-use bullet) and parenthesised markers (`(a)`, `(12)`, `(iv)`), instead of joining them
+  into one paragraph.
+- A page for an unknown utility (`/util/<id>/`) is no longer offered to search engines (`noindex`).
 - CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
   (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
   now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.

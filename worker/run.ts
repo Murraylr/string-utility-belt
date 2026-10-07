@@ -11,6 +11,8 @@
  * 413 body over 1 MB, a share that expands past its ceiling, or an output over 8 Mi
  * characters/bytes (a single step past that ceiling fails like any other step) ·
  * 422 steps that cannot run on the edge (`unsupported`) · 504 over the time budget.
+ * "Run on each" steps share one item budget per request (`maxEachItems`); a step
+ * past it fails like any other step.
  */
 import { isBytes, valueType } from '../src/core/coerce'
 import { unsupportedSteps } from '../src/core/registry'
@@ -35,6 +37,8 @@ export interface RunDeps {
   maxValueSize: number
   /** PBKDF2 work one request may ask for, in HMAC blocks (iterations × blocks per key). */
   pbkdf2Budget: number
+  /** Items "run on each" steps may process in one request, nested ones included. */
+  maxEachItems: number
   timeoutMs: number
   clock?: () => number
 }
@@ -56,7 +60,7 @@ function expandShorthand(raw: unknown, depth = 0): unknown {
     if (item.type === 'branch' && Array.isArray(item.branches)) {
       return { ...item, branches: item.branches.map(b => expandShorthand(b, depth + 1)) }
     }
-    if (item.type === 'macro') return { ...item, steps: expandShorthand(item.steps, depth + 1) }
+    if (item.type === 'macro' || item.type === 'each') return { ...item, steps: expandShorthand(item.steps, depth + 1) }
     return item
   })
 }
@@ -76,7 +80,7 @@ function rawCount(raw: unknown, depth = 0): number {
     if (item.type === 'branch' && Array.isArray(item.branches)) {
       if (item.branches.length > MAX_LANES) return NaN
       for (const b of item.branches) n += rawCount(b, depth + 1)
-    } else if (item.type === 'macro') {
+    } else if (item.type === 'macro' || item.type === 'each') {
       n += rawCount(item.steps, depth + 1)
     }
   }
@@ -94,7 +98,8 @@ function fromRawSteps(raw: unknown, maxSteps: number): Parsed {
   if (dropped > 0) {
     return {
       error: `${dropped} step${dropped > 1 ? 's' : ''} could not be read: each step needs a "utilityId" ` +
-        '(or "type": "branch" with "branches", or "type": "macro" with "steps")',
+        '(or "type": "branch" with "branches", "type": "macro" with "steps", or "type": "each" with "steps" ' +
+        'and a "split" of {"mode": "lines" | "json-array" | "json-values"} or {"mode": "delimiter", "separator": "…"})',
     }
   }
   return { steps }
@@ -251,6 +256,9 @@ export const INPUT_CAPS: Readonly<Record<string, number>> = {
   base62_decode: 16_000,
 }
 
+/** PBKDF2 blocks a request still may compute, shared by every step of the run. */
+interface KdfBudget { left: number; total: number }
+
 /**
  * The utility with its input capped (INPUT_CAPS) and its output checked against `max`. The body limit bounds the input,
  * but nothing bounds growth: a 1 MB input through seven doubling steps (hex_encode…)
@@ -258,8 +266,12 @@ export const INPUT_CAPS: Readonly<Record<string, number>> = {
  * output becomes that step's error, so the runner drops it and applies the step's
  * error policy. The check runs after the step, except for the multipliers in
  * OUTPUT_ESTIMATES, which are refused up front so one huge repeat never allocates.
+ *
+ * PBKDF2 work is charged to `kdf` before each call: `invalidParams` checks every step
+ * once, but a step inside a "run on each" runs once per item, and the work it blocks
+ * the isolate for multiplies with them.
  */
-function bounded(util: Utility, max: number): Utility {
+function bounded(util: Utility, max: number, kdf: KdfBudget): Utility {
   const cap = Object.prototype.hasOwnProperty.call(INPUT_CAPS, util.id) ? INPUT_CAPS[util.id] : undefined
   return {
     ...util,
@@ -272,6 +284,13 @@ function bounded(util: Utility, max: number): Utility {
         ? OUTPUT_ESTIMATES[util.id](inSize, params) : null
       const tooLarge = () => new Error(`the step's output is larger than the server's limit of ${max} characters or bytes`)
       if (estimate !== null && estimate > max) throw tooLarge()
+      const blocks = pbkdf2Blocks(util.id, params)
+      if (blocks) {
+        if (blocks > kdf.left) {
+          throw new Error(`this request has used its PBKDF2 budget of ${kdf.total} blocks (iterations × key blocks); run it locally for more`)
+        }
+        kdf.left -= blocks
+      }
       const out = await util.apply(input, params, ctx)
       const size = sizeOf(out)
       if (size !== null && size > max) throw tooLarge()
@@ -348,13 +367,16 @@ export async function handleRun(request: Request, deps: RunDeps): Promise<Respon
 
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(new Error('timeout')), timeoutMs)
+  const kdf: KdfBudget = { left: deps.pbkdf2Budget, total: deps.pbkdf2Budget }
   let result: RunResult | undefined
   try {
-    // the race matters for a step that ignores the signal: the runner only checks it between steps
+    // the race matters for a step that ignores the signal: the runner only checks it between
+    // steps (and between the items of a "run on each" step, yielding so this timer can fire)
     result = await Promise.race([
       runPipeline(input.value, steps, {
-        load: async id => bounded(await registry.load(id), deps.maxValueSize),
+        load: async id => bounded(await registry.load(id), deps.maxValueSize, kdf),
         signal: ctrl.signal, env: 'edge', clock: deps.clock, maxValueSize: deps.maxValueSize,
+        maxEachItems: deps.maxEachItems,
       }),
       untilAborted(ctrl.signal),
     ])

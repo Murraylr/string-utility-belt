@@ -73,6 +73,12 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
     }
   }
 
+  const runOnEach = () => {
+    dispatch({ type: 'WRAP', ids: orderedSelected, as: 'each' })
+    sel.clear()
+    announce(`${orderedSelected.length === 1 ? 'the step now runs' : `${orderedSelected.length} steps now run`} on each line`)
+    toggleRef.current?.focus()
+  }
   const putInBranch = () => {
     dispatch({ type: 'WRAP', ids: orderedSelected, as: 'branch' })
     sel.clear()
@@ -101,7 +107,7 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="selection actions">
           <span className="text-sm muted">{orderedSelected.length} selected</span>
           {hasSelection && !isContiguous && (
-            <span className="text-xs text-warn">selection must be contiguous (no gaps) to group</span>
+            <span className="text-xs text-warn">selection must be contiguous (no gaps) to group or wrap</span>
           )}
           <button ref={groupRef} type="button" className="btn" disabled={!hasSelection || !isContiguous}
             aria-expanded={naming === 'group'} onClick={() => startNaming('group')}>
@@ -109,6 +115,10 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
           </button>
           <button type="button" className="btn" disabled={!hasSelection || !isContiguous} onClick={putInBranch}>
             Put in a branch
+          </button>
+          <button type="button" className="btn" disabled={!hasSelection || !isContiguous} onClick={runOnEach}
+            title="run the selected steps on every line on its own (switch to list items or JSON values on the new step)">
+            Run on each line
           </button>
           <button ref={saveRef} type="button" className="btn" disabled={!hasSelection}
             aria-expanded={naming === 'save'} onClick={() => startNaming('save')}>

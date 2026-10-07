@@ -12,13 +12,13 @@ function viteNodeCli(root: string): string {
 }
 
 /**
- * Dev-server only: regenerate the utility manifest when a utility is added,
- * removed or edited, so "create a folder and it appears" keeps working without
- * restarting `npm run dev`. The generator writes only files whose content
- * changed, and Vite's HMR picks those up.
+ * Dev-server only: regenerate the utility manifest and the recipe index when a
+ * utility or a recipe is added, removed or edited, so "create a folder and it
+ * appears" keeps working without restarting `npm run dev`. The generators write
+ * only files whose content changed, and Vite's HMR picks those up.
  */
 export function utilityManifest(): Plugin {
-  const UTILITY_FILE = /[\\/]src[\\/]utilities[\\/][^\\/_][^\\/]*[\\/]index\.tsx?$/
+  const UTILITY_FILE = /[\\/]src[\\/](?:utilities[\\/][^\\/_][^\\/]*[\\/]index\.tsx?|recipes[\\/][^\\/_][^\\/]*[\\/]recipe\.ts)$/
   let timer: ReturnType<typeof setTimeout> | undefined
   let running = false
   let pending = false

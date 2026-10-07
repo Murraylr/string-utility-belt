@@ -204,6 +204,13 @@ for a short-lived npm token and attaches provenance. Once the first release has 
 set *Settings → Publishing access* to **Require two-factor authentication and disallow tokens**, so
 nothing but this workflow can publish.
 
+npm accepts a publish before it serves the new version: it scans each one first ("Your package is
+being processed"), which has taken anywhere from a few minutes to over half an hour. The publish
+step waits up to an hour until npm serves it, so the MCP Registry (which checks the npm version it
+points at), the tag and the GitHub release only follow an installable version. If the wait runs out,
+check the version on npmjs.com and re-run the job once it's listed: the publish is skipped and the
+release carries on.
+
 If a publish fails with `ENEEDAUTH`, npm refused the token exchange. It doesn't say why, so the
 publish step (`.github/actions/npm-publish`) adds a report to the job log and summary: npm's own
 account of the exchange, and the exact values the trusted publisher has to hold for that job.
@@ -253,7 +260,7 @@ no Azure subscription is needed.
 4. Make the app a member of the publisher. The Marketplace adds members by their Azure DevOps ID,
    which only the app itself can look up, so let the workflow do it: run a release (any run that
    includes `vscode`). Its **Check Marketplace access** step fails with *Add member ID `<id>` to the
-   publisher*. Open
+   publisher*: the app's Azure DevOps identity, not its client ID. Open
    [the publisher's page](https://marketplace.visualstudio.com/manage/publishers/stringutilitybelt) →
    **Members → Add**, paste the ID, role **Contributor**, add, and **Re-run failed jobs**. If the
    `stringutilitybelt` publisher doesn't exist yet, create it there first.

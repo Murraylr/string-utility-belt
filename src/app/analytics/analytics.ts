@@ -22,7 +22,7 @@ import { getRoute, onRouteChange, type Route } from '@/lib/router'
 import { readPref, writePref } from '@/app/prefs'
 import { registry } from '@/app/registry'
 import { isBytes, isEmptyValue } from '@/core/coerce'
-import { countSteps, findStep, isBranchStep, isMacroStep, isUtilityStep } from '@/core/steps'
+import { countSteps, findStep, isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
 import type { PipelineStep, Value } from '@/types/utility'
 
 export const MEASUREMENT_ID = 'G-EFVMEMB86E'
@@ -77,6 +77,8 @@ export function canonicalPath(route: Route, pathname: string): string {
     case 'blogPost': return `/blog/${route.params.slug}/`
     case 'utilities': return '/utilities/'
     case 'utility': return `/util/${encodeURIComponent(route.params.id)}/`
+    case 'recipes': return '/recipes/'
+    case 'recipe': return `/recipes/${encodeURIComponent(route.params.slug)}/`
     case 'changelog': return '/changelog/'
     case 'page': return `/${route.params.slug}/`
     case 'notFound': return pathname && pathname !== '/' ? clip(pathname) : '/404/'
@@ -92,6 +94,8 @@ export function contentGroup(route: Route): string {
     case 'blogIndex': case 'blogPost': return 'blog'
     case 'utilities': return 'utility_index'
     case 'utility': return 'utility_docs'
+    case 'recipes': return 'recipe_index'
+    case 'recipe': return 'recipe'
     case 'changelog': return 'changelog'
     case 'page': return 'site_page'
     case 'notFound': return 'not_found'
@@ -125,13 +129,18 @@ export function campaignQuery(search: string): string {
   return q ? `?${q}` : ''
 }
 
-/** The enabled steps as `a>b>[c|d]>(e)` — branches in brackets, macros in parentheses. */
+/**
+ * The enabled steps as `a>b>[c|d]>(e)>{lines:f}` — branches in brackets, macros in
+ * parentheses, "run on each" steps in braces with their split mode. Ids and modes only:
+ * never a delimiter, which is text the user typed.
+ */
 export function pipelineSignature(steps: PipelineStep[]): string {
   const sig = (seq: PipelineStep[]): string => seq
     .filter(s => s.enabled !== false)
     .map(s => (isUtilityStep(s) ? s.utilityId
       : isBranchStep(s) ? `[${s.branches.map(sig).join('|')}]`
-        : isMacroStep(s) ? `(${sig(s.steps)})` : '?'))
+        : isMacroStep(s) ? `(${sig(s.steps)})`
+          : isEachStep(s) ? `{${s.split.mode}:${sig(s.steps)}}` : '?'))
     .join('>')
   return clip(sig(steps))
 }
@@ -296,6 +305,7 @@ function pageView(route: Route): void {
       ...fields,
       page_title: title,
       utility_id: route.name === 'utility' ? route.params.id : undefined,
+      recipe_id: route.name === 'recipe' ? route.params.slug : undefined,
       automation_signal: s.automation ?? undefined,
     }))
   })

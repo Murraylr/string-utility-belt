@@ -62,6 +62,7 @@ export function createApi(opts: ApiOptions = {}): Api {
         maxShareChars: opts.maxShareChars ?? 2 * MB,
         maxValueSize: opts.maxValueSize ?? 8 * MB,
         pbkdf2Budget: opts.pbkdf2Budget ?? 1_000_000,
+        maxEachItems: opts.maxEachItems ?? 10_000,
         timeoutMs: opts.runTimeoutMs ?? 10_000,
         clock: opts.clock,
       }))

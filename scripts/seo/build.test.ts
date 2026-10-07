@@ -10,6 +10,10 @@ import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDes
 import { SITE_PAGES } from '../../src/lib/router'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import { resolveOg, resolveOutDir } from '../build-seo'
+import { STATIC_RECIPES } from '../../src/recipes/_generated/static'
+import { step } from '../../src/recipes/define'
+import { TRACE_ELEMENT_ID, type RecipeTrace } from '../../src/recipes/trace'
+import type { Recipe } from '../../src/recipes/types'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -119,15 +123,17 @@ describe('buildSeo over a built dist/', () => {
     result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: m => logs.push(m) })
   }, 60000)
 
-  it('writes one crawlable page per utility, plus the index, blog, changelog, docs, site pages and 404', () => {
+  it('writes one crawlable page per utility and recipe, plus the indexes, blog, changelog, docs, site pages and 404', () => {
     const utilDirs = readdirSync(path.join(dist, 'util'))
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
-    for (const rel of ['utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
+    const recipeDirs = readdirSync(path.join(dist, 'recipes')).filter(f => f !== 'index.html')
+    expect(recipeDirs.sort()).toEqual(STATIC_RECIPES.map(r => r.slug).sort())
+    for (const rel of ['utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
       'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + 11)
+    expect(result.pages).toBe(MANIFEST.length + STATIC_RECIPES.length + 12)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -197,12 +203,12 @@ describe('buildSeo over a built dist/', () => {
   })
 
   it('surrounds every pre-rendered page with the site nav and footer links', () => {
-    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
+    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
-      expect(footer, rel).toEqual(['/utilities/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
+      expect(footer, rel).toEqual(['/utilities/', '/recipes/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="main"] a')].map(a => a.getAttribute('href')), rel)
-        .toEqual(['/', '/docs/', '/utilities/', '/blog/', '/changelog/'])
+        .toEqual(['/', '/docs/', '/utilities/', '/recipes/', '/blog/', '/changelog/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="Integrations"] a')].map(a => a.getAttribute('href')), rel)
         .toEqual(INTEGRATION_LINKS.map(l => l.href))
     }
@@ -308,7 +314,8 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
-      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`,
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`, `${SITE}/recipes/`,
+      ...STATIC_RECIPES.map(r => `${SITE}/recipes/${r.slug}/`),
     ]))
     // every page `pages` counts but the 404, plus the home page (written apart from the count)
     expect(locs).toHaveLength(result.pages - 1 + 1)
@@ -348,6 +355,116 @@ describe('buildSeo over a built dist/', () => {
     expect(after).toEqual(before)
     expect(html(after[1]).querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
   }, 60000)
+})
+
+describe('buildSeo recipes', () => {
+  const GUIDE = [
+    '---', 'title: Shout a List of Titles as Slugs Online', `description: Uppercase slugs from titles ${XSS}, with accents removed and punctuation collapsed into hyphens.`, '---',
+    '## Why', '', `Prose ${XSS}`, '',
+    '## How', '', 'Uses [change case](/util/case/).',
+  ].join('\n')
+  const recipe: Recipe = {
+    slug: 'shout-slugs',
+    name: `Shout slugs ${XSS}`,
+    summary: `Turn titles into uppercase slugs ${XSS}.`,
+    category: 'Writing & Marketing',
+    primaryQuery: 'shout slugs',
+    published: '2026-05-01',
+    updated: '2026-06-02',
+    steps: [
+      step('accents', 'diacritics', {}, 'Accented letters would otherwise be dropped by the next step.'),
+      step('hyphens', 'replace', { pattern: '[^A-Za-z0-9\\n]+', replacement: '-', regex: true, flags: 'g' }, `Collapses punctuation ${XSS}.`),
+      step('upper', 'case', { mode: 'upper' }, 'Uppercases every letter.'),
+    ],
+    samples: [
+      { id: 'titles', title: 'Titles', input: 'Café au lait\n<b>Two</b>', output: 'CAFE-AU-LAIT\n-B-TWO-B-' },
+      { id: 'other', title: 'Other', input: 'x y', output: 'X-Y' },
+    ],
+  }
+  let dist: string
+  let result: Awaited<ReturnType<typeof buildSeo>>
+
+  beforeAll(async () => {
+    dist = fixtureDist()
+    result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe, guide: GUIDE }] })
+  }, 60000)
+
+  it("takes the page head from the guide's frontmatter, as an article with its dates", () => {
+    const source = read(dist, 'recipes/shout-slugs/index.html')
+    const doc = html(source)
+    expect(doc.title).toBe(pageTitle('Shout a List of Titles as Slugs Online'))
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toContain(XSS)
+    expect(source.match(/rel="canonical"/g)).toHaveLength(1)
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`${SITE}/recipes/shout-slugs/`)
+    expect(doc.querySelector('meta[property="og:type"]')?.getAttribute('content')).toBe('article')
+    expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/recipes/shout-slugs.png`)
+    expect(doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')).toBe('2026-05-01')
+    expect(doc.querySelector('meta[property="article:modified_time"]')?.getAttribute('content')).toBe('2026-06-02')
+  })
+
+  it('marks it up as a TechArticle about the utilities it uses, with breadcrumbs', () => {
+    const source = read(dist, 'recipes/shout-slugs/index.html')
+    const ld = [...source.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]))
+    const article = ld.find(x => x['@type'] === 'TechArticle')
+    expect(article).toMatchObject({ headline: recipe.name, url: `${SITE}/recipes/shout-slugs/`, datePublished: '2026-05-01', dateModified: '2026-06-02' })
+    expect(article.about.map((a: { url: string }) => a.url).sort()).toEqual(['case', 'diacritics', 'replace'].map(id => `${SITE}/util/${id}/`))
+    const crumbs = ld.find(x => x['@type'] === 'BreadcrumbList')
+    expect(crumbs.itemListElement.map((i: { item: string }) => i.item)).toEqual([`${SITE}/`, `${SITE}/recipes/`, `${SITE}/recipes/shout-slugs/`])
+  })
+
+  it('embeds the worked example trace for the app, escaped', () => {
+    const source = read(dist, 'recipes/shout-slugs/index.html')
+    expect(source).not.toContain('<b>Two</b>')
+    const doc = html(source)
+    const trace = JSON.parse(doc.getElementById(TRACE_ELEMENT_ID)!.textContent!) as RecipeTrace
+    expect(trace).toMatchObject({ slug: 'shout-slugs', sampleId: 'titles', output: 'CAFE-AU-LAIT\n-B-TWO-B-' })
+    expect(trace.steps.map(s => s.output?.text)).toEqual(['Cafe au lait\n<b>Two</b>', 'Cafe-au-lait\n-b-Two-b-', 'CAFE-AU-LAIT\n-B-TWO-B-'])
+    expect(trace.skip.map(s => s.id)).toEqual(['accents', 'hyphens', 'upper'])
+    expect(doc.head.querySelector(`#${TRACE_ELEMENT_ID}`)).toBeTruthy()
+  })
+
+  it('pre-renders the page itself: heading, live example, every step with its output, the guide', () => {
+    const doc = html(read(dist, 'recipes/shout-slugs/index.html'))
+    const main = doc.querySelector('#root main')!
+    expect(main.querySelectorAll('h1')).toHaveLength(1)
+    expect(main.querySelector('h1')?.textContent).toBe(recipe.name)
+    expect(main.querySelector('textarea')?.textContent).toBe('Café au lait\n<b>Two</b>')
+    expect(main.querySelector('pre[role="status"]')?.textContent).toBe('CAFE-AU-LAIT\n-B-TWO-B-')
+    const steps = [...main.querySelectorAll('#recipe-steps-h ~ ol > li')]
+    expect(steps.map(li => li.querySelector('h3')?.textContent)).toEqual(['1. remove diacritics', '2. replace', '3. change case'])
+    expect(steps[1].textContent).toContain(XSS)
+    expect(steps[2].querySelector('pre')?.textContent).toBe('CAFE-AU-LAIT\n-B-TWO-B-')
+    expect(main.textContent).toContain('What if you skip a step?')
+    expect(main.querySelector('a[href="/util/case/"]')).toBeTruthy()
+    const open = main.querySelector('a.cta')!
+    expect(open.getAttribute('href')).toMatch(/^\/#\/p\//)
+    expect(open.getAttribute('rel')).toBe('nofollow')
+    expect(main.querySelector('section[aria-label="guide"] h2')?.textContent).toBe('Why')
+  })
+
+  it('lists recipes on their index, links them from the utilities they use and the sitemap', () => {
+    const index = html(read(dist, 'recipes/index.html'))
+    expect(index.querySelector('#root main h1')?.textContent).toBe('Recipes')
+    expect(index.querySelector('#root main a[href="/recipes/shout-slugs/"]')?.textContent).toContain(recipe.name)
+    expect(html(read(dist, 'util/case/index.html')).querySelector('#root main a[href="/recipes/shout-slugs/"]')).toBeTruthy()
+    expect(html(read(dist, 'util/trim/index.html')).querySelector('#root main a[href^="/recipes/"]')).toBeNull()
+    const doc = xml(read(dist, 'sitemap.xml'))
+    const urls = [...doc.getElementsByTagName('url')].map(u => [u.getElementsByTagName('loc')[0].textContent, u.getElementsByTagName('lastmod')[0].textContent])
+    expect(urls).toContainEqual([`${SITE}/recipes/shout-slugs/`, '2026-06-02'])
+    expect(urls).toContainEqual([`${SITE}/recipes/`, '2026-06-02'])
+    expect(result.pages).toBe(MANIFEST.length + 1 + 12)
+  })
+
+  it('fails the build when a recipe no longer produces its first sample', async () => {
+    const broken = { ...recipe, samples: [{ ...recipe.samples[0], output: 'SOMETHING ELSE' }, recipe.samples[1]] }
+    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe: broken, guide: GUIDE }] }))
+      .rejects.toThrow(/recipe shout-slugs: its first sample no longer produces its expected output/)
+  })
+
+  it('refuses a recipe slug that is not a safe path segment', async () => {
+    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe: { ...recipe, slug: '../x' }, guide: GUIDE }] }))
+      .rejects.toThrow(/recipe slug "..\/x" is not safe/)
+  })
 })
 
 describe('buildSeo with hostile utility metadata', () => {
@@ -392,15 +509,19 @@ describe('buildSeo edge cases', () => {
     await expect(buildSeo({ outDir: dir, root: ROOT, og: false, log: silent })).rejects.toThrow(/vite build/)
   })
 
-  it('renders an OG image per utility plus the default card', async () => {
+  it('renders an OG image per utility and recipe, plus the default card', async () => {
     const dist = fixtureDist()
     const manifest = MANIFEST.filter(m => m.id === 'trim' || m.id === 'tabs_spaces')
-    const result = await buildSeo({ outDir: dist, root: ROOT, now: NOW, log: silent, manifest })
-    expect(readdirSync(path.join(dist, 'og')).sort()).toEqual(['default.png', 'tabs_spaces.png', 'trim.png'])
-    for (const file of readdirSync(path.join(dist, 'og'))) {
-      expect([...readFileSync(path.join(dist, 'og', file)).subarray(0, 8)]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    const recipe = STATIC_RECIPES[0]
+    const guide = readFileSync(path.join(ROOT, 'src', 'recipes', recipe.slug, 'guide.md'), 'utf8')
+    const result = await buildSeo({ outDir: dist, root: ROOT, now: NOW, log: silent, manifest, recipes: [{ recipe, guide }] })
+    expect(readdirSync(path.join(dist, 'og')).sort()).toEqual(['default.png', 'recipes', 'tabs_spaces.png', 'trim.png'])
+    expect(readdirSync(path.join(dist, 'og', 'recipes'))).toEqual([`${recipe.slug}.png`])
+    const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    for (const file of ['default.png', 'tabs_spaces.png', 'trim.png', `recipes/${recipe.slug}.png`]) {
+      expect([...readFileSync(path.join(dist, 'og', file)).subarray(0, 8)], file).toEqual(png)
     }
-    expect(result.ogImages).toBe(3)
+    expect(result.ogImages).toBe(4)
     expect(result.missingGlyphs).toEqual([])
   }, 60000)
 })

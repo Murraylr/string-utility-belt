@@ -1,7 +1,7 @@
 import React, { useId, useMemo, useRef, useState } from 'react'
 import { Puzzle } from 'lucide-react'
 import {
-  MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, normalizePipelineName,
+  MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, normalizePipelineName, unknownStepTypes,
   type AppRequest, type BridgeResult,
 } from '@/core/extensionBridge'
 import { registry } from '@/app/registry'
@@ -12,11 +12,16 @@ import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { sendToExtension, useExtension } from './bridge'
 
 interface DialogProps {
+  /** Step types the installed extension can save. */
+  stepTypes: readonly string[]
   onClose: () => void
   returnFocus: React.RefObject<HTMLElement | null>
 }
 
-function SaveToExtensionDialog({ onClose, returnFocus }: DialogProps) {
+/** How the dialog names a step type the extension is too old for. */
+const STEP_TYPE_NAMES: Record<string, string> = { each: '"run on each" steps' }
+
+function SaveToExtensionDialog({ stepTypes, onClose, returnFocus }: DialogProps) {
   const { state } = useTool()
   const { favorites } = useFavorites()
   const nameId = useId()
@@ -28,13 +33,16 @@ function SaveToExtensionDialog({ onClose, returnFocus }: DialogProps) {
   const unsupportedNames = useMemo(() => [...new Set(
     extensionUnsupportedSteps(state.steps, id => registry.get(id)).map(u => registry.get(u.utilityId)?.name ?? u.utilityId),
   )], [state.steps])
+  // an extension that predates a step type would drop such steps while saving, changing what the pipeline does
+  const tooNew = useMemo(() => unknownStepTypes(state.steps, stepTypes).map(t => STEP_TYPE_NAMES[t] ?? `${t} steps`),
+    [state.steps, stepTypes])
   const runnableFavorites = useMemo(() => favorites.filter(id => {
     const meta = registry.get(id)
     return !!meta && canRunInExtension(meta)
   }), [favorites])
 
   const empty = state.steps.length === 0
-  const canSave = !busy && !empty && unsupportedNames.length === 0 && normalizePipelineName(name) !== ''
+  const canSave = !busy && !empty && unsupportedNames.length === 0 && tooNew.length === 0 && normalizePipelineName(name) !== ''
 
   const send = async (request: AppRequest, onSaved: () => void) => {
     setBusy(true)
@@ -68,6 +76,11 @@ function SaveToExtensionDialog({ onClose, returnFocus }: DialogProps) {
           placeholder="e.g. decode JWT payload" onChange={e => setName(e.target.value)} />
         <div className="text-xs text-muted">Saving under a name the extension already has updates that pipeline.</div>
         {empty && <div className="text-sm text-muted">Add some steps to the pipeline first.</div>}
+        {tooNew.length > 0 && (
+          <div role="alert" className="text-sm text-warn">
+            This version of the extension can&apos;t save {tooNew.join(' or ')}. Update the extension to save this pipeline.
+          </div>
+        )}
         {unsupportedNames.length > 0 && (
           <div role="alert" className="text-sm text-warn">
             The extension can&apos;t run {unsupportedNames.join(', ')} — remove {unsupportedNames.length === 1 ? 'that step' : 'those steps'} to save this pipeline.
@@ -105,7 +118,7 @@ export default function SaveToExtensionButton() {
       <button ref={buttonRef} type="button" className="btn" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         <Puzzle size={16} aria-hidden /> save to extension
       </button>
-      {open && <SaveToExtensionDialog onClose={() => setOpen(false)} returnFocus={buttonRef} />}
+      {open && <SaveToExtensionDialog stepTypes={extension.stepTypes} onClose={() => setOpen(false)} returnFocus={buttonRef} />}
     </>
   )
 }

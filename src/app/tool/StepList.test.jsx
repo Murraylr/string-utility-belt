@@ -37,8 +37,8 @@ afterEach(() => {
 
 const step = (id, utilityId = 'trim') => ({ id, utilityId, enabled: true, params: {} })
 
-/** The store's step ids as a nested tree: branches as arrays of lanes, macros as {id: [...]}. */
-const idTree = steps => steps.map(s => (s.type === 'branch' ? { [s.id]: s.branches.map(idTree) } : s.type === 'macro' ? { [s.id]: idTree(s.steps) } : s.id))
+/** The store's step ids as a nested tree: branches as arrays of lanes, macro and each bodies as {id: [...]}. */
+const idTree = steps => steps.map(s => (s.type === 'branch' ? { [s.id]: s.branches.map(idTree) } : s.type === 'macro' || s.type === 'each' ? { [s.id]: idTree(s.steps) } : s.id))
 
 function Harness({ extra }) {
   const { state, canUndo } = useTool()
@@ -53,7 +53,7 @@ function Harness({ extra }) {
   )
 }
 
-const flatEnabled = steps => steps.flatMap(s => [s.enabled !== false, ...(s.type === 'branch' ? s.branches.flatMap(flatEnabled) : s.type === 'macro' ? flatEnabled(s.steps) : [])])
+const flatEnabled = steps => steps.flatMap(s => [s.enabled !== false, ...(s.type === 'branch' ? s.branches.flatMap(flatEnabled) : s.type === 'macro' || s.type === 'each' ? flatEnabled(s.steps) : [])])
 const storeTree = () => JSON.parse(screen.getByTestId('store').textContent)
 
 function renderTool(initialSteps, extra) {
@@ -334,6 +334,22 @@ describe('<StepList /> selection mode', () => {
     expect(document.querySelector('[data-step-id="a"]').closest('[data-step-id^="branch"]')).not.toBeNull()
   })
 
+  it('makes a contiguous selection run on each line, as one undoable edit', async () => {
+    const user = userEvent.setup()
+    renderTool([step('a'), step('b'), step('c')])
+    await selectFirstTwo(user)
+    await user.click(screen.getByRole('button', { name: 'Run on each line' }))
+    expect(screen.getByText('2 steps now run on each line').closest('[aria-live]')).not.toBeNull()
+    const [wrapper, last] = storeTree()
+    expect(Object.values(wrapper)[0]).toEqual(['a', 'b'])
+    expect(last).toBe('c')
+    expect(screen.getByRole('combobox', { name: 'split the input into' })).toHaveValue('lines')
+    expect(document.querySelector('[data-step-id="a"]').closest('[data-step-id^="each"]')).not.toBeNull()
+    expect(document.activeElement).toBe(screen.getAllByRole('button', { name: 'done selecting' })[0])
+    await user.click(screen.getByRole('button', { name: 'unwrap' }))
+    expect(storeTree()).toEqual(['a', 'b', 'c'])
+  })
+
   it('offers no selection mode for an empty sequence', () => {
     renderTool([])
     expect(screen.queryByRole('button', { name: 'select' })).toBeNull()
@@ -345,6 +361,43 @@ describe('<StepList /> selection mode', () => {
     expect(screen.getByRole('button', { name: 'select' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'select steps in lane 1' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'select steps in lane 2' })).toBeTruthy()
+  })
+})
+
+describe('<StepList /> "run on each" bodies', () => {
+  const each = (steps = [], id = 'ea') => ({ id, type: 'each', enabled: true, split: { mode: 'lines' }, skipEmpty: true, steps })
+
+  it('renders the body as its own nested list, with its own add control and selection toggle', async () => {
+    const user = userEvent.setup()
+    renderTool([each([step('x')])])
+    expect(screen.getByRole('group', { name: 'steps run on each line' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'select steps in run-on-each step' })).toBeTruthy()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'add a step to this run-on-each step' }), 'reverse')
+    const [tree] = storeTree()
+    expect(tree.ea).toHaveLength(2)
+    expect(tree.ea[0]).toBe('x')
+  })
+
+  it('edits the split as undoable changes: mode, then a separator that can never be emptied', async () => {
+    const user = userEvent.setup()
+    renderTool([each([step('x')])])
+    await user.selectOptions(screen.getByRole('combobox', { name: 'split the input into' }), 'delimiter')
+    const sep = screen.getByRole('textbox', { name: 'item separator' })
+    expect(sep).toHaveValue(',')
+    await user.clear(sep)
+    await user.tab()
+    expect(sep).toHaveValue(',')
+    await user.clear(sep)
+    await user.type(sep, '\\t{Enter}')
+    expect(sep).toHaveValue('\\t')
+    expect(screen.getByTestId('can-undo').textContent).toBe('true')
+  })
+
+  it('bulk-toggles steps inside an each body', async () => {
+    const user = userEvent.setup()
+    renderTool([each([step('x')])], <BulkToggle />)
+    await user.click(screen.getByRole('button', { name: /disable all/i }))
+    expect(JSON.parse(screen.getByTestId('enabled').textContent)).toEqual([false, false])
   })
 })
 

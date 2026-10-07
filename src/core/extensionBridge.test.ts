@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
-  APP_SOURCE, MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, isAppMessage, isBridgeResult,
-  isExtensionHello, normalizePipelineName, parseAppRequest,
+  APP_SOURCE, LEGACY_STEP_TYPES, MAX_PIPELINE_NAME, canRunInExtension, extensionUnsupportedSteps, helloStepTypes,
+  isAppMessage, isBridgeResult, isExtensionHello, normalizePipelineName, parseAppRequest, unknownStepTypes,
 } from './extensionBridge'
+import { STEP_TYPES } from './steps'
+import type { PipelineStep } from '../types/utility'
 
 const env: Record<string, { env: Array<'dom' | 'wasm' | 'eval' | 'main'> }> = {
   trim: { env: [] },
@@ -32,6 +34,24 @@ describe('extensionUnsupportedSteps', () => {
       { stepId: 'e', utilityId: 'html_to_markdown', reason: 'needs dom' },
       { stepId: 'g', utilityId: 'gone', reason: 'unknown utility' },
     ])
+  })
+})
+
+describe('step-type capability', () => {
+  it('reads the step types an extension lists, and assumes the legacy set when it lists none', () => {
+    expect(helloStepTypes({ protocol: 1, version: '1.5.0', stepTypes: ['utility', 'each', 5 as unknown as string] })).toEqual(['utility', 'each'])
+    expect(helloStepTypes({ protocol: 1, version: '1.4.1' })).toEqual(LEGACY_STEP_TYPES)
+    expect(helloStepTypes({ protocol: 1, version: '1.4.1', stepTypes: 'each' as unknown as string[] })).toEqual(LEGACY_STEP_TYPES)
+    expect(LEGACY_STEP_TYPES).not.toContain('each')
+  })
+
+  it('finds step types the extension does not know anywhere in the tree, disabled ones included', () => {
+    const steps: PipelineStep[] = [
+      { id: 'a', utilityId: 'trim' },
+      { id: 'm', type: 'macro', name: 'm', steps: [{ id: 'e', type: 'each', enabled: false, split: { mode: 'lines' }, steps: [] }] },
+    ]
+    expect(unknownStepTypes(steps, LEGACY_STEP_TYPES)).toEqual(['each'])
+    expect(unknownStepTypes(steps, STEP_TYPES)).toEqual([])
   })
 })
 

@@ -7,7 +7,8 @@
  */
 import { decodeShare, encodeShare } from '../../../src/core/serialize'
 import { MAX_PIPELINE_NAME, normalizePipelineName } from '../../../src/core/extensionBridge'
-import { countSteps, isBranchStep, isMacroStep } from '../../../src/core/steps'
+import { countSteps, isBranchStep, isEachStep, isMacroStep } from '../../../src/core/steps'
+import { itemNoun } from '../../../src/core/split'
 import type { UtilityMeta } from '../../../src/core/registry'
 import type { PipelineStep } from '../../../src/types/utility'
 import { DEFAULT_BASE_URL, DEFAULT_MENU_UTILITIES } from './lib/constants'
@@ -99,6 +100,7 @@ function renderFavorites(list: HTMLOListElement, empty: HTMLElement, ids: string
 function stepTitle(step: PipelineStep): string {
   if (isBranchStep(step)) return `branch (${step.branches.length} lanes)`
   if (isMacroStep(step)) return step.name
+  if (isEachStep(step)) return step.label || `run on each ${itemNoun(step.split.mode, 1)}`
   return step.label || getUtilityMeta(step.utilityId)?.name || step.utilityId
 }
 

@@ -3,11 +3,13 @@
  * Undo/redo lives here too: each undoable action snapshots `steps` first.
  *
  * All step-addressed actions find their target by id anywhere in the tree, so the
- * same actions work for top-level steps, steps inside branch lanes and macro bodies.
+ * same actions work for top-level steps and steps inside branch lanes, macro bodies
+ * and "run on each" bodies.
  */
-import type { BranchStep, MacroStep, MergeSpec, PipelineStep } from '@/types/utility'
+import type { BranchStep, EachStep, MergeSpec, PipelineStep, SplitSpec } from '@/types/utility'
 import {
-  cloneWithNewIds, findStep, isBranchStep, isMacroStep, isUtilityStep, stepId, updateStep,
+  childSequences, cloneWithNewIds, findStep, isBranchStep, isEachStep, isMacroStep, isUtilityStep, mapChildSequences,
+  stepId, updateStep,
 } from '@/core/steps'
 import { CODE_UTILITIES } from '@/app/share/trust'
 
@@ -15,11 +17,11 @@ export const HISTORY_LIMIT = 100
 /** Param edits to the same step within this window collapse into one undo entry. */
 export const COALESCE_MS = 800
 
-/** Where to insert: a top-level position, or inside a branch lane / macro body. */
+/** Where to insert: a top-level position, or inside a branch lane / macro or each body. */
 export interface Target {
   /** Insert after this step (same sequence). Omitted: append to the sequence. */
   afterId?: string
-  /** Container step (branch or macro). Omitted: the top level. */
+  /** Container step (branch, macro or each). Omitted: the top level. */
   parentId?: string
   /** Branch lane index when `parentId` is a branch. Default 0. */
   lane?: number
@@ -56,9 +58,11 @@ export type PipelineAction =
   | { type: 'ADD_BRANCH'; target?: Target; lanes?: number; merge?: MergeSpec }
   | { type: 'ADD_LANE'; id: string }
   | { type: 'REMOVE_LANE'; id: string; lane: number }
-  /** Wrap consecutive steps of one sequence in a macro or a single-lane branch. */
-  | { type: 'WRAP'; ids: string[]; as: 'macro' | 'branch'; name?: string }
-  /** Replace a macro or branch by its contents (a branch keeps lane 0). */
+  /** A "run on each" step with an empty body (split on lines unless given). */
+  | { type: 'ADD_EACH'; target?: Target; split?: SplitSpec; id?: string }
+  /** Wrap consecutive steps of one sequence in a macro, a single-lane branch, or a "run on each" step. */
+  | { type: 'WRAP'; ids: string[]; as: 'macro' | 'branch' | 'each'; name?: string; split?: SplitSpec }
+  /** Replace a macro, branch or each step by its contents (a branch keeps lane 0). */
   | { type: 'UNWRAP'; id: string }
   | { type: 'LOAD'; steps: PipelineStep[]; name?: string; libraryId?: string }
   | { type: 'SET_META'; name?: string; libraryId?: string }
@@ -71,55 +75,34 @@ export const initialPipelineState = (steps: PipelineStep[] = [], name?: string, 
 
 // --- sequence helpers ---------------------------------------------------------
 
+type Located = { seq: PipelineStep[]; replace: (next: PipelineStep[]) => PipelineStep[] }
+
+/** `steps` with child sequence `index` of container `parentId` replaced by `next`. */
+const replaceChild = (steps: PipelineStep[], parentId: string, index: number, next: PipelineStep[]) =>
+  updateStep(steps, parentId, p => mapChildSequences(p, (seq, i) => (i === index ? next : seq)))
+
 /** The sequence containing `id`, and a function that rebuilds the tree with it replaced. */
-function locate(steps: PipelineStep[], id: string):
-  { seq: PipelineStep[]; replace: (next: PipelineStep[]) => PipelineStep[] } | null {
+function locate(steps: PipelineStep[], id: string): Located | null {
   if (steps.some(s => s.id === id)) return { seq: steps, replace: next => next }
   for (const s of steps) {
-    if (isBranchStep(s)) {
-      for (let lane = 0; lane < s.branches.length; lane++) {
-        const inner = locate(s.branches[lane], id)
-        if (inner) {
-          return {
-            seq: inner.seq,
-            replace: next => updateStep(steps, s.id, b => {
-              const br = b as BranchStep
-              const branches = br.branches.map((l, i) => (i === lane ? inner.replace(next) : l))
-              return { ...br, branches }
-            }),
-          }
-        }
-      }
-    } else if (isMacroStep(s)) {
-      const inner = locate(s.steps, id)
-      if (inner) {
-        return { seq: inner.seq, replace: next => updateStep(steps, s.id, m => ({ ...(m as MacroStep), steps: inner.replace(next) })) }
-      }
+    const seqs = childSequences(s)
+    for (let i = 0; i < seqs.length; i++) {
+      const inner = locate(seqs[i], id)
+      if (inner) return { seq: inner.seq, replace: next => replaceChild(steps, s.id, i, inner.replace(next)) }
     }
   }
   return null
 }
 
-/** Get and replace the sequence a Target points into. */
-function container(steps: PipelineStep[], t: Target | undefined):
-  { seq: PipelineStep[]; replace: (next: PipelineStep[]) => PipelineStep[] } | null {
+/** Get and replace the sequence a Target points into: a branch's lane `t.lane`, or a macro's or each's body. */
+function container(steps: PipelineStep[], t: Target | undefined): Located | null {
   if (!t?.parentId) return { seq: steps, replace: next => next }
   const parent = findStep(steps, t.parentId)
-  if (!parent) return null
-  if (isBranchStep(parent)) {
-    const lane = Math.max(0, Math.min(t.lane ?? 0, parent.branches.length - 1))
-    return {
-      seq: parent.branches[lane] ?? [],
-      replace: next => updateStep(steps, parent.id, b => {
-        const br = b as BranchStep
-        return { ...br, branches: br.branches.map((l, i) => (i === lane ? next : l)) }
-      }),
-    }
-  }
-  if (isMacroStep(parent)) {
-    return { seq: parent.steps, replace: next => updateStep(steps, parent.id, m => ({ ...(m as MacroStep), steps: next })) }
-  }
-  return null
+  if (!parent || isUtilityStep(parent)) return null
+  const seqs = childSequences(parent)
+  if (!seqs.length) return null
+  const index = isBranchStep(parent) ? Math.max(0, Math.min(t.lane ?? 0, seqs.length - 1)) : 0
+  return { seq: seqs[index], replace: next => replaceChild(steps, parent.id, index, next) }
 }
 
 function insertAt(steps: PipelineStep[], items: PipelineStep[], target?: Target): PipelineStep[] {
@@ -139,11 +122,11 @@ function insertAt(steps: PipelineStep[], items: PipelineStep[], target?: Target)
 const setEnabledDeep = (steps: PipelineStep[], enabled: boolean): PipelineStep[] =>
   steps.map(s => {
     const keep = enabled && isUtilityStep(s) && CODE_UTILITIES.has(s.utilityId)
-    const base = keep ? s : { ...s, enabled }
-    if (isBranchStep(base)) return { ...base, branches: base.branches.map(b => setEnabledDeep(b, enabled)) }
-    if (isMacroStep(base)) return { ...base, steps: setEnabledDeep(base.steps, enabled) }
-    return base
+    return mapChildSequences(keep ? s : { ...s, enabled }, seq => setEnabledDeep(seq, enabled))
   })
+
+const newEach = (steps: PipelineStep[], split: SplitSpec = { mode: 'lines' }, id = stepId('each')): EachStep =>
+  ({ id, type: 'each', enabled: true, split, skipEmpty: true, steps })
 
 // --- reducer -------------------------------------------------------------------
 
@@ -210,6 +193,8 @@ function edit(steps: PipelineStep[], a: PipelineAction): PipelineStep[] {
     case 'REMOVE_LANE':
       return updateStep(steps, a.id, s => (isBranchStep(s) && s.branches.length > 1
         ? { ...s, branches: s.branches.filter((_, i) => i !== a.lane) } : s))
+    case 'ADD_EACH':
+      return insertAt(steps, [newEach([], a.split, a.id)], a.target)
     case 'WRAP': {
       if (!a.ids.length) return steps
       const loc = locate(steps, a.ids[0])
@@ -220,13 +205,15 @@ function edit(steps: PipelineStep[], a: PipelineAction): PipelineStep[] {
       const picked = loc.seq.slice(idx[0], idx[idx.length - 1] + 1)
       const wrapper: PipelineStep = a.as === 'macro'
         ? { id: stepId('macro'), type: 'macro', enabled: true, name: a.name || 'macro', steps: picked }
-        : { id: stepId('branch'), type: 'branch', enabled: true, branches: [picked], merge: { mode: 'concat', separator: '\n' } }
+        : a.as === 'each'
+          ? newEach(picked, a.split)
+          : { id: stepId('branch'), type: 'branch', enabled: true, branches: [picked], merge: { mode: 'concat', separator: '\n' } }
       const seq = [...loc.seq]
       seq.splice(idx[0], picked.length, wrapper)
       return loc.replace(seq)
     }
     case 'UNWRAP':
-      return updateStep(steps, a.id, s => (isMacroStep(s) ? s.steps : isBranchStep(s) ? (s.branches[0] ?? []) : s))
+      return updateStep(steps, a.id, s => (isMacroStep(s) || isEachStep(s) ? s.steps : isBranchStep(s) ? (s.branches[0] ?? []) : s))
     case 'LOAD':
       return a.steps
     case 'CLEAR':

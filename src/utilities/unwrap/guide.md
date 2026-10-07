@@ -82,7 +82,7 @@ output:
 ## Options
 
 - **join with** (`separator`, default a single space) — the text inserted between two lines being joined. It is used literally; a value like `$&` is just two characters, not a special replacement token. It may not contain a line break.
-- **keep list items** (`preserveLists`, default `true`) — recognizes bullet (`-`, `*`, `+`, `•`), numbered (`1.`, `1)`), and lettered (`a.`, `a)`) list markers, plus blockquote arrows, and keeps each list item on its own line, joining only its wrapped continuations.
+- **keep list items** (`preserveLists`, default `true`) — recognizes bullet (`-`, `*`, `+`, `•`, and the `●`, `○`, `■` and similar glyphs that text copied from a PDF carries), numbered (`1.`, `1)`), lettered (`a.`, `a)`) and parenthesised (`(a)`, `(12)`, `(iv)`) list markers, plus blockquote arrows, and keeps each list item on its own line, joining only its wrapped continuations.
 - **keep indented blocks** (`preserveIndented`, default `true`) — leaves a line indented four or more columns (or by any tab) exactly as it is, instead of joining it into the surrounding paragraph.
 
 ## Common uses

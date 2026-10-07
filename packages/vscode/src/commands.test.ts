@@ -364,7 +364,7 @@ describe('subelt.runPipeline — sources', () => {
 
   it('refuses a file made by a newer version', async () => {
     const { doc } = openEditor('same')
-    pickFile('/future.json', { v: 3, steps: [{ id: 's', utilityId: 'case' }] })
+    pickFile('/future.json', { v: 4, steps: [{ id: 's', utilityId: 'case' }] })
     await run('subelt.runPipeline')
     expect(errors()).toEqual([expect.stringContaining('newer version')])
     expect(doc._text()).toBe('same')

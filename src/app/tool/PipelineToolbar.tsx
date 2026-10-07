@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { GitFork, Plus, Redo2, Undo2 } from 'lucide-react'
+import { GitFork, Plus, Redo2, Repeat, Undo2 } from 'lucide-react'
 import Select from '@/components/Select'
 import { defaultParams } from '@/core/params'
 import { registry } from '@/app/registry'
@@ -33,6 +33,10 @@ export default function PipelineToolbar({ onTogglePicker, pickerOpen, children }
         options={options as any} className="max-w-sm" />
       <button type="button" className="btn" onClick={() => dispatch({ type: 'ADD_BRANCH' })} title="fork the pipeline into parallel lanes">
         <GitFork size={16} /> branch
+      </button>
+      <button type="button" className="btn" onClick={() => dispatch({ type: 'ADD_EACH' })}
+        title="run steps on each line, list item or JSON value on its own">
+        <Repeat size={16} /> each
       </button>
       <div className="flex items-center gap-1">
         <button type="button" className="icon-btn" aria-label="undo" title="undo (Ctrl+Z)" disabled={!canUndo} onClick={() => dispatch({ type: 'UNDO' })}><Undo2 size={16} /></button>

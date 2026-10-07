@@ -1,7 +1,11 @@
 import type { Utility } from '@/types/utility'
 
-/** Bullet, numbered, lettered list markers and blockquote arrows. */
-const LIST_RE = /^[ \t]*(?:[-*+•‣▪·–—>]|\d+[.)]|[a-zA-Z][.)])[ \t]+\S/
+/**
+ * Bullet, numbered, lettered and parenthesised list markers, and blockquote arrows.
+ * The bullets include the glyphs PDF exports use (Google Docs writes ● ○ ■, Word's
+ * Symbol-font bullet copies out as the private-use U+F0B7) and legal-style (a), (12), (iv).
+ */
+const LIST_RE = /^[ \t]*(?:[-*+•‣▪·–—>●○◦■□❖➢✓✔\uF0B7]|\d+[.)]|[a-zA-Z][.)]|\((?:\d{1,3}|[a-zA-Z]|[ivxIVX]{1,4})\))[ \t]+\S/
 
 /**
  * Whitespace that may be dropped when lines are joined: everything `\s` matches

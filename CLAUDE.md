@@ -24,6 +24,7 @@ npm run build        # production build, then (postbuild) build:seo — OG image
                      # npm run check:bundle enforces bundle-budget.json
 npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
 npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
+npm run check:recipes -- <slug…>  # check recipes with the build's engine (no slugs = all, plus cross-recipe rules)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
@@ -36,13 +37,26 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - Framework-free: relative imports only, no DOM/React. Consumed by the app, the Worker API and every package.
 - `coerce` (value types, `coerceInputFor`, `isBytes`, display formatting), `params` (resolve defaults,
   declarative validation), `registry` (metadata + lazy loader, env/capability checks), `runner`
-  (`runPipeline(source, steps, { load, previews, signal, env, onStep })`), `serialize` (schema v2,
-  migration, `#/p/…` share links bounded by `MAX_SHARE_CHARS`), `steps`, `sandbox`, `streaming`, `detect`.
+  (`runPipeline(source, steps, { load, previews, signal, env, onStep })`), `serialize` (schema v3,
+  migration, `#/p/…` share links bounded by `MAX_SHARE_CHARS`), `steps`, `split`, `sandbox`, `streaming`, `detect`.
 - The runner enforces declared number/range bounds as step errors and caps any step's output at
   `MAX_VALUE_SIZE` (64 MiB; `maxValueSize` overrides it — the Worker uses 8 MiB), checking a branch's
   lanes before merging them. Steps can be utility steps, `branch` steps (parallel, merged
-  concat/zip/json/pick) or `macro` steps, each with an optional `condition` and `onError` policy
+  concat/zip/json/pick), `macro` steps or `each` steps, each with an optional `condition` and `onError` policy
   (`passthrough` default, `stop`, `empty`).
+- `each` ("run on each") splits its input (`split.ts`: lines, a literal delimiter, JSON array elements, JSON
+  object values), runs its `steps` on every item in a scratch result, and rejoins. Its `onError` also decides
+  what a failed item becomes. One run shares an item budget (`MAX_EACH_ITEMS`, 100 000; `maxEachItems`
+  overrides it — the Worker uses 10 000), yields to the host between items (`yieldToHost`) so a cancel lands,
+  loads each utility once per each step, and records previews for one sample item (`RunResult.items`). Never
+  chunked (`canChunk`).
+- A new step type goes through `steps.ts`: its guard, `childSequences` and `mapChildSequences` (where it
+  keeps nested steps). Tree walks and rebuilds (`walkSteps`, `updateStep`, `cloneWithNewIds`, quarantine,
+  bulk enable) use those, so they need no change; `sanitizeSteps` must parse it strictly (and drops any
+  unknown `type`).
+- Documents carry the oldest schema that can read them (`schemaVersionFor`): v3 only when an `each` step is
+  present, else v2. Every reader refuses `v > SCHEMA_VERSION`, so an older build asks to reload rather than
+  drop steps it cannot read. Write `schemaVersionFor(steps)`, never `SCHEMA_VERSION`, into stored documents.
 
 ### Utility system (`src/utilities/`)
 - Each utility lives in `src/utilities/<id>/index.ts` as a default export of type `Utility`.
@@ -72,6 +86,28 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `file`, `color`, `date`, `multiselect`, `range`. Numbers/ranges that multiply output size or work
   (counts, widths, iterations) must declare `max` — the runner rejects out-of-range values.
 
+### Recipes (`src/recipes/`) — pre-rendered pipeline pages
+- A recipe is a hand-picked multi-step pipeline for one real task, published at `/recipes/<slug>/` (index: `/recipes/`).
+  Folder per recipe: `recipe.ts` (default export `Recipe`: steps built with `step()`/`branch()`/`each()`/`laneStep()` from
+  `define.ts`, each top-level step with a `why`; `each()` runs `laneStep()`s on every line or JSON value; 2+ `samples` with golden outputs, the first is the page's worked
+  example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
+  example blocks). `npm run gen` also writes `src/recipes/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
+  per recipe with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.
+- Rules (`check.ts`, run by `recipes.test.ts` and `check:recipes`): real utilities/params, no `dom`/`main`/`eval`
+  steps (the build runs recipes in Node, the page in a worker), every sample reproduces its output on every run and
+  at any date, **every top-level step changes some sample's output when left out** (no padding), 2+ real steps or a
+  branch, title/description/primaryQuery unique across recipes and utility guides, `primaryQuery` not a utility
+  guide title's head term (no competing with `/util/<id>/`), ≥300 words of guide prose, no near-copied prose.
+- `trace.ts` turns a run into what the page shows (each step's output, what leaving each step out does).
+  `scripts/seo/build.ts` traces every recipe with the static registry, **fails the build** if the first sample's
+  output drifted, renders `RecipeArticle` with `renderToStaticMarkup` and embeds the trace as
+  `<script type="application/json" id="recipe-trace">`. `RecipePage` reads that trace, so nothing runs on load; the
+  first edit runs live (worker). `main.tsx` preloads a recipe route's chunk and data before mounting
+  (`preloadable`, capped at 2.5s) so React replaces the static HTML with the same page, not "Loading…".
+- "Open in the editor" (`openInEditor.ts`) autosaves the visitor's pipeline to the library, saves the recipe as the
+  working pipeline and hands off the input; its href is a `#/p/` share link carrying only the example input.
+- A `<textarea>` turns CRLF into LF: pasted Windows line endings never reach a recipe, only the samples' own text.
+
 ### App (`src/app/`)
 - `AppShell.tsx` — header/nav, lazy route pages, command palette, shortcuts help, theme, PWA install/update, frame-busting.
 - `ToolContext.tsx` + `store/pipeline.ts` — pure reducer with undo/redo (coalesced edits); persisted pipeline.
@@ -84,9 +120,9 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
+  `#/util/:id`, `#/recipes`, `#/recipes/:slug`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
   `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
-- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/docs/`, `/blog/…`, `/about/`…);
+- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/recipes/<slug>/`, `/docs/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex`. The host answers
   it with `dist/404.html` and a 404 status (`not_found_handling: "404-page"`), so a new path-routed page must also be
   pre-rendered by `scripts/seo/build.ts`, or it 404s on a direct load.
@@ -114,6 +150,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `location.href`, and share links carry the user's input in the fragment.
 - Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
   params only) — GA's own history-based page views are off in the stream settings.
+- Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`;
+  page views carry `recipe_id` (register it as a custom dimension).
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
   counts and size buckets only, never input/output text. New params need a custom dimension in GA
   (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
@@ -130,7 +168,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - `packages/core` is a build artifact over `src/core` + the static registry; `cli` (`subelt`), `mcp`
   (stdio server; runs jobs in killable child processes), `extension` (MV3), `vscode`. Each has a README.
 - App ↔ extension: `src/core/extensionBridge.ts` is the shared contract (messages, `BRIDGE_ORIGINS`, the store
-  extension id, which utilities the extension can run). The extension is `externally_connectable` from those origins
+  extension id, which utilities the extension can run, and — via `stepTypes` in its ping answer — which step
+  types it can save; an answer without it means `LEGACY_STEP_TYPES`). The extension is `externally_connectable` from those origins
   (no content script: a new install warning would disable the published extension); `src/app/extension/` pings it
   with `chrome.runtime.sendMessage` and shows "save to extension" only when it answers.
 
@@ -179,6 +218,17 @@ const util: Utility = {
 }
 export default util
 ```
+
+## Adding a recipe
+
+1. Pick a task people search for that needs 2+ utilities, and check no utility page already owns the search:
+   `grep -ih "^title:" src/utilities/*/guide.md | grep -i "<query>"` must print nothing
+2. Create `src/recipes/<slug>/recipe.ts` (see `src/recipes/excel-column-to-sql-in-clause/` and `types.ts`): steps
+   with a true `why` each (verify against the utility source), 2–4 realistic samples (example.com, RFC 5737 IPs,
+   vendor test vectors — never real data or secrets); generate encoded/compressed sample data with a script
+3. Write `guide.md`: why single tools fail at this, what each step does and why the order matters, honest limits,
+   how to do it elsewhere; link utilities as `[name](/util/<id>/)`
+4. `npm run check:recipes -- <slug>` until it passes, then `npm run gen`
 
 ## CI
 

@@ -36,7 +36,7 @@ selection(s).
 
 ### Run Pipeline (share link or JSON)… (`subelt.runPipeline`)
 
-Runs a full saved pipeline (branches, macros, conditions and error policies included)
+Runs a full saved pipeline (branches, macros, "run on each" steps, conditions and error policies included)
 over each selection. The pipeline can come from:
 
 - a pasted share URL (`…#/p/<payload>` or `…#/embed/<payload>`) or the bare payload, or

@@ -31,7 +31,7 @@ export function proseWords(guide: Guide): number {
 }
 
 /** Lines outside fenced code blocks (and outside the frontmatter). */
-function proseLines(source: string): string[] {
+export function proseLines(source: string): string[] {
   let fence: string | null = null
   const out: string[] = []
   const body = source.replace(/\r\n?/g, '\n').replace(/^---\n[\s\S]*?\n---\n/, '')

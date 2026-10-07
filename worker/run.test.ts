@@ -164,7 +164,7 @@ describe('POST /api/run: validation', () => {
     [{ input: 'x', steps: [{ params: {} }] }, /1 step could not be read/],
     [{ input: 'x', steps: [42, 'trim', null] }, /2 steps could not be read/],
     [{ input: 'x', pipeline: 'trim' }, /"pipeline" must be/],
-    [{ input: 'x', pipeline: { v: 3, steps: [] } }, /schema v3/],
+    [{ input: 'x', pipeline: { v: 4, steps: [] } }, /schema v4; the API understands up to v3/],
     [{ input: 'x', pipeline: { v: 2 } }, /"pipeline.steps" must be an array/],
     [{ input: 'x', share: 'definitely-not-a-share-payload' }, /.+/],
     [{ input: 'x', share: 42 }, /"share" must be/],
@@ -505,6 +505,67 @@ describe('POST /api/run: params', () => {
       expect(twoDefaults.status).toBe(400)
       const oneDisabled = await api.fetch(post({ input: 'pw', steps: [{ id: 'e', utilityId: 'aes_encrypt', params: { password: 'p' }, enabled: false }, { id: 'k', utilityId: 'pbkdf2', params: { iterations: 1000 } }] }))
       expect(oneDisabled.status).toBe(200)
+    })
+  })
+
+  describe('"run on each" steps', () => {
+    it('run a sub-pipeline on every line, with shorthand steps inside', async () => {
+      const { res, data } = await run({
+        input: 'aGVsbG8=\r\nd29ybGQ=\n',
+        steps: [{ type: 'each', split: { mode: 'lines' }, steps: ['base64_decode', { utilityId: 'case', params: { mode: 'upper' } }] }],
+      })
+      expect(res.status).toBe(200)
+      expect(data.output).toBe('HELLO\r\nWORLD\n')
+      expect(data.errors).toEqual({})
+    })
+
+    it('decode every value of a JSON object, reporting failed items in errors', async () => {
+      const { data } = await run({
+        input: '{"user":"YWRtaW4=","pass":"not base64!"}',
+        steps: [{ id: 'e', type: 'each', split: { mode: 'json-values' }, steps: [{ id: 'd', utilityId: 'base64_decode' }] }],
+      })
+      expect(data.outputType).toBe('json')
+      expect(data.output.user).toBe('admin')
+      expect(data.errors.e).toMatch(/^1 of 2 values failed \("pass": /)
+    })
+
+    it('refuses an each step it cannot read, naming what it needs', async () => {
+      const { res, data } = await run({ input: 'x', steps: [{ type: 'each', split: { mode: 'words' }, steps: ['reverse'] }] })
+      expect(res.status).toBe(400)
+      expect(data.error).toMatch(/2 steps could not be read: .*"type": "each" with "steps" and a "split"/)
+    })
+
+    it('count nested steps against maxSteps and nesting depth', async () => {
+      const api = createApi({ maxSteps: 3 })
+      const over = await api.fetch(post({ input: 'x', steps: [{ type: 'each', split: { mode: 'lines' }, steps: ['reverse', 'reverse', 'reverse'] }] }))
+      expect(over.status).toBe(400)
+      expect((await over.json() as any).error).toMatch(/too many steps: 4/)
+      let deep: unknown = 'reverse'
+      for (let i = 0; i < 10; i++) deep = { type: 'each', split: { mode: 'lines' }, steps: [deep] }
+      const { res, data } = await run({ input: 'x', steps: [deep] })
+      expect(res.status).toBe(400)
+      expect(data.error).toMatch(/nested more than 8 levels/)
+    })
+
+    it('share one item budget per request', async () => {
+      const api = createApi({ maxEachItems: 3 })
+      const steps = [{ id: 'e', type: 'each', split: { mode: 'lines' }, steps: ['reverse'] }]
+      const ok = await api.fetch(post({ input: 'ab\ncd\nef', steps }))
+      expect((await ok.json() as any).output).toBe('ba\ndc\nfe')
+      const over = await api.fetch(post({ input: 'a\nb\nc\nd', steps }))
+      expect((await over.json() as any).errors.e).toBe('the input has 4 lines; one run can process at most 3')
+    })
+
+    it('charge PBKDF2 work per item, so an each cannot multiply it past the budget', async () => {
+      const api = createApi({ pbkdf2Budget: 1_000 })
+      const steps = [{ id: 'e', type: 'each', split: { mode: 'lines' }, onError: 'stop', steps: [{ id: 'k', utilityId: 'pbkdf2', params: { iterations: 400, keyLength: 32 } }] }]
+      const ok = await api.fetch(post({ input: 'a\nb', steps }))
+      expect((await ok.json() as any).errors).toEqual({})
+      const over = await api.fetch(post({ input: 'a\nb\nc', steps }))
+      const data = await over.json() as any
+      expect(over.status).toBe(200)
+      expect(data.errors.e).toMatch(/^line 3: this request has used its PBKDF2 budget of 1000 blocks/)
+      expect(data.halted).toBe(true)
     })
   })
 
