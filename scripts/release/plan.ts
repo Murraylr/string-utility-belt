@@ -106,6 +106,13 @@ export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
       if (compareVersions(current, testedVersion) > 0) {
         return { ...base, next: current, release: true, bump: null, reason: 'first tagged release (version already raised)' }
       }
+      // a release run already chose this version and failed before tagging it, and pull requests
+      // merged since: if none of them changed what the target ships, retry that version (a store
+      // that already has it skips it); otherwise it may hold other content, so bump again
+      const setAt = versionSetAt(opts.git, target, null)
+      if (setAt && opts.git.subject(setAt).startsWith(RELEASE_COMMIT_PREFIX) && !affected(opts.git.diff(setAt, 'HEAD')).length) {
+        return { ...base, next: current, release: true, bump: null, reason: `first tagged release (retrying ${current}, set by ${setAt.slice(0, 12)})` }
+      }
       const level = (await levelOf(tested)) ?? 'patch'
       return {
         ...base, next: bumpVersion(current, level), release: true, bump: level,
@@ -152,8 +159,11 @@ export async function planRelease(opts: PlanOptions): Promise<TargetPlan[]> {
   }
 }
 
-/** The newest commit after `since` on HEAD's first-parent line that changed `target`'s version, or `null`. */
-function versionSetAt(git: Git, target: Target, since: string): string | null {
+/**
+ * The newest commit after `since` (anywhere in its history for `null`) on HEAD's first-parent line
+ * that changed `target`'s version, or `null`.
+ */
+function versionSetAt(git: Git, target: Target, since: string | null): string | null {
   const file = target.versionFiles[0]
   const versionAt = (rev: string) => {
     const text = git.show(rev, file.path)
@@ -163,7 +173,7 @@ function versionSetAt(git: Git, target: Target, since: string): string | null {
       return null
     }
   }
-  for (const sha of git.firstParentCommits(since)) {
+  for (const sha of git.firstParentCommits(since, 'HEAD', [file.path])) {
     if (versionAt(sha) !== versionAt(`${sha}^1`)) return sha
   }
   return null

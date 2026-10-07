@@ -1,0 +1,33 @@
+name: Publish to npm
+description: >-
+  Publishes a package to npm with trusted publishing (OIDC) and provenance. npm reports a refused
+  token exchange as a bare ENEEDAUTH, so on failure this explains it: npm's own log of the exchange
+  and the exact fields the package's trusted publisher on npmjs.com must hold to match this job.
+  The job needs `permissions: id-token: write`, setup-node with `registry-url`, and `npm ci`.
+
+inputs:
+  package:
+    description: The package directory, e.g. ./packages/core
+    required: true
+  token:
+    description: >-
+      A granular npm access token, only for bootstrapping a package that has no trusted publisher yet.
+      Leave empty for trusted publishing.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        PACKAGE: ${{ inputs.package }}
+        NODE_AUTH_TOKEN: ${{ inputs.token }}
+      run: |
+        set -euo pipefail
+        npm install --global npm@11   # trusted publishing needs npm >= 11.5.1
+        logs="$RUNNER_TEMP/npm-publish-logs"
+        if ! npm publish "$PACKAGE" --provenance --access public --logs-dir "$logs"; then
+          npm run --silent release -- npm-auth-report "$PACKAGE" "$logs" || true
+          exit 1
+        fi

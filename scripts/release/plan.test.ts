@@ -114,6 +114,26 @@ describe('planRelease', () => {
     expect(retry.cli).toMatchObject({ release: true, current: '2.0.1', next: '2.0.1', bump: null })
   })
 
+  it('retries an untagged first release at its version after more merges, until what a target ships changes', async () => {
+    const set = releaseCommit(await plan())
+    commit('docs', { 'README.md': 'readme\n' })
+    const retry = byId(await plan())
+    expect(retry.app).toMatchObject({ release: true, current: '1.0.1', next: '1.0.1', bump: null })
+    expect(retry.app.reason).toBe(`first tagged release (retrying 1.0.1, set by ${set.slice(0, 12)})`)
+    expect(retry.cli).toMatchObject({ release: true, current: '2.0.1', next: '2.0.1', bump: null })
+
+    // 2.0.1 may already be on a store with the old content: new content gets a new version
+    commit('cli fix', { 'packages/cli/main.ts': 'cli 2\n' }, ['release:minor'])
+    const changed = byId(await plan())
+    expect(changed.cli).toMatchObject({ release: true, current: '2.0.1', next: '2.1.0', bump: 'minor' })
+    expect(changed.app).toMatchObject({ next: '1.0.1', bump: null })
+  })
+
+  it('still bumps an untagged first release whose version a pull request set, not a release run', async () => {
+    commit('raise cli', versions('1.0.0', '2.1.0'))
+    expect(byId(await plan()).cli).toMatchObject({ current: '2.1.0', next: '2.1.1', bump: 'patch' })
+  })
+
   it('releases nothing that is unchanged since its tag', async () => {
     const first = await plan()
     releaseCommit(first)
