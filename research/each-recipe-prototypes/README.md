@@ -48,6 +48,6 @@ cidr-list-to-ip-ranges, find-invalid-lines-in-jsonl, list-to-json-array, md5-ema
 decode-base64-each-line, camel-case-hashtags, bulk-slug-generator, check-title-tag-lengths,
 check-palette-contrast-on-white-and-black, tailwind-colors-to-oklch-theme, json-log-timestamps-to-dates,
 user-agent-breakdown-from-access-log, decode-docker-config-auth; and no refactor for the other 10
-shipped recipes. The reasons are in the task that links here.
+shipped recipes. The reasons, and the full build brief, are in `TASK.md`.
 
 Delete this folder once the recipes it describes have shipped.
