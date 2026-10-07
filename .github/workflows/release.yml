@@ -395,15 +395,17 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
-      # the Entra ID identity must be a Contributor on the publisher; until it is, say which identity to add
+      # the Entra ID identity must be a Contributor on the publisher; until it is, say which identity to add.
+      # Its ID comes from connectionData, not profiles/me: an app (service principal) has no Azure DevOps
+      # profile, so profiles/me answers VSS011031.
       - name: Check Marketplace access
         if: steps.published.outputs.vscode_marketplace != 'true'
         run: |
           if npx --yes @vscode/vsce@4.0.0 verify-pat --azure-credential stringutilitybelt; then exit 0; fi
-          profile="$(az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 \
-            --url 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1-preview.3' \
-            --query id --output tsv || true)"
-          echo "::error::This identity can't publish as stringutilitybelt. Add member ID ${profile:-(unknown)} to the publisher as a Contributor (RELEASING.md, VS Code Marketplace), then re-run this job."
+          member="$(az rest --method get --resource 499b84ac-1321-427f-aa17-267ca6975798 \
+            --url 'https://app.vssps.visualstudio.com/_apis/connectionData' \
+            --query authenticatedUser.id --output tsv || true)"
+          echo "::error::This identity can't publish as stringutilitybelt. Add member ID ${member:-(unknown)} to the publisher as a Contributor (RELEASING.md, VS Code Marketplace), then re-run this job."
           exit 1
       - name: Publish to the VS Code Marketplace
         if: steps.published.outputs.vscode_marketplace != 'true'
