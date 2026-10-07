@@ -11,8 +11,11 @@ export interface PersistedState {
   libraryId?: string
 }
 
-/** Stored with the oldest schema that can read it, like every pipeline document (see `schemaVersionFor`). */
-export function saveState(state: Partial<PersistedState>) {
+/**
+ * Saves the working pipeline, with the oldest schema that can read it (like every pipeline
+ * document, see `schemaVersionFor`); false when storage refused the write (quota, disabled storage).
+ */
+export function saveState(state: Partial<PersistedState>): boolean {
   const steps = state?.steps ?? []
   const safe = {
     v: schemaVersionFor(steps),
@@ -21,7 +24,12 @@ export function saveState(state: Partial<PersistedState>) {
     ...(state?.name ? { name: state.name } : {}),
     ...(state?.libraryId ? { libraryId: state.libraryId } : {}),
   }
-  try { localStorage.setItem(CURRENT_KEY, JSON.stringify(safe)) } catch { /* quota or disabled storage */ }
+  try {
+    localStorage.setItem(CURRENT_KEY, JSON.stringify(safe))
+    return true
+  } catch {
+    return false
+  }
 }
 
 /**

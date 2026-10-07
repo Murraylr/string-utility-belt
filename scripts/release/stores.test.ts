@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest'
 import { GitHub } from './github'
-import { request, type Fetch } from './http'
-import { marketplaceVersions, publishedVersions, storeName } from './stores'
+import { poll, request, type Fetch } from './http'
+import { marketplaceVersions, npmServes, publishedVersions, storeName } from './stores'
 
 const noSleep = async () => {}
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -62,6 +62,40 @@ describe('publishedVersions', () => {
     await expect(publishedVersions('npm', 'subelt', { fetch, sleep: noSleep })).rejects.toThrow(/could not read the published versions of npm subelt: HTTP 403/)
     await expect(publishedVersions('vscode-marketplace', 'pub.ext', { fetch, sleep: noSleep })).rejects.toThrow(/HTTP 403/)
     await expect(publishedVersions('open-vsx', 'not-an-id', { fetch })).rejects.toThrow(/not a publisher\.name extension id/)
+  })
+})
+
+describe('npmServes', () => {
+  it('asks npm for the exact version, which a fresh publish lacks until npm has processed it', async () => {
+    const fetch = fakeFetch(url => (url.endsWith('/1.3.4') ? json({ version: '1.3.4' }) : status(404)))
+    expect(await npmServes('@string-utility-belt/mcp', '1.3.4', { fetch })).toBe(true)
+    expect(await npmServes('@string-utility-belt/mcp', '1.3.5', { fetch })).toBe(false)
+    expect(fetch.mock.calls[0][0]).toBe('https://registry.npmjs.org/@string-utility-belt%2fmcp/1.3.4')
+    await expect(npmServes('subelt', '1.0.0', { fetch: fakeFetch(() => status(403)) })).rejects.toThrow(/npm subelt@1\.0\.0: HTTP 403/)
+  })
+})
+
+describe('poll', () => {
+  /** A clock that `sleep` advances. */
+  function clock() {
+    let t = 0
+    return { now: () => t, sleep: vi.fn(async (ms: number) => { t += ms }) }
+  }
+
+  it('checks until the check passes, telling it the time elapsed', async () => {
+    const { now, sleep } = clock()
+    const seen: number[] = []
+    const check = async (elapsed: number) => { seen.push(elapsed); return seen.length === 3 }
+    expect(await poll(check, { timeoutMs: 60_000, intervalMs: 10_000, now, sleep })).toBe(true)
+    expect(seen).toEqual([0, 10_000, 20_000])
+  })
+
+  it('gives up once another interval would pass the timeout', async () => {
+    const { now, sleep } = clock()
+    const check = vi.fn(async () => false)
+    expect(await poll(check, { timeoutMs: 25_000, intervalMs: 10_000, now, sleep })).toBe(false)
+    expect(check).toHaveBeenCalledTimes(3)
+    expect(sleep).toHaveBeenCalledTimes(2)
   })
 })
 

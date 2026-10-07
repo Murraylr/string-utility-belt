@@ -44,6 +44,17 @@ describe('unwrap', () => {
     expect(await util.apply('para\n---\nmore', {})).toBe('para --- more')
   })
 
+  it('recognises the bullets text copied from a PDF carries, and parenthesised markers', async () => {
+    const docs = 'Areas:\n\u25cf Account setup\n\u25cf Importing contacts from a CSV\nfile or a CRM\n\u25cb nested\n\u25a0 square\n\uf0b7 Word symbol bullet'
+    expect(await util.apply(docs, {}))
+      .toBe('Areas:\n\u25cf Account setup\n\u25cf Importing contacts from a CSV file or a CRM\n\u25cb nested\n\u25a0 square\n\uf0b7 Word symbol bullet')
+    const clauses = 'The Supplier shall:\n(a) deliver within 30 days of the\norder date;\n(b) keep records; and\n(iv) report yearly.\n(12) Notices.'
+    expect(await util.apply(clauses, {}))
+      .toBe('The Supplier shall:\n(a) deliver within 30 days of the order date;\n(b) keep records; and\n(iv) report yearly.\n(12) Notices.')
+    // a parenthesised word is prose, not a marker
+    expect(await util.apply('wrapped\n(see below) more', {})).toBe('wrapped (see below) more')
+  })
+
   it('keeps indented blocks verbatim unless told not to', async () => {
     const src = 'intro text\n    code();\ntail'
     expect(await util.apply(src, { preserveIndented: true })).toBe('intro text\n    code();\ntail')

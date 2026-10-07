@@ -71,6 +71,18 @@ export async function publishedVersions(store: Store, name: string, opts: Reques
   }
 }
 
+/**
+ * Whether npm serves `name@version` yet. npm accepts a publish before it serves the version (it
+ * scans every new version first, usually for a few minutes), and caches the packument
+ * `publishedVersions` reads for five minutes; this version document is neither.
+ */
+export async function npmServes(name: string, version: string, opts: RequestOptions = {}): Promise<boolean> {
+  const res = await request(`${NPM_REGISTRY}/${name.replace('/', '%2f')}/${encodeURIComponent(version)}`, {
+    headers: { accept: 'application/json' },
+  }, opts)
+  return (await jsonOrNotFound(res, `npm ${name}@${version}`)) !== null
+}
+
 /** Every version of a Marketplace extension (`publisher.name`); empty when it was never published. */
 export async function marketplaceVersions(id: string, opts: RequestOptions = {}): Promise<string[]> {
   splitExtensionId(id)

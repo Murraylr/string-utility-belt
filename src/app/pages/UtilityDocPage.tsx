@@ -13,7 +13,11 @@ import type { ParamSpec, Params, UtilityEnv, UtilityExample } from '@/types/util
 import UtilityGuide from './UtilityGuide'
 import { useUtilityGuide } from './useUtilityGuide'
 import { useDocumentMeta } from './useDocumentMeta'
+import { useNoindex } from './useNoindex'
 import { relatedUtilities, utilityPath } from './related'
+import { RECIPE_INDEX } from '@/recipes/_generated/index'
+import { RecipeCards } from './recipes/RecipeArticle'
+import { recipesUsing } from './recipes/recipeHelpers'
 import { SITE_NAME, displayName, pageTitle } from './seo'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
@@ -87,6 +91,8 @@ export default function UtilityDocPage({ id }: { id: string }) {
 
 function UnknownUtility({ id }: { id: string }) {
   useDocumentMeta(pageTitle('Unknown utility'), `There is no ${SITE_NAME} utility called "${id}".`)
+  // the host answers any /util/<id>/ with a page: keep the made-up ones out of the index
+  useNoindex()
   return (
     <div className="max-w-3xl mx-auto card p-6 grid gap-3">
       <h1 className="text-xl font-semibold">Unknown utility "{id}"</h1>
@@ -147,6 +153,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
   }, [id, playInput, playParams])
 
   const related = useMemo(() => relatedUtilities(meta, registry.list()), [meta])
+  const recipes = useMemo(() => recipesUsing(id, RECIPE_INDEX), [id])
 
   const tryExample = (ex: UtilityExample) => {
     setPlayInput(ex.input)
@@ -311,6 +318,13 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
               )}
             </div>
           ))}
+        </section>
+      )}
+
+      {recipes.length > 0 && (
+        <section className="card p-6 grid gap-3">
+          <h2 className="text-lg font-medium">Recipes that use {displayName(meta.name)}</h2>
+          <RecipeCards recipes={recipes} className="grid sm:grid-cols-2 gap-2" />
         </section>
       )}
 
