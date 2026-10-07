@@ -39,12 +39,12 @@ describeIfBuilt('built extension (dist/)', () => {
     }
   })
 
-  it('matches the required manifest shape, with the root package version', () => {
+  it('matches the required manifest shape, with the version of its own manifest.json (not the site\'s)', () => {
     const manifest = readManifest()
-    const rootPkg = JSON.parse(readFileSync(resolve(__dirname, '../../../package.json'), 'utf8'))
+    const source = JSON.parse(readFileSync(resolve(__dirname, '../manifest.json'), 'utf8'))
     expect(manifest.manifest_version).toBe(3)
     expect(manifest.name).toBe('String Utility Belt')
-    expect(manifest.version).toBe(rootPkg.version)
+    expect(manifest.version).toBe(source.version)
     expect([...manifest.permissions].sort()).toEqual(['activeTab', 'clipboardWrite', 'contextMenus', 'scripting', 'storage'])
     expect(manifest.host_permissions).toBeUndefined()
     expect(manifest.content_scripts).toBeUndefined() // a host permission: a new install warning, which disables existing installs on update
