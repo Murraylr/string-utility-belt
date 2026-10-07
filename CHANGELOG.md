@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
+  (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
+  now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
+
+## [1.5.0] - 2026-10-07
+
 ### Added
 
 - **Recipes** — ready-made multi-step pipelines for real tasks, each with its own page at
@@ -39,9 +47,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Word's private-use bullet) and parenthesised markers (`(a)`, `(12)`, `(iv)`), instead of joining them
   into one paragraph.
 - A page for an unknown utility (`/util/<id>/`) is no longer offered to search engines (`noindex`).
-- CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
-  (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
-  now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
 
 ## [1.4.0] - 2026-10-06
 
