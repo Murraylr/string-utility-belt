@@ -159,7 +159,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"core"')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50   # includes waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
@@ -199,7 +199,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"cli"')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50   # includes waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
@@ -238,7 +238,7 @@ jobs:
     needs: plan
     if: contains(needs.plan.outputs.targets, '"mcp"')
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 55   # includes waiting for npm to serve the new version
     environment: npm
     permissions:
       contents: write   # tag + GitHub release
@@ -285,7 +285,8 @@ jobs:
           echo "$MCP_PUBLISHER_SHA256  $archive" | sha256sum --check --strict
           tar -xzf "$archive" -C "$RUNNER_TEMP" mcp-publisher
           "$RUNNER_TEMP/mcp-publisher" login dns --domain stringutilitybelt.com --private-key "$MCP_REGISTRY_PRIVATE_KEY"
-          # the registry verifies the npm package it points at, which can lag a fresh publish briefly
+          # the registry verifies the npm version it points at: npm serves it by now (the publish step
+          # waits for that), and this covers the moment it takes to show everywhere
           for attempt in 1 2 3 4 5; do
             if "$RUNNER_TEMP/mcp-publisher" publish server.json; then exit 0; fi
             echo "MCP Registry publish attempt $attempt failed; retrying in 20s"

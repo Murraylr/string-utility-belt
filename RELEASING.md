@@ -204,6 +204,12 @@ for a short-lived npm token and attaches provenance. Once the first release has 
 set *Settings → Publishing access* to **Require two-factor authentication and disallow tokens**, so
 nothing but this workflow can publish.
 
+npm accepts a publish before it serves the new version: it scans each one first ("Your package is
+being processed"), usually for a few minutes. The publish step waits up to 30 minutes until npm
+serves it, so the MCP Registry (which checks the npm version it points at), the tag and the GitHub
+release only follow an installable version. If the wait runs out, check the version on npmjs.com and
+re-run the job once it's listed: the publish is skipped and the release carries on.
+
 If a publish fails with `ENEEDAUTH`, npm refused the token exchange. It doesn't say why, so the
 publish step (`.github/actions/npm-publish`) adds a report to the job log and summary: npm's own
 account of the exchange, and the exact values the trusted publisher has to hold for that job.

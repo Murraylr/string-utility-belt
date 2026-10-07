@@ -1,9 +1,12 @@
 name: Publish to npm
 description: >-
-  Publishes a package to npm with trusted publishing (OIDC) and provenance. npm reports a refused
-  token exchange as a bare ENEEDAUTH, so on failure this explains it: npm's own log of the exchange
-  and the exact fields the package's trusted publisher on npmjs.com must hold to match this job.
-  The job needs `permissions: id-token: write`, setup-node with `registry-url`, and `npm ci`.
+  Publishes a package to npm with trusted publishing (OIDC) and provenance, then waits until npm
+  serves the new version (npm scans every new version before serving it), so the steps after it
+  (the MCP Registry, the tag and the GitHub release) only run for an installable version. npm
+  reports a refused token exchange as a bare ENEEDAUTH, so on failure this explains it: npm's own
+  log of the exchange and the exact fields the package's trusted publisher on npmjs.com must hold
+  to match this job. The job needs `permissions: id-token: write`, setup-node with `registry-url`,
+  `npm ci`, and a timeout that leaves room for the wait (up to 30 minutes).
 
 inputs:
   package:
@@ -31,3 +34,7 @@ runs:
           npm run --silent release -- npm-auth-report "$PACKAGE" "$logs" || true
           exit 1
         fi
+    - shell: bash
+      env:
+        PACKAGE: ${{ inputs.package }}
+      run: npm run --silent release -- wait-for-npm "$PACKAGE" --minutes 30
