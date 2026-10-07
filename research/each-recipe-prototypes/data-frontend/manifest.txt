@@ -1,0 +1,492 @@
+aes_decrypt [Ciphers] "string"->["string","bytes"] env= :: password:string="", mode:select[GCM|CBC]="GCM", keyBits:select[128|256]="256", iterations:number=100000, format:select[auto|base64|hex]="auto", output:select[text|bytes]="text"
+    TITLE: AES Decrypt Online — Reverse AES-GCM & AES-CBC
+aes_encrypt [Ciphers] ["string","bytes"]->"string" env= :: password:string="", mode:select[GCM|CBC]="GCM", keyBits:select[128|256]="256", iterations:number=100000, output:select[base64|hex]="base64"
+    TITLE: AES Encrypt Online — AES-256-GCM & AES-CBC Tool
+align_columns [Formatting] "string"->"string" env= :: delimiter:string="auto", outputDelimiter:string="  ", align:select[left|right|auto]="left", header:boolean=false
+    TITLE: Align Columns Online — Format Text Into Aligned Tables
+alternating_case [Formatting] "string"->"string" env= :: startUpper:boolean=false, skipNonLetters:boolean=true
+    TITLE: Alternating Case Converter — Make SpOnGeBoB Text Online
+argon2_hash [Hashing] "string"->"string" env=wasm :: variant:select[argon2id|argon2i|argon2d]="argon2id", iterations:number=3, memoryKiB:number=4096, parallelism:number=1, hashLength:number=32, salt:string=""
+    TITLE: Argon2 Hash Generator — Hash Passwords Online
+ascii_banner [Formatting] "string"->"string" env= :: font:select[block|banner|small|slant]="block", spacing:number=1
+    TITLE: ASCII Banner Generator — Big Text Art Online
+atbash [Ciphers] "string"->"string" env= :: 
+    TITLE: Atbash Cipher Online — Encode & Decode Mirror Text
+base32_decode [Decoding] "string"->["string","bytes"] env= :: variant:select[rfc4648|rfc4648-hex|z-base-32]="rfc4648", output:select[text|bytes]="text"
+    TITLE: Base32 Decode Online — Base32 to Text Converter
+base32_encode [Encoding] ["string","bytes"]->"string" env= :: variant:select[rfc4648|rfc4648-hex|z-base-32]="rfc4648", padding:boolean=true
+    TITLE: Base32 Encode Online — Text to Base32 Converter
+base58_decode [Decoding] "string"->["string","bytes"] env= :: alphabet:select[bitcoin|ripple|flickr]="bitcoin", output:select[text|bytes]="text"
+    TITLE: Base58 Decode Online — Base58 to Text Converter
+base58_encode [Encoding] ["string","bytes"]->"string" env= :: alphabet:select[bitcoin|ripple|flickr]="bitcoin"
+    TITLE: Base58 Encode Online — Text to Base58 Converter
+base62_decode [Decoding] "string"->["string","bytes"] env= :: alphabet:select[standard|inverted]="standard", output:select[text|bytes]="text"
+    TITLE: Base62 Decode Online — Base62 to Text Converter
+base62_encode [Encoding] ["string","bytes"]->"string" env= :: alphabet:select[standard|inverted]="standard"
+    TITLE: Base62 Encode Online — Text to Base62 Converter
+base64_decode [Decoding] "string"->"string" env= :: 
+    TITLE: Base64 Decode Online — Base64 to Text Converter
+base64_encode [Encoding] ["string","bytes"]->"string" env= :: 
+    TITLE: Base64 Encode Online — Convert Text to Base64
+base64url_decode [Decoding] "string"->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: Base64URL Decode Online — URL-Safe Base64 Decoder
+base64url_encode [Encoding] ["string","bytes"]->"string" env= :: padding:boolean=false
+    TITLE: Base64URL Encode Online — URL-Safe Base64 Converter
+base85_decode [Decoding] "string"->["string","bytes"] env= :: variant:select[ascii85|z85|rfc1924]="ascii85", output:select[text|bytes]="text"
+    TITLE: Base85 Decode Online — Ascii85 & Z85 Decoder
+base85_encode [Encoding] ["string","bytes"]->"string" env= :: variant:select[ascii85|z85|rfc1924]="ascii85", delimiters:boolean=false
+    TITLE: Base85 Encode Online — Ascii85 & Z85 Converter
+base91_decode [Decoding] "string"->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: basE91 Decode Online — Base91 to Text Converter
+base91_encode [Encoding] ["string","bytes"]->"string" env= :: 
+    TITLE: basE91 Encode Online — Text to Base91 Converter
+bcrypt_hash [Hashing] "string"->"string" env=wasm :: cost:number=10, salt:string=""
+    TITLE: Bcrypt Hash Generator — Hash Passwords Online
+bcrypt_verify [Hashing] "string"->"json" env=wasm :: hash:string=""
+    TITLE: Bcrypt Verify Online — Check a Password Hash
+binary_decode [Decoding] "string"->["string","bytes"] env= :: bits:select[8|7]="8", output:select[text|bytes]="text"
+    TITLE: Binary Decode Online — Binary to Text Converter
+binary_encode [Encoding] ["string","bytes"]->"string" env= :: bits:select[8|7]="8", separator:string=" ", groupBytes:number=1
+    TITLE: Binary Encode Online — Text to Binary (0s and 1s)
+bit_ops [Numbers] "string"->"string" env= :: operation:select[and|or|xor|not|shift-left|shift-right|unsigned-shift-right|rotate-left|rotate-right|popcount|reverse-bits]="and", operand:string="0", width:select[8|16|32|64]="32", inputRadix:number=0, outputRadix:number=2, perLine:boolean=true
+    TITLE: Bitwise Operations Online — AND, OR, XOR, Shift, Rotate
+blake [Hashing] ["string","bytes"]->"string" env=wasm :: algorithm:select[BLAKE2b-256|BLAKE2b-512|BLAKE2s-128|BLAKE2s-256|BLAKE3-256]="BLAKE2b-256", key:string="", output:select[hex|base64]="hex"
+    TITLE: BLAKE2 & BLAKE3 Hash Generator Online — Keyed
+bom [Encoding] ["string","bytes"]->["string","bytes","json"] env= :: mode:select[detect|add|remove]="detect", encoding:select[utf-8|utf-16le|utf-16be]="utf-8"
+    TITLE: BOM Detector — Detect, Add or Remove a Byte Order Mark
+box_text [Formatting] "string"->"string" env= :: style:select[single|double|round|bold|ascii|dashed]="single", padding:number=1, align:select[left|center|right]="left", title:string="", width:number=0
+    TITLE: ASCII Box Text Generator — Draw Borders Around Text
+brotli_decompress [Compression] ["string","bytes"]->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: Brotli Decompress Online — Decode .br Data to Text
+bytes_humanize [Numbers] "string"->"string" env= :: direction:select[to-human|to-bytes]="to-human", unit:select[binary|decimal]="binary", decimals:number=2, perLine:boolean=true
+    TITLE: Byte Size Converter — Humanize or Parse File Sizes
+caesar [Ciphers] "string"->"string" env= :: shift:number=13, mode:select[letters|rot47|alphanumeric]="letters", preserveCase:boolean=true
+    TITLE: Caesar Cipher & ROT13 Online — Shift Text Tool
+case [Formatting] "string"->"string" env= :: mode:select[upper|lower|title|sentence]="upper"
+    TITLE: Change Case Online — Upper, Lower, Title & Sentence Case
+char_frequency [Analysis] "string"->["string","json"] env= :: top:number=0, ignoreCase:boolean=false, includeWhitespace:boolean=false, format:select[table|json|csv]="table", percent:boolean=true
+    TITLE: Character Frequency Counter — Letter Count Online
+charset_decode [Decoding] ["string","bytes"]->"string" env= :: charset:select[utf-8|utf-16le|utf-16be|windows-1252|iso-8859-1|iso-8859-15|windows-1251|koi8-r|shift_jis|euc-jp|euc-kr|gbk|big5|macintosh]="windows-1252", fatal:boolean=false
+    TITLE: Charset Decode Online — Windows-1252, Shift_JIS & More
+charset_encode [Encoding] "string"->"bytes" env= :: charset:select[utf-8|utf-16le|utf-16be|windows-1252|iso-8859-1|iso-8859-15]="utf-8", onUnmappable:select[error|skip|replace]="error"
+    TITLE: Charset Encode Online — Text to Windows-1252, Latin-1 Bytes
+checksum [Hashing] ["string","bytes"]->"string" env=wasm :: algorithm:select[CRC-32|CRC-32C|CRC-16-CCITT|CRC-16-MODBUS|Adler-32|FNV-1a-32|FNV-1a-64|MurmurHash3-32|xxHash-32|xxHash-64|Java-hashCode|djb2|sdbm]="CRC-32", output:select[hex|decimal]="hex", seed:number=0
+    TITLE: CRC32 & Checksum Calculator Online — Hash Text
+checksum_verify [Hashing] ["string","bytes"]->"json" env= :: algorithm:select[MD5|SHA-1|SHA-256|SHA-384|SHA-512|CRC-32]="SHA-256", expected:string=""
+    TITLE: Checksum Verifier Online — Compare Hash Digests
+chunk [String Ops] "string"->"string" env= :: size:number=10, unit:select[characters|words|lines]="characters", separator:string="\n", padLast:boolean=false, padChar:string=" "
+    TITLE: Chunk Text Online — Split Strings into Fixed-Size Groups
+cidr [Web & Dev] "string"->["string","json"] env= :: mode:select[info|expand|contains|split]="info", address:string="", newPrefix:number=0, limit:number=1024
+    TITLE: CIDR Calculator — Subnet and IP Range Tool Online
+code_string_escape [Encoding] "string"->"string" env= :: language:select[javascript|json|c|java|python|go|csharp|php|ruby|sql]="javascript", quote:select[double|single|backtick]="double", wrap:boolean=false, escapeNonAscii:boolean=false
+    TITLE: Code String Escape — Escape Text for 10 Languages
+code_string_unescape [Decoding] "string"->"string" env= :: language:select[javascript|json|c|java|python|go|csharp|php|ruby|sql]="javascript"
+    TITLE: Code String Unescape — Decode Source String Literals
+codepoints_decode [Decoding] "string"->"string" env= :: format:select[auto|hex|decimal]="auto"
+    TITLE: Code Points to Text — Convert U+XXXX to Characters
+codepoints_encode [Encoding] "string"->"string" env= :: format:select[hex|decimal|u-plus|escaped]="u-plus", separator:string=" "
+    TITLE: Unicode Code Point Converter — Text to U+XXXX
+collapse_whitespace [String Ops] "string"->"string" env= :: spaces:boolean=true, newlines:boolean=true, trim:boolean=true, tabsToSpaces:boolean=false, unicodeSpaces:boolean=true
+    TITLE: Collapse Whitespace Online — Squeeze Extra Spaces
+color_contrast [Color] "string"->"json" env= :: foreground:color="", background:color="#ffffff"
+    TITLE: WCAG Contrast Checker — Text Color Ratio Online
+color_convert [Color] "string"->["string","json"] env= :: to:select[hex|hex-alpha|rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|named|all]="hex", perLine:boolean=true, precision:number=2
+    TITLE: CSS Color Converter — Hex, RGB, HSL, OKLCH Online
+columnar_decode [Ciphers] "string"->"string" env= :: key:string="ZEBRA", padChar:string="X"
+    TITLE: Columnar Transposition Cipher Decoder Online
+columnar_encode [Ciphers] "string"->"string" env= :: key:string="ZEBRA", padChar:string="X"
+    TITLE: Columnar Transposition Cipher Encoder Online
+count [Analysis] "string"->"string" env= :: 
+    TITLE: Word and Character Counter — Count Text Online
+cron_describe [Date & Time] "string"->["string","json"] env= :: format:select[text|json]="text", locale:select[en|es|fr|de|it|nl|pt_BR]="en", verbose:boolean=false, use24Hour:boolean=true, dayOfWeekStartIndexZero:boolean=true, seconds:boolean=false
+    TITLE: Cron Expression Describer — Explain Cron Schedules
+csv_columns [Data Formats] "string"->"string" env= :: columns:string="", mode:select[keep|drop]="keep", delimiter:string="auto", header:boolean=true
+    TITLE: CSV Column Selector — Keep, Drop, Reorder Fields
+csv_delimiter [Data Formats] "string"->"string" env= :: from:string="auto", to:string="\\t", quoteAll:boolean=false
+    TITLE: CSV Delimiter Converter — Comma, Tab, Pipe & More
+csv_normalize_headers [Data Formats] "string"->"string" env= :: style:select[snake|camel|kebab|pascal|title|lower|upper]="snake", delimiter:string="auto", dedupe:boolean=true
+    TITLE: CSV Header Case Converter — snake_case & camelCase
+csv_to_html [Data Formats] "string"->"string" env= :: delimiter:string="auto", header:boolean=true, className:string="", indent:number=2
+    TITLE: CSV to HTML Table Converter Online
+csv_to_json [Data Formats] "string"->"string" env= :: delimiter:string="auto", header:boolean=true, typed:boolean=false, trim:boolean=true, indent:number=2
+    TITLE: CSV to JSON Converter Online — Typed Records
+csv_to_markdown [Data Formats] "string"->"string" env= :: delimiter:string="auto", align:select[left|center|right|none]="left", header:boolean=true
+    TITLE: CSV to Markdown Table Converter Online
+csv_to_sql [Data Formats] "string"->"string" env= :: table:string="my_table", delimiter:string="auto", dialect:select[ansi|mysql|postgres|mssql|sqlite]="ansi", batch:boolean=false, nullToken:string="", createTable:boolean=false
+    TITLE: CSV to SQL INSERT Generator Online
+csv_transpose [Data Formats] "string"->"string" env= :: delimiter:string="auto"
+    TITLE: CSV Transpose Tool — Swap Rows and Columns
+curl_build [Web & Dev] "json"->"string" env= :: multiline:boolean=true, flavor:select[posix|powershell]="posix", pretty:boolean=true
+    TITLE: JSON to Curl Command Converter Online
+curl_parse [Web & Dev] "string"->"json" env= :: 
+    TITLE: Curl Command to JSON Converter Online
+custom_js [String Ops] ["string","bytes","json"]->["string","bytes","json"] env=eval,main :: code:code="// `input` is the value from the previous step: a string, a Uint8Array\n// (bytes) or parsed JSON. Return the new value; `await` works here too.\n// Runs in an isolated sandbox with no network access.\n//\n// return String(input).toUpperCase()\n", timeoutMs:number=2000
+    TITLE: Custom JavaScript Step — Run Your Own Code in a Sandbox
+data_uri_build [Encoding] ["string","bytes"]->"string" env= :: mime:string="text/plain", base64:boolean=true, charset:string="utf-8"
+    TITLE: Data URI Generator — Encode Text or Files as data:
+data_uri_parse [Decoding] "string"->["json","string","bytes"] env= :: output:select[json|text|bytes]="json"
+    TITLE: Data URI Parser — Decode a data: URI to Text or Bytes
+date_format [Date & Time] "string"->"string" env= :: format:string="YYYY-MM-DD HH:mm:ss", timezone:string="UTC", locale:string="en-US", perLine:boolean=true
+    TITLE: Date Format Converter — Reformat Dates & Timestamps Online
+deflate_compress [Compression] ["string","bytes"]->"bytes" env= :: format:select[raw|zlib]="zlib", level:number=6
+    TITLE: DEFLATE Compress Online — Raw or zlib-Wrapped Bytes
+deflate_decompress [Compression] ["string","bytes"]->["string","bytes"] env= :: format:select[auto|raw|zlib]="auto", output:select[text|bytes]="text"
+    TITLE: DEFLATE Decompress Online — zlib and Raw Inflate
+detect_format [Analysis] ["string","bytes"]->"json" env= :: 
+    TITLE: Detect Format Online — Identify JSON, Base64, JWT & More
+diacritics [String Ops] "string"->"string" env= :: 
+    TITLE: Remove Diacritics Online — Strip Accents from Text
+duration_humanize [Date & Time] "string"->"string" env= :: direction:select[to-human|to-seconds]="to-human", unit:select[seconds|milliseconds]="seconds", style:select[long|short|colon|iso8601]="long", maxUnits:number=2, perLine:boolean=true
+    TITLE: Duration Humanizer — Seconds to Readable Time Online
+entropy [Analysis] "string"->["json","string"] env= :: unit:select[bits|nats]="bits", format:select[json|text]="json"
+    TITLE: Password Entropy Calculator — Shannon Entropy Online
+env_to_json [Data Formats] "string"->"string" env= :: typed:boolean=false, expand:boolean=false, indent:number=2
+    TITLE: .env to JSON Converter Online
+escape_html [Encoding] "string"->"string" env= :: 
+    TITLE: Escape HTML Online — Encode &, <, >, " and '
+extract_preset [Analysis] "string"->"string" env= :: type:multiselect[urls|emails|ipv4|ipv6|numbers|integers|hashtags|mentions|hex-colors|uuids|quoted-strings|dates|times|phone|html-tags|words|domains|file-paths|credit-cards|jwt]=["urls"], unique:boolean=false, sort:boolean=false, separator:string="\n", count:boolean=false
+    TITLE: Extract URLs, Emails & Patterns Online — Text Scraper
+fake_data [Generators] "string"->["string","json"] env= :: type:select[name|first-name|last-name|email|username|phone|address|city|country|company|job-title|sentence|url|domain|ipv4|mac|date|price|credit-card|row]="name", count:number=5, format:select[lines|json|csv]="lines", separator:string="\n", seed:number=0
+    TITLE: Fake Data Generator Online — Mock Names & Rows
+filter_lines_by_length [Lines] "string"->"string" env= :: min:number=0, max:number=0, unit:select[characters|words]="characters", invert:boolean=false
+    TITLE: Filter Lines by Length Online — Keep Lines in Range
+format_case [Formatting] "string"->"string" env= :: mode:select[camel|pascal|snake|kebab|upper|lower|title|sentence]="camel"
+    TITLE: camelCase, snake_case & kebab-case Converter Online
+get_bytes [Encoding] ["string"]->"bytes" env= :: mode:select[utf8|hex|base64|unicode]="utf8"
+    TITLE: Get Bytes Online — Convert Text to UTF-8 or Hex Bytes
+grep_lines [Lines] "string"->"string" env= :: pattern:string="", regex:boolean=false, invert:boolean=false, ignoreCase:boolean=false, wholeWord:boolean=false, context:number=0, lineNumbers:boolean=false
+    TITLE: Grep Lines Online — Search Text by Pattern
+gzip_compress [Compression] ["string","bytes"]->"bytes" env= :: level:number=6
+    TITLE: Gzip Compress Online — Create a .gz Stream from Text
+gzip_decompress [Compression] ["string","bytes"]->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: Gzip Decompress Online — Decode .gz Data to Text
+hash [Hashing] ["string","bytes"]->"string" env= :: algo:select[SHA-1|SHA-256|SHA-384|SHA-512]="SHA-256"
+    TITLE: SHA-256 Hash Generator Online — SHA-1/384/512
+head [Lines] "string"->"string" env= :: count:number=10, unit:select[lines|characters|words]="lines"
+    TITLE: Head Command Online — Keep the First Lines of Text
+hex_decode [Decoding] "string"->"bytes" env= :: 
+    TITLE: Hex Decode Online — Hexadecimal to Bytes Converter
+hex_dump [Analysis] ["string","bytes"]->"string" env= :: width:number=16, uppercase:boolean=false, showAscii:boolean=true, showOffset:boolean=true
+    TITLE: Hex Dump Online — Hex and ASCII Byte Viewer
+hex_encode [Encoding] ["string","bytes"]->"string" env= :: 
+    TITLE: Hex Encode Online — Text to Hexadecimal Converter
+hmac [Hashing] ["string","bytes"]->"string" env= :: algorithm:select[SHA-1|SHA-256|SHA-384|SHA-512]="SHA-256", key:string="", keyFormat:select[text|hex|base64]="text", output:select[hex|base64|base64url]="hex"
+    TITLE: HMAC Generator Online — SHA-256 Signature Tool
+html_entity_decode [Decoding] "string"->"string" env= :: 
+    TITLE: HTML Entity Decoder — Decode Named & Numeric References
+html_entity_encode [Encoding] "string"->"string" env= :: mode:select[named|decimal|hex]="named", scope:select[minimal|non-ascii|all]="non-ascii"
+    TITLE: HTML Entity Encoder — Named, Decimal & Hex References
+html_table_to_csv [Data Formats] "string"->"string" env=dom :: tableIndex:number=0, delimiter:string=","
+    TITLE: HTML Table to CSV Converter Online
+html_to_markdown [Data Formats] "string"->"string" env=dom :: headingStyle:select[atx|setext]="atx", bulletMarker:select[-|*|+]="-", codeBlockStyle:select[fenced|indented]="fenced"
+    TITLE: HTML to Markdown Converter Online — Convert HTML to MD
+http_headers_build [Web & Dev] "json"->"string" env= :: canonicalCase:boolean=true, eol:select[crlf|lf]="crlf"
+    TITLE: JSON to HTTP Headers Converter Online
+http_headers_parse [Web & Dev] "string"->["json","string"] env= :: lowercaseNames:boolean=true, indent:number=2
+    TITLE: HTTP Headers to JSON Parser Online
+ieee754 [Numbers] "string"->["string","json"] env= :: direction:select[to-bits|to-number]="to-bits", precision:select[double|single]="double", format:select[binary|hex|breakdown]="breakdown"
+    TITLE: IEEE 754 Float Converter — Number to Bits and Back
+indent [Formatting] "string"->"string" env= :: mode:select[add|remove|auto-dedent]="add", amount:number=2, character:select[space|tab]="space", skipBlank:boolean=true
+    TITLE: Indent / Dedent Text Online — Add or Remove Leading Spaces
+ini_to_json [Data Formats] "string"->"string" env= :: nested:boolean=false, typed:boolean=false, indent:number=2
+    TITLE: INI to JSON Converter Online
+initials [String Ops] "string"->"string" env= :: separator:string="", uppercase:boolean=true, skipSmallWords:boolean=false, maxLength:number=0
+    TITLE: Initials Generator — Turn a Phrase into an Acronym
+insert_at [String Ops] "string"->"string" env= :: text:string="", position:number=0, mode:select[insert|overwrite]="insert", perLine:boolean=false
+    TITLE: Insert Text at Position — String Splice Tool Online
+ip_convert [Web & Dev] "string"->"string" env= :: mode:select[auto|to-integer|to-address|ipv6-expand|ipv6-compress|to-binary|to-hex|ipv4-to-ipv6]="auto", perLine:boolean=true
+    TITLE: IP Address Converter — Integer, Hex and Binary Online
+json_diff [Analysis] "string"->["json","string"] env= :: other:file="{}", format:select[summary|json-patch|unified]="summary"
+    TITLE: JSON Diff Online — Compare Two JSON Documents
+json_escape [Encoding] "string"->"string" env= :: 
+    TITLE: JSON String Escape — Escape Text for JSON Online
+json_flatten [Data Formats] "string"->"string" env= :: delimiter:string=".", arrayNotation:select[bracket|dot]="bracket", indent:number=2
+    TITLE: JSON Flatten Online — Nested JSON to Flat Key Paths
+json_minify [URL & JSON] "string"->"string" env= :: 
+    TITLE: JSON Minifier Online — Compact JSON, Remove Whitespace
+json_pretty [URL & JSON] ["string"]->"string" env= :: indent:number=2
+    TITLE: JSON Pretty Print Online — Format & Indent JSON
+json_schema_validate [Data Formats] ["string","json"]->"json" env= :: schema:file="{}"
+    TITLE: JSON Schema Validator Online — Validate JSON Data
+json_sort_keys [Data Formats] "string"->"string" env= :: direction:select[asc|desc]="asc", deep:boolean=true, sortArrays:boolean=false, indent:number=2
+    TITLE: Sort JSON Keys Online — Alphabetize JSON Objects
+json_to_csv [Data Formats] ["string","json"]->"string" env= :: delimiter:string=",", header:boolean=true, flatten:boolean=false, eol:select[lf|crlf]="lf", columns:string=""
+    TITLE: JSON to CSV Converter Online — Arrays to Table
+json_to_env [Data Formats] "string"->"string" env= :: upperCase:boolean=true, delimiter:string="_", quote:select[auto|always|never]="auto", exportPrefix:boolean=false
+    TITLE: JSON to .env Converter Online
+json_to_ini [Data Formats] "json"->"string" env= :: delimiter:string="=", spacing:boolean=false
+    TITLE: JSON to INI Converter Online
+json_to_jsonl [Data Formats] "string"->"string" env= :: 
+    TITLE: JSON to JSONL Converter — Array to NDJSON
+json_to_query_string [Web & Dev] "string"->"string" env= :: arrayFormat:select[bracket|repeat|comma|index]="repeat", nested:select[bracket|dot|json]="bracket", encode:boolean=true, sort:boolean=false, prefix:boolean=false
+    TITLE: JSON to Query String Converter Online
+json_to_schema [Data Formats] ["string","json"]->"json" env= :: title:string="Root", requireAll:boolean=true, includeExamples:boolean=false
+    TITLE: JSON to JSON Schema Generator Online
+json_to_toml [Data Formats] "string"->"string" env= :: 
+    TITLE: JSON to TOML Converter — Convert JSON to TOML Online
+json_to_typescript [Data Formats] ["string","json"]->"string" env= :: rootName:string="Root", style:select[interface|type]="interface", optionalNulls:boolean=true, readonlyProps:boolean=false, arrayUnion:boolean=true
+    TITLE: JSON to TypeScript — Generate Interfaces from JSON
+json_to_xml [Data Formats] ["string","json"]->"string" env= :: rootName:string="root", itemName:string="item", indent:number=2, attributePrefix:string="@", declaration:boolean=true
+    TITLE: JSON to XML Converter Online — Convert JSON to XML
+json_to_yaml [Data Formats] "string"->"string" env= :: indent:number=2, lineWidth:number=80, sortKeys:boolean=false
+    TITLE: JSON to YAML Converter Online — Convert JSON to YAML
+json_unescape [Decoding] "string"->"string" env= :: 
+    TITLE: JSON String Unescape — Decode JSON Escape Sequences
+json_unflatten [Data Formats] "string"->"string" env= :: delimiter:string=".", indent:number=2
+    TITLE: JSON Unflatten Online — Rebuild Nested JSON from Paths
+json_validate [Data Formats] "string"->"json" env= :: strict:boolean=true
+    TITLE: JSON Validator Online — Check JSON Syntax
+json5_parse [Data Formats] "string"->"string" env= :: indent:number=2
+    TITLE: JSON5 / JSONC Parser Online — Convert to Strict JSON
+jsonl_to_json [Data Formats] "string"->"string" env= :: indent:number=2, skipBlank:boolean=true, onError:select[error|skip]="error"
+    TITLE: JSONL to JSON Converter — NDJSON to Array
+jsonpath [Data Formats] "string"->"string" env= :: path:string="$", mode:select[values|paths|first|count]="values", indent:number=2
+    TITLE: JSONPath Query Tool Online — Filter & Extract JSON
+jwt_decode [Decoding] "string"->"json" env= :: part:select[all|header|payload]="all"
+    TITLE: JWT Decoder Online — Decode JSON Web Tokens
+jwt_verify [Ciphers] "string"->"json" env= :: secret:string="", secretFormat:select[text|base64url|hex]="text", checkExpiry:boolean=true
+    TITLE: JWT Signature Verifier Online — Check HS256
+language_detect [Analysis] "string"->"json" env= :: 
+    TITLE: Language Detection Online — Identify Text Language
+leet [Formatting] "string"->"string" env= :: level:select[basic|medium|extreme]="basic", direction:select[to-leet|from-leet]="to-leet"
+    TITLE: Leet Speak Translator — Convert Text to 1337 Online
+length [Analysis] "string"->"string" env= :: 
+    TITLE: String Length Calculator — Count Characters Online
+line_affix [Lines] "string"->"string" env= :: prefix:string="", suffix:string="", skipBlank:boolean=true, joinWith:string=""
+    TITLE: Add Prefix or Suffix to Lines Online
+line_dedupe [Formatting] "string"->"string" env= :: caseSensitive:boolean=true
+    TITLE: Remove Duplicate Lines Online — Line Deduplicator
+line_reverse [Lines] "string"->"string" env= :: 
+    TITLE: Reverse Line Order Online — Flip Text Line by Line
+line_sort [Formatting] "string"->"string" env= :: mode:select[alphabetical|numeric|natural|length|column|random]="alphabetical", direction:select[asc|desc]="asc", caseSensitive:boolean=false, unique:boolean=false, column:number=1, separator:string="", seed:number=0
+    TITLE: Sort Lines Online — Alphabetical, Numeric & Natural Sort
+lorem_ipsum [Generators] "string"->"string" env= :: unit:select[paragraphs|sentences|words|bytes]="paragraphs", count:number=3, startWithLorem:boolean=true, html:boolean=false, seed:number=0
+    TITLE: Lorem Ipsum Generator — Placeholder Text Online
+mac_format [Web & Dev] "string"->["string","json"] env= :: style:select[colon|dash|dot|bare|cisco]="colon", case:select[lower|upper]="lower", perLine:boolean=true, validate:boolean=true, info:boolean=false
+    TITLE: MAC Address Formatter — Colon, Dash and Cisco Style
+markdown_strip [String Ops] "string"->"string" env= :: keepLinkUrls:boolean=false, keepCodeBlocks:boolean=true
+    TITLE: Markdown to Text — Strip Markdown Formatting Online
+markdown_table_format [Formatting] "string"->"string" env= :: align:select[preserve|left|center|right]="preserve", compact:boolean=false
+    TITLE: Markdown Table Formatter — Align Pipe Tables
+markdown_to_csv [Data Formats] "string"->"string" env= :: delimiter:string=","
+    TITLE: Markdown Table to CSV Converter Online
+markdown_to_html [Data Formats] "string"->"string" env= :: gfm:boolean=true, breaks:boolean=false, headerIds:boolean=false
+    TITLE: Markdown to HTML Converter Online — Render Markdown
+md5 [Hashing] ["string","bytes"]->["string","bytes"] env= :: 
+    TITLE: MD5 Hash Generator Online — Free MD5 Checksum
+mime_from_magic [Analysis] ["string","bytes"]->"json" env= :: 
+    TITLE: File Type Detector — Identify Files by Magic Bytes
+mime_lookup [Web & Dev] "string"->"string" env= :: direction:select[auto|extension-to-mime|mime-to-extension]="auto", perLine:boolean=true
+    TITLE: MIME Type Lookup — File Extension Converter Online
+morse_decode [Decoding] "string"->"string" env= :: 
+    TITLE: Morse Code Decoder — Translate Morse Code to Text
+morse_encode [Encoding] "string"->"string" env= :: letterSeparator:string=" ", wordSeparator:string=" / ", onUnknown:select[error|skip|keep]="skip"
+    TITLE: Morse Code Translator — Text to Morse Code Online
+msgpack_decode [Data Formats] "bytes"->"json" env= :: 
+    TITLE: MessagePack Decoder — Decode MsgPack to JSON Online
+msgpack_encode [Data Formats] "json"->"bytes" env= :: 
+    TITLE: MessagePack Encoder — Encode JSON to MsgPack Online
+multi_replace [String Ops] "string"->"string" env= :: rules:keyvalue=[], regex:boolean=false, ignoreCase:boolean=false, applyOnce:boolean=false
+    TITLE: Multi Replace Online — Apply Many Find/Replace Rules
+nanoid [Generators] "string"->"string" env= :: size:number=21, alphabet:string="A-Za-z0-9_-", count:number=1, seed:number=0
+    TITLE: Nano ID Generator Online — Random Unique IDs
+ngram_frequency [Analysis] "string"->["string","json"] env= :: n:number=2, unit:select[words|characters]="words", top:number=20, ignoreCase:boolean=true, format:select[table|json]="table"
+    TITLE: N-gram Frequency Analyzer — Find Common Word Pairs
+normalize [String Ops] "string"->"string" env= :: form:select[NFC|NFD|NFKC|NFKD]="NFC"
+    TITLE: Unicode Normalize Online — NFC, NFD, NFKC, NFKD
+normalize_line_endings [Formatting] "string"->["string","json"] env= :: mode:select[lf|crlf|cr|detect]="lf", finalNewline:select[keep|add|remove]="keep"
+    TITLE: Line Ending Converter — LF, CRLF & CR Online (dos2unix)
+number_base_convert [Numbers] "string"->"string" env= :: from:number=10, to:number=16, uppercase:boolean=false, prefix:boolean=false, groupDigits:number=0, perLine:boolean=true
+    TITLE: Number Base Converter — Hex, Binary, Octal, Base 2–36
+number_format [Numbers] "string"->"string" env= :: style:select[decimal|thousands|scientific|engineering|percent|currency|compact|fixed]="thousands", decimals:number=2, locale:string="en-US", currency:string="USD", separator:string="", perLine:boolean=true
+    TITLE: Number Format Online — Thousands, Percent, Currency
+number_lines [Formatting] "string"->"string" env= :: start:number=1, separator:string=": "
+    TITLE: Number Lines Online — Add Line Numbers to Text
+number_sequence [Generators] "string"->"string" env= :: start:number=1, end:number=10, step:number=1, pad:number=0, prefix:string="", suffix:string="", separator:string="\\n", radix:number=10
+    TITLE: Number Sequence Generator — Custom Ranges Online
+number_words [Numbers] "string"->"string" env= :: direction:select[to-words|to-number]="to-words", style:select[cardinal|ordinal|year|currency]="cardinal", locale:select[en-US|en-GB]="en-US", perLine:boolean=true
+    TITLE: Number to Words Converter — English, Both Directions
+octal_decode [Decoding] "string"->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: Octal Decode Online — Octal to Text Converter
+octal_encode [Encoding] ["string","bytes"]->"string" env= :: separator:string=" "
+    TITLE: Octal Encode Online — Text to Octal Converter
+ordinalize [Numbers] "string"->"string" env= :: style:select[suffix|words]="suffix", perLine:boolean=true
+    TITLE: Ordinalize Numbers Online — 1 to 1st, 2 to 2nd
+pad [String Ops] "string"->"string" env= :: length:number=10, char:string=" ", side:select[end|start|both]="end"
+    TITLE: Pad String Online — Left Pad, Right Pad & Center Text
+password_generator [Generators] "string"->"string" env= :: mode:select[random|pronounceable|passphrase]="random", length:number=20, words:number=4, separator:string="-", uppercase:boolean=true, digits:boolean=true, symbols:boolean=true, excludeAmbiguous:boolean=true, count:number=1, seed:number=0
+    TITLE: Password Generator — Random, Pronounceable & Passphrase
+pbkdf2 [Hashing] ["string","bytes"]->"string" env= :: algorithm:select[SHA-1|SHA-256|SHA-512]="SHA-256", salt:string="", iterations:number=100000, keyLength:number=32, output:select[hex|base64]="hex"
+    TITLE: PBKDF2 Key Derivation Online — Hash Generator
+pluralize_words [String Ops] "string"->"string" env= :: mode:select[plural|singular]="plural", scope:select[whole|last-word|each-line]="whole", count:number=0
+    TITLE: Pluralize Words Online — Singular to Plural Converter
+protobuf_decode [Data Formats] ["string","bytes"]->"json" env= :: 
+    TITLE: Protobuf Decoder — Decode Protobuf Wire Format Online
+punycode_decode [Decoding] "string"->"string" env= :: mode:select[domain|label|raw]="domain"
+    TITLE: Punycode Decoder — Convert xn-- Domains to Unicode
+punycode_encode [Encoding] "string"->"string" env= :: mode:select[domain|label|raw]="domain"
+    TITLE: Punycode Encoder — Convert Unicode Domains to ASCII
+qr_code [Generators] "string"->["string","json"] env= :: errorCorrection:select[L|M|Q|H]="M", moduleSize:number=4, margin:number=4, dark:color="#000000", light:color="#ffffff", output:select[svg|ascii|json]="svg"
+    TITLE: QR Code Generator Online — SVG, ASCII & JSON
+query_params_normalize [Web & Dev] "string"->"string" env= :: sort:boolean=true, dedupe:select[none|first|last]="last", dropEmpty:boolean=false, drop:string="", decode:boolean=false, lowercaseHost:boolean=true
+    TITLE: Normalize URL Query Parameters Online
+query_string_to_json [Web & Dev] "string"->"string" env= :: nested:select[auto|bracket|dot|none]="auto", typed:boolean=false, indent:number=2
+    TITLE: Query String to JSON Converter Online
+quoted_printable_decode [Decoding] "string"->["string","bytes"] env= :: output:select[text|bytes]="text"
+    TITLE: Quoted-Printable Decode — Decode RFC 2045 QP Text
+quoted_printable_encode [Encoding] ["string","bytes"]->"string" env= :: lineLength:number=76
+    TITLE: Quoted-Printable Encode — RFC 2045 Text to QP
+rail_fence_decode [Ciphers] "string"->"string" env= :: rails:number=3, offset:number=0
+    TITLE: Rail Fence Cipher Decoder Online — Zigzag Cipher
+rail_fence_encode [Ciphers] "string"->"string" env= :: rails:number=3, offset:number=0
+    TITLE: Rail Fence Cipher Encoder Online — Zigzag Cipher
+random_bytes [Generators] "string"->["string","bytes"] env= :: count:number=16, output:select[hex|base64|base64url|decimal|c-array|bytes]="hex", seed:number=0
+    TITLE: Random Bytes Generator — Hex, Base64 & C Array
+random_case [Formatting] "string"->"string" env= :: probability:range=0.5, seed:number=0
+    TITLE: Random Case Generator — Randomize Text Capitalization
+random_string [Generators] "string"->"string" env= :: length:number=16, charset:select[alphanumeric|alpha|lowercase|uppercase|numeric|hex|symbols|all|custom]="alphanumeric", custom:string="", count:number=1, seed:number=0
+    TITLE: Random String Generator — Custom Character Sets
+readability [Analysis] "string"->["json","string"] env= :: format:select[json|text]="json"
+    TITLE: Readability Score Calculator — Flesch, Fog, SMOG Online
+reading_time [Analysis] "string"->["string","json"] env= :: wordsPerMinute:number=200, format:select[text|json]="text"
+    TITLE: Reading Time Calculator Online — Estimate Read Time
+regex_explain [Analysis] "string"->["string","json"] env= :: pattern:regex="", flags:string="", format:select[tree|json]="tree"
+    TITLE: Regex Explainer Online — Understand a Pattern's Parts
+regex_extract [String Ops] "string"->"string" env= :: pattern:regex="", flags:string="g"
+    TITLE: Regex Extract Online — Pull All Pattern Matches from Text
+remove_blank_lines [String Ops] "string"->"string" env= :: 
+    TITLE: Remove Blank Lines Online — Strip Empty Lines from Text
+remove_invisible [Analysis] "string"->["string","json"] env= :: mode:select[remove|reveal|list]="remove"
+    TITLE: Invisible Character Remover — Find Hidden Unicode
+repeat [String Ops] "string"->"string" env= :: count:number=2, separator:string=""
+    TITLE: Repeat String Online — Duplicate Text N Times
+replace [String Ops] "string"->"string" env= :: pattern:string="", replacement:string="", regex:boolean=true, flags:string="g"
+    TITLE: Find and Replace Text Online — Regex Replacer
+reverse [String Ops] "string"->"string" env= :: 
+    TITLE: Reverse a String Online — Flip Text Backwards
+reverse_words [String Ops] "string"->"string" env= :: separator:string=" ", perLine:boolean=true
+    TITLE: Reverse Word Order Online — Flip Sentence Words
+roman_numerals [Numbers] "string"->"string" env= :: direction:select[to-roman|to-arabic]="to-roman", perLine:boolean=true
+    TITLE: Roman Numeral Converter — Number to MCMXCIV and Back
+rot13 [Encoding] "string"->"string" env= :: 
+    TITLE: ROT13 Encoder/Decoder — Caesar Cipher Online
+sed [String Ops] "string"->"string" env= :: script:code="s/foo/bar/g", perLine:boolean=true
+    TITLE: Sed Script Online — Run sed-Style Text Edits
+semver [Web & Dev] "string"->["string","json"] env= :: mode:select[parse|validate|compare|sort|satisfies|increment]="parse", other:string="", range:string="", release:select[major|minor|patch|premajor|preminor|prepatch|prerelease]="patch", direction:select[asc|desc]="asc"
+    TITLE: Semantic Version Tool — Compare, Sort and Bump SemVer
+set_operations [Lines] "string"->"string" env= :: other:file="", operation:select[union|intersection|difference|symmetric-difference]="intersection", ignoreCase:boolean=false, trim:boolean=true, sort:boolean=false
+    TITLE: Line Set Operations Online — Union, Intersect, Diff Lists
+sha3 [Hashing] ["string","bytes"]->"string" env=wasm :: algorithm:select[SHA3-224|SHA3-256|SHA3-384|SHA3-512|Keccak-224|Keccak-256|Keccak-384|Keccak-512]="SHA3-256", output:select[hex|base64|base64url]="hex"
+    TITLE: SHA-3 & Keccak-256 Hash Generator Online
+shell_quote [String Ops] "string"->"string" env= :: flavor:select[posix|powershell|cmd]="posix", mode:select[quote|escape]="quote"
+    TITLE: Shell Quote & Escape Online — Bash, PowerShell, cmd
+shuffle [Generators] "string"->"string" env= :: unit:select[lines|words|characters]="lines", seed:number=0
+    TITLE: Shuffle Text Online — Randomize Lines or Words
+slice [String Ops] "string"->"string" env= :: start:number=0, end:number=0
+    TITLE: String Slice Online — Extract Text by Index Range
+slug [Formatting] "string"->"string" env= :: 
+    TITLE: Slug Generator Online — Convert Text to a URL Slug
+smart_quotes [Formatting] "string"->"string" env= :: direction:select[to-smart|to-straight]="to-straight", quotes:boolean=true, dashes:boolean=true, ellipsis:boolean=true, locale:select[en|de|fr|pl]="en"
+    TITLE: Smart Quotes Converter — Curly Quotes Online
+sort_words_in_line [Lines] "string"->"string" env= :: direction:select[asc|desc]="asc", separator:string=" ", unique:boolean=false, ignoreCase:boolean=true
+    TITLE: Sort Words in a Line Online — Alphabetize Word Order
+split_join [String Ops] "string"->"string" env= :: splitBy:string=",", joinWith:string="\n"
+    TITLE: Split and Join Text Online — Swap Delimiters Fast
+sql_escape [String Ops] "string"->"string" env= :: flavor:select[ansi|mysql|postgres|mssql]="ansi", wrap:boolean=true
+    TITLE: SQL Escape Online — Escape Quotes for SQL Literals
+sql_format [Formatting] "string"->"string" env= :: dialect:select[sql|mysql|postgresql|sqlite|mariadb|bigquery|spark|transactsql]="sql", keywordCase:select[upper|lower|preserve]="upper", indent:number=2, linesBetweenQueries:number=1
+    TITLE: SQL Formatter Online — Pretty Print SQL Queries
+sql_minify [Formatting] "string"->"string" env= :: removeComments:boolean=true, semicolonNewline:boolean=false
+    TITLE: SQL Minifier Online — Collapse SQL to One Line
+string_distance [Analysis] "string"->"json" env= :: other:string="", algorithm:select[levenshtein|damerau-levenshtein|hamming|jaro|jaro-winkler|dice|jaccard|lcs|cosine]="levenshtein", ignoreCase:boolean=false, normalized:boolean=false
+    TITLE: String Distance Calculator — Levenshtein & More Online
+strip_ansi [String Ops] "string"->"string" env= :: mode:select[strip|keep-text]="strip"
+    TITLE: Strip ANSI Codes Online — Remove Terminal Color Codes
+strip_chars [String Ops] "string"->"string" env= :: type:select[punctuation|digits|letters|whitespace|non-alphanumeric|non-ascii|non-printable|emoji|custom]="punctuation", custom:string="", invert:boolean=false, replaceWith:string=""
+    TITLE: Strip Characters Online — Remove Punctuation or Emoji
+strip_html_tags [String Ops] "string"->"string" env= :: decodeEntities:boolean=true, preserveBreaks:boolean=true, allowedTags:string=""
+    TITLE: Strip HTML Tags Online — Convert HTML to Plain Text
+substring_around [String Ops] "string"->"string" env= :: delimiter:string="", mode:select[before|after|between]="before", endDelimiter:string="", occurrence:select[first|last]="first", perLine:boolean=false, ifMissing:select[empty|whole|error]="whole"
+    TITLE: Extract Text Before or After a Delimiter Online
+swap_case [Formatting] "string"->"string" env= :: 
+    TITLE: Swap Case Online — Invert Uppercase and Lowercase Letters
+tabs_spaces [Formatting] "string"->"string" env= :: direction:select[tabs-to-spaces|spaces-to-tabs]="tabs-to-spaces", tabWidth:number=4, leadingOnly:boolean=false
+    TITLE: Tabs to Spaces Converter Online (and Back)
+tail [Lines] "string"->"string" env= :: count:number=10, unit:select[lines|characters|words]="lines"
+    TITLE: Tail Command Online — Keep the Last Lines of Text
+template_expand [Generators] "string"->"string" env= :: template:textarea="{i}, {uuid}", count:number=10, start:number=1, separator:string="\n", seed:number=0
+    TITLE: Template Expander — Generate Rows from a Pattern
+text_diff [Analysis] "string"->["string","json"] env= :: other:file="", granularity:select[lines|words|characters]="lines", format:select[unified|inline|side-by-side|json]="unified", context:number=3, ignoreCase:boolean=false, ignoreWhitespace:boolean=false
+    TITLE: Text Diff Online — Compare Two Texts Line by Line
+text_stats [Analysis] "string"->["json","string"] env= :: format:select[json|text]="json"
+    TITLE: Text Statistics Online — Count Words, Chars & Sentences
+timestamp_convert [Date & Time] "string"->["string","json"] env= :: to:select[all|iso|unix|unix-ms|rfc2822|http|sql|local|relative]="all", timezone:string="UTC", perLine:boolean=true
+    TITLE: Unix Timestamp Converter — Epoch to Date Online
+timestamp_now [Generators] "string"->["string","json"] env= :: format:select[iso|unix|unix-ms|rfc2822|http|sql|local|all]="iso", timezone:string="UTC", offsetSeconds:number=0
+    TITLE: Current Timestamp Generator — Now in Any Format
+toml_to_json [Data Formats] "string"->"string" env= :: indent:number=2
+    TITLE: TOML to JSON Converter — Parse TOML Online
+tr [String Ops] "string"->"string" env= :: from:string="", to:string="", delete:boolean=false, squeeze:boolean=false, ranges:boolean=true
+    TITLE: Translate Characters Online — POSIX tr Tool
+trim [String Ops] "string"->"string" env= :: 
+    TITLE: Trim Whitespace Online — Strip Leading & Trailing Space
+trim_lines [Lines] "string"->"string" env= :: side:select[both|start|end]="both", characters:string=""
+    TITLE: Trim Lines Online — Strip Whitespace from Every Line
+truncate [String Ops] "string"->"string" env= :: length:number=20, ellipsis:string="…"
+    TITLE: Truncate Text Online — Shorten Strings with Ellipsis
+ulid [Generators] "string"->"string" env= :: count:number=1, timestamp:number=0, seed:number=0
+    TITLE: ULID Generator Online — Sortable Unique IDs
+unescape_html [Decoding] "string"->"string" env= :: 
+    TITLE: Unescape HTML Online — Decode HTML Entities to Text
+unicode_escape_decode [Decoding] "string"->"string" env= :: 
+    TITLE: Unicode Unescape — Decode \u, CSS & HTML Escapes
+unicode_escape_encode [Encoding] "string"->"string" env= :: style:select[js-u|js-braces|css|python|java|html-hex|html-dec]="js-u", scope:select[non-ascii|all]="non-ascii"
+    TITLE: Unicode Escape Online — \u, CSS, Python & HTML Styles
+unicode_inspect [Analysis] "string"->["string","json"] env= :: limit:number=200, format:select[table|json]="table"
+    TITLE: Unicode Code Point Inspector — Analyze Characters Online
+unicode_style [Formatting] "string"->"string" env= :: style:select[fullwidth|small-caps|bubble|bubble-filled|square|upside-down|bold|italic|bold-italic|monospace|script|fraktur|double-struck|strikethrough|underline|superscript|subscript|zalgo]="fullwidth", intensity:range=3, seed:number=0
+    TITLE: Unicode Text Style Generator — Fancy Fonts Online
+uniq_count [Lines] "string"->["string","json"] env= :: sort:select[count-desc|count-asc|alpha|original]="count-desc", separator:string="\t", ignoreCase:boolean=false, trim:boolean=false, onlyDuplicates:boolean=false, format:select[count-line|line-count|json]="count-line"
+    TITLE: Uniq Count Online — Count Duplicate Lines (uniq -c)
+unwrap [Formatting] "string"->"string" env= :: separator:string=" ", preserveLists:boolean=true, preserveIndented:boolean=true
+    TITLE: Unwrap Text Online — Join Wrapped Lines Into Paragraphs
+url_build [Web & Dev] "json"->"string" env= :: encode:boolean=true
+    TITLE: URL Builder Online — Assemble a URL from Parts
+url_decode [URL & JSON] "string"->"string" env= :: 
+    TITLE: URL Decode Online — Percent-Decode URL Text
+url_encode [URL & JSON] "string"->"string" env= :: 
+    TITLE: URL Encode Online — Percent-Encode Text for URLs
+url_parse [Web & Dev] "string"->"json" env= :: base:string="", decodeParams:boolean=true
+    TITLE: URL Parser Online — Split a URL into JSON Parts
+user_agent_parse [Web & Dev] "string"->"json" env= :: 
+    TITLE: User Agent Parser — Browser, OS and Bot Detector Online
+uuid [Generators] "string"->"string" env= :: version:select[v4|v7|v1|nil|max]="v4", count:number=1, uppercase:boolean=false, hyphens:boolean=true, braces:boolean=false, seed:number=0
+    TITLE: UUID Generator Online — v4, v7, v1, Nil & Max
+validate [Analysis] "string"->"json" env= :: type:select[email|url|uuid|ipv4|ipv6|semver|credit-card|isbn|mac|hex-color|json|base64|date|iso8601|domain|port|jwt|slug|hostname]="email", perLine:boolean=false
+    TITLE: Validate Email, URL, UUID & More Online — Format Check
+vigenere_decode [Ciphers] "string"->"string" env= :: key:string="KEY", preserveCase:boolean=true, skipNonLetters:boolean=true
+    TITLE: Vigenère Cipher Decoder Online — Keyword Cipher
+vigenere_encode [Ciphers] "string"->"string" env= :: key:string="KEY", preserveCase:boolean=true, skipNonLetters:boolean=true
+    TITLE: Vigenère Cipher Encoder Online — Keyword Cipher
+word_frequency [Analysis] "string"->["string","json"] env= :: top:number=20, ignoreCase:boolean=true, stopWords:boolean=false, minLength:number=1, format:select[table|json|csv]="table", stripPunctuation:boolean=true
+    TITLE: Word Frequency Counter — Most Common Words Online
+word_wrap [Formatting] "string"->"string" env= :: width:number=80, breakLongWords:boolean=false, indent:string="", preserveParagraphs:boolean=true, trailingSpaces:boolean=false
+    TITLE: Word Wrap Online — Wrap Text to a Fixed Column Width
+xml_escape [Encoding] "string"->"string" env= :: quotes:boolean=true, scope:select[minimal|non-ascii]="minimal"
+    TITLE: XML Escape Online — Encode Text for XML Documents
+xml_minify [Formatting] "string"->"string" env= :: removeComments:boolean=true
+    TITLE: XML Minifier Online — Remove Whitespace from XML
+xml_pretty [Formatting] "string"->"string" env= :: indent:number=2, collapseEmpty:boolean=true
+    TITLE: XML Formatter Online — Pretty Print and Indent XML
+xml_to_json [Data Formats] "string"->["json","string"] env=dom :: attributePrefix:string="@", textKey:string="#text", compact:boolean=true, indent:number=2, output:select[json|string]="json"
+    TITLE: XML to JSON Converter Online — Parse XML to JSON
+xml_unescape [Decoding] "string"->"string" env= :: 
+    TITLE: XML Unescape Online — Decode XML Entities to Text
+xor_cipher [Ciphers] ["string","bytes"]->["string","bytes"] env= :: key:string="", keyFormat:select[text|hex|base64|decimal]="text", output:select[text|hex|base64|bytes]="hex"
+    TITLE: XOR Cipher Online — Encrypt & Decrypt with a Key
+yaml_to_json [Data Formats] "string"->"string" env= :: indent:number=2, allDocuments:boolean=false
+    TITLE: YAML to JSON Converter Online — Parse YAML to JSON
+zip_extract [Compression] "bytes"->["string","bytes"] env= :: entry:string="", output:select[text|bytes]="text"
+    TITLE: ZIP Extract Online — Pull One File from an Archive
+zip_list [Compression] "bytes"->"json" env= :: 
+    TITLE: ZIP List Online — Inspect a .zip Archive's Contents

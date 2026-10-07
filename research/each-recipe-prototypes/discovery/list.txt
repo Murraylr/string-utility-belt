@@ -1,0 +1,247 @@
+aes_decrypt [Ciphers] env= :: password:string="", mode:select(GCM|CBC)="GCM", keyBits:select(128|256)="256", iterations:number=100000, format:select(auto|base64|hex)="auto", output:select(text|bytes)="text"
+aes_encrypt [Ciphers] env= :: password:string="", mode:select(GCM|CBC)="GCM", keyBits:select(128|256)="256", iterations:number=100000, output:select(base64|hex)="base64"
+align_columns [Formatting] env= :: delimiter:string="auto", outputDelimiter:string="  ", align:select(left|right|auto)="left", header:boolean=false
+alternating_case [Formatting] env= :: startUpper:boolean=false, skipNonLetters:boolean=true
+argon2_hash [Hashing] env=wasm :: variant:select(argon2id|argon2i|argon2d)="argon2id", iterations:number=3, memoryKiB:number=4096, parallelism:number=1, hashLength:number=32, salt:string=""
+ascii_banner [Formatting] env= :: font:select(block|banner|small|slant)="block", spacing:number=1
+atbash [Ciphers] env= :: 
+base32_decode [Decoding] env= :: variant:select(rfc4648|rfc4648-hex|z-base-32)="rfc4648", output:select(text|bytes)="text"
+base32_encode [Encoding] env= :: variant:select(rfc4648|rfc4648-hex|z-base-32)="rfc4648", padding:boolean=true
+base58_decode [Decoding] env= :: alphabet:select(bitcoin|ripple|flickr)="bitcoin", output:select(text|bytes)="text"
+base58_encode [Encoding] env= :: alphabet:select(bitcoin|ripple|flickr)="bitcoin"
+base62_decode [Decoding] env= :: alphabet:select(standard|inverted)="standard", output:select(text|bytes)="text"
+base62_encode [Encoding] env= :: alphabet:select(standard|inverted)="standard"
+base64_decode [Decoding] env= :: 
+base64_encode [Encoding] env= :: 
+base64url_decode [Decoding] env= :: output:select(text|bytes)="text"
+base64url_encode [Encoding] env= :: padding:boolean=false
+base85_decode [Decoding] env= :: variant:select(ascii85|z85|rfc1924)="ascii85", output:select(text|bytes)="text"
+base85_encode [Encoding] env= :: variant:select(ascii85|z85|rfc1924)="ascii85", delimiters:boolean=false
+base91_decode [Decoding] env= :: output:select(text|bytes)="text"
+base91_encode [Encoding] env= :: 
+bcrypt_hash [Hashing] env=wasm :: cost:number=10, salt:string=""
+bcrypt_verify [Hashing] env=wasm :: hash:string=""
+binary_decode [Decoding] env= :: bits:select(8|7)="8", output:select(text|bytes)="text"
+binary_encode [Encoding] env= :: bits:select(8|7)="8", separator:string=" ", groupBytes:number=1
+bit_ops [Numbers] env= :: operation:select(and|or|xor|not|shift-left|shift-right|unsigned-shift-right|rotate-left|rotate-right|popcount|reverse-bits)="and", operand:string="0", width:select(8|16|32|64)="32", inputRadix:number=0, outputRadix:number=2, perLine:boolean=true
+blake [Hashing] env=wasm :: algorithm:select(BLAKE2b-256|BLAKE2b-512|BLAKE2s-128|BLAKE2s-256|BLAKE3-256)="BLAKE2b-256", key:string="", output:select(hex|base64)="hex"
+bom [Encoding] env= :: mode:select(detect|add|remove)="detect", encoding:select(utf-8|utf-16le|utf-16be)="utf-8"
+box_text [Formatting] env= :: style:select(single|double|round|bold|ascii|dashed)="single", padding:number=1, align:select(left|center|right)="left", title:string="", width:number=0
+brotli_decompress [Compression] env= :: output:select(text|bytes)="text"
+bytes_humanize [Numbers] env= :: direction:select(to-human|to-bytes)="to-human", unit:select(binary|decimal)="binary", decimals:number=2, perLine:boolean=true
+caesar [Ciphers] env= :: shift:number=13, mode:select(letters|rot47|alphanumeric)="letters", preserveCase:boolean=true
+case [Formatting] env= :: mode:select(upper|lower|title|sentence)="upper"
+char_frequency [Analysis] env= :: top:number=0, ignoreCase:boolean=false, includeWhitespace:boolean=false, format:select(table|json|csv)="table", percent:boolean=true
+charset_decode [Decoding] env= :: charset:select(utf-8|utf-16le|utf-16be|windows-1252|iso-8859-1|iso-8859-15|windows-1251|koi8-r|shift_jis|euc-jp|euc-kr|gbk|big5|macintosh)="windows-1252", fatal:boolean=false
+charset_encode [Encoding] env= :: charset:select(utf-8|utf-16le|utf-16be|windows-1252|iso-8859-1|iso-8859-15)="utf-8", onUnmappable:select(error|skip|replace)="error"
+checksum [Hashing] env=wasm :: algorithm:select(CRC-32|CRC-32C|CRC-16-CCITT|CRC-16-MODBUS|Adler-32|FNV-1a-32|FNV-1a-64|MurmurHash3-32|xxHash-32|xxHash-64|Java-hashCode|djb2|sdbm)="CRC-32", output:select(hex|decimal)="hex", seed:number=0
+checksum_verify [Hashing] env= :: algorithm:select(MD5|SHA-1|SHA-256|SHA-384|SHA-512|CRC-32)="SHA-256", expected:string=""
+chunk [String Ops] env= :: size:number=10, unit:select(characters|words|lines)="characters", separator:string="\n", padLast:boolean=false, padChar:string=" "
+cidr [Web & Dev] env= :: mode:select(info|expand|contains|split)="info", address:string="", newPrefix:number=0, limit:number=1024
+code_string_escape [Encoding] env= :: language:select(javascript|json|c|java|python|go|csharp|php|ruby|sql)="javascript", quote:select(double|single|backtick)="double", wrap:boolean=false, escapeNonAscii:boolean=false
+code_string_unescape [Decoding] env= :: language:select(javascript|json|c|java|python|go|csharp|php|ruby|sql)="javascript"
+codepoints_decode [Decoding] env= :: format:select(auto|hex|decimal)="auto"
+codepoints_encode [Encoding] env= :: format:select(hex|decimal|u-plus|escaped)="u-plus", separator:string=" "
+collapse_whitespace [String Ops] env= :: spaces:boolean=true, newlines:boolean=true, trim:boolean=true, tabsToSpaces:boolean=false, unicodeSpaces:boolean=true
+color_contrast [Color] env= :: foreground:color="", background:color="#ffffff"
+color_convert [Color] env= :: to:select(hex|hex-alpha|rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|named|all)="hex", perLine:boolean=true, precision:number=2
+columnar_decode [Ciphers] env= :: key:string="ZEBRA", padChar:string="X"
+columnar_encode [Ciphers] env= :: key:string="ZEBRA", padChar:string="X"
+count [Analysis] env= :: 
+cron_describe [Date & Time] env= :: format:select(text|json)="text", locale:select(en|es|fr|de|it|nl|pt_BR)="en", verbose:boolean=false, use24Hour:boolean=true, dayOfWeekStartIndexZero:boolean=true, seconds:boolean=false
+csv_columns [Data Formats] env= :: columns:string="", mode:select(keep|drop)="keep", delimiter:string="auto", header:boolean=true
+csv_delimiter [Data Formats] env= :: from:string="auto", to:string="\\t", quoteAll:boolean=false
+csv_normalize_headers [Data Formats] env= :: style:select(snake|camel|kebab|pascal|title|lower|upper)="snake", delimiter:string="auto", dedupe:boolean=true
+csv_to_html [Data Formats] env= :: delimiter:string="auto", header:boolean=true, className:string="", indent:number=2
+csv_to_json [Data Formats] env= :: delimiter:string="auto", header:boolean=true, typed:boolean=false, trim:boolean=true, indent:number=2
+csv_to_markdown [Data Formats] env= :: delimiter:string="auto", align:select(left|center|right|none)="left", header:boolean=true
+csv_to_sql [Data Formats] env= :: table:string="my_table", delimiter:string="auto", dialect:select(ansi|mysql|postgres|mssql|sqlite)="ansi", batch:boolean=false, nullToken:string="", createTable:boolean=false
+csv_transpose [Data Formats] env= :: delimiter:string="auto"
+curl_build [Web & Dev] env= :: multiline:boolean=true, flavor:select(posix|powershell)="posix", pretty:boolean=true
+curl_parse [Web & Dev] env= :: 
+custom_js [String Ops] env=eval/main :: code:code="// `input` is the value from the previous step: a string, a Uint8Array\n// (bytes) or parsed JSON. Return the new value; `await` works here too.\n// Runs in an isolated sandbox with no network access.\n//\n// return String(input).toUpperCase()\n", timeoutMs:number=2000
+data_uri_build [Encoding] env= :: mime:string="text/plain", base64:boolean=true, charset:string="utf-8"
+data_uri_parse [Decoding] env= :: output:select(json|text|bytes)="json"
+date_format [Date & Time] env= :: format:string="YYYY-MM-DD HH:mm:ss", timezone:string="UTC", locale:string="en-US", perLine:boolean=true
+deflate_compress [Compression] env= :: format:select(raw|zlib)="zlib", level:number=6
+deflate_decompress [Compression] env= :: format:select(auto|raw|zlib)="auto", output:select(text|bytes)="text"
+detect_format [Analysis] env= :: 
+diacritics [String Ops] env= :: 
+duration_humanize [Date & Time] env= :: direction:select(to-human|to-seconds)="to-human", unit:select(seconds|milliseconds)="seconds", style:select(long|short|colon|iso8601)="long", maxUnits:number=2, perLine:boolean=true
+entropy [Analysis] env= :: unit:select(bits|nats)="bits", format:select(json|text)="json"
+env_to_json [Data Formats] env= :: typed:boolean=false, expand:boolean=false, indent:number=2
+escape_html [Encoding] env= :: 
+extract_preset [Analysis] env= :: type:multiselect(urls|emails|ipv4|ipv6|numbers|integers|hashtags|mentions|hex-colors|uuids|quoted-strings|dates|times|phone|html-tags|words|domains|file-paths|credit-cards|jwt)=["urls"], unique:boolean=false, sort:boolean=false, separator:string="\n", count:boolean=false
+fake_data [Generators] env= :: type:select(name|first-name|last-name|email|username|phone|address|city|country|company|job-title|sentence|url|domain|ipv4|mac|date|price|credit-card|row)="name", count:number=5, format:select(lines|json|csv)="lines", separator:string="\n", seed:number=0
+filter_lines_by_length [Lines] env= :: min:number=0, max:number=0, unit:select(characters|words)="characters", invert:boolean=false
+format_case [Formatting] env= :: mode:select(camel|pascal|snake|kebab|upper|lower|title|sentence)="camel"
+get_bytes [Encoding] env= :: mode:select(utf8|hex|base64|unicode)="utf8"
+grep_lines [Lines] env= :: pattern:string="", regex:boolean=false, invert:boolean=false, ignoreCase:boolean=false, wholeWord:boolean=false, context:number=0, lineNumbers:boolean=false
+gzip_compress [Compression] env= :: level:number=6
+gzip_decompress [Compression] env= :: output:select(text|bytes)="text"
+hash [Hashing] env= :: algo:select(SHA-1|SHA-256|SHA-384|SHA-512)="SHA-256"
+head [Lines] env= :: count:number=10, unit:select(lines|characters|words)="lines"
+hex_decode [Decoding] env= :: 
+hex_dump [Analysis] env= :: width:number=16, uppercase:boolean=false, showAscii:boolean=true, showOffset:boolean=true
+hex_encode [Encoding] env= :: 
+hmac [Hashing] env= :: algorithm:select(SHA-1|SHA-256|SHA-384|SHA-512)="SHA-256", key:string="", keyFormat:select(text|hex|base64)="text", output:select(hex|base64|base64url)="hex"
+html_entity_decode [Decoding] env= :: 
+html_entity_encode [Encoding] env= :: mode:select(named|decimal|hex)="named", scope:select(minimal|non-ascii|all)="non-ascii"
+html_table_to_csv [Data Formats] env=dom :: tableIndex:number=0, delimiter:string=","
+html_to_markdown [Data Formats] env=dom :: headingStyle:select(atx|setext)="atx", bulletMarker:select(-|*|+)="-", codeBlockStyle:select(fenced|indented)="fenced"
+http_headers_build [Web & Dev] env= :: canonicalCase:boolean=true, eol:select(crlf|lf)="crlf"
+http_headers_parse [Web & Dev] env= :: lowercaseNames:boolean=true, indent:number=2
+ieee754 [Numbers] env= :: direction:select(to-bits|to-number)="to-bits", precision:select(double|single)="double", format:select(binary|hex|breakdown)="breakdown"
+indent [Formatting] env= :: mode:select(add|remove|auto-dedent)="add", amount:number=2, character:select(space|tab)="space", skipBlank:boolean=true
+ini_to_json [Data Formats] env= :: nested:boolean=false, typed:boolean=false, indent:number=2
+initials [String Ops] env= :: separator:string="", uppercase:boolean=true, skipSmallWords:boolean=false, maxLength:number=0
+insert_at [String Ops] env= :: text:string="", position:number=0, mode:select(insert|overwrite)="insert", perLine:boolean=false
+ip_convert [Web & Dev] env= :: mode:select(auto|to-integer|to-address|ipv6-expand|ipv6-compress|to-binary|to-hex|ipv4-to-ipv6)="auto", perLine:boolean=true
+json_diff [Analysis] env= :: other:file="{}", format:select(summary|json-patch|unified)="summary"
+json_escape [Encoding] env= :: 
+json_flatten [Data Formats] env= :: delimiter:string=".", arrayNotation:select(bracket|dot)="bracket", indent:number=2
+json_minify [URL & JSON] env= :: 
+json_pretty [URL & JSON] env= :: indent:number=2
+json_schema_validate [Data Formats] env= :: schema:file="{}"
+json_sort_keys [Data Formats] env= :: direction:select(asc|desc)="asc", deep:boolean=true, sortArrays:boolean=false, indent:number=2
+json_to_csv [Data Formats] env= :: delimiter:string=",", header:boolean=true, flatten:boolean=false, eol:select(lf|crlf)="lf", columns:string=""
+json_to_env [Data Formats] env= :: upperCase:boolean=true, delimiter:string="_", quote:select(auto|always|never)="auto", exportPrefix:boolean=false
+json_to_ini [Data Formats] env= :: delimiter:string="=", spacing:boolean=false
+json_to_jsonl [Data Formats] env= :: 
+json_to_query_string [Web & Dev] env= :: arrayFormat:select(bracket|repeat|comma|index)="repeat", nested:select(bracket|dot|json)="bracket", encode:boolean=true, sort:boolean=false, prefix:boolean=false
+json_to_schema [Data Formats] env= :: title:string="Root", requireAll:boolean=true, includeExamples:boolean=false
+json_to_toml [Data Formats] env= :: 
+json_to_typescript [Data Formats] env= :: rootName:string="Root", style:select(interface|type)="interface", optionalNulls:boolean=true, readonlyProps:boolean=false, arrayUnion:boolean=true
+json_to_xml [Data Formats] env= :: rootName:string="root", itemName:string="item", indent:number=2, attributePrefix:string="@", declaration:boolean=true
+json_to_yaml [Data Formats] env= :: indent:number=2, lineWidth:number=80, sortKeys:boolean=false
+json_unescape [Decoding] env= :: 
+json_unflatten [Data Formats] env= :: delimiter:string=".", indent:number=2
+json_validate [Data Formats] env= :: strict:boolean=true
+json5_parse [Data Formats] env= :: indent:number=2
+jsonl_to_json [Data Formats] env= :: indent:number=2, skipBlank:boolean=true, onError:select(error|skip)="error"
+jsonpath [Data Formats] env= :: path:string="$", mode:select(values|paths|first|count)="values", indent:number=2
+jwt_decode [Decoding] env= :: part:select(all|header|payload)="all"
+jwt_verify [Ciphers] env= :: secret:string="", secretFormat:select(text|base64url|hex)="text", checkExpiry:boolean=true
+language_detect [Analysis] env= :: 
+leet [Formatting] env= :: level:select(basic|medium|extreme)="basic", direction:select(to-leet|from-leet)="to-leet"
+length [Analysis] env= :: 
+line_affix [Lines] env= :: prefix:string="", suffix:string="", skipBlank:boolean=true, joinWith:string=""
+line_dedupe [Formatting] env= :: caseSensitive:boolean=true
+line_reverse [Lines] env= :: 
+line_sort [Formatting] env= :: mode:select(alphabetical|numeric|natural|length|column|random)="alphabetical", direction:select(asc|desc)="asc", caseSensitive:boolean=false, unique:boolean=false, column:number=1, separator:string="", seed:number=0
+lorem_ipsum [Generators] env= :: unit:select(paragraphs|sentences|words|bytes)="paragraphs", count:number=3, startWithLorem:boolean=true, html:boolean=false, seed:number=0
+mac_format [Web & Dev] env= :: style:select(colon|dash|dot|bare|cisco)="colon", case:select(lower|upper)="lower", perLine:boolean=true, validate:boolean=true, info:boolean=false
+markdown_strip [String Ops] env= :: keepLinkUrls:boolean=false, keepCodeBlocks:boolean=true
+markdown_table_format [Formatting] env= :: align:select(preserve|left|center|right)="preserve", compact:boolean=false
+markdown_to_csv [Data Formats] env= :: delimiter:string=","
+markdown_to_html [Data Formats] env= :: gfm:boolean=true, breaks:boolean=false, headerIds:boolean=false
+md5 [Hashing] env= :: 
+mime_from_magic [Analysis] env= :: 
+mime_lookup [Web & Dev] env= :: direction:select(auto|extension-to-mime|mime-to-extension)="auto", perLine:boolean=true
+morse_decode [Decoding] env= :: 
+morse_encode [Encoding] env= :: letterSeparator:string=" ", wordSeparator:string=" / ", onUnknown:select(error|skip|keep)="skip"
+msgpack_decode [Data Formats] env= :: 
+msgpack_encode [Data Formats] env= :: 
+multi_replace [String Ops] env= :: rules:keyvalue=[], regex:boolean=false, ignoreCase:boolean=false, applyOnce:boolean=false
+nanoid [Generators] env= :: size:number=21, alphabet:string="A-Za-z0-9_-", count:number=1, seed:number=0
+ngram_frequency [Analysis] env= :: n:number=2, unit:select(words|characters)="words", top:number=20, ignoreCase:boolean=true, format:select(table|json)="table"
+normalize [String Ops] env= :: form:select(NFC|NFD|NFKC|NFKD)="NFC"
+normalize_line_endings [Formatting] env= :: mode:select(lf|crlf|cr|detect)="lf", finalNewline:select(keep|add|remove)="keep"
+number_base_convert [Numbers] env= :: from:number=10, to:number=16, uppercase:boolean=false, prefix:boolean=false, groupDigits:number=0, perLine:boolean=true
+number_format [Numbers] env= :: style:select(decimal|thousands|scientific|engineering|percent|currency|compact|fixed)="thousands", decimals:number=2, locale:string="en-US", currency:string="USD", separator:string="", perLine:boolean=true
+number_lines [Formatting] env= :: start:number=1, separator:string=": "
+number_sequence [Generators] env= :: start:number=1, end:number=10, step:number=1, pad:number=0, prefix:string="", suffix:string="", separator:string="\\n", radix:number=10
+number_words [Numbers] env= :: direction:select(to-words|to-number)="to-words", style:select(cardinal|ordinal|year|currency)="cardinal", locale:select(en-US|en-GB)="en-US", perLine:boolean=true
+octal_decode [Decoding] env= :: output:select(text|bytes)="text"
+octal_encode [Encoding] env= :: separator:string=" "
+ordinalize [Numbers] env= :: style:select(suffix|words)="suffix", perLine:boolean=true
+pad [String Ops] env= :: length:number=10, char:string=" ", side:select(end|start|both)="end"
+password_generator [Generators] env= :: mode:select(random|pronounceable|passphrase)="random", length:number=20, words:number=4, separator:string="-", uppercase:boolean=true, digits:boolean=true, symbols:boolean=true, excludeAmbiguous:boolean=true, count:number=1, seed:number=0
+pbkdf2 [Hashing] env= :: algorithm:select(SHA-1|SHA-256|SHA-512)="SHA-256", salt:string="", iterations:number=100000, keyLength:number=32, output:select(hex|base64)="hex"
+pluralize_words [String Ops] env= :: mode:select(plural|singular)="plural", scope:select(whole|last-word|each-line)="whole", count:number=0
+protobuf_decode [Data Formats] env= :: 
+punycode_decode [Decoding] env= :: mode:select(domain|label|raw)="domain"
+punycode_encode [Encoding] env= :: mode:select(domain|label|raw)="domain"
+qr_code [Generators] env= :: errorCorrection:select(L|M|Q|H)="M", moduleSize:number=4, margin:number=4, dark:color="#000000", light:color="#ffffff", output:select(svg|ascii|json)="svg"
+query_params_normalize [Web & Dev] env= :: sort:boolean=true, dedupe:select(none|first|last)="last", dropEmpty:boolean=false, drop:string="", decode:boolean=false, lowercaseHost:boolean=true
+query_string_to_json [Web & Dev] env= :: nested:select(auto|bracket|dot|none)="auto", typed:boolean=false, indent:number=2
+quoted_printable_decode [Decoding] env= :: output:select(text|bytes)="text"
+quoted_printable_encode [Encoding] env= :: lineLength:number=76
+rail_fence_decode [Ciphers] env= :: rails:number=3, offset:number=0
+rail_fence_encode [Ciphers] env= :: rails:number=3, offset:number=0
+random_bytes [Generators] env= :: count:number=16, output:select(hex|base64|base64url|decimal|c-array|bytes)="hex", seed:number=0
+random_case [Formatting] env= :: probability:range=0.5, seed:number=0
+random_string [Generators] env= :: length:number=16, charset:select(alphanumeric|alpha|lowercase|uppercase|numeric|hex|symbols|all|custom)="alphanumeric", custom:string="", count:number=1, seed:number=0
+readability [Analysis] env= :: format:select(json|text)="json"
+reading_time [Analysis] env= :: wordsPerMinute:number=200, format:select(text|json)="text"
+regex_explain [Analysis] env= :: pattern:regex="", flags:string="", format:select(tree|json)="tree"
+regex_extract [String Ops] env= :: pattern:regex="", flags:string="g"
+remove_blank_lines [String Ops] env= :: 
+remove_invisible [Analysis] env= :: mode:select(remove|reveal|list)="remove"
+repeat [String Ops] env= :: count:number=2, separator:string=""
+replace [String Ops] env= :: pattern:string="", replacement:string="", regex:boolean=true, flags:string="g"
+reverse [String Ops] env= :: 
+reverse_words [String Ops] env= :: separator:string=" ", perLine:boolean=true
+roman_numerals [Numbers] env= :: direction:select(to-roman|to-arabic)="to-roman", perLine:boolean=true
+rot13 [Encoding] env= :: 
+sed [String Ops] env= :: script:code="s/foo/bar/g", perLine:boolean=true
+semver [Web & Dev] env= :: mode:select(parse|validate|compare|sort|satisfies|increment)="parse", other:string="", range:string="", release:select(major|minor|patch|premajor|preminor|prepatch|prerelease)="patch", direction:select(asc|desc)="asc"
+set_operations [Lines] env= :: other:file="", operation:select(union|intersection|difference|symmetric-difference)="intersection", ignoreCase:boolean=false, trim:boolean=true, sort:boolean=false
+sha3 [Hashing] env=wasm :: algorithm:select(SHA3-224|SHA3-256|SHA3-384|SHA3-512|Keccak-224|Keccak-256|Keccak-384|Keccak-512)="SHA3-256", output:select(hex|base64|base64url)="hex"
+shell_quote [String Ops] env= :: flavor:select(posix|powershell|cmd)="posix", mode:select(quote|escape)="quote"
+shuffle [Generators] env= :: unit:select(lines|words|characters)="lines", seed:number=0
+slice [String Ops] env= :: start:number=0, end:number=0
+slug [Formatting] env= :: 
+smart_quotes [Formatting] env= :: direction:select(to-smart|to-straight)="to-straight", quotes:boolean=true, dashes:boolean=true, ellipsis:boolean=true, locale:select(en|de|fr|pl)="en"
+sort_words_in_line [Lines] env= :: direction:select(asc|desc)="asc", separator:string=" ", unique:boolean=false, ignoreCase:boolean=true
+split_join [String Ops] env= :: splitBy:string=",", joinWith:string="\n"
+sql_escape [String Ops] env= :: flavor:select(ansi|mysql|postgres|mssql)="ansi", wrap:boolean=true
+sql_format [Formatting] env= :: dialect:select(sql|mysql|postgresql|sqlite|mariadb|bigquery|spark|transactsql)="sql", keywordCase:select(upper|lower|preserve)="upper", indent:number=2, linesBetweenQueries:number=1
+sql_minify [Formatting] env= :: removeComments:boolean=true, semicolonNewline:boolean=false
+string_distance [Analysis] env= :: other:string="", algorithm:select(levenshtein|damerau-levenshtein|hamming|jaro|jaro-winkler|dice|jaccard|lcs|cosine)="levenshtein", ignoreCase:boolean=false, normalized:boolean=false
+strip_ansi [String Ops] env= :: mode:select(strip|keep-text)="strip"
+strip_chars [String Ops] env= :: type:select(punctuation|digits|letters|whitespace|non-alphanumeric|non-ascii|non-printable|emoji|custom)="punctuation", custom:string="", invert:boolean=false, replaceWith:string=""
+strip_html_tags [String Ops] env= :: decodeEntities:boolean=true, preserveBreaks:boolean=true, allowedTags:string=""
+substring_around [String Ops] env= :: delimiter:string="", mode:select(before|after|between)="before", endDelimiter:string="", occurrence:select(first|last)="first", perLine:boolean=false, ifMissing:select(empty|whole|error)="whole"
+swap_case [Formatting] env= :: 
+tabs_spaces [Formatting] env= :: direction:select(tabs-to-spaces|spaces-to-tabs)="tabs-to-spaces", tabWidth:number=4, leadingOnly:boolean=false
+tail [Lines] env= :: count:number=10, unit:select(lines|characters|words)="lines"
+template_expand [Generators] env= :: template:textarea="{i}, {uuid}", count:number=10, start:number=1, separator:string="\n", seed:number=0
+text_diff [Analysis] env= :: other:file="", granularity:select(lines|words|characters)="lines", format:select(unified|inline|side-by-side|json)="unified", context:number=3, ignoreCase:boolean=false, ignoreWhitespace:boolean=false
+text_stats [Analysis] env= :: format:select(json|text)="json"
+timestamp_convert [Date & Time] env= :: to:select(all|iso|unix|unix-ms|rfc2822|http|sql|local|relative)="all", timezone:string="UTC", perLine:boolean=true
+timestamp_now [Generators] env= :: format:select(iso|unix|unix-ms|rfc2822|http|sql|local|all)="iso", timezone:string="UTC", offsetSeconds:number=0
+toml_to_json [Data Formats] env= :: indent:number=2
+tr [String Ops] env= :: from:string="", to:string="", delete:boolean=false, squeeze:boolean=false, ranges:boolean=true
+trim [String Ops] env= :: 
+trim_lines [Lines] env= :: side:select(both|start|end)="both", characters:string=""
+truncate [String Ops] env= :: length:number=20, ellipsis:string="…"
+ulid [Generators] env= :: count:number=1, timestamp:number=0, seed:number=0
+unescape_html [Decoding] env= :: 
+unicode_escape_decode [Decoding] env= :: 
+unicode_escape_encode [Encoding] env= :: style:select(js-u|js-braces|css|python|java|html-hex|html-dec)="js-u", scope:select(non-ascii|all)="non-ascii"
+unicode_inspect [Analysis] env= :: limit:number=200, format:select(table|json)="table"
+unicode_style [Formatting] env= :: style:select(fullwidth|small-caps|bubble|bubble-filled|square|upside-down|bold|italic|bold-italic|monospace|script|fraktur|double-struck|strikethrough|underline|superscript|subscript|zalgo)="fullwidth", intensity:range=3, seed:number=0
+uniq_count [Lines] env= :: sort:select(count-desc|count-asc|alpha|original)="count-desc", separator:string="\t", ignoreCase:boolean=false, trim:boolean=false, onlyDuplicates:boolean=false, format:select(count-line|line-count|json)="count-line"
+unwrap [Formatting] env= :: separator:string=" ", preserveLists:boolean=true, preserveIndented:boolean=true
+url_build [Web & Dev] env= :: encode:boolean=true
+url_decode [URL & JSON] env= :: 
+url_encode [URL & JSON] env= :: 
+url_parse [Web & Dev] env= :: base:string="", decodeParams:boolean=true
+user_agent_parse [Web & Dev] env= :: 
+uuid [Generators] env= :: version:select(v4|v7|v1|nil|max)="v4", count:number=1, uppercase:boolean=false, hyphens:boolean=true, braces:boolean=false, seed:number=0
+validate [Analysis] env= :: type:select(email|url|uuid|ipv4|ipv6|semver|credit-card|isbn|mac|hex-color|json|base64|date|iso8601|domain|port|jwt|slug|hostname)="email", perLine:boolean=false
+vigenere_decode [Ciphers] env= :: key:string="KEY", preserveCase:boolean=true, skipNonLetters:boolean=true
+vigenere_encode [Ciphers] env= :: key:string="KEY", preserveCase:boolean=true, skipNonLetters:boolean=true
+word_frequency [Analysis] env= :: top:number=20, ignoreCase:boolean=true, stopWords:boolean=false, minLength:number=1, format:select(table|json|csv)="table", stripPunctuation:boolean=true
+word_wrap [Formatting] env= :: width:number=80, breakLongWords:boolean=false, indent:string="", preserveParagraphs:boolean=true, trailingSpaces:boolean=false
+xml_escape [Encoding] env= :: quotes:boolean=true, scope:select(minimal|non-ascii)="minimal"
+xml_minify [Formatting] env= :: removeComments:boolean=true
+xml_pretty [Formatting] env= :: indent:number=2, collapseEmpty:boolean=true
+xml_to_json [Data Formats] env=dom :: attributePrefix:string="@", textKey:string="#text", compact:boolean=true, indent:number=2, output:select(json|string)="json"
+xml_unescape [Decoding] env= :: 
+xor_cipher [Ciphers] env= :: key:string="", keyFormat:select(text|hex|base64|decimal)="text", output:select(text|hex|base64|bytes)="hex"
+yaml_to_json [Data Formats] env= :: indent:number=2, allDocuments:boolean=false
+zip_extract [Compression] env= :: entry:string="", output:select(text|bytes)="text"
+zip_list [Compression] env= :: 
+246

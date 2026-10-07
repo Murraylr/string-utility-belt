@@ -1,0 +1,33 @@
+import type { Recipe } from '/home/user/string-utility-belt/src/recipes/types'
+import { each, laneStep, step } from '/home/user/string-utility-belt/src/recipes/define'
+
+const recipe: Recipe = {
+  slug: 'decode-kinesis-records',
+  name: 'Decode every record in a Kinesis Lambda event',
+  summary:
+    'Paste a Lambda event from a Kinesis stream, a Firehose transformation or a Pub/Sub push and read every record\'s Base64 data as JSON, in delivery order, instead of decoding the values one by one.',
+  category: 'Web & APIs',
+  primaryQuery: 'decode kinesis records in lambda event',
+  published: '2026-10-08',
+  related: ['decode-cloudwatch-logs-data', 'decode-kubernetes-secret'],
+  steps: [
+    step('find-data', 'regex_extract', { pattern: '(?<="data":\\s*")[A-Za-z0-9+/=]+', flags: 'gi' },
+      'Pulls out the value of every field named data, in any letter case and at any depth: kinesis.data in each Kinesis record, data in each Firehose record, message.data in a Pub/Sub push. Each Base64 string lands on a line of its own, in record order.',
+      { label: 'find every data value' }),
+    each('decode', { mode: 'lines' }, [laneStep('b64', 'base64_decode')],
+      'Decodes each record on its own line. Every record is a separate Base64 string with its own padding, so decoding them as one block fails or runs the payloads together; one at a time, each comes back as the text its producer wrote.',
+      { label: 'decode each record' }),
+    step('to-array', 'jsonl_to_json', { indent: 2 },
+      'Collects the decoded payloads, one JSON document per line, into a single indented array, so the fields of every record read top to bottom in the order the stream delivered them.',
+      { label: 'one JSON array' }),
+  ],
+  samples: [
+    { id: 'kinesis-stream', title: 'Kinesis stream event', input: "{\n  \"Records\": [\n    {\n      \"kinesis\": {\n        \"kinesisSchemaVersion\": \"1.0\",\n        \"partitionKey\": \"order-48213\",\n        \"sequenceNumber\": \"49656843311458374402180126384503215930491052114577571842\",\n        \"data\": \"eyJ0eXBlIjoib3JkZXIuY3JlYXRlZCIsIm9yZGVyX2lkIjo0ODIxMywidG90YWwiOjQ5OTksImN1cnJlbmN5IjoidXNkIn0=\",\n        \"approximateArrivalTimestamp\": 1790848800.123\n      },\n      \"eventSource\": \"aws:kinesis\",\n      \"eventVersion\": \"1.0\",\n      \"eventID\": \"shardId-000000000000:49656843311458374402180126384503215930491052114577571842\",\n      \"eventName\": \"aws:kinesis:record\",\n      \"invokeIdentityArn\": \"arn:aws:iam::111122223333:role/orders-consumer\",\n      \"awsRegion\": \"us-east-1\",\n      \"eventSourceARN\": \"arn:aws:kinesis:us-east-1:111122223333:stream/orders\"\n    },\n    {\n      \"kinesis\": {\n        \"kinesisSchemaVersion\": \"1.0\",\n        \"partitionKey\": \"order-48214\",\n        \"sequenceNumber\": \"49656843311458374402180126384504424856310666743752278018\",\n        \"data\": \"eyJ0eXBlIjoib3JkZXIucGFpZCIsIm9yZGVyX2lkIjo0ODIxNCwidG90YWwiOjEyNTAsImN1cnJlbmN5IjoidXNkIiwicGFpZF92aWEiOiJjYXJkIn0=\",\n        \"approximateArrivalTimestamp\": 1790848801.456\n      },\n      \"eventSource\": \"aws:kinesis\",\n      \"eventVersion\": \"1.0\",\n      \"eventID\": \"shardId-000000000000:49656843311458374402180126384504424856310666743752278018\",\n      \"eventName\": \"aws:kinesis:record\",\n      \"invokeIdentityArn\": \"arn:aws:iam::111122223333:role/orders-consumer\",\n      \"awsRegion\": \"us-east-1\",\n      \"eventSourceARN\": \"arn:aws:kinesis:us-east-1:111122223333:stream/orders\"\n    }\n  ]\n}\n", output: "[\n  {\n    \"type\": \"order.created\",\n    \"order_id\": 48213,\n    \"total\": 4999,\n    \"currency\": \"usd\"\n  },\n  {\n    \"type\": \"order.paid\",\n    \"order_id\": 48214,\n    \"total\": 1250,\n    \"currency\": \"usd\",\n    \"paid_via\": \"card\"\n  }\n]",
+    },
+    { id: 'firehose-transform', title: 'Firehose transformation event', input: "{\n  \"invocationId\": \"6f1c2b0a-8d3e-4b7a-9c5d-2e4f6a8b0c1d\",\n  \"deliveryStreamArn\": \"arn:aws:firehose:us-east-1:111122223333:deliverystream/api-access-logs\",\n  \"region\": \"us-east-1\",\n  \"records\": [\n    {\n      \"recordId\": \"49656843311458374402180126384505633782130281372926984194000000000000\",\n      \"approximateArrivalTimestamp\": 1790935200412,\n      \"data\": \"eyJ0cyI6IjIwMjYtMTAtMDJUMTA6MDA6MDAuMjEyWiIsIm1ldGhvZCI6IkdFVCIsInBhdGgiOiIvdjEvb3JkZXJzIiwic3RhdHVzIjoyMDAsIm1zIjoxOCwiY2xpZW50X2lwIjoiMjAzLjAuMTEzLjI0In0=\"\n    },\n    {\n      \"recordId\": \"49656843311458374402180126384506842707949895970101690370000000000000\",\n      \"approximateArrivalTimestamp\": 1790935200987,\n      \"data\": \"eyJ0cyI6IjIwMjYtMTAtMDJUMTA6MDA6MDAuODcxWiIsIm1ldGhvZCI6IlBPU1QiLCJwYXRoIjoiL3YxL29yZGVycyIsInN0YXR1cyI6NDIyLCJtcyI6NDEsImNsaWVudF9pcCI6IjE5OC41MS4xMDAuNyIsImVycm9yIjoiY3VycmVuY3kgXCJ1c2RkXCIgaXMgbm90IHN1cHBvcnRlZCJ9\"\n    },\n    {\n      \"recordId\": \"49656843311458374402180126384508051633769510599276396546000000000000\",\n      \"approximateArrivalTimestamp\": 1790935201544,\n      \"data\": \"eyJ0cyI6IjIwMjYtMTAtMDJUMTA6MDA6MDEuNDA5WiIsIm1ldGhvZCI6IkdFVCIsInBhdGgiOiIvdjEvb3JkZXJzLzQ4MjE0Iiwic3RhdHVzIjo0MDQsIm1zIjo2LCJjbGllbnRfaXAiOiIxOTIuMC4yLjU1In0=\"\n    }\n  ]\n}\n", output: "[\n  {\n    \"ts\": \"2026-10-02T10:00:00.212Z\",\n    \"method\": \"GET\",\n    \"path\": \"/v1/orders\",\n    \"status\": 200,\n    \"ms\": 18,\n    \"client_ip\": \"203.0.113.24\"\n  },\n  {\n    \"ts\": \"2026-10-02T10:00:00.871Z\",\n    \"method\": \"POST\",\n    \"path\": \"/v1/orders\",\n    \"status\": 422,\n    \"ms\": 41,\n    \"client_ip\": \"198.51.100.7\",\n    \"error\": \"currency \\\"usdd\\\" is not supported\"\n  },\n  {\n    \"ts\": \"2026-10-02T10:00:01.409Z\",\n    \"method\": \"GET\",\n    \"path\": \"/v1/orders/48214\",\n    \"status\": 404,\n    \"ms\": 6,\n    \"client_ip\": \"192.0.2.55\"\n  }\n]",
+    },
+    { id: 'pubsub-push', title: 'Pub/Sub push request body', input: "{\n  \"message\": {\n    \"attributes\": {\n      \"eventType\": \"invoice.paid\"\n    },\n    \"data\": \"eyJpbnZvaWNlIjoiSU5WLTIwMjYtMDA0MiIsImN1c3RvbWVyIjoiY3VzXzEwNDIiLCJhbW91bnRfZHVlIjowLCJzdGF0dXMiOiJwYWlkIiwibm90ZSI6IlBhaWQgaW4gZnVsbCDigJQgdGhhbmsgeW91IOKckyJ9\",\n    \"messageId\": \"13687025468392\",\n    \"publishTime\": \"2026-10-03T08:15:00.123Z\"\n  },\n  \"subscription\": \"projects/example-project/subscriptions/billing-events-push\"\n}\n", output: "[\n  {\n    \"invoice\": \"INV-2026-0042\",\n    \"customer\": \"cus_1042\",\n    \"amount_due\": 0,\n    \"status\": \"paid\",\n    \"note\": \"Paid in full — thank you ✓\"\n  }\n]",
+    },
+  ],
+}
+export default recipe
