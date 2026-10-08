@@ -1,4 +1,6 @@
 import React from 'react'
+import { SquareTerminal } from 'lucide-react'
+import type { IntegrationId } from './links'
 
 type IconProps = { size?: number; className?: string }
 
@@ -40,4 +42,17 @@ export function ChromeIcon({ size = 16, className }: IconProps) {
       <line x1="10.88" x2="15.46" y1="21.94" y2="14" />
     </svg>
   )
+}
+
+/** A terminal, for the command-line tool (Lucide's `square-terminal`). */
+export function TerminalIcon({ size = 16, className }: IconProps) {
+  return <SquareTerminal size={size} className={className} aria-hidden="true" focusable="false" />
+}
+
+/** Each integration's mark, wherever the site names one (header, promos). */
+export const INTEGRATION_ICONS: Record<IntegrationId, (props: IconProps) => React.ReactElement> = {
+  chrome: ChromeIcon,
+  vscode: VsCodeIcon,
+  mcp: McpIcon,
+  cli: TerminalIcon,
 }

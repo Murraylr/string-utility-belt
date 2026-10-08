@@ -14,6 +14,8 @@
  *   vite-node scripts/build-seo.ts [--outDir <dir>] [--no-og]
  */
 import path from 'node:path'
+import { checkBuiltPages } from './csp'
+import { siteHeaders } from './headers'
 import { buildSeo } from './seo/build'
 
 /**
@@ -47,6 +49,11 @@ async function main() {
   console.log(`[build-seo] ${result.ogImages} OG images rendered in ${result.ogMs}ms`)
   console.log(`[build-seo] sitemap.xml: ${result.sitemapUrls} urls; rss.xml: ${result.rssItems} items`)
   console.log(`[build-seo] outDir: ${outDir}`)
+  // last, over every page including the pre-rendered ones: a page whose inline scripts the
+  // CSP blocks must never deploy (it would render, but without its theme or analytics)
+  const problems = checkBuiltPages(outDir, siteHeaders(outDir)['Content-Security-Policy'] ?? '')
+  if (problems.length) throw new Error(`the CSP in _headers blocks scripts on built pages:\n  ${problems.join('\n  ')}`)
+  console.log('[build-seo] CSP: every built page runs only allowed scripts')
 }
 
 // only when executed as the script, not when a test imports `resolveOutDir`

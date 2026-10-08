@@ -39,6 +39,7 @@ export const en = {
     about: 'About',
     privacy: 'Privacy policy',
     contact: 'Contact',
+    advertise: 'Advertise',
   },
   blog: {
     title: 'Blog',

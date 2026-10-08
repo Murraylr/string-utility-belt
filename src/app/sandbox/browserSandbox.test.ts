@@ -9,7 +9,7 @@
 import vm from 'node:vm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createBrowserSandbox, installBrowserSandbox } from './browserSandbox'
-import { MSG, SANDBOX_CSP } from './frame'
+import { JOB_ELEMENT_ID, MSG, SANDBOX_BOOTSTRAP_SCRIPT, SANDBOX_CSP } from './frame'
 import { getSandbox, setSandbox, type SandboxRequest } from '@/core/sandbox'
 import util from '@/utilities/custom_js'
 
@@ -17,7 +17,8 @@ const frames = () => document.querySelectorAll('iframe')
 
 /** Read the job the host baked into a frame's srcdoc. */
 function jobOf(frame: HTMLIFrameElement) {
-  return JSON.parse(frame.srcdoc.match(/var SUBELT_JOB=(.*);\n\(function/s)![1])
+  const doc = new DOMParser().parseFromString(frame.srcdoc, 'text/html')
+  return JSON.parse(doc.getElementById(JOB_ELEMENT_ID)!.textContent!)
 }
 
 function start(req: Partial<SandboxRequest> = {}, { graceMs = 500, startupMs = 5000 } = {}) {
@@ -313,8 +314,9 @@ describe('end to end, host + bootstrap + worker source', () => {
     const promise = createBrowserSandbox().run({ code: 'return input', input: '', timeoutMs: 1000, ...req })
     const frame = frames()[frames().length - 1]
     const parsed = new DOMParser().parseFromString(frame.srcdoc, 'text/html')
-    const scripts = parsed.querySelectorAll('script')
+    const scripts = parsed.querySelectorAll('script:not([type])')
     expect(scripts).toHaveLength(1)
+    expect(scripts[0].textContent).toBe(SANDBOX_BOOTSTRAP_SCRIPT)
     let n = 0
     const URLStub = {
       createObjectURL: (b: { src: string }) => { const u = `blob:null/${++n}`; VmWorker.sources.set(u, b.src); return u },
@@ -327,7 +329,7 @@ describe('end to end, host + bootstrap + worker source', () => {
         setTimeout(() => window.dispatchEvent(new MessageEvent('message', { data: cloned, source: frame.contentWindow, origin: 'null' })))
       },
     }
-    new Function('parent', 'Worker', 'URL', 'Blob', scripts[0].textContent!)(parentStub, VmWorker, URLStub, BlobStub)
+    new Function('document', 'parent', 'Worker', 'URL', 'Blob', scripts[0].textContent!)(parsed, parentStub, VmWorker, URLStub, BlobStub)
     return { promise, URLStub }
   }
 

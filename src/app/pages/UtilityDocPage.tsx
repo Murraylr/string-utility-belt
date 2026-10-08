@@ -7,7 +7,6 @@ import { stepId } from '@/core/steps'
 import { loadState, saveState } from '@/lib/persist'
 import { isPlainLeftClick, navigateToPath } from '@/lib/router'
 import ParamsEditor from '@/components/ParamsEditor'
-import AdSlot from '@/app/ads/AdSlot'
 import { track, trackUtilityAdd } from '@/app/analytics/analytics'
 import type { ParamSpec, Params, UtilityEnv, UtilityExample } from '@/types/utility'
 import UtilityGuide from './UtilityGuide'
@@ -19,6 +18,7 @@ import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { RecipeCards } from './recipes/RecipeArticle'
 import { recipesUsing } from './recipes/recipeHelpers'
 import { SITE_NAME, displayName, pageTitle } from './seo'
+import PageSponsor from '@/app/sponsors/PageSponsor'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
   dom: 'Needs the DOM (DOMParser/document) — browser main thread only.',
@@ -200,6 +200,8 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
             {meta.tags.map(t => <span key={`t:${t}`} className="chip" title="tag">{t}</span>)}
           </div>
         )}
+        {/* in the header, never in the playground below it */}
+        <PageSponsor page={{ kind: 'utility', id }} />
       </header>
 
       {/* first after the header: most visitors arrive from a search for the tool itself */}
@@ -248,9 +250,6 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
       </section>
 
       <UtilityGuide name={meta.name} state={guide} onOpen={() => track('guide_open', { utility_id: id })} />
-
-      {/* between content sections, clear of the playground's controls */}
-      <AdSlot placement="doc-page" />
 
       {paramEntries.length > 0 && (
         <section className="card p-6 grid gap-3">

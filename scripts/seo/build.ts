@@ -19,7 +19,7 @@ import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './chan
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
   renderChangelogContent, renderHomeContent, renderDocsContent, renderSitePageContent, renderNotFoundContent,
-  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent,
+  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent, type PageSponsorSpec,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { newest, readSourceDates, type SourceDates } from './lastmod'
@@ -29,6 +29,8 @@ import { featuredRecipes, recipesUsing, relatedRecipes } from '../../src/app/pag
 import { traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace } from '../../src/recipes/trace'
 import type { Recipe, RecipeMeta } from '../../src/recipes/types'
 import { metaOfRecipe } from '../gen-recipes'
+import { sponsorFor, utcDay, type SponsorPage, type Sponsorship } from '../../src/app/sponsors/sponsors'
+import { SPONSORSHIPS } from '../../src/app/sponsors/sponsorships'
 import { parseSitePage } from '../../src/app/pages/sitePages'
 import {
   SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
@@ -49,7 +51,7 @@ export interface BuildSeoOptions {
   /** Render the Open Graph PNGs (default true; ~0.4s each). */
   og?: boolean
   ogConcurrency?: number
-  /** Build time: the copyright year, and the lastmod of a page whose sources have no git history (default: now). */
+  /** Build time: the copyright year, the day's live sponsorships, and the lastmod of a page whose sources have no git history (default: now). */
   now?: Date
   log?: (message: string) => void
   /** Utilities to publish (default: the generated manifest + examples). */
@@ -61,6 +63,8 @@ export interface BuildSeoOptions {
   recipes?: Array<{ recipe: Recipe; guide: string }>
   /** When each source file under `root` last changed (default: its git history, `readSourceDates`). */
   sourceDates?: SourceDates
+  /** Booked sponsorships (default: `SPONSORSHIPS`); pages show those live on `now`'s UTC day. */
+  sponsorships?: readonly Sponsorship[]
 }
 
 export interface BuildSeoResult {
@@ -181,7 +185,7 @@ function breadcrumbLd(items: Array<{ name: string; url: string }>) {
   }
 }
 
-const SITE_PAGE_TYPES: Record<SitePageSlug, string> = { about: 'AboutPage', privacy: 'WebPage', contact: 'ContactPage', integrations: 'WebPage' }
+const SITE_PAGE_TYPES: Record<SitePageSlug, string> = { about: 'AboutPage', privacy: 'WebPage', contact: 'ContactPage', integrations: 'WebPage', advertise: 'WebPage' }
 
 // ---------------------------------------------------------------------------
 // Page builders — each starts from the built `index.html` template (with any
@@ -223,7 +227,7 @@ function readGuide(root: string, id: string): string | undefined {
   return existsSync(file) ? readFileSync(file, 'utf8') : undefined
 }
 
-function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[]): PageSpec {
+function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[], sponsor?: PageSponsorSpec): PageSpec {
   // the guide's search-facing title/description, as `UtilityDocPage` also sets them
   const name = displayName(meta.name)
   const title = pageTitle(guide?.title ?? name)
@@ -238,7 +242,7 @@ function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | 
       webApplicationLd(meta, canonical, description),
       breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: `${SITE}/utilities/` }, { name, url: canonical }]),
     ],
-    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes }),
+    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes, sponsor }),
   }
 }
 
@@ -365,6 +369,12 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   const now = options.now ?? new Date()
   const year = now.getUTCFullYear()
   const t0 = Date.now()
+  const sponsorships = options.sponsorships ?? SPONSORSHIPS
+  const sponsorDay = utcDay(now)
+  const sponsorOf = (page: SponsorPage): PageSponsorSpec | undefined => {
+    const sponsorship = sponsorFor(page, sponsorDay, sponsorships)
+    return sponsorship && { sponsorship, page }
+  }
 
   const indexHtmlPath = path.join(outDir, 'index.html')
   if (!existsSync(indexHtmlPath)) {
@@ -398,7 +408,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const guide = source === undefined ? undefined : parseGuide(source)
     if (guide) guides++
     page(path.join('util', meta.id, 'index.html'),
-      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas)))
+      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas),
+        sponsorOf({ kind: 'utility', id: meta.id })))
   }
   if (guides < manifest.length) log(`[build-seo] warning: ${manifest.length - guides} of ${manifest.length} utilities have no guide.md`)
 
@@ -456,6 +467,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
         trace,
         utility: id => utilityById.get(id),
         related: relatedRecipes(recipe, recipeMetas),
+        sponsor: sponsorOf({ kind: 'recipe', slug: recipe.slug }),
       }),
     })
   }
@@ -483,7 +495,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
         blogPostingLd(post, url),
         breadcrumbLd([HOME_CRUMB, { name: 'Blog', url: blogUrl }, { name: post.title, url }]),
       ],
-      content: renderBlogPostContent({ title: post.title, date: post.date, updated: post.updated }, post.bodyHtml),
+      content: renderBlogPostContent({ title: post.title, date: post.date, updated: post.updated }, post.bodyHtml,
+        sponsorOf({ kind: 'blog', slug: post.meta.slug })),
     })
   }
 

@@ -54,6 +54,7 @@ const FOOTER_LINKS = [
   { href: '/about/', key: 'footer.about' },
   { href: '/privacy/', key: 'footer.privacy' },
   { href: '/contact/', key: 'footer.contact' },
+  { href: '/advertise/', key: 'footer.advertise' },
 ] as const
 
 /** Site links on every page: the about, privacy and contact pages ad networks and visitors look for. */
