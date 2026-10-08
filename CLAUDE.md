@@ -196,6 +196,10 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
 - Silent off `stringutilitybelt.com` (dev, E2E, CI, previews). `?analytics=off|on|debug` switches a browser.
   Automation (webdriver/headless/bot UA) is reported as `visitor_type: automated`, page views only.
+- Analysing the data: GA property `507388453`; key events `pipeline_load` and `integration_click`. Data before 2026-09-26
+  includes dev traffic (`localhost`, `127.0.0.1`, `*.workers.dev`): filter `hostname` or start there. BigQuery project
+  `string-utility-belt` (US) holds the Search Console bulk export (`searchconsole`, from 2026-10-08) and the GA4 daily
+  export (`analytics_507388453`, tables expire after 426 days — the 14 months the privacy policy promises). Neither backfills.
 
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).
