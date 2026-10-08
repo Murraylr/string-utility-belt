@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **New icons in the new brand**: the "sub" keycap on an orange tile, for the site (browser tab, home-screen and
+  installed-app icons, with a sharp 32 px favicon) and the browser extension's toolbar. At 16 px the toolbar icon is a
+  bold "s" key, so it stays legible.
+- Plainer wording when the browser extension confirms a saved pipeline.
+
 ## [1.10.0] - 2026-10-08
 
 ### Changed

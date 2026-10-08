@@ -115,7 +115,7 @@ export function handleAppRequest(request: AppRequest, now: () => number = Date.n
       if (!outcome.ok) return { ok: false, error: outcome.error }
       await setPipelines(outcome.value.list)
       const { saved, replaced } = outcome.value
-      return { ok: true, message: `${replaced ? 'Updated' : 'Saved'} "${saved.name}" — it's on the right-click menu.` }
+      return { ok: true, message: `${replaced ? 'Updated' : 'Saved'} "${saved.name}". It's on the right-click menu.` }
     }
     const { list, added, unavailable, overflow } = mergeFavorites(await getMenuUtilities(), request.utilityIds)
     if (added) await setMenuUtilities(list)

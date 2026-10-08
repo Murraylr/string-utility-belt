@@ -56,7 +56,7 @@ describe('SaveToExtensionButton', () => {
   })
 
   it('saves the pipeline under the given name and shows the extension\'s answer', async () => {
-    fake.respond(() => ({ ok: true, message: 'Saved "Encode" — it\'s on the right-click menu.' }))
+    fake.respond(() => ({ ok: true, message: 'Saved "Encode". It\'s on the right-click menu.' }))
     const user = await openDialog()
     expect(screen.getByRole('dialog', { name: 'Save to extension' })).toBeInTheDocument()
 
@@ -65,7 +65,7 @@ describe('SaveToExtensionButton', () => {
     await user.type(screen.getByLabelText('Pipeline name'), 'Encode')
     await user.click(save)
 
-    expect(await screen.findByText('Saved "Encode" — it\'s on the right-click menu.')).toBeInTheDocument()
+    expect(await screen.findByText('Saved "Encode". It\'s on the right-click menu.')).toBeInTheDocument()
     expect(lastRequest()).toEqual({ type: 'save-pipeline', name: 'Encode', steps: STEPS })
   })
 

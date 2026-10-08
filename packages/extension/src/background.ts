@@ -64,7 +64,7 @@ function setBadge(text: string, title: string): void {
 /** A failed run never touches the page: the popup gets the input and the error, the toolbar icon a badge. */
 async function reportFailure(name: string, source: string, error: unknown): Promise<void> {
   const message = `${name} failed: ${(error as Error)?.message || String(error)}`
-  setBadge('!', `String Utility Belt — ${message}`)
+  setBadge('!', `String Utility Belt: ${message}`)
   await Promise.all([setLastResult(source), setLastError(message)])
 }
 

@@ -341,7 +341,7 @@ describe('background: messages from the web app', () => {
   const save = (name: string, steps: unknown[]) => send({ type: 'save-pipeline', name, steps })
 
   it('saves a pipeline from the app, then updates it in place when saved again under the same name', async () => {
-    expect(await save('  My   pipeline ', [{ id: 's', utilityId: 'trim' }])).toEqual({ ok: true, message: 'Saved "My pipeline" — it\'s on the right-click menu.' })
+    expect(await save('  My   pipeline ', [{ id: 's', utilityId: 'trim' }])).toEqual({ ok: true, message: 'Saved "My pipeline". It\'s on the right-click menu.' })
     const [first] = ctx.local.store.pipelines as Array<{ id: string; name: string }>
     expect(first.name).toBe('My pipeline')
 
