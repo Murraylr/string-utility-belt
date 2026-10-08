@@ -6,13 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Added
-
-- **Recipes in the browser extension** — every recipe page offers "Save to extension" when the String Utility
-  Belt extension is installed, saving the recipe under its name to the right-click menu in one click. In a
-  desktop Chrome, Edge or other Chromium browser without it, the page links to the extension's Chrome Web
-  Store listing instead; other browsers and phones, which can't install it, see neither.
-
 ### Changed
 
 - Recipe pages show what runs inside a run-on-each or branch step: every nested step with its link, the
@@ -29,14 +22,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
-  (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
-  now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
 - **gzip decompress** reports short input that is not gzip (`{`, `[`, a cut-off `H4sIAAAA`) as not valid
   gzip data instead of a failed integrity check.
 - A recipe page with one numbered step says "1 step", on the page and on its share card.
 - Leaving a recipe page stops working out its "What if you skip a step?" examples, instead of running them
   on in the background while the next page waits for the engine.
+
+## [1.7.0] - 2026-10-08
+
+### Added
+
+- **Advertise page** (`/advertise/`, linked from the footer): who the site is for, the sponsorship formats on offer,
+  what sponsors may and may not do, and how to book.
+- **Sponsor block** on utility, recipe and blog pages: while a sponsorship is booked, the sponsor's logo, name, one
+  line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie. Until
+  then it introduces our own tools, matched to the page (not shown on phones): the command-line tool on Kubernetes and
+  cloud pages, the MCP server on hashing and security pages, the VS Code extension on data-format and recipe pages, and
+  elsewhere the browser extension in a desktop Chrome, Edge or other Chromium browser that doesn't have it yet,
+  otherwise the VS Code extension.
+
+### Changed
+
+- **No more Google AdSense.** The site loads no advertising scripts; any sponsorship is shown as part of the page,
+  with no scripts, pixels or cookies, and never in the tool, embeds, extensions, CLI or MCP server. Without
+  AdSense there is no consent message either: in the EEA, the UK and Switzerland Google Analytics now always runs
+  without cookies. The privacy policy, about and contact pages say so.
+
+### Security
+
+- **Content-Security-Policy** on every page: scripts only from the site itself and Google Analytics, inline scripts
+  only by hash, no plugins, no `<base>` changes, forms only to the site. The custom JavaScript sandbox runs under it
+  too. Every build checks the pre-rendered pages against it, and the end-to-end tests run under it.
+
+## [1.6.0] - 2026-10-08
+
+### Added
+
+- **Recipes in the browser extension** — every recipe page offers "Save to extension" when the String Utility
+  Belt extension is installed, saving the recipe under its name to the right-click menu in one click. In a
+  desktop Chrome, Edge or other Chromium browser without it, the page links to the extension's Chrome Web
+  Store listing instead; other browsers and phones, which can't install it, see neither.
+
+### Fixed
+
+- CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
+  (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
+  now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
 
 ## [1.5.0] - 2026-10-07
 

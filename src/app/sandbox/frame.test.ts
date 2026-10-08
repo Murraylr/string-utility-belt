@@ -6,11 +6,19 @@
 import vm from 'node:vm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  BOOTSTRAP_SOURCE, MSG, SANDBOX_CSP, SANDBOX_FLAGS, WORKER_SOURCE, buildSrcdoc, encodeInput, type SandboxJob,
+  BOOTSTRAP_SOURCE, JOB_ELEMENT_ID, MSG, SANDBOX_BOOTSTRAP_SCRIPT, SANDBOX_CSP, SANDBOX_FLAGS, WORKER_SOURCE,
+  buildSrcdoc, encodeInput, type SandboxJob,
 } from './frame'
 
 const job = (over: Partial<SandboxJob> = {}): SandboxJob =>
   ({ token: 'tok123', code: 'return input', input: { k: 's', v: 'hi' }, timeoutMs: 100, ...over })
+
+/** The srcdoc's scripts as a browser parses them: [job data block, bootstrap]. */
+function parts(html: string) {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  const scripts = [...doc.querySelectorAll('script')]
+  return { doc, scripts, data: scripts.find(s => s.type === 'application/json'), code: scripts.filter(s => !s.type) }
+}
 
 describe('frame document', () => {
   it('uses exactly the sandbox flag that keeps the origin opaque', () => {
@@ -22,50 +30,54 @@ describe('frame document', () => {
     expect(SANDBOX_CSP).toBe("default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:")
   })
 
-  it('puts the CSP meta first, before the one bootstrap script', () => {
+  it('puts the CSP meta first, then the job data block, then the one bootstrap script', () => {
     const html = buildSrcdoc(job())
     expect(html.startsWith(`<meta http-equiv="Content-Security-Policy" content="${SANDBOX_CSP}">`)).toBe(true)
-    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const { doc, scripts, data, code } = parts(html)
     const first = doc.head.firstElementChild!
     expect(first.tagName).toBe('META')
     expect(first.getAttribute('http-equiv')).toBe('Content-Security-Policy')
     expect(first.getAttribute('content')).toBe(SANDBOX_CSP)
-    const scripts = doc.querySelectorAll('script')
-    expect(scripts).toHaveLength(1)
-    expect(html.match(/<\/script/gi)).toHaveLength(1)
+    expect(scripts).toHaveLength(2)
+    expect(scripts[0]).toBe(data)
+    expect(data!.id).toBe(JOB_ELEMENT_ID)
+    expect(code).toEqual([scripts[1]])
+    expect(html.match(/<\/script/gi)).toHaveLength(2)
   })
 
   it('bakes the job into the document so it is never posted anywhere', () => {
     const html = buildSrcdoc(job({ token: 'abc', code: 'return input', input: { k: 's', v: 'secret' } }))
-    expect(html).toContain('var SUBELT_JOB=')
-    const doc = new DOMParser().parseFromString(html, 'text/html')
-    const src = doc.querySelector('script')!.textContent!
-    const embedded = JSON.parse(src.match(/var SUBELT_JOB=(.*);\n\(function/s)![1])
+    const embedded = JSON.parse(parts(html).data!.textContent!)
     expect(embedded).toEqual({ token: 'abc', code: 'return input', input: { k: 's', v: 'secret' }, timeoutMs: 100 })
+  })
+
+  it('runs the same bootstrap on every run, so the site CSP can allow it by hash', () => {
+    const a = parts(buildSrcdoc(job({ token: 'f00d', code: 'return 1', input: { k: 's', v: 'x' } })))
+    const b = parts(buildSrcdoc(job({ token: 'beef', code: 'return "</script>"', input: { k: 'j', v: '[1]' } })))
+    expect(a.code[0].textContent).toBe(SANDBOX_BOOTSTRAP_SCRIPT)
+    expect(b.code[0].textContent).toBe(SANDBOX_BOOTSTRAP_SCRIPT)
+    expect(SANDBOX_BOOTSTRAP_SCRIPT).not.toMatch(/f00d|beef/)
   })
 
   it('escapes a payload that tries to close the script element early', () => {
     const html = buildSrcdoc(job({ code: 'return "</script><script>alert(1)</script>"' }))
-    // still exactly one real <script>: the payload's tags are neutralised
-    expect(html.match(/<\/script/gi)).toHaveLength(1)
-    const doc = new DOMParser().parseFromString(html, 'text/html')
-    expect(doc.querySelectorAll('script')).toHaveLength(1)
+    // still exactly the two real <script>s: the payload's tags are neutralised
+    expect(html.match(/<\/script/gi)).toHaveLength(2)
+    expect(parts(html).scripts).toHaveLength(2)
   })
 
-  it('keeps the one script intact whatever HTML-like text the code or input carries', () => {
+  it('keeps both scripts intact whatever HTML-like text the code or input carries', () => {
     // `<!--` then `<script` puts the HTML tokenizer in its "double escaped" state, where the
     // closing `</script>` no longer ends the element: the bootstrap would never run.
     const payloads = ['<!--<script>', '<!-- <script>x</script> -->', '<!--<SCRIPT >', '<script>', '-->', '<!--']
     for (const payload of payloads) {
       const html = buildSrcdoc(job({ code: `return ${JSON.stringify(payload)}`, input: { k: 's', v: payload } }))
-      const doc = new DOMParser().parseFromString(html, 'text/html')
-      const scripts = doc.querySelectorAll('script')
-      expect(scripts, payload).toHaveLength(1)
-      const src = scripts[0].textContent!
-      expect(src.endsWith('})();'), payload).toBe(true)
-      // the script still compiles, and the job round-trips exactly
-      expect(() => new Function(src), payload).not.toThrow()
-      const embedded = JSON.parse(src.match(/var SUBELT_JOB=(.*);\n\(function/s)![1])
+      const { scripts, data, code } = parts(html)
+      expect(scripts, payload).toHaveLength(2)
+      // the bootstrap is untouched and still compiles, and the job round-trips exactly
+      expect(code[0].textContent, payload).toBe(SANDBOX_BOOTSTRAP_SCRIPT)
+      expect(() => new Function(code[0].textContent!), payload).not.toThrow()
+      const embedded = JSON.parse(data!.textContent!)
       expect(embedded.input.v).toBe(payload)
       expect(embedded.code).toBe(`return ${JSON.stringify(payload)}`)
     }
@@ -126,8 +138,11 @@ function bootFrame(over: Partial<SandboxJob> = {}) {
     revokeObjectURL: vi.fn(),
   }
   class BlobStub { constructor(public parts: string[], public opts: { type: string }) {} get type() { return this.opts.type } }
-  new Function('SUBELT_JOB', 'parent', 'URL', 'Blob', 'Worker', 'setTimeout', 'clearTimeout', 'atob', BOOTSTRAP_SOURCE)(
-    job(over), parent, URLStub, BlobStub, FakeWorker, setTimeout, clearTimeout, atob,
+  const documentStub = {
+    getElementById: (id: string) => (id === JOB_ELEMENT_ID ? { textContent: JSON.stringify(job(over)) } : null),
+  }
+  new Function('document', 'parent', 'URL', 'Blob', 'Worker', 'setTimeout', 'clearTimeout', 'atob', BOOTSTRAP_SOURCE)(
+    documentStub, parent, URLStub, BlobStub, FakeWorker, setTimeout, clearTimeout, atob,
   )
   /** The Worker's start-up ping: the moment user code begins to run. */
   const alive = (w = FakeWorker.instances[0]) => w.onmessage!({ data: { alive: true } })
@@ -140,6 +155,15 @@ function bootFrame(over: Partial<SandboxJob> = {}) {
 describe('frame bootstrap', () => {
   beforeEach(() => { FakeWorker.instances = []; FakeWorker.failNext = null; vi.useFakeTimers() })
   afterEach(() => vi.useRealTimers())
+
+  it('stays silent, starting nothing, when the job cannot be read', () => {
+    const parent = { postMessage: vi.fn() }
+    for (const el of [null, { textContent: 'not json' }]) {
+      new Function('document', 'parent', 'Worker', BOOTSTRAP_SOURCE)({ getElementById: () => el }, parent, FakeWorker)
+    }
+    expect(parent.postMessage).not.toHaveBeenCalled()
+    expect(FakeWorker.instances).toHaveLength(0)
+  })
 
   it('starts the Worker from a Blob of the worker source and hands it decoded code and input — never the token', () => {
     const { blobs } = bootFrame({ input: { k: 'j', v: '{"a":1}' } })

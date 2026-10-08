@@ -8,8 +8,6 @@
   <meta name="description" content="Free string and text tools that run in your browser: encode, decode, hash, format and convert — Base64, URL, JSON, SHA-256 and more." />
   <meta name="robots" content="max-image-preview:large" />
   <meta name="theme-color" content="#0f172a" />
-  <!-- AdSense site verification (same publisher id as public/ads.txt and src/app/ads/config.ts) -->
-  <meta name="google-adsense-account" content="ca-pub-2227752612794222" />
   <!-- Search Console ownership of https://stringutilitybelt.com/ (linked to Google Analytics); keep it -->
   <meta name="google-site-verification" content="Qk-RujAWPTyGcrpnsvXuecqvd56489XSYWgKJ1YGA9Y" />
   <link rel="manifest" href="/manifest.webmanifest">
@@ -22,6 +20,7 @@
     rel="stylesheet">
   <script>
     // apply the saved theme before first paint so dark mode never flashes light
+    // (its SHA-256 is in the CSP, public/_headers: `npm test` names the new hash after an edit)
     (function () {
       try {
         var pref = JSON.parse(localStorage.getItem('sub:pref:theme') || '"system"');
@@ -32,10 +31,11 @@
   </script>
   <script>
     // Google tag (gtag.js). Consent Mode v2: in the EEA, the UK and Switzerland nothing is
-    // stored until the visitor answers the consent message (Google's CMP, configured in
-    // AdSense → Privacy & messaging), which updates these defaults. Google Analytics is
-    // configured by the app (src/app/analytics/analytics.ts), never here: a plain
-    // gtag('config') would report location.href, and share links carry input in the hash.
+    // stored (the site shows no consent message, so these stay denied and GA only gets
+    // cookieless pings; the ad_* signals also govern GA's Google signals). Google Analytics is configured by the app
+    // (src/app/analytics/analytics.ts), never here: a plain gtag('config') would report
+    // location.href, and share links carry input in the hash.
+    // Its SHA-256 is in the CSP (public/_headers): `npm test` names the new hash after an edit.
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('consent', 'default', {
@@ -44,24 +44,11 @@
       ad_personalization: 'denied',
       analytics_storage: 'denied',
       region: ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
-        'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH'],
-      wait_for_update: 500
+        'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH']
     });
     gtag('js', new Date());
-
-    // No ads inside a frame: the #/embed widget runs on other people's sites, and every
-    // other page refuses to render framed. Must run before adsbygoogle.js loads.
-    (function () {
-      var framed;
-      try { framed = window.self !== window.top; } catch (e) { framed = true; }
-      if (framed || /^#\/*embed(?:[\/?]|$)/.test(location.hash)) {
-        (window.adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 1;
-      }
-    })();
   </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-EFVMEMB86E"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2227752612794222"
-    crossorigin="anonymous"></script>
 </head>
 
 <body class="min-h-screen">

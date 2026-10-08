@@ -1,7 +1,7 @@
 /**
  * The documents that run custom code, as strings: the iframe's srcdoc (a CSP, the
- * per-run job, and a bootstrap script) and the Worker source the bootstrap starts
- * from a Blob URL.
+ * per-run job as a JSON data block, and a bootstrap script) and the Worker source the
+ * bootstrap starts from a Blob URL.
  *
  * Why each layer exists:
  * - `sandbox="allow-scripts"` WITHOUT `allow-same-origin` gives the frame an opaque
@@ -15,6 +15,12 @@
  *   document, and the frame can still `terminate()` it when the time budget runs out.
  * - The frame is created per run and removed afterwards, so no state survives
  *   between runs.
+ * - The site's own CSP (public/_headers) binds this frame too: a srcdoc document, and a
+ *   Blob-URL Worker it starts, inherit the CSP of the page that created them on top of
+ *   their own. That policy allows inline scripts only by hash, so the bootstrap is the
+ *   same text on every run (`SANDBOX_BOOTSTRAP_SCRIPT`, whose hash the site's CSP lists)
+ *   and the per-run job travels beside it in a non-executable JSON data block. It also
+ *   has to allow 'unsafe-eval', which is how the Worker compiles the user's code.
  * - The job (code, input, token) is embedded IN the srcdoc, not posted to the frame.
  *   A message posted to an opaque-origin frame must target `'*'`, so anything sent
  *   that way is readable by whatever document currently occupies the frame — and a
@@ -34,6 +40,9 @@ export const SANDBOX_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsa
 
 /** Marker on every message of this protocol. */
 export const MSG = '__subelt'
+
+/** The id of the srcdoc's JSON data block that carries the run's job. */
+export const JOB_ELEMENT_ID = 'subelt-job'
 
 /** A run's input, encoded so it survives being embedded in the srcdoc as JSON. */
 export type EncodedInput =
@@ -123,8 +132,8 @@ post({ alive: true });
 `
 
 /**
- * Runs in the sandboxed frame. Reads the job the app baked into this document
- * (`SUBELT_JOB`: token, code, encoded input, time budget), starts a Worker to run
+ * Runs in the sandboxed frame. Reads the job the app baked into this document (the
+ * JSON data block `#subelt-job`: token, code, encoded input, time budget), starts a Worker to run
  * the code, tells the parent when the Worker is up (`running`, the moment the budget
  * starts) and relays the outcome (`result`). Every message to the parent carries the
  * job's token, which only THIS document knows — the app never posts the token (or the
@@ -150,7 +159,14 @@ function decodeInput(enc) {
   }
   return JSON.parse(enc.v);
 }
-var job = SUBELT_JOB;
+var job;
+try {
+  job = JSON.parse(document.getElementById(${JSON.stringify(JOB_ELEMENT_ID)}).textContent);
+} catch (err) {
+  // Without the job there is no token, so no reply could be told apart from a forgery:
+  // stay silent and let the host's start-up budget report that the sandbox did not start.
+  return;
+}
 var token = job.token;
 var ms = Number(job.timeoutMs);
 if (!(ms > 0)) ms = 2000;
@@ -225,22 +241,28 @@ worker.onmessageerror = function () {
 worker.postMessage({ code: job.code, input: input });
 })();`
 
-/** Escape `</script` so no string inside the script can close the element early. */
-const inlineScript = (src: string) => src.replace(/<\/(script)/gi, '<\\/$1')
+/**
+ * The bootstrap exactly as it appears between `<script>` and `</script>` in every
+ * srcdoc: `</script` escaped so no string inside it can close the element early. The
+ * same text on every run, so the site's CSP can allow it by hash (scripts/csp.test.ts
+ * fails, naming the new hash, when this changes).
+ */
+export const SANDBOX_BOOTSTRAP_SCRIPT = BOOTSTRAP_SOURCE.replace(/<\/(script)/gi, '<\\/$1')
 
 /**
- * The job as a JS literal that is inert inside a <script>. `<` only occurs inside
+ * The job as JSON that is inert inside a <script> data block. `<` only occurs inside
  * JSON strings, where its unicode escape means the same thing, so neither `</script` nor
  * `<!--` (which, followed by `<script`, stops the closing tag from ending the
  * element) can reach the HTML tokenizer.
  */
-const jobLiteral = (job: SandboxJob) => JSON.stringify(job).replace(/</g, '\\u003c')
+const jobJson = (job: SandboxJob) => JSON.stringify(job).replace(/</g, '\\u003c')
 
 /**
  * The frame document. The CSP meta is the first element so it governs everything
- * after it; the job is embedded as `SUBELT_JOB` for the bootstrap to read.
+ * after it; the job comes before the bootstrap, which reads it when it runs.
  */
 export function buildSrcdoc(job: SandboxJob): string {
   return `<meta http-equiv="Content-Security-Policy" content="${SANDBOX_CSP}">` +
-    `<script>var SUBELT_JOB=${jobLiteral(job)};\n${inlineScript(BOOTSTRAP_SOURCE)}</script>`
+    `<script type="application/json" id="${JOB_ELEMENT_ID}">${jobJson(job)}</script>` +
+    `<script>${SANDBOX_BOOTSTRAP_SCRIPT}</script>`
 }

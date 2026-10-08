@@ -17,14 +17,14 @@ export type RouteName =
   /** One recipe: the pre-rendered `/recipes/<slug>/`, or `#/recipes/<slug>` */
   | 'recipe'
   | 'changelog'
-  /** A site page (about, privacy policy, contact): `/<slug>/` or `#/<slug>` */
+  /** A site page (about, privacy policy, contact, integrations, advertise): `/<slug>/` or `#/<slug>` */
   | 'page'
   | 'notFound'
 
 export type Route = { name: RouteName; params: Record<string, string> }
 
 /** Slugs of the site pages, each pre-rendered at `/<slug>/` from `src/app/pages/content/<slug>.md`. */
-export const SITE_PAGES = ['about', 'privacy', 'contact', 'integrations'] as const
+export const SITE_PAGES = ['about', 'privacy', 'contact', 'integrations', 'advertise'] as const
 export type SitePageSlug = (typeof SITE_PAGES)[number]
 
 const isSitePage = (slug: string | undefined): slug is SitePageSlug =>

@@ -21,4 +21,4 @@ For anything about how the site handles data, see the [privacy policy](/privacy/
 
 ## Advertising and partnerships
 
-The site's ads are served by Google AdSense. For other enquiries, email us with some details about what you have in mind.
+To sponsor a page or the site, see [advertising](/advertise/) for the audience, the formats and the rules, then email us. For partnerships and other enquiries, email us with some details about what you have in mind.

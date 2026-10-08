@@ -5,6 +5,7 @@ import path from 'node:path'
 import { utilityManifest } from './scripts/vite-plugin-utilities'
 import { pwaServiceWorker } from './scripts/vite-plugin-pwa'
 import { utilityGuides } from './scripts/vite-plugin-guides'
+import { siteHeaders } from './scripts/headers'
 
 export default defineConfig(async ({ mode }) => {
   const plugins = [react(), utilityManifest(), utilityGuides(), pwaServiceWorker()];
@@ -55,6 +56,9 @@ export default defineConfig(async ({ mode }) => {
     },
     // honour PORT so a preview harness can assign a free port
     server: process.env.PORT ? { port: Number(process.env.PORT), strictPort: true } : undefined,
+    // the production headers (public/_headers), CSP included, so E2E runs under the real policy
+    // (not the dev server's: its inline React Refresh preamble is not in the policy)
+    preview: { headers: siteHeaders(path.resolve(__dirname, 'public')) },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
