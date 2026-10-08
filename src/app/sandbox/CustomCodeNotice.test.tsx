@@ -7,7 +7,7 @@ describe('CustomCodeNotice', () => {
   it('warns on custom code steps', () => {
     render(<CustomCodeNotice utilityId="custom_js" enabled={true} />)
     const note = screen.getByRole('note')
-    expect(note).toHaveTextContent('This step runs custom code — review it before enabling.')
+    expect(note).toHaveTextContent('This step runs JavaScript. Read the code before you turn it on, especially if it came from someone else\'s link.')
     expect(note).toHaveTextContent(/no network access/)
     expect(note).not.toHaveTextContent(/stays off/)
   })

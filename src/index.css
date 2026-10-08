@@ -248,7 +248,7 @@
     @apply text-[11.5px] text-muted;
   }
   .page-title {
-    @apply m-0 text-[32px] leading-[38px] font-semibold tracking-[-0.025em] text-balance;
+    @apply m-0 text-[26px] leading-8 sm:text-[32px] sm:leading-[38px] font-semibold tracking-[-0.025em] text-balance;
   }
   .page-lead {
     @apply m-0 text-[15px] leading-6 text-muted text-pretty;

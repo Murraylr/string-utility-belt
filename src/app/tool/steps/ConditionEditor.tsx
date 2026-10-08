@@ -5,6 +5,7 @@
  */
 import React, { useId, useMemo, useState } from 'react'
 import type { Condition, ValueType } from '@/types/utility'
+import { typeLabel } from './status'
 
 export interface ConditionEditorProps {
   condition?: Condition
@@ -16,9 +17,9 @@ type Kind = 'always' | Condition['kind']
 
 const KIND_OPTIONS: Array<{ value: Kind; label: string }> = [
   { value: 'always', label: 'always' },
-  { value: 'nonEmpty', label: 'when input is non-empty' },
-  { value: 'regex', label: 'when input matches regex' },
-  { value: 'type', label: 'when input type is…' },
+  { value: 'nonEmpty', label: 'when the input isn’t empty' },
+  { value: 'regex', label: 'when the input matches a regex' },
+  { value: 'type', label: 'when the input type is…' },
 ]
 
 const TYPE_OPTIONS: ValueType[] = ['string', 'bytes', 'json']
@@ -81,42 +82,42 @@ export default function ConditionEditor({ condition, onChange }: ConditionEditor
     : { 'aria-invalid': false })
 
   return (
-    <div className="grid gap-2 text-sm">
-      <label className="flex items-center gap-2 flex-wrap">
-        <span className="muted">run</span>
-        <select className="field" aria-label="run condition" value={kind} onChange={e => setKind(e.target.value)}>
-          {KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </label>
+    <div className="grid gap-1.5">
+      <select className="field h-[30px] min-w-0" aria-label="run condition" value={kind} onChange={e => setKind(e.target.value)}>
+        {KIND_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
 
       {kind === 'regex' && (
-        <div className="flex flex-wrap items-center gap-2">
-          <input className="field flex-1 min-w-32" aria-label="regex pattern" placeholder="pattern"
-            value={draft.pattern} {...invalid('pattern')}
-            onChange={e => setDraft(d => ({ ...d, pattern: e.target.value }))} onBlur={commitRegex} onKeyDown={draftKeys} />
-          <input className="field w-20" aria-label="regex flags" placeholder="flags" value={draft.flags} {...invalid('flags')}
-            onChange={e => setDraft(d => ({ ...d, flags: e.target.value }))} onBlur={commitRegex} onKeyDown={draftKeys} />
-          {error && <span id={errorId} role="alert" className="text-danger text-xs">{error.message}</span>}
-        </div>
+        <>
+          <div className="flex gap-1.5">
+            <input className="field h-7 flex-1 min-w-0 font-mono text-xs" aria-label="regex pattern" placeholder="pattern"
+              spellCheck={false} value={draft.pattern} {...invalid('pattern')}
+              onChange={e => setDraft(d => ({ ...d, pattern: e.target.value }))} onBlur={commitRegex} onKeyDown={draftKeys} />
+            <input className="field h-7 w-[60px] font-mono text-xs" aria-label="regex flags" placeholder="flags"
+              spellCheck={false} value={draft.flags} {...invalid('flags')}
+              onChange={e => setDraft(d => ({ ...d, flags: e.target.value }))} onBlur={commitRegex} onKeyDown={draftKeys} />
+          </div>
+          {error && <span id={errorId} role="alert" className="text-[11.5px] text-danger-ink">{error.message}</span>}
+        </>
       )}
 
       {kind === 'type' && (
-        <select className="field" aria-label="input type" value={type}
+        <select className="field h-7 text-[12.5px] min-w-0" aria-label="input type" value={type}
           onChange={e => onChange({ kind: 'type', type: e.target.value as ValueType, negate })}>
-          {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+          {TYPE_OPTIONS.map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
         </select>
       )}
 
-      <label className="flex items-center gap-2">
+      <label className="flex items-center gap-1.5 text-[12.5px] cursor-pointer has-disabled:cursor-default has-disabled:opacity-60">
         {/* enabled whenever a condition is stored, so an imported "always + negate" (never runs) can be undone */}
-        <input type="checkbox" aria-label="negate condition" checked={negate} disabled={!condition}
+        <input type="checkbox" checked={negate} disabled={!condition}
           onChange={e => {
             if (!condition) return
             if (condition.kind === 'always' && !e.target.checked) onChange(undefined)
             else if (condition.kind === 'regex') onChange({ ...condition, ...draft, negate: e.target.checked })
             else onChange({ ...condition, negate: e.target.checked } as Condition)
           }} />
-        negate
+        Negate (run when it doesn’t match)
       </label>
     </div>
   )

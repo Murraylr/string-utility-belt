@@ -1,4 +1,5 @@
 import React, { useId } from 'react'
+import { Plus } from 'lucide-react'
 import type { Suggestion } from '@/core/detect'
 
 /**
@@ -12,16 +13,19 @@ export default function SuggestionButton({ suggestion: s, onPick }: { suggestion
   return (
     <button
       type="button"
-      className="w-full text-left p-3 rounded-xl border bg-surface hover:border-primary-600 hover:shadow-glow transition"
+      className="w-full flex items-center justify-between gap-2.5 text-left px-2.5 py-2 border rounded-md bg-surface hover:border-acc"
       aria-label={`${s.label}, ${pct} confidence`}
       aria-describedby={previewId}
       onClick={() => onPick(s)}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">{s.label}</span>
-        <span className="chip" title="detection confidence">{pct}</span>
-      </div>
-      <div id={previewId} className="text-xs text-muted mono mt-1 wrap-anywhere line-clamp-3">{s.preview}</div>
+      <span className="grid gap-0.5 min-w-0">
+        <span className="flex items-center gap-2">
+          <span className="text-[13px] font-medium">{s.label}</span>
+          <span className="chip" title="detection confidence">{pct}</span>
+        </span>
+        <span id={previewId} className="font-mono text-xs text-muted wrap-anywhere line-clamp-2">{s.preview}</span>
+      </span>
+      <Plus size={14} className="shrink-0 text-muted" aria-hidden />
     </button>
   )
 }

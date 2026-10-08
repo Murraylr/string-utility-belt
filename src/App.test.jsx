@@ -85,7 +85,11 @@ describe('<App />', () => {
     render(<App />)
     const input = screen.getByPlaceholderText(/type or paste/i)
     fireEvent.change(input, { target: { value: 'a'.repeat(30) } })
-    fireEvent.change(screen.getByDisplayValue('trim'), { target: { value: 'truncate' } })
+    // the step's name opens a picker that swaps its utility
+    fireEvent.click(screen.getByRole('button', { name: 'trim, change utility' }))
+    const search = screen.getByRole('combobox', { name: 'Search utilities' })
+    fireEvent.change(search, { target: { value: 'truncate' } })
+    fireEvent.keyDown(search, { key: 'Enter' })
     // truncate defaults: length 20, ellipsis '…' -> 19 chars + ellipsis
     // the result arrives after a lazy chunk load plus a debounced run — allow for a loaded machine
     expect(await screen.findByText('a'.repeat(19) + '…', {}, { timeout: 5000 })).toBeTruthy()

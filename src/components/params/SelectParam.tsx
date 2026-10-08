@@ -9,6 +9,7 @@ export default function SelectParam({ id, spec, value, onChange, error, describe
       value={value}
       onChange={onChange}
       options={spec.options}
+      className="h-[30px]"
       aria-invalid={invalid(error)}
       aria-describedby={describedBy}
     />

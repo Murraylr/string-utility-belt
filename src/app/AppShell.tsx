@@ -63,7 +63,7 @@ export function Footer() {
   const { t } = useT()
   return (
     <footer className="border-t">
-      <div className="max-w-[1440px] mx-auto px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-muted">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-muted">
         <nav aria-label={t('footer.label')} className="flex flex-wrap gap-x-[18px] gap-y-1.5">
           {FOOTER_LINKS.map(l => <a key={l.href} href={l.href} className="text-muted hover:text-fg">{t(l.key)}</a>)}
         </nav>
@@ -108,9 +108,10 @@ export function Header({ children, current }: { children?: React.ReactNode; curr
   const { t } = useT()
   return (
     <header className="sticky top-0 z-30 bg-[rgb(var(--c-header)/.92)] backdrop-blur-sm border-b">
-      <div className="max-w-[1440px] mx-auto px-6 min-h-14 flex flex-wrap items-center gap-x-6">
+      {/* phones: logo and actions on one row, the nav scrolling sideways on its own row below */}
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 min-h-14 flex flex-wrap items-center gap-x-3 sm:gap-x-6">
         <Logo />
-        <nav className="flex items-stretch gap-5 h-14 text-[13.5px] font-medium overflow-x-auto" aria-label="main">
+        <nav className="flex items-stretch gap-4 sm:gap-5 h-11 sm:h-14 text-[13.5px] font-medium overflow-x-auto max-sm:order-last max-sm:w-full max-sm:-mx-4 max-sm:px-4 max-sm:border-t [scrollbar-width:none]" aria-label="main">
           {NAV.map(n => {
             const active = !!current && (n.routes as ReadonlyArray<string>).includes(current)
             return (
@@ -157,10 +158,10 @@ function PaletteButton() {
   return (
     <button type="button" aria-label="Open command palette (Ctrl+K)"
       onClick={() => window.dispatchEvent(new CustomEvent(EVENT_OPEN_PALETTE))}
-      className="flex items-center gap-2.5 flex-[0_1_240px] min-w-[120px] h-8 pl-2.5 pr-1.5 my-3 border rounded-md bg-surface-2 text-muted text-[13px] text-left hover:border-line-2">
+      className="flex items-center justify-center sm:justify-start gap-2.5 size-8 sm:size-auto sm:flex-[0_1_240px] sm:min-w-[120px] sm:h-8 sm:pl-2.5 sm:pr-1.5 my-3 border rounded-md bg-surface-2 text-muted text-[13px] text-left hover:border-line-2">
       <Search size={15} aria-hidden="true" />
-      <span className="flex-1 truncate">Search or run a command</span>
-      <kbd className="kbd">Ctrl K</kbd>
+      <span className="hidden sm:block flex-1 truncate">Search or run a command</span>
+      <kbd className="kbd hidden md:inline">Ctrl K</kbd>
     </button>
   )
 }
@@ -168,7 +169,7 @@ function PaletteButton() {
 /** The "?" shortcut's visible counterpart. */
 function ShortcutsButton() {
   return (
-    <button type="button" className="icon-btn" aria-label="Keyboard shortcuts (?)" title="Keyboard shortcuts (?)"
+    <button type="button" className="icon-btn max-sm:hidden" aria-label="Keyboard shortcuts (?)" title="Keyboard shortcuts (?)"
       onClick={() => window.dispatchEvent(new CustomEvent(EVENT_OPEN_SHORTCUTS))}>
       <Keyboard size={16} aria-hidden="true" />
     </button>
@@ -211,7 +212,8 @@ export default function AppShell() {
       <UpdateBanner />
       <Header current={route.name}>
         <PaletteButton />
-        <IntegrationsNav />
+        {/* nothing in it installs on a phone, like the promos it is hidden there */}
+        <div className="max-sm:hidden"><IntegrationsNav /></div>
         <div className="flex items-center gap-1 shrink-0">
           <InstallButton />
           <ShortcutsButton />
@@ -219,7 +221,7 @@ export default function AppShell() {
         </div>
       </Header>
       {promoPage && <PagePromo page={promoPage} slot="strip" />}
-      <main id="main" tabIndex={-1} className={`flex-1 w-full mx-auto px-6 min-w-0 outline-hidden ${isTool
+      <main id="main" tabIndex={-1} className={`flex-1 w-full mx-auto px-4 sm:px-6 min-w-0 outline-hidden ${isTool
         ? 'max-w-[1440px] pt-7 pb-[72px] grid gap-7'
         : 'max-w-[1200px] pt-10 pb-20'}`}>
         <Suspense fallback={<PageLoading />}>

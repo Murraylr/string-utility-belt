@@ -171,20 +171,20 @@ describe('UtilityPicker', () => {
 
   it('toggles a favorite and shows it pinned (once) when the query is empty', () => {
     render(<UtilityPicker onPick={vi.fn()} />)
-    fireEvent.click(screen.getByLabelText('favorite case'))
-    expect(screen.getByLabelText('unfavorite case')).toHaveAttribute('aria-pressed', 'true')
-    const favorites = screen.getByRole('group', { name: 'Favorites' })
+    fireEvent.click(screen.getByLabelText('Star case'))
+    expect(screen.getByLabelText('Unstar case')).toHaveAttribute('aria-pressed', 'true')
+    const favorites = screen.getByRole('group', { name: 'Starred' })
     expect(within(favorites).getByText('case')).toBeInTheDocument()
     expect(screen.getAllByText('case')).toHaveLength(1)
     expect(screen.getAllByRole('option')[0]).toHaveTextContent('case')
   })
 
-  it('pins recently picked utilities in a "Recently used" section (persisted)', () => {
+  it('pins recently picked utilities in a "Recent" section (persisted)', () => {
     const { unmount } = render(<UtilityPicker onPick={vi.fn()} />)
     fireEvent.click(screen.getByText('json pretty'))
     unmount()
     render(<UtilityPicker onPick={vi.fn()} />)
-    const recent = screen.getByRole('group', { name: 'Recently used' })
+    const recent = screen.getByRole('group', { name: 'Recent' })
     expect(within(recent).getByText('json pretty')).toBeInTheDocument()
   })
 
@@ -192,16 +192,16 @@ describe('UtilityPicker', () => {
     localStorage.setItem('sub:pref:favorites', JSON.stringify(['json_pretty']))
     localStorage.setItem('sub:pref:recents', JSON.stringify(['base64_decode']))
     const { unmount } = render(<UtilityPicker onPick={vi.fn()} previousProduces={['string']} />)
-    expect(screen.getByRole('group', { name: 'Favorites' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Starred' })).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('only exact matches'))
     // json_pretty accepts json: not an exact match for a string input
-    expect(screen.queryByRole('group', { name: 'Favorites' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Starred' })).not.toBeInTheDocument()
     expect(screen.queryByText('json pretty')).not.toBeInTheDocument()
     unmount()
     render(<UtilityPicker onPick={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Encoding' }))
-    expect(screen.queryByRole('group', { name: 'Favorites' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('group', { name: 'Recently used' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Starred' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Recent' })).not.toBeInTheDocument()
   })
 
   it('survives corrupted favorites/recents in storage', () => {
@@ -209,8 +209,8 @@ describe('UtilityPicker', () => {
     localStorage.setItem('sub:pref:recents', '"trim"')
     render(<UtilityPicker onPick={vi.fn()} />)
     expect(screen.getByText('base64 encode')).toBeInTheDocument()
-    fireEvent.click(screen.getByLabelText('favorite case'))
-    expect(screen.getByLabelText('unfavorite case')).toBeInTheDocument()
+    fireEvent.click(screen.getByLabelText('Star case'))
+    expect(screen.getByLabelText('Unstar case')).toBeInTheDocument()
   })
 
   it('shows a badge for a lossy or coerced compatibility level and none for exact', () => {
@@ -253,18 +253,19 @@ describe('UtilityPicker', () => {
     render(<UtilityPicker onPick={vi.fn()} previousProduces={['bytes']} />)
     fireEvent.click(screen.getByLabelText('only exact matches'))
     // every listed utility here accepts 'string', none accept 'bytes' exactly
-    expect(screen.getByText('No utilities match your search.')).toBeInTheDocument()
+    expect(screen.getByText('No utilities match these filters.')).toBeInTheDocument()
   })
 
   it("makes only the active option's favorite toggle a Tab stop, not one per card", () => {
     render(<UtilityPicker onPick={() => {}} />)
-    const stars = () => screen.getAllByRole('button', { name: /^(un)?favorite / })
+    const stars = () => screen.getAllByRole('button', { name: /^(Star|Unstar) / })
     expect(stars().filter(b => b.tabIndex === 0)).toHaveLength(1)
-    expect(stars().find(b => b.tabIndex === 0)).toHaveAccessibleName('favorite base64 encode')
-    // arrowing in the search box moves the Tab stop along with the active option
+    expect(stars().find(b => b.tabIndex === 0)).toHaveAccessibleName('Star base64 encode')
+    // arrowing in the search box moves the Tab stop along with the active option, in the order
+    // shown: browsing groups by category, so Encoding's second utility comes next
     fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' })
     expect(stars().filter(b => b.tabIndex === 0)).toHaveLength(1)
-    expect(stars().find(b => b.tabIndex === 0)).toHaveAccessibleName('favorite base64 decode')
+    expect(stars().find(b => b.tabIndex === 0)).toHaveAccessibleName('Star get bytes')
   })
 
   it('lays the category chips out as one scrollable row below the sm breakpoint', () => {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { EditorView } from '@codemirror/view'
-import type { Extension } from '@codemirror/state'
+import { Prec, type Extension } from '@codemirror/state'
 
 export type CodeLanguage = 'javascript' | 'json' | 'sql' | 'xml' | 'html' | 'yaml' | 'markdown'
 
@@ -40,6 +40,23 @@ function loadLanguage(key: CodeLanguage): Promise<Extension> {
   }
   return promise
 }
+
+/**
+ * The editor's chrome in the site's tokens (CSS variables, so it follows the theme switch
+ * without a reconfigure). Syntax colours still come from the light/dark preset.
+ */
+const tokenChrome = Prec.highest(EditorView.theme({
+  '&': { backgroundColor: 'rgb(var(--c-canvas))', color: 'rgb(var(--c-fg))', fontSize: '12.5px' },
+  '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '19px' },
+  '.cm-content': { caretColor: 'rgb(var(--c-acc))' },
+  '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'rgb(var(--c-acc))' },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': { backgroundColor: 'rgb(var(--c-acc) / .25)' },
+  '.cm-gutters': { backgroundColor: 'rgb(var(--c-strip))', color: 'rgb(var(--c-muted))', borderRight: '1px solid rgb(var(--c-line))' },
+  '.cm-activeLine': { backgroundColor: 'rgb(var(--c-surface-2) / .6)' },
+  '.cm-activeLineGutter': { backgroundColor: 'rgb(var(--c-surface-2))', color: 'rgb(var(--c-fg))' },
+  '.cm-placeholder': { color: 'rgb(var(--c-muted))' },
+  '&.cm-focused': { outline: 'none' },
+}))
 
 export interface CodeEditorProps {
   /** Put on the editable surface, so `<label htmlFor>` targets and `getElementById` find it. */
@@ -103,12 +120,12 @@ export default function CodeEditor({
       'aria-describedby': [describedBy, hintId].filter(Boolean).join(' '),
     }
     if (invalid) attrs['aria-invalid'] = 'true'
-    return [EditorView.contentAttributes.of(attrs), ...(languageExt ? [languageExt] : [])]
+    return [tokenChrome, EditorView.contentAttributes.of(attrs), ...(languageExt ? [languageExt] : [])]
   }, [id, label, describedBy, hintId, invalid, languageExt])
 
   return (
     <div className="group flex flex-col gap-1">
-      <div className="overflow-hidden rounded-xl border text-xs">
+      <div className="overflow-hidden rounded-md border focus-within:border-acc">
         <CodeMirror
           value={text}
           height="200px"
@@ -120,7 +137,7 @@ export default function CodeEditor({
           selection={handoff ?? undefined}
         />
       </div>
-      <p id={hintId} className="sr-only text-xs text-muted group-focus-within:not-sr-only">
+      <p id={hintId} className="sr-only text-[11.5px] text-muted group-focus-within:not-sr-only">
         Tab indents — press Escape, then Tab, to move focus out of the editor.
       </p>
     </div>

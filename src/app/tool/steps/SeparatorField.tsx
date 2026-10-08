@@ -34,7 +34,7 @@ export default function SeparatorField({ label, value, onChange, allowEmpty = tr
     if (next !== value) onChange(next)
   }
   return (
-    <input className="field w-28" aria-label={label} value={draft} maxLength={maxLength}
+    <input className="field h-[30px] w-[110px] font-mono text-[12.5px] text-fg" spellCheck={false} aria-label={label} value={draft} maxLength={maxLength}
       onChange={e => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={e => {

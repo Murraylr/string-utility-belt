@@ -85,7 +85,8 @@ export default function Docs() {
 
   return (
     <div className="grid gap-10 lg:grid-cols-[200px_minmax(0,760px)] items-start">
-      <div className="lg:sticky lg:top-[84px] grid gap-5">
+      {/* the section list sits beside the guide; on narrower screens the guide starts the page */}
+      <div className="hidden lg:grid lg:sticky lg:top-[84px] gap-5">
         <nav aria-label="Docs sections" className="grid gap-px text-[13px]">
           <span className="px-2.5 pb-2 text-[11.5px] font-medium text-muted">On this page</span>
           {SECTIONS.map(s => (
@@ -96,9 +97,7 @@ export default function Docs() {
               className="px-2.5 py-[5px] rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg">{s.title}</a>
           ))}
         </nav>
-        <div className="hidden lg:block">
-          <PagePromo page={{ kind: 'index' }} slot="rail" />
-        </div>
+        <PagePromo page={{ kind: 'index' }} slot="rail" />
       </div>
 
       <div className="grid gap-7 min-w-0">
@@ -122,7 +121,7 @@ export default function Docs() {
                 <strong>fetch URL</strong> to load input from elsewhere.
               </li>
               <li className="md-li">
-                Add steps. <strong>Add utility</strong> opens a browser where you can filter by category or search by name.
+                Add steps. <strong>Add step</strong> opens a picker where you can filter by category or search by name.
                 You can also use the <strong>quick add</strong> dropdown, start from a <strong>preset</strong>, or press{' '}
                 <Code>Ctrl K</Code> to open the command palette.
               </li>
@@ -164,7 +163,7 @@ export default function Docs() {
                 or null stays one if its result still reads as one.
               </li>
               <li className="md-li">
-                When the steps fail on an item, the step's <strong>on error</strong> setting decides what that item becomes:
+                When the steps fail on an item, the step's <strong>If this step fails</strong> setting (under <strong>Advanced</strong>) decides what that item becomes:
                 by default it keeps whatever its steps produced, <em>empty output</em> blanks it, and <em>stop</em> fails the
                 whole step. The other items are never affected. The card counts the items that failed.
               </li>
@@ -179,12 +178,12 @@ export default function Docs() {
           <Section id="previews" title="Previews and errors">
             <ul className="md-ul">
               <li className="md-li">
-                Tick <strong>show intermediate previews</strong> to see each step's output below its card. Turn on the diff view
+                Tick <strong>Previews</strong> to see each step's output below its card. Turn on the diff view
                 to see what a step changed. This helps you find where a chain goes wrong.
               </li>
               <li className="md-li">
                 If a step fails, for example because of an invalid regex or bad hex, its card shows the error in red. By default
-                the pipeline carries on with that step's input. Change this per step with <strong>on error</strong>: stop the
+                the pipeline carries on with that step's input. Change this per step under <strong>Advanced</strong>, in <strong>If this step fails</strong>: stop the
                 pipeline, or continue with empty output.
               </li>
             </ul>

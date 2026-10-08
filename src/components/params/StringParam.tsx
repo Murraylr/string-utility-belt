@@ -5,7 +5,8 @@ export default function StringParam({ id, spec, value, onChange, error, describe
   return (
     <input
       id={id}
-      className="field"
+      className="field h-[30px] min-w-0 font-mono text-[12.5px]"
+      spellCheck={false}
       placeholder={spec.placeholder}
       maxLength={spec.maxLength}
       value={value}

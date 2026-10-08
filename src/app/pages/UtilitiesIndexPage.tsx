@@ -101,10 +101,10 @@ export default function UtilitiesIndexPage() {
             </h2>
             <ul className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,250px),1fr))] gap-x-7 lg:col-span-3">
               {items.map(u => (
-                <li key={u.id} className="border-t">
+                <li key={u.id} className="border-t min-w-0">
                   {/* the pre-rendered page's crawlable path; AppShell keeps the click in the app */}
                   <a className="group grid gap-0.5 pt-2.5 pb-[11px]" href={utilityPath(u.id)}>
-                    <span className="flex items-baseline justify-between gap-2.5">
+                    <span className="flex flex-wrap items-baseline justify-between gap-x-2.5">
                       <span className="text-[13.5px] font-medium group-hover:text-acc">{displayName(u.name)}</span>
                       <span className="font-mono text-[10.5px] text-muted whitespace-nowrap">{signature(u)}</span>
                     </span>

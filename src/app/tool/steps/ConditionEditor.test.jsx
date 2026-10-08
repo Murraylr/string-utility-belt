@@ -15,7 +15,7 @@ describe('<ConditionEditor />', () => {
   it('starts on "always" with negate disabled', () => {
     render(<ConditionEditor onChange={() => {}} />)
     expect(screen.getByLabelText('run condition').value).toBe('always')
-    expect(screen.getByLabelText('negate condition')).toBeDisabled()
+    expect(screen.getByLabelText(/^Negate/)).toBeDisabled()
   })
 
   it('round-trips nonEmpty with negate', async () => {
@@ -24,7 +24,7 @@ describe('<ConditionEditor />', () => {
     render(<Controlled onChange={onChange} />)
     await user.selectOptions(screen.getByLabelText('run condition'), 'nonEmpty')
     expect(onChange).toHaveBeenLastCalledWith({ kind: 'nonEmpty', negate: false })
-    await user.click(screen.getByLabelText('negate condition'))
+    await user.click(screen.getByLabelText(/^Negate/))
     expect(onChange).toHaveBeenLastCalledWith({ kind: 'nonEmpty', negate: true })
   })
 
@@ -123,12 +123,12 @@ describe('<ConditionEditor />', () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
     render(<Controlled initial={{ kind: 'always', negate: true }} onChange={onChange} />)
-    const negate = screen.getByLabelText('negate condition')
+    const negate = screen.getByLabelText(/^Negate/)
     expect(negate).not.toBeDisabled()
     expect(negate).toBeChecked()
     await user.click(negate)
     expect(onChange).toHaveBeenLastCalledWith(undefined)
-    expect(screen.getByLabelText('negate condition')).toBeDisabled()
+    expect(screen.getByLabelText(/^Negate/)).toBeDisabled()
   })
 
   it('round-trips a type condition', async () => {

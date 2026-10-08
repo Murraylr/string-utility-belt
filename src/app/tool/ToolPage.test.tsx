@@ -41,18 +41,20 @@ function Harness() {
   )
 }
 
-/** The steps toolbar's picker toggle (the empty state's own button only opens it). */
+/** The add row's picker toggle. */
 const pickerToggle = () => screen.getAllByRole('button', { name: /^add (a )?(utility|step)$/i })
   .find(b => b.hasAttribute('aria-expanded'))!
 
 describe('ToolPage utility picker layout', () => {
-  it('opens the picker inside a height-capped, scrollable section', () => {
+  it('opens the picker in the steps section, after the steps and the add row', () => {
     render(<Harness />)
     fireEvent.click(pickerToggle())
-    const wrapper = screen.getByTestId('picker-stub').closest('section')
-    expect(wrapper).not.toBeNull()
-    expect(wrapper).toHaveClass('overflow-y-auto')
-    expect(wrapper?.className).toMatch(/max-h-/)
+    const picker = screen.getByTestId('picker-stub')
+    expect(picker.closest('section')).toHaveAccessibleName('Pipeline steps')
+    // the empty state (in place of the step list) and the toggle both come before the picker
+    const empty = screen.getByText('Paste something and we’ll suggest a pipeline.')
+    expect(empty.compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(pickerToggle().compareDocumentPosition(picker) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('closes on the toolbar button (a real toggle)', () => {

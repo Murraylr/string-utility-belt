@@ -21,7 +21,8 @@ const TOC_MIN_SECTIONS = 3
 // the markdown's own `# heading` (the page's h1) styled as the page title, ruled off from the text
 const TITLE = [
   '[&>.md-h1:first-child]:mt-0', '[&>.md-h1:first-child]:mb-6', '[&>.md-h1:first-child]:pb-5',
-  '[&>.md-h1:first-child]:border-b', '[&>.md-h1:first-child]:text-[32px]', '[&>.md-h1:first-child]:leading-[38px]',
+  '[&>.md-h1:first-child]:border-b', '[&>.md-h1:first-child]:text-[26px]', '[&>.md-h1:first-child]:leading-8',
+  'sm:[&>.md-h1:first-child]:text-[32px]', 'sm:[&>.md-h1:first-child]:leading-[38px]',
   '[&>.md-h1:first-child]:tracking-[-0.025em]', '[&>.md-h1:first-child]:text-balance',
 ].join(' ')
 

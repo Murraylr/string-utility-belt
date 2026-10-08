@@ -11,6 +11,7 @@ import { SelectionCtx, type SelectionApi } from './selection'
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [active, setActiveState] = useState(false)
   const [selectedSet, setSelectedSet] = useState<Set<string>>(() => new Set())
+  const [toggleButton, setToggleButton] = useState<HTMLButtonElement | null>(null)
 
   const api = useMemo<SelectionApi>(() => ({
     active,
@@ -27,7 +28,9 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       const idxs = order.reduce<number[]>((acc, id, i) => { if (selectedSet.has(id)) acc.push(i); return acc }, [])
       return idxs.length > 0 && idxs.every((v, k) => k === 0 || v === idxs[k - 1] + 1)
     },
-  }), [active, selectedSet])
+    toggleButton,
+    setToggleButton,
+  }), [active, selectedSet, toggleButton])
 
   return <SelectionCtx.Provider value={api}>{children}</SelectionCtx.Provider>
 }

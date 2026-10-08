@@ -17,11 +17,11 @@ function Probe() {
 
 const stepsShown = () => JSON.parse(screen.getByTestId('steps').textContent || '[]') as [string, unknown][]
 
-function Harness({ initialInput, onAddUtility = () => {} }: { initialInput?: string; onAddUtility?: () => void }) {
+function Harness({ initialInput }: { initialInput?: string }) {
   return (
     <ToolProvider initialSteps={[]} initialInput={initialInput} persist={false}>
       <Probe />
-      <EmptyState onAddUtility={onAddUtility} />
+      <EmptyState />
     </ToolProvider>
   )
 }
@@ -31,35 +31,14 @@ afterEach(() => {
 })
 
 describe('EmptyState', () => {
-  it('shows the empty-input message and both buttons when there is no input', () => {
+  it('asks for input when there is none', () => {
     render(<Harness initialInput="" />)
-    expect(screen.getByText("Paste something and we'll suggest a pipeline")).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Browse presets' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Add a utility' })).toBeTruthy()
-  })
-
-  it('calls onAddUtility when "Add a utility" is clicked', () => {
-    const onAddUtility = vi.fn()
-    render(<Harness initialInput="" onAddUtility={onAddUtility} />)
-    fireEvent.click(screen.getByText('Add a utility'))
-    expect(onAddUtility).toHaveBeenCalledTimes(1)
-  })
-
-  it('dispatches sub:open-presets when "Browse presets" is clicked', () => {
-    const handler = vi.fn()
-    window.addEventListener('sub:open-presets', handler)
-    try {
-      render(<Harness initialInput="" />)
-      fireEvent.click(screen.getByText('Browse presets'))
-      expect(handler).toHaveBeenCalledTimes(1)
-    } finally {
-      window.removeEventListener('sub:open-presets', handler)
-    }
+    expect(screen.getByRole('status')).toHaveTextContent('Paste something and we’ll suggest a pipeline.')
   })
 
   it('suggests a decoder for non-empty input and adds it (with default params) on click', async () => {
     render(<Harness initialInput={'{"a":1}'} />)
-    expect(screen.queryByText("Paste something and we'll suggest a pipeline")).toBeNull()
+    expect(screen.queryByText('Paste something and we’ll suggest a pipeline.')).toBeNull()
     const suggestion = await screen.findByText('JSON pretty-print', {}, { timeout: 5000 })
     const button = screen.getByRole('button', { name: /^JSON pretty-print, \d+% confidence$/ })
     expect(button).toHaveAccessibleDescription(/"a": 1/)
@@ -111,7 +90,7 @@ describe('EmptyState', () => {
     render(<Harness initialInput="just some plain words" />)
     expect(await screen.findByText(/no obvious decoding/i, {}, { timeout: 5000 })).toBeTruthy()
     expect(screen.queryByText(/a few things this could be/i)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Add a utility' })).toBeTruthy()
+    expect(screen.queryByRole('list', { name: 'suggested first steps' })).toBeNull()
   })
 
   it('does not analyse very large input automatically', async () => {

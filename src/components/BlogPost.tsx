@@ -91,7 +91,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
           <nav aria-label="Breadcrumb" className="text-[12.5px]">
             <a href="/blog/" className="text-muted hover:text-fg">{t('blog.title')}</a>
           </nav>
-          {meta.title && <h1 className="m-0 text-[34px] leading-10 font-semibold tracking-[-0.025em] text-balance">{meta.title}</h1>}
+          {meta.title && <h1 className="m-0 text-[28px] leading-[34px] sm:text-[34px] sm:leading-10 font-semibold tracking-[-0.025em] text-balance">{meta.title}</h1>}
           {meta.description && <p className="m-0 text-base leading-[26px] text-muted text-pretty">{meta.description}</p>}
           {(meta.date || tags.length > 0) && (
             <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 font-mono text-[11.5px] text-muted">

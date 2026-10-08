@@ -65,7 +65,7 @@ test.describe('utility doc page', () => {
 
   test("the utility picker's docs link opens the utility's page in place", async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('button', { name: /^add utility$/i }).first().click()
+    await page.getByRole('button', { name: /^add step$/i }).click()
     const docs = page.getByRole('listbox', { name: 'utilities' }).locator('a[href="/util/base64_encode/"]').first()
     await markDocument(page)
     await docs.click()

@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { BookOpen, Search, Plus, Star, Clock } from 'lucide-react'
+import { BookOpen, Search, Star } from 'lucide-react'
 import { registry } from '@/app/registry'
 import { utilityPath } from '@/app/pages/related'
 import type { UtilityMeta } from '@/core/registry'
@@ -9,6 +9,7 @@ import { searchUtilities, type FuzzyRange } from '@/app/search/fuzzy'
 import Highlight from '@/app/search/Highlight'
 import { useFavorites, useRecents, pushRecent } from '@/app/favorites'
 import { useSearchTracking } from '@/app/analytics/analytics'
+import { signatureOf } from '@/app/tool/steps/status'
 
 export interface UtilityPickerProps {
   onPick: (id: string) => void
@@ -16,13 +17,15 @@ export interface UtilityPickerProps {
   onClose?: () => void
   /** The previous step's output type(s), for type-aware compatibility badges. */
   previousProduces?: ValueType[]
+  /** A line above the search box saying what the pick is for. */
+  title?: string
 }
 
-type Section = 'favorites' | 'recents' | 'results'
 interface VisibleItem {
   key: string
   meta: UtilityMeta
-  section: Section
+  /** The group it is listed under: Starred, Recent, a category, or Results while searching. */
+  group: string
   nameRanges: FuzzyRange[]
 }
 
@@ -44,7 +47,7 @@ interface PickerCardProps {
 
 /**
  * One option. Memoized with primitive / stable props: hovering or arrowing through
- * ~250 cards then re-renders the two whose `active` flips, not the whole grid.
+ * ~250 rows then re-renders the two whose `active` flips, not the whole list.
  */
 const PickerCard = memo(function PickerCard({
   optionId, meta, nameRanges, index, active, favorite, badgeLevel, badgeNote, onHover, onPick, onToggleFavorite,
@@ -54,7 +57,7 @@ const PickerCard = memo(function PickerCard({
       id={optionId}
       role="option"
       aria-selected={active}
-      // named by the utility (and its badge) rather than by every control and chip in the card
+      // named by the utility (and its badge) rather than by every control in the row
       aria-labelledby={badgeLevel ? `${optionId}-name ${optionId}-badge` : `${optionId}-name`}
       aria-description={badgeNote}
       onMouseEnter={() => onHover(index)}
@@ -62,59 +65,50 @@ const PickerCard = memo(function PickerCard({
       onMouseDown={e => e.preventDefault()}
       // a click on the docs link is not a pick. Not stopped at the link instead: the click
       // must bubble on to the document, where AppShell's handler follows it in-app
-      onClick={e => { if (!(e.target as Element).closest('a')) onPick(meta.id) }}
-      className={`text-left p-4 rounded-2xl border cursor-pointer transition ${active ? 'border-primary-600 bg-surface-2 shadow-glow' : 'bg-surface hover:border-primary-600'}`}
+      onClick={e => { if (!(e.target as Element).closest('a, button')) onPick(meta.id) }}
+      className={`flex items-stretch rounded-[5px] cursor-pointer hover:bg-surface-2 ${active ? 'bg-surface-2' : ''}`}
     >
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span id={`${optionId}-name`} className="font-medium">
-          <Highlight text={meta.name} ranges={nameRanges} />
-        </span>
-        <div className="flex items-center gap-1 shrink-0">
+      <div className="flex-1 min-w-0 grid gap-px text-left py-2 pl-2.5 pr-1">
+        <span className="flex flex-wrap items-baseline gap-x-2">
+          <span id={`${optionId}-name`} className="text-[13px] font-medium">
+            <Highlight text={meta.name} ranges={nameRanges} />
+          </span>
+          <span className={`font-mono text-[10.5px] ${badgeLevel ? 'text-warn' : 'text-muted'}`}>{signatureOf(meta)}</span>
           {badgeLevel && (
-            <span id={`${optionId}-badge`} className="chip" title={badgeNote}>
+            <span id={`${optionId}-badge`} className="font-mono text-[10.5px] text-warn" title={badgeNote}>
               {badgeLevel === 'lossy' ? 'lossy' : 'coerced'}
             </span>
           )}
-          <span className="chip">{meta.category}</span>
-          <button
-            type="button"
-            aria-label={favorite ? `unfavorite ${meta.name}` : `favorite ${meta.name}`}
-            aria-pressed={favorite}
-            // one Tab stop for the whole grid (the active option's star), not ~250: the arrow
-            // keys pick the option in the search box, Tab then reaches its favorite toggle
-            tabIndex={active ? 0 : -1}
-            // icon-btn alone renders ~30x30px here — under the ~40px mobile tap-target
-            // guideline; grow the hit area without touching the shared class
-            className="icon-btn min-w-[40px] min-h-[40px] inline-flex items-center justify-center"
-            onClick={e => { e.stopPropagation(); onToggleFavorite(meta.id) }}
-          >
-            <Star size={14} fill={favorite ? 'currentColor' : 'none'} aria-hidden />
-          </button>
-        </div>
+        </span>
+        <span className="text-xs text-muted line-clamp-2">{meta.description}</span>
       </div>
-      <div className="text-xs text-muted">{meta.description}</div>
-      <div className="mt-3 flex flex-wrap gap-1">
-        {Object.keys(meta.params).slice(0, 3).map(k => (
-          <span key={k} className="text-[10px] px-1.5 py-0.5 rounded-sm bg-surface-2 border">{k}</span>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
-        <span className="flex items-center gap-2 text-primary-600"><Plus size={14} aria-hidden /> add</span>
-        <a
-          href={utilityPath(meta.id)}
-          aria-label={`${meta.name} docs`}
-          // same single Tab stop as the favorite toggle
-          tabIndex={active ? 0 : -1}
-          className="inline-flex items-center gap-1 text-xs text-muted hover:text-primary-600 hover:underline"
-        >
-          <BookOpen size={12} aria-hidden /> docs
-        </a>
-      </div>
+      <a
+        href={utilityPath(meta.id)}
+        aria-label={`${meta.name} docs`}
+        title={`${meta.name} docs`}
+        // one Tab stop for the whole list (the active option's controls), not one per row
+        tabIndex={active ? 0 : -1}
+        className="w-[30px] grid place-items-center text-muted hover:text-acc"
+      >
+        <BookOpen size={13} aria-hidden />
+      </a>
+      <button
+        type="button"
+        aria-label={favorite ? `Unstar ${meta.name}` : `Star ${meta.name}`}
+        title={favorite ? 'Unstar' : 'Star'}
+        aria-pressed={favorite}
+        // same single Tab stop as the docs link: the arrow keys pick the option in the search box
+        tabIndex={active ? 0 : -1}
+        className={`w-[30px] grid place-items-center ${favorite ? 'text-acc' : 'text-line-2 hover:text-muted'}`}
+        onClick={() => onToggleFavorite(meta.id)}
+      >
+        <Star size={13} fill={favorite ? 'currentColor' : 'none'} aria-hidden />
+      </button>
     </div>
   )
 })
 
-export default function UtilityPicker({ onPick, onClose, previousProduces: producesProp }: UtilityPickerProps) {
+export default function UtilityPicker({ onPick, onClose, previousProduces: producesProp, title }: UtilityPickerProps) {
   // an empty list carries no type information: behave as if none was given
   const previousProduces = producesProp?.length ? producesProp : undefined
   const [category, setCategory] = useState('All')
@@ -167,11 +161,20 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
   }, [results, favoriteMetas, passesFilters])
   useSearchTracking('picker', query, filteredResults.length)
 
+  // browsing lists every utility under its category; a search lists the ranked matches together
+  const resultItems = useMemo(() => {
+    const items = filteredResults.map(r => ({
+      key: `${idBase}-res-${r.meta.id}`, meta: r.meta, group: showPinned ? r.meta.category : 'Results', nameRanges: r.nameRanges,
+    }))
+    if (!showPinned) return items
+    return categories.flatMap(c => items.filter(it => it.group === c))
+  }, [idBase, filteredResults, showPinned, categories])
+
   const visible: VisibleItem[] = useMemo(() => [
-    ...favoriteMetas.map(m => ({ key: `${idBase}-fav-${m.id}`, meta: m, section: 'favorites' as const, nameRanges: NO_RANGES })),
-    ...recentMetas.map(m => ({ key: `${idBase}-rec-${m.id}`, meta: m, section: 'recents' as const, nameRanges: NO_RANGES })),
-    ...filteredResults.map(r => ({ key: `${idBase}-res-${r.meta.id}`, meta: r.meta, section: 'results' as const, nameRanges: r.nameRanges })),
-  ], [idBase, favoriteMetas, recentMetas, filteredResults])
+    ...favoriteMetas.map(m => ({ key: `${idBase}-fav-${m.id}`, meta: m, group: 'Starred', nameRanges: NO_RANGES })),
+    ...recentMetas.map(m => ({ key: `${idBase}-rec-${m.id}`, meta: m, group: 'Recent', nameRanges: NO_RANGES })),
+    ...resultItems,
+  ], [idBase, favoriteMetas, recentMetas, resultItems])
 
   // reset the active option (during render, not an effect — see the React docs on
   // "adjusting state when a prop changes") whenever the visible list changes shape
@@ -181,10 +184,15 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
   const clampedIndex = Math.max(0, Math.min(activeIndex, visible.length - 1))
   const activeId = visible[clampedIndex]?.key
 
-  const withIndex = useMemo(() => visible.map((item, idx) => ({ item, idx })), [visible])
-  const favSection = withIndex.filter(x => x.item.section === 'favorites')
-  const recSection = withIndex.filter(x => x.item.section === 'recents')
-  const resSection = withIndex.filter(x => x.item.section === 'results')
+  const groups = useMemo(() => {
+    const out: Array<{ name: string; entries: Array<{ item: VisibleItem; idx: number }> }> = []
+    visible.forEach((item, idx) => {
+      const last = out[out.length - 1]
+      if (last?.name === item.group) last.entries.push({ item, idx })
+      else out.push({ name: item.group, entries: [{ item, idx }] })
+    })
+    return out
+  }, [visible])
 
   // stable, so the memoized cards only re-render when their own props change
   const onPickRef = useRef(onPick)
@@ -231,12 +239,12 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
 
   // role="none" on the list wrappers keeps listbox > group > option ownership intact
   const renderGrid = (entries: { item: VisibleItem; idx: number }[]) => (
-    <ul role="none" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <ul role="none" className="grid gap-0.5 grid-cols-[repeat(auto-fill,minmax(min(100%,230px),1fr))]">
       {entries.map(({ item, idx }) => {
         const compat = previousProduces ? compatibility(previousProduces, item.meta.accepts) : null
         const badge = compat && compat.level !== 'exact' ? { level: compat.level, note: compat.note } : null
         return (
-          <li role="none" key={item.key}>
+          <li role="none" key={item.key} className="min-w-0">
             <PickerCard
               optionId={item.key}
               meta={item.meta}
@@ -257,24 +265,10 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
   )
 
   return (
-    <div className="card p-5">
-      {/* one scrolling row on phones: wrapped, the ~16 chips fill most of the picker's
-          height-capped scroll area and leave room for a single card. p-1/-m-1 keep the
-          focus outline (2px + 2px offset) inside the scroller's clip box */}
-      <div className="flex items-center gap-2 mb-2 -m-1 p-1 overflow-x-auto sm:flex-wrap sm:overflow-visible">
-        {categories.map(c => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCategory(c)}
-            aria-pressed={category === c}
-            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border transition ${category === c ? 'bg-primary-600 text-white border-primary-600 shadow-glow' : 'bg-surface hover:bg-surface-2'}`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-      <div className="relative mb-2">
+    <div className="border rounded-lg bg-surface shadow-[0_16px_40px_-20px_rgb(var(--c-shadow)/var(--shadow-alpha))]">
+      {title && <div className="px-3 pt-2 text-xs text-muted">{title}</div>}
+      <div className="flex items-center gap-2.5 px-3 h-11 border-b">
+        <Search className="shrink-0 text-muted" size={15} aria-hidden />
         <input
           ref={inputRef}
           role="combobox"
@@ -283,45 +277,53 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
           aria-controls={listboxId}
           aria-activedescendant={activeId}
           aria-label="Search utilities"
-          className="w-full field pl-9"
-          placeholder="Search utilities…"
+          className="flex-1 min-w-0 h-full bg-transparent outline-hidden text-sm"
+          placeholder="Search utilities: base64, hash, json…"
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
         />
-        <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-muted" size={16} aria-hidden />
+        <kbd className="kbd hidden sm:inline">Esc</kbd>
+      </div>
+      {/* one scrolling row on phones: wrapped, the ~16 pills would push the list off screen.
+          p-1/-m-1 keep the focus outline (2px + 2px offset) inside the scroller's clip box */}
+      <div className="border-b px-2.5 py-2">
+        <div className="flex items-center gap-1 -m-1 p-1 overflow-x-auto sm:flex-wrap sm:overflow-visible">
+          {categories.map(c => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              aria-pressed={category === c}
+              className="pill shrink-0 whitespace-nowrap h-6 px-[9px] text-xs"
+            >
+              {c}
+            </button>
+          ))}
+          {previousProduces && (
+            <label className="shrink-0 whitespace-nowrap ml-auto flex items-center gap-1.5 h-6 px-1.5 text-xs text-muted cursor-pointer">
+              <input type="checkbox" checked={onlyExact} onChange={e => setOnlyExact(e.target.checked)} />
+              only exact matches
+            </label>
+          )}
+        </div>
       </div>
       <div role="status" className="sr-only">
         {query.trim() ? `${filteredResults.length} ${filteredResults.length === 1 ? 'utility' : 'utilities'} found` : ''}
       </div>
-      {previousProduces && (
-        <label className="mb-3 flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={onlyExact} onChange={e => setOnlyExact(e.target.checked)} />
-          only exact matches
-        </label>
-      )}
-      <div id={listboxId} role="listbox" aria-label="utilities">
-        {favSection.length > 0 && (
-          <div role="group" aria-label="Favorites" className="mb-4">
-            <div className="flex items-center gap-1 text-xs text-muted mb-2" aria-hidden><Star size={12} /> Favorites</div>
-            {renderGrid(favSection)}
+      <div id={listboxId} role="listbox" aria-label="utilities" className="max-h-[360px] overflow-auto p-1.5">
+        {groups.map(g => (
+          <div key={g.name} role="group" aria-label={g.name}>
+            <div className="px-2 pt-2 pb-1 text-[11.5px] font-medium text-muted" aria-hidden>{g.name}</div>
+            {renderGrid(g.entries)}
           </div>
-        )}
-        {recSection.length > 0 && (
-          <div role="group" aria-label="Recently used" className="mb-4">
-            <div className="flex items-center gap-1 text-xs text-muted mb-2" aria-hidden><Clock size={12} /> Recently used</div>
-            {renderGrid(recSection)}
-          </div>
-        )}
-        {resSection.length > 0 && (
-          <div role="group" aria-label="Results">
-            {renderGrid(resSection)}
+        ))}
+        {visible.length === 0 && (
+          <div className="px-2.5 py-5 text-[13px] text-muted">
+            {query.trim() ? `No utility matches “${query.trim()}”.` : 'No utilities match these filters.'}
           </div>
         )}
       </div>
-      {visible.length === 0 && (
-        <div className="text-sm text-muted">No utilities match your search.</div>
-      )}
     </div>
   )
 }

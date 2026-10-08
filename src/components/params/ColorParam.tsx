@@ -25,7 +25,7 @@ export default function ColorParam({ id, spec, value, onChange, error, described
     <div className="flex items-center gap-2">
       <input
         type="color"
-        className="h-9 w-10 shrink-0 cursor-pointer rounded-lg border bg-transparent"
+        className="h-[30px] w-9 shrink-0 cursor-pointer rounded-md border bg-surface p-0.5"
         aria-label={`${spec.label} swatch`}
         title={isHex ? undefined : 'not a hex colour — showing a placeholder swatch'}
         value={rgb}
@@ -33,7 +33,7 @@ export default function ColorParam({ id, spec, value, onChange, error, described
       />
       <input
         id={id}
-        className="field flex-1 font-mono"
+        className="field h-[30px] min-w-0 flex-1 font-mono text-[12.5px]"
         placeholder={spec.placeholder}
         spellCheck={false}
         value={value}

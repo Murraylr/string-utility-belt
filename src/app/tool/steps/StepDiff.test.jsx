@@ -91,10 +91,10 @@ describe('<StepDiff />', () => {
     const group = await screen.findByRole('group', { name: 'step diff' })
     const rows = [...group.children].map(el => ({ text: el.textContent, cls: el.className }))
     expect(rows.find(r => r.text.includes('old'))).toMatchObject({ text: '- old' })
-    expect(rows.find(r => r.text.includes('old')).cls).toMatch(/text-danger/)
+    expect(rows.find(r => r.text.includes('old')).cls).toMatch(/text-del-ink/)
     expect(rows.find(r => r.text.includes('new'))).toMatchObject({ text: '+ new' })
-    expect(rows.find(r => r.text.includes('new')).cls).toMatch(/text-success/)
-    expect(rows.find(r => r.text.includes('keep')).cls).not.toMatch(/text-(success|danger)/)
+    expect(rows.find(r => r.text.includes('new')).cls).toMatch(/text-add-ink/)
+    expect(rows.find(r => r.text.includes('keep')).cls).not.toMatch(/text-(add|del)-ink/)
   })
 
   it('diffs binary (non-UTF-8) bytes as hex instead of calling them unchanged', async () => {

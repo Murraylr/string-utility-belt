@@ -50,11 +50,7 @@ test.describe('smoke', () => {
     await page.goto('/')
     await page.locator('#pipeline-input').fill('  Héllo World  ')
 
-    // the toolbar has a children slot other features fill; pick the select that offers utilities
-    const quickAdd = page
-      .locator('section[aria-label="pipeline toolbar"] select')
-      .filter({ has: page.locator('option[value="slug"]') })
-      .first()
+    const quickAdd = page.getByRole('combobox', { name: 'quick add a utility' })
     await quickAdd.selectOption('trim')
     await quickAdd.selectOption('slug')
 

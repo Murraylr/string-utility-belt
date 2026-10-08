@@ -1,14 +1,14 @@
 /**
  * Renders a sequence of steps (the top level, a branch lane, or a macro or "run on
- * each" body) and wires each card to the store. Recursive: branch lanes and macro and
- * each bodies are StepLists of their own, addressed by `parentId` / `lane`.
+ * each" body) as a timeline and wires each card to the store. Recursive: branch lanes
+ * and macro and each bodies are StepLists of their own, addressed by `parentId` / `lane`.
  *
- * Owns drag-and-drop reordering (framer-motion `Reorder`) and selection mode
- * (`SelectionProvider`, scoped to this one sequence) for its direct children.
+ * Owns drag-and-drop reordering (framer-motion `Reorder`) for its direct children, and
+ * selection mode for a nested sequence (its own `SelectionProvider`). The top-level
+ * list uses the provider `StepsSection` mounts, whose toolbar holds its toggle.
  */
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Reorder, useDragControls, useReducedMotion } from 'framer-motion'
-import { GripVertical } from 'lucide-react'
 import type { PipelineStep } from '@/types/utility'
 import { isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
 import { defaultParams } from '@/core/params'
@@ -24,6 +24,7 @@ import MacroCard from './steps/MacroCard'
 import { SelectionProvider } from './steps/SelectionContext'
 import { useSelection } from './steps/selection'
 import SelectionBar from './steps/SelectionBar'
+import { StepDepth, stepMark, useStepDepth } from './steps/depth'
 import CustomCodeNotice from '@/app/sandbox/CustomCodeNotice'
 
 export interface StepListProps {
@@ -35,10 +36,14 @@ export interface StepListProps {
 }
 
 export default function StepList(props: StepListProps) {
+  const depth = useStepDepth()
+  if (!props.parentId) return <StepListInner {...props} />
   return (
-    <SelectionProvider>
-      <StepListInner {...props} />
-    </SelectionProvider>
+    <StepDepth.Provider value={depth + 1}>
+      <SelectionProvider>
+        <StepListInner {...props} />
+      </SelectionProvider>
+    </StepDepth.Provider>
   )
 }
 
@@ -96,9 +101,9 @@ function StepListInner({ steps, parentId, lane, scope }: StepListProps) {
   const rendered = order.map(id => byId.get(id)).filter((s): s is PipelineStep => !!s)
 
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0">
       <SelectionBar order={ids} parentId={parentId} lane={lane} scopeLabel={scopeLabel} />
-      <Reorder.Group as="div" axis="y" values={order} onReorder={setOrder} className="grid gap-3">
+      <Reorder.Group as="div" axis="y" values={order} onReorder={setOrder} className="grid">
         {rendered.map((step, i) => (
           <ReorderableStep key={step.id} step={step} index={i} total={rendered.length}
             onCommit={() => commitOrder(order)} onMoved={announceMove} registerHandle={registerHandle}
@@ -111,9 +116,11 @@ function StepListInner({ steps, parentId, lane, scope }: StepListProps) {
   )
 }
 
-function DragHandle({ index, total, controls, onMoveUp, onMoveDown, handleRef }: {
+function DragHandle({ index, total, failed, controls, onMoveUp, onMoveDown, handleRef }: {
   index: number
   total: number
+  /** The step failed in the last run: the mark turns red. */
+  failed: boolean
   controls: ReturnType<typeof useDragControls>
   onMoveUp: () => void
   onMoveDown: () => void
@@ -130,12 +137,16 @@ function DragHandle({ index, total, controls, onMoveUp, onMoveDown, handleRef }:
       onMoveDown()
     }
   }
+  const depth = useStepDepth()
+  const tone = failed ? 'border-danger bg-danger text-surface' : 'border-line-2 bg-surface text-fg hover:border-acc'
   return (
-    <button ref={handleRef} type="button" className="icon-btn cursor-grab touch-none mt-4 shrink-0"
+    <button ref={handleRef} type="button"
+      className={`grid place-items-center shrink-0 rounded-md border font-mono font-medium cursor-grab active:cursor-grabbing touch-none ${tone} ${depth ? 'size-6 mt-[7px] text-[10.5px]' : 'size-7 mt-2.5 text-[11.5px]'}`}
       aria-label={`reorder step ${index + 1} (drag, or focus and press Alt+Arrow keys to move)`}
+      title="Drag to reorder, or focus and press Alt+↑ / Alt+↓"
       aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
       onPointerDown={e => controls.start(e)} onKeyDown={onKeyDown}>
-      <GripVertical size={16} />
+      {stepMark(index, depth)}
     </button>
   )
 }
@@ -156,6 +167,8 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
   const controls = useDragControls()
   const reducedMotion = useReducedMotion()
   const sel = useSelection()
+  const nested = useStepDepth() > 0
+  const failed = !!run.result?.err[step.id] && step.enabled !== false
 
   const common = {
     onMoveUp: () => {
@@ -174,6 +187,7 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
     },
     onToggle: (enabled: boolean) => dispatch({ type: 'TOGGLE_STEP', id: step.id, enabled }),
   }
+  const unwrap = () => { onRemoving(); dispatch({ type: 'UNWRAP', id: step.id }) }
 
   let card: React.ReactNode = null
   if (isUtilityStep(step)) {
@@ -194,17 +208,11 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
       </StepCard>
     )
   } else if (isBranchStep(step)) {
-    card = <BranchCard step={step} index={index} onDelete={common.onDelete} onToggle={common.onToggle} />
+    card = <BranchCard step={step} index={index} total={total} {...common} />
   } else if (isMacroStep(step)) {
-    card = (
-      <MacroCard step={step} index={index} onDelete={common.onDelete} onToggle={common.onToggle}
-        onUnwrap={() => { onRemoving(); dispatch({ type: 'UNWRAP', id: step.id }) }} />
-    )
+    card = <MacroCard step={step} index={index} total={total} {...common} onUnwrap={unwrap} />
   } else if (isEachStep(step)) {
-    card = (
-      <EachCard step={step} index={index} onDelete={common.onDelete} onToggle={common.onToggle}
-        onUnwrap={() => { onRemoving(); dispatch({ type: 'UNWRAP', id: step.id }) }} />
-    )
+    card = <EachCard step={step} index={index} total={total} {...common} onUnwrap={unwrap} />
   }
 
   return (
@@ -212,27 +220,34 @@ function ReorderableStep({ step, index, total, onCommit, onMoved, registerHandle
     // card's text every time its preview grows or shrinks
     <Reorder.Item as="div" value={step.id} dragListener={false} dragControls={controls} layout="position"
       transition={reducedMotion ? { duration: 0 } : undefined}
-      onDragEnd={onCommit} className="flex items-start gap-2" data-step-row={step.id}>
-      <DragHandle index={index} total={total} controls={controls} onMoveUp={common.onMoveUp} onMoveDown={common.onMoveDown}
-        handleRef={el => registerHandle(step.id, el)} />
-      {sel?.active && (
-        // padding + matched negative margins grow the tap target (WCAG 2.5.8) to ~40px
-        // while reproducing the bare checkbox's original mt-4-aligned flow footprint.
-        <label className="mt-0.5 -mx-3.5 -mb-3.5 p-3.5 shrink-0 inline-flex cursor-pointer touch-manipulation">
-          <input type="checkbox" aria-label={`select step ${index + 1}`}
-            checked={sel.isSelected(step.id)} onChange={() => sel.toggle(step.id)} />
-        </label>
-      )}
-      <div className="flex-1 min-w-0">{card}</div>
+      onDragEnd={onCommit} data-step-row={step.id}
+      className={`grid ${nested ? 'grid-cols-[24px_minmax(0,1fr)] gap-x-2' : 'grid-cols-[32px_minmax(0,1fr)] gap-x-3'}`}>
+      {/* the timeline: the step's mark (its drag handle) and the line on to the next step */}
+      <div className="flex flex-col items-center">
+        <DragHandle index={index} total={total} failed={failed} controls={controls} onMoveUp={common.onMoveUp} onMoveDown={common.onMoveDown}
+          handleRef={el => registerHandle(step.id, el)} />
+        <span aria-hidden="true" className={`flex-1 w-px bg-line-2 ${nested && index === total - 1 ? '' : 'min-h-3'}`} />
+      </div>
+      <div className={`flex items-start min-w-0 ${nested ? 'gap-2 pb-2' : 'gap-2.5 pb-3'}`}>
+        {sel?.active && (
+          // padding + matched negative margins grow the tap target (WCAG 2.5.8) to ~40px
+          // without moving the checkbox off the card's first line
+          <label className={`-mx-2.5 -mb-2.5 px-2.5 pb-2.5 shrink-0 inline-flex cursor-pointer touch-manipulation ${nested ? 'pt-2.5' : 'pt-[17px]'}`}>
+            <input type="checkbox" aria-label={`select step ${index + 1}`}
+              checked={sel.isSelected(step.id)} onChange={() => sel.toggle(step.id)} />
+          </label>
+        )}
+        {card}
+      </div>
     </Reorder.Item>
   )
 }
 
 function AddInto({ parentId, lane, label }: { parentId: string; lane?: number; label: string }) {
   const { dispatch } = useTool()
-  const options = React.useMemo(() => [{ label: '+ add step…', value: '' }, ...utilityOptionGroups()], [])
+  const options = React.useMemo(() => [{ label: '+ Add a step', value: '' }, ...utilityOptionGroups()], [])
   return (
-    <Select className="text-sm w-full" value="" options={options as any}
+    <Select className="h-7 w-full px-1.5 rounded-[5px] text-xs text-muted" value="" options={options as any}
       aria-label={`add a step to ${label}`}
       onChange={id => {
         if (!id) return

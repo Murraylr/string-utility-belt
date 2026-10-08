@@ -7,7 +7,7 @@ test.describe('run on each', () => {
   test('decodes every line on its own, leaves empty lines alone and counts the line that failed', async ({ page }) => {
     await page.goto('/')
 
-    await page.getByRole('button', { name: 'each', exact: true }).click()
+    await page.getByRole('button', { name: 'Run on each', exact: true }).click()
     const each = page.locator('[data-step-id]').first()
     await expect(each.getByRole('combobox', { name: 'split the input into' })).toHaveValue('lines')
     await each.getByLabel('add a step to this run-on-each step').selectOption('base64_decode')
@@ -28,7 +28,7 @@ test.describe('run on each', () => {
     // on the whole input, reverse also swaps the lines
     await expect(result(page)).toHaveText('dc\nba')
 
-    await page.getByRole('button', { name: 'select', exact: true }).click()
+    await page.getByRole('button', { name: 'Select', exact: true }).click()
     await page.getByLabel('select step 1').click()
     await page.getByRole('button', { name: 'Run on each line' }).click()
     // per line, each line is reversed where it is
