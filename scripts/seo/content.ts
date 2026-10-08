@@ -15,6 +15,8 @@ import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
 import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
 import type { RecipeTrace } from '../../src/recipes/trace'
 import SponsorBlock from '../../src/app/sponsors/SponsorBlock'
+import PromoBlock from '../../src/app/sponsors/PromoBlock'
+import { fixedPromo } from '../../src/app/sponsors/promos'
 import type { SponsorPage, Sponsorship } from '../../src/app/sponsors/sponsors'
 
 /** A page's sponsor at build time, rendered by the app's own `SponsorBlock`. */
@@ -333,7 +335,8 @@ export function renderRecipeContent(opts: {
   })
   return renderToStaticMarkup(createElement(RecipeArticle, {
     recipe, utility, guideHtml, steps: trace.steps, skip: trace.skip, live, related,
-    sponsor: sponsor && sponsorElement(sponsor),
+    // with no sponsor, the promo the app will show whatever the browser, so the page does not shift on load
+    sponsor: sponsor ? sponsorElement(sponsor) : createElement(PromoBlock, { id: fixedPromo({ kind: 'recipe', slug: recipe.slug })! }),
   }))
 }
 

@@ -106,6 +106,12 @@ describe('HousePromo', () => {
     expect(container.innerHTML).toBe('')
   })
 
+  it('shows a promo that does not depend on the browser at once, as the pre-render does', () => {
+    browser('checking', true)
+    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+    expect(promoOn({ kind: 'utility', id: 'csv_to_json' })).toBe('vscode')
+  })
+
   it('reports a click as an integration click from the promo, and marks the integrations seen', () => {
     browser('absent', true)
     render(<PageSponsor page={trim} sponsorships={[]} />)

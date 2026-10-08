@@ -500,6 +500,14 @@ describe('buildSeo recipes', () => {
     expect(main.querySelector('section[aria-label="guide"] h2')?.textContent).toBe('Why')
   })
 
+  it("pre-renders an unbooked recipe page's slot with the promo the app shows there, and none on utility pages", () => {
+    const promo = html(read(dist, 'recipes/shout-slugs/index.html')).querySelector('#root main header aside[data-promo]')!
+    expect(promo.getAttribute('data-promo')).toBe('vscode')
+    expect(promo.getAttribute('aria-label')).toBe('From String Utility Belt')
+    expect(promo.className).toBe('sponsor hidden sm:flex')
+    expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
+  })
+
   it('lists recipes on their index, links them from the utilities they use and the sitemap', () => {
     const index = html(read(dist, 'recipes/index.html'))
     expect(index.querySelector('#root main h1')?.textContent).toBe('Recipes')

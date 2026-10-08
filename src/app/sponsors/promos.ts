@@ -34,6 +34,10 @@ export const PROMOS: Record<PromoId, Promo> = {
  * with those files in an editor. Everywhere else the VS Code extension.
  */
 export function choosePromo(page: SponsorPage, chromeInstallable: boolean): PromoId {
-  if (!chromeInstallable || page.kind === 'recipe' || topicOf(page) === 'data-formats') return 'vscode'
-  return 'chrome'
+  return fixedPromo(page) ?? (chromeInstallable ? 'chrome' : 'vscode')
+}
+
+/** The promo a page shows whatever the browser, if its choice does not depend on it (so it can be pre-rendered). */
+export function fixedPromo(page: SponsorPage): PromoId | undefined {
+  return page.kind === 'recipe' || topicOf(page) === 'data-formats' ? 'vscode' : undefined
 }
