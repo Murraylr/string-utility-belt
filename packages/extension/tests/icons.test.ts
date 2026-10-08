@@ -1,8 +1,9 @@
 // @vitest-environment node
 /**
- * The toolbar and store icons are the String Utility Belt "S" mark, not a
- * placeholder: each size in the manifest exists at that size and actually has
- * a mark on it (a solid or empty square would pass a dimensions-only check).
+ * The toolbar and store icons are the String Utility Belt keycap mark (made by
+ * scripts/icons.ts), not a placeholder: each size in the manifest exists at that
+ * size and actually has a mark on it (a solid or empty square would pass a
+ * dimensions-only check).
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -68,7 +69,7 @@ describe('extension icons', () => {
       else if (luma > 220) mark++
     }
     const area = width * height
-    expect(tile / area, 'the purple tile covers most of the icon').toBeGreaterThan(0.25)
-    expect(mark / area, 'the white S is visible on it').toBeGreaterThan(0.03)
+    expect(tile / area, 'the accent tile covers much of the icon').toBeGreaterThan(0.25)
+    expect(mark / area, 'the cream key is visible on it').toBeGreaterThan(0.03)
   })
 })

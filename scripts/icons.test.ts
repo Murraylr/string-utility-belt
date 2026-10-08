@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { ICON_SPECS, buildIconSvg, generateIcons, renderIconPng, renderIconPixels, LOGO_COLOR } from './icons'
+import { EXTENSION_ICON_SPECS, ICON_SPECS, buildIconSvg, generateIcons, renderIconPng, renderIconPixels, LOGO_COLOR, LOGO_FOREGROUND } from './icons'
 
 const ROOT = path.resolve(__dirname, '..')
 
@@ -23,50 +23,75 @@ describe('ICON_SPECS', () => {
       { file: 'icon-512.png', size: 512, maskable: false },
       { file: 'icon-maskable-512.png', size: 512, maskable: true },
       { file: 'apple-touch-icon.png', size: 180, maskable: false },
+      { file: 'favicon-32.png', size: 32, maskable: false },
     ]))
+  })
+
+  it('draws the three-letter keycap only where it can be read: 128 px and up', () => {
+    for (const spec of [...ICON_SPECS, ...EXTENSION_ICON_SPECS]) {
+      expect(spec.variant === 'full', spec.file).toBe(spec.size - 2 * (spec.padding ?? 0) >= 96)
+    }
   })
 })
 
 describe('buildIconSvg', () => {
-  it('is a font-independent vector mark using the brand colour', () => {
-    const svg = buildIconSvg({ maskable: false })
+  it('is a font-independent vector mark using the brand colours', () => {
+    const svg = buildIconSvg({ variant: 'full', maskable: false })
     expect(svg).toContain('<svg')
     expect(svg).toContain(LOGO_COLOR)
+    expect(svg).toContain(LOGO_FOREGROUND)
     expect(svg).not.toMatch(/<text|font-family/)
   })
 
   it('rounds the corners for the "any" purpose icon', () => {
-    expect(buildIconSvg({ maskable: false })).toMatch(/rx="[1-9]\d*"/)
+    expect(buildIconSvg({ variant: 'full', maskable: false })).toMatch(/<rect x="0" y="0" width="512" height="512" rx="[1-9]\d*"/)
   })
 
   it('is full-bleed (no corner rounding) when the OS applies its own mask: maskable and apple-touch-icon', () => {
-    expect(buildIconSvg({ maskable: true })).toMatch(/rx="0"/)
-    expect(buildIconSvg({ maskable: false, fullBleed: true })).toMatch(/rx="0"/)
+    expect(buildIconSvg({ variant: 'full', maskable: true })).toMatch(/<rect x="0" y="0" width="512" height="512" rx="0"/)
+    expect(buildIconSvg({ variant: 'full', maskable: false, fullBleed: true })).toMatch(/<rect x="0" y="0" width="512" height="512" rx="0"/)
+  })
+
+  it('leaves a transparent margin when the spec asks for padding (Chrome\'s 128 px icon)', () => {
+    expect(buildIconSvg({ variant: 'full', maskable: false, padding: 16, size: 128 })).toMatch(/<rect x="64" y="64" width="384" height="384"/)
   })
 })
 
 describe('the rendered mark', () => {
-  /** x positions of the foreground (white) pixels in one row. */
-  function whiteColumns({ width, pixels }: { width: number; pixels: Uint8Array }, y: number) {
-    const xs: number[] = []
-    for (let x = 0; x < width; x++) {
-      const i = (y * width + x) * 4
-      if (pixels[i] > 200 && pixels[i + 1] > 200 && pixels[i + 2] > 200) xs.push(x)
+  const isCream = (p: Uint8Array, i: number) => p[i + 3] > 200 && p[i] > 230 && p[i + 1] > 230 && p[i + 2] > 220
+  const isAccent = (p: Uint8Array, i: number) => p[i + 3] > 200 && p[i] > 170 && p[i + 1] < 110 && p[i + 2] < 70
+
+  /** Lengths of the cream runs down the middle column, top to bottom. */
+  function creamRuns({ width, height, pixels }: { width: number; height: number; pixels: Uint8Array }, x: number) {
+    const runs: number[] = []
+    let run = 0
+    for (let y = 0; y < height; y++) {
+      if (isCream(pixels, (y * width + x) * 4)) run++
+      else if (run) { runs.push(run); run = 0 }
     }
-    return xs
+    if (run) runs.push(run)
+    return runs
   }
 
-  // An "S": the upper bowl bulges LEFT (opening right) and the lower bowl bulges RIGHT.
-  // A mirrored glyph reads as a "2"/"ƨ" on every home screen.
-  it.each(ICON_SPECS)('reads as an S, not a mirrored S ($file)', async (spec) => {
+  // A key seen from the front: a thin rim on top, letters on the accent face, a deep base.
+  it.each([...ICON_SPECS, ...EXTENSION_ICON_SPECS].filter(s => s.variant !== 'tiny' && s.size >= 128))('is a keycap with a deep base ($file)', async (spec) => {
     const image = await renderIconPixels(spec)
-    const mid = image.width / 2
-    const upper = whiteColumns(image, Math.round(image.height * 0.35))
-    const lower = whiteColumns(image, Math.round(image.height * 0.65))
-    expect(upper.length).toBeGreaterThan(0)
-    expect(lower.length).toBeGreaterThan(0)
-    expect(Math.max(...upper)).toBeLessThan(mid)
-    expect(Math.min(...lower)).toBeGreaterThan(mid)
+    // left of centre: through the key's rim and base, clear of the letters
+    const runs = creamRuns(image, Math.round(image.width * 0.27))
+    expect(runs.length, 'a rim above and a base below').toBe(2)
+    expect(runs[1]).toBeGreaterThan(runs[0] * 1.5)
+  }, 30_000)
+
+  it.each([...ICON_SPECS, ...EXTENSION_ICON_SPECS])('is the accent tile with cream on it ($file)', async (spec) => {
+    const { pixels, width, height } = await renderIconPixels(spec)
+    let accent = 0
+    let cream = 0
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (isAccent(pixels, i)) accent++
+      else if (isCream(pixels, i)) cream++
+    }
+    expect(accent / (width * height)).toBeGreaterThan(0.25)
+    expect(cream / (width * height)).toBeGreaterThan(0.05)
   }, 30_000)
 })
 
@@ -87,11 +112,13 @@ describe('generateIcons', () => {
   }, 30_000)
 })
 
-describe('committed icons (public/icons)', () => {
-  it('are up to date with the generator — run `npx vite-node scripts/icons.ts` after changing the logo', async () => {
-    for (const spec of ICON_SPECS) {
-      const committed = fs.readFileSync(path.join(ROOT, 'public/icons', spec.file))
-      expect(Buffer.from(await renderIconPng(spec)).equals(committed), spec.file).toBe(true)
+describe('committed icons (public/icons, packages/extension/icons)', () => {
+  it('are up to date with the generator: run `npx vite-node scripts/icons.ts` after changing the mark', async () => {
+    for (const [dir, specs] of [['public/icons', ICON_SPECS], ['packages/extension/icons', EXTENSION_ICON_SPECS]] as const) {
+      for (const spec of specs) {
+        const committed = fs.readFileSync(path.join(ROOT, dir, spec.file))
+        expect(Buffer.from(await renderIconPng(spec)).equals(committed), `${dir}/${spec.file}`).toBe(true)
+      }
     }
   }, 30_000)
 
@@ -109,5 +136,6 @@ describe('committed icons (public/icons)', () => {
     const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')
     expect(html).toMatch(/<link rel="manifest" href="\/manifest\.webmanifest">/)
     expect(html).toMatch(/<link rel="apple-touch-icon" href="\/icons\/apple-touch-icon\.png">/)
+    expect(html).toMatch(/<link rel="icon" type="image\/png" sizes="32x32" href="\/icons\/favicon-32\.png">/)
   })
 })

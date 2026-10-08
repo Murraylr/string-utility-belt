@@ -1,58 +1,49 @@
 {
   "assets": [
     {
-      "file": "01-decode-base64.png",
+      "file": "01-build-a-pipeline.png",
       "width": 1280,
       "height": 800,
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 292887
+      "bytes": 139528
     },
     {
-      "file": "02-format-json.png",
+      "file": "02-save-whole-pipeline.png",
       "width": 1280,
       "height": 800,
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 322855
+      "bytes": 107373
     },
     {
-      "file": "03-change-case.png",
+      "file": "03-right-click-any-selection.png",
       "width": 1280,
       "height": 800,
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 306778
+      "bytes": 90629
     },
     {
-      "file": "04-hash-text.png",
+      "file": "04-every-step-one-click.png",
       "width": 1280,
       "height": 800,
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 315390
+      "bytes": 107764
     },
     {
-      "file": "05-customize-menu.png",
+      "file": "05-private-by-design.png",
       "width": 1280,
       "height": 800,
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 290501
-    },
-    {
-      "file": "marquee-promo-1400x560.png",
-      "width": 1400,
-      "height": 560,
-      "bitDepth": 8,
-      "colorType": 2,
-      "format": "24-bit RGB PNG",
-      "bytes": 508872
+      "bytes": 89973
     },
     {
       "file": "small-promo-440x280.png",
@@ -61,7 +52,16 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 92861
+      "bytes": 23871
+    },
+    {
+      "file": "marquee-promo-1400x560.png",
+      "width": 1400,
+      "height": 560,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 62405
     },
     {
       "file": "store-icon-128.png",
@@ -69,10 +69,10 @@
       "height": 128,
       "bitDepth": 8,
       "colorType": 6,
-      "format": "RGBA PNG",
-      "bytes": 3050
+      "format": "32-bit RGBA PNG",
+      "bytes": 2419
     }
   ],
-  "shortDescriptionCharacters": 119,
+  "shortDescriptionCharacters": 118,
   "allPassed": true
 }

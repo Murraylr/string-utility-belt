@@ -1,6 +1,6 @@
-Turn selected text into something useful without interrupting your work.
+Build a text pipeline once, then run it on anything you select.
 
-String Utility Belt brings 242 text and developer utilities to Chrome. Decode a Base64 string, format JSON, change letter case, generate a hash, and handle everyday text tasks from the right-click menu or a compact toolbar popup.
+String Utility Belt brings 242 text and developer utilities to Chrome, and something most text tools can't do: whole pipelines. Chain steps on stringutilitybelt.com (trim every line, lower-case it, drop duplicates, sort), save the pipeline to the extension in one click, and run every step on any selection from the right-click menu. Single utilities are there too: decode Base64, format JSON, change case, generate a hash, and more.
 
 WORK WHERE YOUR TEXT IS
 
@@ -21,11 +21,11 @@ TOOLS FOR DAILY DEVELOPMENT
 
 MAKE THE RIGHT-CLICK MENU YOURS
 
-Start with ten useful defaults, then search the Options page by utility name, identifier, tag, or category. Choose the tools you want in your menu and save your selection. Right-click actions use each utility's default settings; the popup exposes supported settings for individual runs.
+Start with ten useful favourites, then put them in the order you want, remove the ones you don't use, and add others by searching the Options page by name, identifier, tag, or category. Right-click actions use each utility's default settings; the popup exposes supported settings for individual runs.
 
-GO FURTHER IN THE FULL APP
+SAVED PIPELINES, ONE CLICK AWAY
 
-Open String Utility Belt's companion web app when you need to chain transformations into visual pipelines with per-step previews. The extension is designed for quick, single-utility tasks; the full app provides the pipeline workspace.
+Build a multi-step pipeline on stringutilitybelt.com, with a preview after every step, steps that run on each line, and branches. Send it to the extension with "Save to extension", or paste its share link on the Options page. Each saved pipeline becomes one item in your right-click menu and in the toolbar popup, and runs every step with the settings it was saved with. Saving again under the same name updates it. Rename, reorder, or delete pipelines on the Options page.
 
 LOCAL PROCESSING, WITH A CLEAR HANDOFF
 
