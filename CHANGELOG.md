@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-08
+
 ### Added
 
 - **Recipes in the browser extension** — every recipe page offers "Save to extension" when the String Utility
