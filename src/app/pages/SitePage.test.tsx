@@ -16,7 +16,7 @@ describe('SitePage', () => {
     for (const link of screen.getAllByRole('link', { name: "Google's Ads Settings" })) {
       expect(link.getAttribute('href')).toBe('https://adssettings.google.com/')
     }
-    expect(document.title).toBe('Privacy Policy — String Utility Belt')
+    expect(document.title).toBe('Privacy Policy | String Utility Belt')
     unmount()
     expect(document.title).toBe('String Utility Belt')
   })

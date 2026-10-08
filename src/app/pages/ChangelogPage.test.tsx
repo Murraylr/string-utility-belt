@@ -29,7 +29,7 @@ describe('<ChangelogPage />', () => {
   it('sets the document title, and restores it on leaving', () => {
     document.title = 'String Utility Belt'
     const { unmount } = render(<ChangelogPage />)
-    expect(document.title).toBe('Changelog — String Utility Belt')
+    expect(document.title).toBe('Changelog | String Utility Belt')
     unmount()
     // otherwise the tool page (which sets no title) keeps "Changelog — …"
     expect(document.title).toBe('String Utility Belt')

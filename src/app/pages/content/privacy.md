@@ -5,7 +5,7 @@ description: How String Utility Belt handles data: your text is processed in you
 
 # Privacy Policy
 
-*Last updated: 7 October 2026*
+*Last updated: 8 October 2026*
 
 String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and publishes the String Utility Belt browser extension, VS Code extension, command-line tool (`subelt`), MCP server and code library. This policy explains what information is collected when you use the site or these tools, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
 
@@ -25,7 +25,7 @@ If you install the site as an app, its service worker keeps a copy of the site's
 
 ## Share links
 
-When you create a share link, your pipeline — and your input, if you choose to include it — is compressed into the part of the link after the `#`. Browsers do not send that part of a web address to the server, so we never receive it. Anyone you give the link to can read what it contains, so only include input you are happy to share.
+When you create a share link, your pipeline (and your input, if you choose to include it) is compressed into the part of the link after the `#`. Browsers do not send that part of a web address to the server, so we never receive it. Anyone you give the link to can read what it contains, so only include input you are happy to share.
 
 ## Features that contact our server
 
@@ -60,7 +60,7 @@ These run entirely on your computer, on the text you give them, and make no netw
 
 ### Google Analytics
 
-We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. It also records which features you use — for example which utilities you add to a pipeline, how large your input is (as a rough size range), that you copied or downloaded a result or followed a sponsor's link, or what you typed into a utility search box — but never the text, files or share links you work with: a shared pipeline is reported only as "a shared pipeline". To tell people from automated traffic, the site notes whether a visit showed real mouse, keyboard or touch input, and remembers that on your device. With Google signals turned on, Google also associates this data with your Google account if you are signed in and have allowed ads personalization, which gives us aggregate reports on visitors' age range, gender and interests; you can stop this in [Google's Ads Settings](https://adssettings.google.com/). We only look at this information in aggregate. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
+We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. It also records which features you use, for example which utilities you add to a pipeline, how large your input is (as a rough size range), that you copied or downloaded a result or followed a sponsor's link, or what you typed into a utility search box. It never records the text, files or share links you work with: a shared pipeline is reported only as "a shared pipeline". To tell people from automated traffic, the site notes whether a visit showed real mouse, keyboard or touch input, and remembers that on your device. With Google signals turned on, Google also associates this data with your Google account if you are signed in and have allowed ads personalization, which gives us aggregate reports on visitors' age range, gender and interests; you can stop this in [Google's Ads Settings](https://adssettings.google.com/). We only look at this information in aggregate. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
 
 ### Google Fonts
 
@@ -74,7 +74,7 @@ The site's typefaces are loaded from Google Fonts. To download them, your browse
 
 ## Your rights
 
-Depending on where you live — for example under the GDPR or the UK GDPR — you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data collected by Google, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
+Depending on where you live (for example under the GDPR or the UK GDPR), you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data collected by Google, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
 
 We process data on the basis of our legitimate interest in understanding how the site is used (analytics, without cookies where the law requires consent for them) and in running a secure and reliable service (rate limiting and operational logs).
 

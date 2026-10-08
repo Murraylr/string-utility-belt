@@ -137,7 +137,7 @@ describe('<BlogPost /> revisions and markup', () => {
     expect(screen.getByText('September 25, 2026').closest('time')?.getAttribute('datetime')).toBe('2026-09-25')
     expect(screen.getByRole('heading', { level: 2, name: 'Part' })).toBeTruthy()
     expect(screen.getAllByRole('listitem').map(li => li.textContent)).toEqual(['one', 'two'])
-    expect(document.title).toBe('Revised — String Utility Belt')
+    expect(document.title).toBe('Revised | String Utility Belt')
   })
 })
 

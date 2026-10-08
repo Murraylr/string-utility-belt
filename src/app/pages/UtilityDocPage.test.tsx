@@ -28,7 +28,7 @@ describe('UtilityDocPage', () => {
   it('sets the document title and meta description, and restores both on leaving', () => {
     document.title = 'String Utility Belt'
     const { unmount } = render(<UtilityDocPage id="trim" />)
-    expect(document.title).toBe('trim — String Utility Belt')
+    expect(document.title).toBe('trim | String Utility Belt')
     const meta = document.querySelector('meta[name="description"]')
     expect(meta?.getAttribute('content')).toBe('Remove leading and trailing whitespace.')
 
@@ -184,7 +184,7 @@ describe('UtilityDocPage', () => {
   it('titles the not-found page', () => {
     document.title = 'String Utility Belt'
     const { unmount } = render(<UtilityDocPage id="does-not-exist" />)
-    expect(document.title).toBe('Unknown utility — String Utility Belt')
+    expect(document.title).toBe('Unknown utility | String Utility Belt')
     unmount()
     expect(document.title).toBe('String Utility Belt')
   })
@@ -296,6 +296,6 @@ describe('UtilityDocPage guide', () => {
     render(<UtilityDocPage id="trim" />)
     await waitFor(() => expect(fetchMock).toHaveBeenCalled())
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'How trim works' })).toBeNull())
-    expect(document.title).toBe('trim — String Utility Belt')
+    expect(document.title).toBe('trim | String Utility Belt')
   })
 })

@@ -1,5 +1,5 @@
 ---
-title: Excel Column to SQL IN Clause — Quoted, Deduped, Escaped
+title: Excel Column to SQL IN Clause: Quoted, Deduped, Escaped
 description: Paste a column from Excel or Google Sheets and get a valid SQL IN (...) list with values trimmed, duplicates removed and apostrophes escaped.
 ---
 
