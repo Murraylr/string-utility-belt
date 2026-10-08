@@ -1,13 +1,27 @@
 import React from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { track } from '@/app/analytics/analytics'
 import SponsorBlock from './SponsorBlock'
 import PageSponsor from './PageSponsor'
 import { utcDay, type Sponsorship } from './sponsors'
+import { PROMOS } from './promos'
+import { useExtensionStatus, type ExtensionStatus } from '@/app/extension/bridge'
+import { canInstallExtension } from '@/app/extension/installable'
+import { readPref } from '@/app/prefs'
+import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 
 vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
+vi.mock('@/app/extension/bridge', () => ({ useExtensionStatus: vi.fn() }))
+vi.mock('@/app/extension/installable', () => ({ canInstallExtension: vi.fn() }))
+
+/** As the browser answers: whether the extension is installed, and whether it could be. */
+function browser(status: ExtensionStatus, installable: boolean) {
+  vi.mocked(useExtensionStatus).mockReturnValue(status)
+  vi.mocked(canInstallExtension).mockReturnValue(installable)
+}
+beforeEach(() => { vi.mocked(track).mockClear(); browser('absent', false) })
 
 const today = utcDay(new Date())
 const booking: Sponsorship = {
@@ -40,11 +54,17 @@ describe('SponsorBlock', () => {
 })
 
 describe('PageSponsor', () => {
-  it('renders nothing when the page has no sponsor today', () => {
-    const { container } = render(<PageSponsor page={{ kind: 'utility', id: 'trim' }} sponsorships={[]} />)
-    expect(container.innerHTML).toBe('')
+  it('fills an unbooked page with our own extension, labelled as ours and hidden on phones', () => {
     const past = { ...booking, start: '2020-01-01', end: '2020-01-31' }
-    expect(render(<PageSponsor page={{ kind: 'utility', id: 'trim' }} sponsorships={[past]} />).container.innerHTML).toBe('')
+    render(<PageSponsor page={{ kind: 'utility', id: 'trim' }} sponsorships={[past]} className="mt-3" />)
+    expect(screen.queryByRole('complementary', { name: 'Sponsor' })).toBeNull()
+    const block = screen.getByRole('complementary', { name: 'From String Utility Belt' })
+    expect(block.className).toBe('sponsor hidden sm:flex mt-3')
+    expect(block.getAttribute('data-promo')).toBe('vscode')
+    const link = screen.getByRole('link', { name: `${PROMOS.vscode.name} — ${PROMOS.vscode.text} (opens in a new tab)` })
+    expect(link.getAttribute('href')).toBe(PROMOS.vscode.href)
+    expect(link.getAttribute('rel')).toBe('noopener')
+    expect(block.textContent).toContain('From String Utility Belt · Advertise')
   })
 
   it("shows today's sponsor and reports a click by ids only", () => {
@@ -52,5 +72,52 @@ describe('PageSponsor', () => {
     expect(screen.getByRole('complementary', { name: 'Sponsor' }).className).toBe('sponsor mt-3')
     fireEvent.click(screen.getByRole('link', { name: /Acme/ }))
     expect(track).toHaveBeenCalledWith('sponsor_click', { sponsorship_id: 'acme-now', sponsor_page: 'recipes/decode-saml-request' })
+  })
+})
+
+describe('HousePromo', () => {
+  const trim = { kind: 'utility', id: 'trim' } as const
+  const promoOn = (page: Parameters<typeof PageSponsor>[0]['page']) => {
+    const { container, unmount } = render(<PageSponsor page={page} sponsorships={[]} />)
+    const id = container.querySelector('[data-promo]')?.getAttribute('data-promo') ?? null
+    unmount()
+    return id
+  }
+
+  it('offers the browser extension only where it can be installed and is not', () => {
+    browser('absent', true)
+    expect(promoOn(trim)).toBe('chrome')
+    expect(promoOn({ kind: 'blog', slug: 'md5-insecure-but-useful' })).toBe('chrome')
+    browser({ id: 'x', version: '1.4.1', stepTypes: ['utility'] }, true)
+    expect(promoOn(trim)).toBe('vscode')
+    browser('absent', false)
+    expect(promoOn(trim)).toBe('vscode')
+  })
+
+  it('leaves the browser extension to recipe pages themselves, and offers VS Code on data-format pages', () => {
+    browser('absent', true)
+    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+    expect(promoOn({ kind: 'utility', id: 'json_pretty' })).toBe('vscode')
+  })
+
+  it('shows nothing while the browser extension is still answering, so it never flips', () => {
+    browser('checking', true)
+    const { container } = render(<PageSponsor page={trim} sponsorships={[]} />)
+    expect(container.innerHTML).toBe('')
+  })
+
+  it('reports a click as an integration click from the promo, and marks the integrations seen', () => {
+    browser('absent', true)
+    render(<PageSponsor page={trim} sponsorships={[]} />)
+    fireEvent.click(screen.getByRole('link', { name: /String Utility Belt for Chrome/ }))
+    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'chrome', source: 'promo', sponsor_page: 'util/trim' })
+    expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
+  })
+
+  it('gives way to a paid sponsor', () => {
+    browser('absent', true)
+    render(<PageSponsor page={trim} sponsorships={[booking]} />)
+    expect(screen.getByRole('complementary', { name: 'Sponsor' })).toBeTruthy()
+    expect(screen.queryByRole('complementary', { name: 'From String Utility Belt' })).toBeNull()
   })
 })

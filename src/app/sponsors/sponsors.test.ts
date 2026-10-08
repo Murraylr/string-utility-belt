@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest'
 import { MANIFEST } from '@/utilities/_generated/manifest'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { sponsorshipProblems } from './check'
-import { pageKey, sponsorFor, sponsoredHref, topicOf, utcDay, type Sponsorship } from './sponsors'
+import { MAX_SPONSOR_NAME, MAX_SPONSOR_TEXT, pageKey, sponsorFor, sponsoredHref, topicOf, utcDay, type Sponsorship } from './sponsors'
 import { SPONSORSHIPS } from './sponsorships'
 import { SPONSOR_TOPICS } from './topics'
+import { PROMOS } from './promos'
+import { CHROME_WEB_STORE_URL, VSCODE_MARKETPLACE_URL } from '@/app/integrations/links'
 
 const booking = (over: Partial<Sponsorship> = {}): Sponsorship => ({
   id: 'acme-2026-11', scope: 'auth-tokens', name: 'Acme', text: 'Single sign-on in an afternoon.',
@@ -128,5 +130,16 @@ describe('bookings', () => {
     expect(sponsorshipProblems([booking(), next, site], logo)).toEqual([])
     expect(sponsorshipProblems([booking(), clash], logo)).toEqual(['sponsorships acme-2026-11 and rival-2026-11 both hold auth-tokens on overlapping days'])
     expect(sponsorshipProblems([booking(), booking()], logo)).toContain('sponsorship acme-2026-11: duplicate id')
+  })
+})
+
+describe('house promos', () => {
+  it('fit the slot a sponsor gets, and link to the store pages', () => {
+    for (const [id, p] of Object.entries(PROMOS)) {
+      expect(p.text.length, id).toBeLessThanOrEqual(MAX_SPONSOR_TEXT)
+      expect(p.name.length, id).toBeLessThanOrEqual(MAX_SPONSOR_NAME)
+    }
+    expect(PROMOS.chrome.href).toBe(CHROME_WEB_STORE_URL)
+    expect(PROMOS.vscode.href).toBe(VSCODE_MARKETPLACE_URL)
   })
 })

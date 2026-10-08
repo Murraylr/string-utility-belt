@@ -176,6 +176,10 @@
   .sponsor-logo {
     @apply size-12 shrink-0 rounded-lg object-contain bg-white;
   }
+  /* HousePromo: our own extension's icon on a brand tile in place of a sponsor's logo */
+  .sponsor-mark {
+    @apply grid place-items-center bg-primary-600 text-white;
+  }
   .sponsor-label {
     @apply text-[11px] uppercase tracking-wide text-muted sm:order-last;
   }

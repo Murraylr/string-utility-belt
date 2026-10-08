@@ -10,8 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Advertise page** (`/advertise/`, linked from the footer): who the site is for, the sponsorship formats on offer,
   what sponsors may and may not do, and how to book.
-- **Sponsor block** on utility, recipe and blog pages, shown only while a sponsorship is booked: the sponsor's logo,
-  name, one line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie.
+- **Sponsor block** on utility, recipe and blog pages: while a sponsorship is booked, the sponsor's logo, name, one
+  line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie. Until
+  then it introduces our own extensions: the browser extension in a desktop Chrome, Edge or other Chromium browser
+  that doesn't have it yet, otherwise the VS Code extension (not shown on phones).
 
 ### Changed
 

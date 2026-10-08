@@ -150,6 +150,11 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
   of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
   event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
+  Both go through `Slot` (the shared layout).
+- An unbooked slot shows our own extension (`HousePromo`, `promos.ts`; app-only, as it depends on the browser):
+  labelled "From String Utility Belt", never "Sponsor"; the browser extension only where `canInstallExtension()` and
+  it has not answered, never on recipe pages (`RecipeExtension` offers it) or data-format pages, else VS Code; hidden
+  below `sm`; nothing while the extension is still answering; clicks are `integration_click` with `source: 'promo'`.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts
