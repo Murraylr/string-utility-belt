@@ -15,8 +15,8 @@ export default function LibraryButton() {
 
   return (
     <>
-      <button ref={buttonRef} className="btn" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        <Library size={16} aria-hidden /> library
+      <button ref={buttonRef} className="btn h-[30px] px-2.5" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <Library size={14} aria-hidden /> Library
       </button>
       {open && <LibraryDialog onClose={() => setOpen(false)} returnFocus={buttonRef} />}
     </>

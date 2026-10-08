@@ -28,17 +28,17 @@ describe('OutputView (bytes)', () => {
   it('shows a lossy text view by default with a text/hex toggle', () => {
     render(<OutputView value={new Uint8Array([72, 105])} text="Hi" />)
     expect(screen.getByText('Hi')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'text' })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: 'hex' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Hex' })).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('opens binary-looking bytes in the hex view, and text-like bytes as text', () => {
     const { unmount } = render(<OutputView value={new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff])} text="" />)
-    expect(screen.getByRole('button', { name: 'hex' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Hex' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('table', { name: /hex view/i })).toBeTruthy()
     unmount()
     render(<OutputView value={new TextEncoder().encode('plain words')} text="" />)
-    expect(screen.getByRole('button', { name: 'text' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Text' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('plain words')).toBeTruthy()
   })
 
@@ -53,7 +53,7 @@ describe('OutputView (bytes)', () => {
   it('switches to a hex dump on toggle', async () => {
     const user = userEvent.setup()
     render(<OutputView value={new Uint8Array([0x41])} text="A" />)
-    await user.click(screen.getByRole('button', { name: 'hex' }))
+    await user.click(screen.getByRole('button', { name: 'Hex' }))
     expect(screen.getByRole('table', { name: /hex view/i })).toBeTruthy()
   })
 })

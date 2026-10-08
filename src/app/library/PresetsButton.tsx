@@ -15,8 +15,8 @@ export default function PresetsButton() {
 
   return (
     <>
-      <button ref={buttonRef} className="btn" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        <LayoutGrid size={16} aria-hidden /> presets
+      <button ref={buttonRef} className="btn h-[30px] px-2.5" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <LayoutGrid size={14} aria-hidden /> Presets
       </button>
       {open && <PresetGallery onClose={() => setOpen(false)} returnFocus={buttonRef} />}
     </>

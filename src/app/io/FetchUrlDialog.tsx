@@ -109,25 +109,26 @@ export default function FetchUrlDialog({ open, onClose, onFetched }: FetchUrlDia
     }
   }
 
-  // Portalled to <body>: an ancestor with a transform or backdrop-filter (the tool's `.glass` hero)
+  // Portalled to <body>: an ancestor with a transform or backdrop-filter
   // would otherwise become the containing block of this `fixed` overlay and clip it.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      className="fixed inset-0 z-60 flex items-start justify-center overflow-auto bg-black/35 px-4 pt-[9vh] pb-4"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
       // a file dropped on the modal must neither load as input nor make the browser open it
       // (a dragged link or text still drops into the URL field normally)
       onDragOver={e => { if (draggingFiles(e.dataTransfer)) { e.preventDefault(); e.dataTransfer.dropEffect = 'none' } }}
       onDrop={e => { if (draggingFiles(e.dataTransfer)) e.preventDefault() }}
     >
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fetch-url-title" className="card p-4 w-full max-w-md grid gap-3">
-        <h2 id="fetch-url-title" className="font-semibold">Fetch URL as input</h2>
-        <form onSubmit={submit} className="grid gap-2" aria-busy={loading}>
-          <label className="muted" htmlFor="fetch-url-input">URL</label>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="fetch-url-title"
+        className="w-full max-w-md bg-surface border rounded-[10px] shadow-dialog">
+        <h2 id="fetch-url-title" className="m-0 px-[18px] pt-3.5 pb-3 border-b text-[15px] font-semibold">Fetch a URL as input</h2>
+        <form onSubmit={submit} className="grid gap-2 p-[18px]" aria-busy={loading}>
+          <label className="text-[12.5px] font-medium" htmlFor="fetch-url-input">URL</label>
           <input
             id="fetch-url-input"
             ref={inputRef}
-            className="field"
+            className="field font-mono text-[12.5px]"
             type="url"
             inputMode="url"
             placeholder="https://example.com/data.json"
@@ -135,12 +136,12 @@ export default function FetchUrlDialog({ open, onClose, onFetched }: FetchUrlDia
             onChange={e => setUrl(e.target.value)}
             required
           />
-          <p className="muted text-xs">Sites that block cross-origin requests are fetched through this site&apos;s proxy (5 MB max).</p>
-          {error && <div role="alert" className="text-sm text-danger">{error}</div>}
+          <p className="m-0 text-xs text-muted">If a site blocks requests from other pages, we fetch it through this site&apos;s proxy (5 MB max).</p>
+          {error && <div role="alert" className="text-[12.5px] text-danger">{error}</div>}
           <span role="status" className="sr-only">{loading ? 'fetching…' : ''}</span>
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" className="btn" onClick={onClose}>cancel</button>
-            <button type="submit" className="cta" disabled={loading}>{loading ? 'fetching…' : 'fetch'}</button>
+          <div className="flex justify-end gap-1.5 mt-2">
+            <button type="button" className="btn" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn-inv" disabled={loading}>{loading ? 'Fetching…' : 'Fetch'}</button>
           </div>
         </form>
       </div>

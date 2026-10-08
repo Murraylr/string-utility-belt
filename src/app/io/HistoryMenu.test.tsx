@@ -106,6 +106,6 @@ describe('HistoryMenu', () => {
     const user = userEvent.setup()
     render(<HistoryMenu onRestore={vi.fn()} />)
     await user.click(screen.getByRole('button', { name: /history/i }))
-    expect(await screen.findByText(/history is unavailable/i)).toBeTruthy()
+    expect(await screen.findByText(/history isn't available/i)).toBeTruthy()
   })
 })

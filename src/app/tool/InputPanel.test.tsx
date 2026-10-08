@@ -36,7 +36,7 @@ const textarea = () => screen.getByPlaceholderText(/type or paste/i) as HTMLText
 describe('InputPanel — text editing basics', () => {
   it('keeps the textarea id/placeholder App.test.jsx relies on', () => {
     render(<Harness />)
-    const textarea = screen.getByPlaceholderText(/type or paste your text here…/i)
+    const textarea = screen.getByPlaceholderText(/type or paste text here, or drop a file/i)
     expect(textarea.id).toBe('pipeline-input')
   })
 
@@ -133,7 +133,7 @@ describe('InputPanel — clipboard paste button', () => {
       configurable: true,
     })
     render(<Harness />)
-    fireEvent.click(screen.getByRole('button', { name: 'paste' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
     await waitFor(() => expect(screen.getByPlaceholderText(/type or paste/i)).toHaveValue('clip text'))
   })
 
@@ -143,8 +143,8 @@ describe('InputPanel — clipboard paste button', () => {
       configurable: true,
     })
     render(<Harness />)
-    fireEvent.click(screen.getByRole('button', { name: 'paste' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(/denied|permission/i)
+    fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/denied/i)
   })
 })
 
@@ -182,7 +182,7 @@ describe('InputPanel — review regressions', () => {
     vi.spyOn(fileInput, 'readFileAsInput').mockRejectedValue(new Error('NotReadableError'))
     render(<Harness />)
     fireEvent.drop(textarea().parentElement as HTMLElement, { dataTransfer: { files: [new File(['x'], 'x.txt')] } })
-    expect(await screen.findByRole('alert')).toHaveTextContent(/could not read x\.txt/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/couldn't read x\.txt/i)
   })
 
   it('applies the most recently dropped file even when an earlier read finishes last', async () => {
@@ -208,7 +208,7 @@ describe('InputPanel — review regressions', () => {
     await screen.findByText('first.bin')
     fireEvent.click(screen.getByRole('button', { name: 'probe: external bytes' }))
     expect(screen.queryByText('first.bin')).toBeNull()
-    expect(screen.getByText('binary input')).toBeTruthy()
+    expect(screen.getByText('Binary input')).toBeTruthy()
   })
 
   it('accepts a pasted file while the binary panel (no textarea) has focus', async () => {
@@ -238,8 +238,8 @@ describe('InputPanel — review regressions', () => {
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })
     try {
       render(<Harness />)
-      fireEvent.click(screen.getByRole('button', { name: 'paste' }))
-      expect(await screen.findByRole('alert')).toHaveTextContent(/not available/i)
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/isn't available/i)
     } finally {
       if (original) Object.defineProperty(navigator, 'clipboard', original)
       else delete (navigator as any).clipboard
@@ -274,7 +274,7 @@ describe('InputPanel — review regressions', () => {
       render(<Harness />)
       fireEvent.change(textarea(), { target: { value: 'aaa\nbbb\nccc', selectionStart: 11, selectionEnd: 11 } })
       expect(screen.getByText('Ln 3, Col 4')).toBeTruthy()
-      fireEvent.click(screen.getByRole('button', { name: 'paste' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
       await waitFor(() => expect(textarea()).toHaveValue('x'))
       expect(screen.getByText('Ln 1, Col 2')).toBeTruthy()
     } finally {
@@ -374,9 +374,9 @@ describe('InputPanel — history saving', () => {
 describe('InputPanel — auto-run on paste preference', () => {
   beforeEach(() => localStorage.setItem('sub:pref:liveRun', 'false'))
 
-  it('offers an "auto-run on paste" switch in manual mode that turns the behaviour off', async () => {
+  it('offers a "run on paste" switch in manual mode that turns the behaviour off', async () => {
     render(<Harness />)
-    const toggle = screen.getByRole('checkbox', { name: /auto-run on paste/i })
+    const toggle = screen.getByRole('checkbox', { name: /run on paste/i })
     expect(toggle).toBeChecked()
     fireEvent.click(toggle)
     expect(JSON.parse(localStorage.getItem('sub:pref:autoRunOnPaste') as string)).toBe(false)

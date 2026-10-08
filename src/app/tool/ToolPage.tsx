@@ -20,6 +20,9 @@ import IOSection from './IOSection'
 import PipelineToolbar from './PipelineToolbar'
 import StepList from './StepList'
 
+/** Longest pipeline name kept, as the library keeps it. */
+const MAX_NAME = 120
+
 /** The pipeline editor. Must be rendered inside <ToolProvider>. */
 export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
   const { state, dispatch, input, run } = useTool()
@@ -53,49 +56,63 @@ export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
     return meta ? typesOf(meta.produces) : [valueType(input)]
   }, [state.steps, input, run.result])
 
-  return (
-    <>
-      <ToolCommandBridge />
-      {banner}
-      <section className="glass rounded-[28px] p-4 sm:p-6 md:p-8 shadow-glow grid gap-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold">String Utility Belt</h1>
-            <p className="muted">Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="cta" onClick={openPicker}>Add utility</button>
-            <a className="btn" href="/blog/">Read blog</a>
-          </div>
-        </div>
-        <IOSection />
-      </section>
-
-      <PipelineToolbar onTogglePicker={togglePicker} pickerOpen={showPicker}>
-        <MagicButton />
+  const titleRow = (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="grid gap-1 min-w-[240px] flex-1">
+        <h1 className="sr-only">String Utility Belt</h1>
+        <input
+          className="w-full min-w-0 p-0 bg-transparent border-0 border-b border-transparent outline-hidden focus:border-line-2 text-2xl leading-[30px] font-semibold tracking-[-0.02em]"
+          aria-label="Pipeline name"
+          placeholder="Untitled pipeline"
+          maxLength={MAX_NAME}
+          autoComplete="off"
+          spellCheck={false}
+          value={state.name ?? ''}
+          onChange={e => dispatch({ type: 'SET_META', name: e.target.value || undefined, libraryId: state.libraryId })}
+        />
+        <p className="m-0 text-[13px] text-muted text-pretty">
+          Paste some text, add steps, and watch what each one does to it. It all runs in your browser, so nothing you
+          paste gets uploaded.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
         <PresetsButton />
         <LibraryButton />
         <ShareButton />
         <SaveToExtensionButton />
-        <BulkToggle />
-        <EngineControls />
-      </PipelineToolbar>
+      </div>
+    </div>
+  )
 
-      {showPicker && (
-        // UtilityPicker lists every matching utility inline with no scroll container of
-        // its own (by design: arrow-key nav needs the whole listbox mounted) — capping
-        // height here keeps the ~250-utility "All" view from turning the page into a
-        // multi-thousand-pixel scroll, especially on mobile.
-        <section className="max-h-[70vh] overflow-y-auto rounded-[28px]">
-          <UtilityPicker onPick={addStep} onClose={closePicker} previousProduces={previousProduces} />
-        </section>
-      )}
+  return (
+    <>
+      <ToolCommandBridge />
+      {banner}
+      <IOSection header={titleRow}>
+        <div className="grid gap-3.5 min-w-0">
+          <PipelineToolbar onTogglePicker={togglePicker} pickerOpen={showPicker}>
+            <MagicButton />
+            <BulkToggle />
+            <EngineControls />
+          </PipelineToolbar>
 
-      <section className="grid gap-3" aria-label="pipeline steps">
-        {state.steps.length === 0
-          ? <EmptyState onAddUtility={openPicker} />
-          : <StepList steps={state.steps} />}
-      </section>
+          {showPicker && (
+            // UtilityPicker lists every matching utility inline with no scroll container of
+            // its own (by design: arrow-key nav needs the whole listbox mounted) — capping
+            // height here keeps the ~250-utility "All" view from turning the page into a
+            // multi-thousand-pixel scroll, especially on mobile.
+            <section className="max-h-[70vh] overflow-y-auto rounded-lg">
+              <UtilityPicker onPick={addStep} onClose={closePicker} previousProduces={previousProduces} />
+            </section>
+          )}
+
+          <section className="grid gap-3" aria-label="pipeline steps">
+            {state.steps.length === 0
+              ? <EmptyState onAddUtility={openPicker} />
+              : <StepList steps={state.steps} />}
+          </section>
+        </div>
+      </IOSection>
     </>
   )
 }

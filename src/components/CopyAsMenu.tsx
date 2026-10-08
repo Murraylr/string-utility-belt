@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronDown, ClipboardCopy, Check, AlertCircle } from 'lucide-react'
+import { ChevronDown, Copy, Check, AlertCircle } from 'lucide-react'
 import { asText, formatForDisplay, isBytes } from '@/core/coerce'
 import { bytesToBase64, bytesToHex, utf8Encode } from '@/app/io/bytes'
 import type { Value } from '@/types/utility'
@@ -22,14 +22,18 @@ function formatValue(value: Value, format: CopyFormat): string {
   return isBytes(value) ? bytesToBase64(value) : bytesToBase64(utf8Encode(asText(value)))
 }
 
-const MENU_ITEMS: Array<{ format: CopyFormat; label: string }> = [
-  { format: 'raw', label: 'raw' },
-  { format: 'json-literal', label: 'JSON string literal' },
-  { format: 'hex', label: 'hex' },
-  { format: 'base64', label: 'base64' },
+/** `hint`: what "abc" looks like in that form. */
+const MENU_ITEMS: Array<{ format: CopyFormat; label: string; hint: string }> = [
+  { format: 'raw', label: 'Raw', hint: 'abc' },
+  { format: 'json-literal', label: 'JSON string literal', hint: '"abc"' },
+  { format: 'hex', label: 'Hex', hint: '616263' },
+  { format: 'base64', label: 'Base64', hint: 'YWJj' },
 ]
 
-/** Split button: main click copies raw; the menu offers JSON-literal/hex/base64 forms. */
+/**
+ * Copy button plus a "copy as" menu (JSON literal, hex, base64). With a `label` it is the
+ * output's filled Copy button and a "Copy as" button; without, two compact icon buttons.
+ */
 export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMenuProps) {
   const [status, setStatus] = useState<'idle' | 'copied' | 'error'>('idle')
   const [open, setOpen] = useState(false)
@@ -98,23 +102,23 @@ export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMe
     }
   }
 
-  const StatusIcon = status === 'copied' ? Check : status === 'error' ? AlertCircle : ClipboardCopy
+  const StatusIcon = status === 'copied' ? Check : status === 'error' ? AlertCircle : Copy
 
   return (
-    <div className={`relative inline-flex ${className ?? ''}`} ref={containerRef}>
+    <div className={`relative inline-flex ${label ? 'gap-1.5' : ''} ${className ?? ''}`} ref={containerRef}>
       <button
         type="button"
-        className={label ? 'btn rounded-r-none' : 'icon-btn'}
+        className={label ? 'btn-inv min-w-[82px]' : 'icon-btn'}
         onClick={() => copyAs('raw')}
         aria-label={label ?? 'copy'}
       >
-        <StatusIcon size={16} />
-        {label && <span>{status === 'copied' ? 'copied' : status === 'error' ? 'failed' : label}</span>}
+        <StatusIcon size={label ? 14 : 16} aria-hidden />
+        {label && <span>{status === 'copied' ? 'Copied' : status === 'error' ? 'Failed' : label}</span>}
       </button>
       <button
         type="button"
         ref={toggleRef}
-        className={label ? 'btn rounded-l-none border-l-0 px-1.5' : 'icon-btn'}
+        className={label ? 'btn px-2.5' : 'icon-btn'}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="copy as…"
@@ -126,13 +130,14 @@ export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMe
           setOpen(true)
         }}
       >
-        <ChevronDown size={14} />
+        {label && <span aria-hidden>Copy as</span>}
+        <ChevronDown size={label ? 13 : 14} className={label ? 'text-muted' : ''} aria-hidden />
       </button>
       {open && (
         <div
           role="menu"
           aria-label="copy as"
-          className="absolute right-0 top-full mt-1 z-10 card p-1 grid gap-0.5 min-w-40"
+          className={`popover absolute top-full mt-1.5 z-20 w-[230px] max-w-[calc(100vw-2rem)] ${label ? 'left-0' : 'right-0'}`}
           onKeyDown={onMenuKeyDown}
         >
           {MENU_ITEMS.map((item, i) => (
@@ -141,16 +146,17 @@ export default function CopyAsMenu({ value, label, className, onCopy }: CopyAsMe
               role="menuitem"
               type="button"
               ref={el => { itemRefs.current[i] = el }}
-              className="btn justify-start"
+              className="menu-item"
               onClick={() => { copyAs(item.format); closeMenu() }}
             >
               {item.label}
+              <span className="font-mono text-[11px] text-muted" aria-hidden>{item.hint}</span>
             </button>
           ))}
         </div>
       )}
       <span role="status" aria-live="polite" className="sr-only">
-        {status === 'copied' ? 'copied' : status === 'error' ? 'copy failed' : ''}
+        {status === 'copied' ? 'Copied' : status === 'error' ? 'Copy failed' : ''}
       </span>
     </div>
   )

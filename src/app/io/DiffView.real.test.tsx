@@ -7,6 +7,6 @@ describe('DiffView with the real diff package', () => {
   it('renders a line diff', async () => {
     render(<DiffView before={'keep\nold\n'} after={'keep\nnew\n'} />)
     const region = await screen.findByRole('region', { name: 'input to output diff' }, { timeout: 5000 })
-    await waitFor(() => expect(region.textContent).toBe('  keep- old+ new'))
+    await waitFor(() => expect(region.textContent).toBe('keep-old+new'))
   })
 })

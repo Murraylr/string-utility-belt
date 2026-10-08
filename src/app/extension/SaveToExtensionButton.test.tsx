@@ -25,7 +25,7 @@ function renderButton(steps: PipelineStep[] = STEPS, name?: string) {
 async function openDialog(steps: PipelineStep[] = STEPS, name?: string) {
   const user = userEvent.setup()
   renderButton(steps, name)
-  await user.click(await screen.findByRole('button', { name: 'save to extension' }))
+  await user.click(await screen.findByRole('button', { name: 'Save to extension' }))
   return user
 }
 
@@ -44,15 +44,15 @@ afterEach(() => {
 describe('SaveToExtensionButton', () => {
   it('renders nothing until the extension answers, then offers the dialog', async () => {
     renderButton()
-    expect(screen.queryByRole('button', { name: 'save to extension' })).toBeNull()
-    expect(await screen.findByRole('button', { name: 'save to extension' })).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(screen.queryByRole('button', { name: 'Save to extension' })).toBeNull()
+    expect(await screen.findByRole('button', { name: 'Save to extension' })).toHaveAttribute('aria-haspopup', 'dialog')
   })
 
   it('renders nothing without the extension', async () => {
     vi.unstubAllGlobals()
     renderButton()
     await new Promise(r => setTimeout(r, 0))
-    expect(screen.queryByRole('button', { name: 'save to extension' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Save to extension' })).toBeNull()
   })
 
   it('saves the pipeline under the given name and shows the extension\'s answer', async () => {
@@ -60,9 +60,9 @@ describe('SaveToExtensionButton', () => {
     const user = await openDialog()
     expect(screen.getByRole('dialog', { name: 'Save to extension' })).toBeInTheDocument()
 
-    const save = screen.getByRole('button', { name: 'save pipeline' })
+    const save = screen.getByRole('button', { name: 'Save pipeline' })
     expect(save).toBeDisabled() // no name yet
-    await user.type(screen.getByLabelText('pipeline name'), 'Encode')
+    await user.type(screen.getByLabelText('Pipeline name'), 'Encode')
     await user.click(save)
 
     expect(await screen.findByText('Saved "Encode" — it\'s on the right-click menu.')).toBeInTheDocument()
@@ -72,7 +72,7 @@ describe('SaveToExtensionButton', () => {
   it('prefills the pipeline\'s own name, and shows an error answer as such', async () => {
     fake.respond(() => ({ ok: false, error: 'The extension holds up to 50 pipelines.' }))
     const user = await openDialog(STEPS, 'My pipeline')
-    const nameInput = screen.getByLabelText('pipeline name')
+    const nameInput = screen.getByLabelText('Pipeline name')
     expect(nameInput).toHaveValue('My pipeline')
 
     await user.type(nameInput, '{Enter}') // submits the form
@@ -83,7 +83,7 @@ describe('SaveToExtensionButton', () => {
     await openDialog([...STEPS, { id: 'c', enabled: false, utilityId: 'custom_js', params: {} }], 'Has code')
 
     expect(screen.getByRole('alert')).toHaveTextContent(/can't run custom javascript/)
-    expect(screen.getByRole('button', { name: 'save pipeline' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save pipeline' })).toBeDisabled()
   })
 
   describe('"run on each" steps', () => {
@@ -95,7 +95,7 @@ describe('SaveToExtensionButton', () => {
     it('are refused up front by an extension that does not list them (it would drop them while saving)', async () => {
       await openDialog(withEach, 'Per line')
       expect(screen.getByRole('alert')).toHaveTextContent(/can't save "run on each" steps\. Update the extension/)
-      expect(screen.getByRole('button', { name: 'save pipeline' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Save pipeline' })).toBeDisabled()
     })
 
     it('are saved by an extension that lists them', async () => {
@@ -104,7 +104,7 @@ describe('SaveToExtensionButton', () => {
       fake = installFakeExtension({ stepTypes: ['utility', 'branch', 'macro', 'each'] })
       const user = await openDialog(withEach, 'Per line')
       expect(screen.queryByRole('alert')).toBeNull()
-      await user.click(screen.getByRole('button', { name: 'save pipeline' }))
+      await user.click(screen.getByRole('button', { name: 'Save pipeline' }))
       expect(lastRequest()).toEqual({ type: 'save-pipeline', name: 'Per line', steps: withEach })
     })
   })
@@ -112,7 +112,7 @@ describe('SaveToExtensionButton', () => {
   it('cannot save an empty pipeline', async () => {
     await openDialog([], 'Nothing')
     expect(screen.getByText(/add some steps/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'save pipeline' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save pipeline' })).toBeDisabled()
   })
 
   it('sends the starred utilities the extension can run as favourites', async () => {
@@ -121,7 +121,7 @@ describe('SaveToExtensionButton', () => {
     const user = await openDialog()
 
     expect(screen.getByText(/add your 2 starred utilities/i)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'add favourites' }))
+    await user.click(screen.getByRole('button', { name: 'Add favourites' }))
     expect(await screen.findByText('Added 2 favourites to the right-click menu.')).toBeInTheDocument()
     expect(lastRequest()).toEqual({ type: 'add-favorites', utilityIds: ['sha3', 'trim'] })
   })
@@ -129,6 +129,6 @@ describe('SaveToExtensionButton', () => {
   it('has nothing to add without starred utilities', async () => {
     await openDialog()
     expect(screen.getByText(/star utilities in the picker/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'add favourites' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Add favourites' })).toBeDisabled()
   })
 })

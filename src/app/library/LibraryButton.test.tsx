@@ -10,7 +10,7 @@ describe('LibraryButton', () => {
   it('opens the dialog on click, and Escape closes it and returns focus to the button', async () => {
     const user = userEvent.setup()
     renderButton()
-    const button = screen.getByRole('button', { name: 'library' })
+    const button = screen.getByRole('button', { name: 'Library' })
     expect(button).toHaveAttribute('aria-haspopup', 'dialog')
     expect(screen.queryByRole('dialog')).toBeNull()
 
@@ -35,6 +35,6 @@ describe('LibraryButton', () => {
     await screen.findByRole('dialog', { name: 'Library' })
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'library' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Library' }))
   })
 })
