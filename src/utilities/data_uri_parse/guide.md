@@ -1,5 +1,5 @@
 ---
-title: Data URI Parser — Decode a data: URI to Text or Bytes
+title: Data URI Parser: Decode a data: URI to Text or Bytes
 description: Parse a data: URI into its mime type, charset, encoding and payload, or extract the decoded content directly as text or bytes.
 ---
 ## What is a data URI?
@@ -36,11 +36,11 @@ output:
 }
 ```
 
-A missing mime type defaults to `text/plain`, as RFC 2397 specifies; a payload with no charset label is decoded as UTF-8, a superset of the RFC's US-ASCII default. The header is parsed loosely on purpose: it is split on `;`, each `key=value` pair is read case-insensitively, quoted values have their quotes stripped, and unrecognized parameters are ignored rather than rejected — real-world data URIs are not always written in the exact case or order the spec shows.
+A missing mime type defaults to `text/plain`, as RFC 2397 specifies; a payload with no charset label is decoded as UTF-8, a superset of the RFC's US-ASCII default. The header is parsed loosely on purpose: it is split on `;`, each `key=value` pair is read case-insensitively, quoted values have their quotes stripped, and unrecognized parameters are ignored rather than rejected. Real-world data URIs are not always written in the exact case or order the spec shows.
 
 ### Getting just the decoded content
 
-Set **output** to `text` or `bytes` to skip the JSON wrapper and get the decoded payload directly — useful when you already know what it contains and just want the content for the next step in a pipeline.
+Set **output** to `text` or `bytes` to skip the JSON wrapper and get the decoded payload directly. This is useful when you already know what it contains and just want the content for the next step in a pipeline.
 
 ```example
 title: output set to text
@@ -62,11 +62,11 @@ output:
 }
 ```
 
-The default JSON output only puts the raw decoded text in `data` when the bytes actually decode as valid, printable text (tabs and newlines are fine; other control characters are not) — otherwise, as in the PNG example above, `data` holds the base64 form so binary content is never mangled by an attempted text decode. Ask for `output: bytes` if you need the raw bytes of an image or other binary payload.
+The default JSON output only puts the raw decoded text in `data` when the bytes actually decode as valid, printable text (tabs and newlines are fine; other control characters are not). Otherwise, as in the PNG example above, `data` holds the base64 form so binary content is never mangled by an attempted text decode. Ask for `output: bytes` if you need the raw bytes of an image or other binary payload.
 
 ## Options
 
-- **output** — `json` (default, the full breakdown above), `text` (just the decoded payload as a string) or `bytes` (the raw decoded bytes).
+- **output**: `json` (default, the full breakdown above), `text` (just the decoded payload as a string) or `bytes` (the raw decoded bytes).
 
 ## Common uses
 
@@ -78,6 +78,6 @@ The default JSON output only puts the raw decoded text in `data` when the bytes 
 ## Tips and pitfalls
 
 - The base64 payload is decoded leniently: whitespace inside it is stripped, the URL-safe alphabet (`-`/`_`) is accepted alongside the standard one, and missing padding is added automatically. A payload with an impossible length (one leftover base64 character) still throws, since there is no valid decoding for it.
-- An input that is not a `data:` URI at all — a regular URL, or plain text — throws a clear error rather than returning empty or partial results.
-- A charset label is honored when decoding text — `charset=iso-8859-1` bytes decode as Latin-1, not UTF-8 — using the runtime's `TextDecoder`, so an unrecognized label falls back to UTF-8. In `text` output, bytes that are invalid in that charset become `�` rather than causing an error.
+- An input that is not a `data:` URI at all (a regular URL, or plain text) throws a clear error rather than returning empty or partial results.
+- A charset label is honored when decoding text (`charset=iso-8859-1` bytes decode as Latin-1, not UTF-8) using the runtime's `TextDecoder`, so an unrecognized label falls back to UTF-8. In `text` output, bytes that are invalid in that charset become `�` rather than causing an error.
 - To see the exact bytes behind a payload rather than a text guess, use `output: bytes` together with [hex dump](/util/hex_dump/).

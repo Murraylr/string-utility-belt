@@ -4,7 +4,7 @@ description: Parse a raw HTTP header block or full request or response into JSON
 ---
 ## What does http headers parse do?
 
-Copying headers out of browser DevTools, `curl -i`, or a raw request/response dump gives you a block of `Name: value` lines that's tedious to search or diff by eye. This tool parses that block — with or without its request or status start line — into structured JSON, folding any repeated header into an array and unfolding old-style continuation lines.
+Copying headers out of browser DevTools, `curl -i`, or a raw request/response dump gives you a block of `Name: value` lines that's tedious to search or diff by eye. This tool parses that block (with or without its request or status start line) into structured JSON, folding any repeated header into an array and unfolding old-style continuation lines.
 
 ## How it works
 
@@ -29,7 +29,7 @@ output:
 }
 ```
 
-A response works the same way, and any header repeated on multiple lines — `Set-Cookie` being the classic example — folds into a JSON array instead of overwriting itself:
+A response works the same way, and any header repeated on multiple lines (`Set-Cookie` being the classic example) folds into a JSON array instead of overwriting itself:
 
 ```example
 title: a response with repeated Set-Cookie headers
@@ -53,7 +53,7 @@ output:
 }
 ```
 
-A block with no recognizable start line — just headers — is handled too, and by default every header name is lowercased for consistent lookups; turn `lowercaseNames` off to keep the original casing:
+A block with no recognizable start line (just headers) is handled too, and by default every header name is lowercased for consistent lookups; turn `lowercaseNames` off to keep the original casing:
 
 ```example
 title: original casing preserved
@@ -91,8 +91,8 @@ output:
 
 ## Options
 
-- **lowercase header names** — on by default, since HTTP header names are case-insensitive; turn it off to preserve the exact casing from the input.
-- **json indent (2 = structured value)** — with the default of `2`, the result is a real structured value that a downstream pipeline step can read directly. Any other value (`0`–`10`, excluding `2`) instead returns the JSON as pre-formatted text at that indent width — handy for copying a specific compact or wide rendering. A downstream step that expects JSON still parses that text.
+- **lowercase header names**: on by default, since HTTP header names are case-insensitive; turn it off to preserve the exact casing from the input.
+- **json indent (2 = structured value)**: with the default of `2`, the result is a real structured value that a downstream pipeline step can read directly. Any other value (`0`–`10`, excluding `2`) instead returns the JSON as pre-formatted text at that indent width. That is handy for copying a specific compact or wide rendering. A downstream step that expects JSON still parses that text.
 
 ## Common uses
 
@@ -103,7 +103,7 @@ output:
 
 ## Tips and pitfalls
 
-- Parsing stops at the first blank line, so pasting a full request or response *with its body included* is safe — the body is simply ignored rather than mis-parsed as more headers.
+- Parsing stops at the first blank line, so pasting a full request or response *with its body included* is safe. The body is simply ignored rather than mis-parsed as more headers.
 - A header line with no colon at all throws a clear error naming the offending line, since that's not valid header syntax to silently skip.
-- Whether the first line is read as a request line depends on it starting with a recognized HTTP method (or carrying an explicit `HTTP/x.y` version token) — a line that matches neither is read as an ordinary header line instead, and throws if it has no colon.
+- Whether the first line is read as a request line depends on it starting with a recognized HTTP method (or carrying an explicit `HTTP/x.y` version token). A line that matches neither is read as an ordinary header line instead, and throws if it has no colon.
 - To go the other direction and rebuild a header block from JSON, use [json to http headers](/util/http_headers_build/); to parse an entire curl command rather than just its headers, see [curl command to json](/util/curl_parse/).

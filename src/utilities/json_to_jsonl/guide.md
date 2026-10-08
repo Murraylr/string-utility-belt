@@ -1,13 +1,13 @@
 ---
-title: JSON to JSONL Converter — Array to NDJSON
+title: JSON to JSONL Converter: Array to NDJSON
 description: Split a JSON array into newline-delimited JSON (JSONL or NDJSON) online, one compact record per line.
 ---
 ## What does converting JSON to JSONL do?
 
 JSONL (also called NDJSON) writes one complete, compact JSON value per
 line instead of one big document. That shape is what log pipelines and
-streaming ingestion APIs typically expect — the same shape `jq -c '.[]'`
-prints — because each line can be read, parsed, and processed
+streaming ingestion APIs typically expect (the same shape `jq -c '.[]'`
+prints), because each line can be read, parsed, and processed
 independently without loading the whole file into memory. This tool takes a normal JSON array and splits
 it into exactly that: one line per element, each compacted with no extra
 whitespace.
@@ -15,7 +15,7 @@ whitespace.
 ## How it works
 
 1. The input is parsed as JSON. If it is an array, every element becomes
-   one line; if it is any other JSON value — an object, a string, a number —
+   one line; if it is any other JSON value (an object, a string, a number),
    the whole document becomes a single line, since there is nothing to
    split.
 2. Each element is serialized compactly (`JSON.stringify` with no
@@ -23,7 +23,7 @@ whitespace.
 3. The Unicode line and paragraph separators U+2028 and U+2029, which
    `JSON.stringify` leaves unescaped inside strings, are written as literal
    characters. They are not `\n` or `\r`, so a JSONL reader that splits on
-   those — including [jsonl to json](/util/jsonl_to_json/) — still sees one
+   those (including [jsonl to json](/util/jsonl_to_json/)) still sees one
    record per line; a reader that splits with something broader, such as
    Python's `str.splitlines()`, will break those records apart.
 
@@ -34,7 +34,7 @@ output: {"id":1,"name":"Ada"}
 {"id":2,"name":"Grace"}
 ```
 
-A document that is not an array — a single object, a string, or a number —
+A document that is not an array (a single object, a string, or a number)
 becomes one line, since JSONL only needs to split when there is more than
 one record to separate:
 
@@ -56,7 +56,7 @@ output:
 
 ## Options
 
-This utility has no configurable options — it always compacts every
+This utility has no configurable options. It always compacts every
 element and separates them with `\n`.
 
 ## Common uses

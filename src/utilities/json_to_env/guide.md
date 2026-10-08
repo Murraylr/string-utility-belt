@@ -4,7 +4,7 @@ description: Flatten a JSON object into .env KEY=value lines online, with upper-
 ---
 ## What does converting JSON to .env do?
 
-Configuration often starts as JSON — an API response, a settings file — but
+Configuration often starts as JSON (an API response, a settings file) but
 needs to end up as `.env`-style `KEY=value` lines for a shell, a Docker
 container, or a dotenv-based app to read. This tool flattens a JSON object
 into that format: nested objects become underscore-joined keys, arrays
@@ -13,7 +13,7 @@ a dotenv-style parser reads it back as written.
 
 ## How it works
 
-1. Only a JSON object at the root is accepted — arrays and scalars at the
+1. Only a JSON object at the root is accepted. Arrays and scalars at the
    top level are rejected, since there is no key to attach them to.
 2. Each nested object is walked depth-first; a key path like `db.host`
    becomes `DB_HOST` (joined with the **path delimiter**, `_` by default).
@@ -28,9 +28,9 @@ a dotenv-style parser reads it back as written.
 4. Keys are upper-cased by default (**upper-case keys**); turn this off to
    keep the original casing.
 5. **quoting** decides when a value is wrapped in quotes: `auto` (the
-   default) quotes only values that need it — those with leading/trailing
+   default) quotes only values that need it (those with leading/trailing
    whitespace or shell-significant characters like spaces, `#`, `$`, or
-   backticks — `always` quotes everything, and `never` never quotes,
+   backticks), `always` quotes everything, and `never` never quotes,
    escaping any embedded newline as `\n` instead so the record still fits
    on one line.
 
@@ -70,16 +70,16 @@ output: MY_KEY_NAME=1
 
 ## Options
 
-- **upper-case keys** — on by default (`PORT`); off keeps the original
+- **upper-case keys**: on by default (`PORT`); off keeps the original
   casing (`port`).
-- **path delimiter** — the string joining nested path segments, default
+- **path delimiter**: the string joining nested path segments, default
   `_` (so `DB_HOST`); set to `__` or anything else you prefer.
-- **quoting** — `auto` (default) quotes only values that need it, `always`
+- **quoting**: `auto` (default) quotes only values that need it, `always`
   quotes every value, and `never` never quotes (escaping embedded newlines
   as `\n` instead). A dotenv parser reads `never` output back less
   faithfully: that `\n` stays two characters, edge whitespace is trimmed,
   and anything after a ` #` is treated as a comment.
-- **export prefix** — off by default; on, prefixes every line with
+- **export prefix**: off by default; on, prefixes every line with
   `export `, for files that will be sourced by a shell (see the caveat
   below).
 
@@ -96,7 +96,7 @@ output: MY_KEY_NAME=1
 
 ## Tips and pitfalls
 
-- An empty object, or empty input, produces no output at all — there is
+- An empty object, or empty input, produces no output at all. There is
   nothing to write a line for.
 - `null` becomes an empty value (`KEY=`): the variable is set to an empty
   string, not left unset.
@@ -108,7 +108,7 @@ output: MY_KEY_NAME=1
   `db.host` and `db_host`); both lines are written, and a reader keeps the
   last one.
 - [.env to json](/util/env_to_json/) reads the resulting file back into
-  JSON, but it parses `.env` literally — `DB_HOST` comes back as a flat
+  JSON, but it parses `.env` literally. `DB_HOST` comes back as a flat
   `"DB_HOST"` key, not nested back under `db.host`, since `.env` has no
   native concept of nesting and this tool's flattening is one-directional.
 - For a config format that supports sections natively instead of

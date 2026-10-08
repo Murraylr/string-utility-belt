@@ -17,12 +17,12 @@ so the shape survives being read back.
 1. Only a JSON object at the root is accepted; the input can be raw JSON
    text or an object handed over from a previous pipeline step.
 2. At each level, scalar and array properties are written as lines first,
-   and nested objects are written afterward as `[section]` blocks — this
+   and nested objects are written afterward as `[section]` blocks. This
    keeps top-level settings readable above the sections that follow.
 3. A nested object's nested object becomes a dotted section name
    (`[a.b]`), so arbitrarily deep structures stay representable.
-4. An array is written as one `key[]=value` line per element — even a
-   single-element array — so [ini to json](/util/ini_to_json/) reads it
+4. An array is written as one `key[]=value` line per element (even a
+   single-element array), so [ini to json](/util/ini_to_json/) reads it
    back as an array rather than a plain scalar. An object or array inside
    an array is written as compact JSON text, which reads back as a string.
 5. A value is quoted only when it needs to be: when it has
@@ -55,7 +55,7 @@ tags[]=b
 one[]=x
 ```
 
-A value is quoted only when INI syntax would otherwise misread it — here, an
+A value is quoted only when INI syntax would otherwise misread it. Here, that is an
 embedded newline:
 
 ```example
@@ -79,12 +79,12 @@ c=d
 
 ## Options
 
-- **delimiter** — the character between key and value, default `=`. A key
+- **delimiter**: the character between key and value, default `=`. A key
   that itself contains the chosen delimiter throws an error rather than
   producing an ambiguous line. [ini to json](/util/ini_to_json/) only
   splits on `=`, so it cannot read back a file written with another
   delimiter.
-- **spacing** — off by default (`key=value`); on, adds spaces around the
+- **spacing**: off by default (`key=value`); on, adds spaces around the
   delimiter (`key = value`).
 
 ## Common uses
@@ -93,8 +93,8 @@ c=d
   legacy tools that only read INI.
 - Producing config output for applications (many desktop and Windows tools,
   some PHP and Python projects) that expect INI over JSON or YAML.
-- Round-tripping through [ini to json](/util/ini_to_json/) — with
-  **nest dotted names** and **coerce value types** turned on there — to
+- Round-tripping through [ini to json](/util/ini_to_json/), with
+  **nest dotted names** and **coerce value types** turned on there, to
   check whether a JSON structure survives being written and re-read as INI
   (see the caveats below).
 
@@ -112,8 +112,8 @@ c=d
 - The root object's scalar values always come before any sections, matching
   how most hand-written INI files put global settings above the sections
   that refine them.
-- Input that is not an object at the top level — an array, a string, a
-  number — is rejected, since INI has no way to represent a bare top-level
+- Input that is not an object at the top level (an array, a string, a
+  number) is rejected, since INI has no way to represent a bare top-level
   value.
 - For a flatter, section-free config format, see
   [json to .env](/util/json_to_env/) instead.

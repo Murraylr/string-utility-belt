@@ -1,10 +1,10 @@
 ---
-title: Duration Humanizer — Seconds to Readable Time Online
+title: Duration Humanizer: Seconds to Readable Time Online
 description: Turn seconds or milliseconds into a readable duration like "1h 30m", or parse durations, clock times, and ISO 8601 back into a number.
 ---
 ## What does duration humanize do?
 
-Computers measure elapsed time in seconds or milliseconds — `5400`, `93784.5` — which nobody wants to read in a UI, a log line or a changelog. This tool converts that number into a readable duration such as "1 hour 30 minutes", "1h 30m", a clock-style "1:30:00", or an ISO 8601 duration ("PT1H30M"). It also runs in reverse, parsing any of those readable forms (plus a wide range of shorthand like "1 hour and 30 minutes" or "500ms") back into a plain number.
+Computers measure elapsed time in seconds or milliseconds (`5400`, `93784.5`), which nobody wants to read in a UI, a log line or a changelog. This tool converts that number into a readable duration such as "1 hour 30 minutes", "1h 30m", a clock-style "1:30:00", or an ISO 8601 duration ("PT1H30M"). It also runs in reverse, parsing any of those readable forms (plus a wide range of shorthand like "1 hour and 30 minutes" or "500ms") back into a plain number.
 
 ## How it works
 
@@ -49,7 +49,7 @@ input: 1.5
 output: 1 second 500 milliseconds
 ```
 
-Negative durations are supported too — the sign is applied to the whole rendered string:
+Negative durations are supported too. The sign is applied to the whole rendered string:
 
 ```example
 title: a negative duration keeps its sign
@@ -59,11 +59,11 @@ output: -1 hour 30 minutes
 
 ## Options
 
-- **direction** — `to-human` (default) turns a number into a readable duration; `to-seconds` parses a readable duration back into a number, expressed in the chosen `unit`.
-- **number unit** — whether the numeric side of the conversion is `seconds` (default) or `milliseconds`: it sets how a plain-number input is read and, for `to-seconds`, the unit of the number written out. Unit words in the input (`h`, `min`, `ms`, …) are always honored as written.
-- **style** — how a human-readable duration is rendered: `long` ("1 hour 30 minutes"), `short` ("1h 30m"), `colon` ("1:30:00", growing to `D:HH:MM:SS` for multi-day spans), or `iso8601` ("PT1H30M"). Only used for `to-human`.
-- **max units (0 = all)** — how many consecutive units, counted from the largest non-zero one, to show in `long`/`short`/`iso8601` output (default 2); `0` shows every non-zero unit down to milliseconds. `colon` style ignores this and always shows every field down to seconds (plus a fractional millisecond suffix when needed).
-- **one duration per line** — on by default, so each line of a multi-line input is converted independently; blank lines are preserved.
+- **direction**: `to-human` (default) turns a number into a readable duration; `to-seconds` parses a readable duration back into a number, expressed in the chosen `unit`.
+- **number unit**: whether the numeric side of the conversion is `seconds` (default) or `milliseconds`: it sets how a plain-number input is read and, for `to-seconds`, the unit of the number written out. Unit words in the input (`h`, `min`, `ms`, …) are always honored as written.
+- **style**: how a human-readable duration is rendered: `long` ("1 hour 30 minutes"), `short` ("1h 30m"), `colon` ("1:30:00", growing to `D:HH:MM:SS` for multi-day spans), or `iso8601` ("PT1H30M"). Only used for `to-human`.
+- **max units (0 = all)**: how many consecutive units, counted from the largest non-zero one, to show in `long`/`short`/`iso8601` output (default 2); `0` shows every non-zero unit down to milliseconds. `colon` style ignores this and always shows every field down to seconds (plus a fractional millisecond suffix when needed).
+- **one duration per line**: on by default, so each line of a multi-line input is converted independently; blank lines are preserved.
 
 When parsing free-form text, the recognized unit words include `ns`/`nanosecond(s)`, `us`/`µs`/`microsecond(s)`, `ms`/`millisecond(s)`, `s`/`sec(s)`/`second(s)`, `m`/`min(s)`/`minute(s)`, `h`/`hr(s)`/`hour(s)`, `d`/`day(s)`, `w`/`wk(s)`/`week(s)`, `mo`/`month(s)` (treated as an approximate 30 days) and `y`/`yr(s)`/`year(s)` (an approximate 365 days). Months and years are accepted on the way in because people write them, but the tool never *emits* them, since their real length varies with the calendar.
 

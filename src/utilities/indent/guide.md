@@ -1,17 +1,17 @@
 ---
-title: Indent / Dedent Text Online — Add or Remove Leading Spaces
+title: Indent / Dedent Text Online: Add or Remove Leading Spaces
 description: Add or remove leading indentation on every line online, or auto-dedent by stripping the common whitespace prefix, using spaces or tabs.
 ---
 ## What does indenting and dedenting mean?
 
-Indentation is the leading whitespace at the start of a line, used to show nesting in code, quoted text, or an outline. This tool adds a fixed amount of indentation to every line, removes a fixed amount, or automatically strips whatever leading whitespace every line shares in common — the same idea as Python's `textwrap.dedent`, useful for cleaning up a block of text that was copied out of an indented context such as a multi-line string literal.
+Indentation is the leading whitespace at the start of a line, used to show nesting in code, quoted text, or an outline. This tool adds a fixed amount of indentation to every line, removes a fixed amount, or automatically strips whatever leading whitespace every line shares in common. It is the same idea as Python's `textwrap.dedent`, and useful for cleaning up a block of text that was copied out of an indented context such as a multi-line string literal.
 
 ## How it works
 
 The `mode` option chooses one of three behaviors:
 
 - **add** inserts the pad character, repeated `amount` times, at the start of every line.
-- **remove** strips up to `amount` copies of the pad character from the start of every line — if a line has fewer than `amount`, only what is actually there is removed.
+- **remove** strips up to `amount` copies of the pad character from the start of every line. If a line has fewer than `amount`, only what is actually there is removed.
 - **auto-dedent** finds the longest whitespace prefix shared by every non-blank line and removes exactly that much from each line, whatever mix of spaces and tabs it is made of. The prefix must match character for character, so a tab-indented line and a space-indented line share no common indent.
 
 ```example
@@ -45,7 +45,7 @@ b
 c
 ```
 
-`auto-dedent` ignores the `amount` and `character` options entirely — it measures the shortest common indent itself:
+`auto-dedent` ignores the `amount` and `character` options entirely. It measures the shortest common indent itself:
 
 ```example
 title: auto-dedent strips the common leading whitespace
@@ -79,10 +79,10 @@ output:
 
 ## Options
 
-- **mode** (`mode`, default `add`) — `add`, `remove`, or `auto-dedent`, as described above.
-- **amount** (`amount`, default `2`, 0–64, whole numbers only) — how many pad characters to add or remove per line. Ignored by `auto-dedent`.
-- **character** (`character`, default `space`) — `space` or `tab`, the unit that is added or removed. Ignored by `auto-dedent`, which matches whatever whitespace is already there.
-- **skip blank lines** (`skipBlank`, default `true`) — when adding or removing, blank lines (containing only whitespace, or nothing) are left exactly as they are instead of gaining or losing padding.
+- **mode** (`mode`, default `add`): `add`, `remove`, or `auto-dedent`, as described above.
+- **amount** (`amount`, default `2`, 0–64, whole numbers only): how many pad characters to add or remove per line. Ignored by `auto-dedent`.
+- **character** (`character`, default `space`): `space` or `tab`, the unit that is added or removed. Ignored by `auto-dedent`, which matches whatever whitespace is already there.
+- **skip blank lines** (`skipBlank`, default `true`): when adding or removing, blank lines (containing only whitespace, or nothing) are left exactly as they are instead of gaining or losing padding.
 
 ## Common uses
 

@@ -1,10 +1,10 @@
 ---
 title: Curl Command to JSON Converter Online
-description: Parse a curl command into structured JSON online — method, URL, headers, body, auth and form fields — handling shell quoting automatically.
+description: Parse a curl command into structured JSON online: method, URL, headers, body, auth and form fields, with shell quoting handled for you.
 ---
 ## What does curl parse do?
 
-Browser DevTools, Postman and Chrome's "Copy as cURL" all let you export a request as a `curl` command line — but a command line is awkward to feed into a test, a script, or documentation. This tool parses a `curl` command into structured JSON: method, URL, headers, body, authentication and form fields, handling the shell quoting that real curl commands are pasted with (single and double quotes, `$'...'` ANSI-C quoting, and line continuations from bash, `cmd.exe` or PowerShell).
+Browser DevTools, Postman and Chrome's "Copy as cURL" all let you export a request as a `curl` command line. But a command line is awkward to feed into a test, a script, or documentation. This tool parses a `curl` command into structured JSON: method, URL, headers, body, authentication and form fields, handling the shell quoting that real curl commands are pasted with (single and double quotes, `$'...'` ANSI-C quoting, and line continuations from bash, `cmd.exe` or PowerShell).
 
 ## How it works
 
@@ -31,7 +31,7 @@ output:
 }
 ```
 
-A command copied from a browser often spans several lines with `\`-continuations — those are joined back into one command before parsing, exactly as a real shell would:
+A command copied from a browser often spans several lines with `\`-continuations. Those are joined back into one command before parsing, exactly as a real shell would:
 
 ```example
 title: a multi-line command with a continuation
@@ -111,7 +111,7 @@ output:
 
 The tokenizer understands everything curl commands are typically pasted with: single quotes (literal), double quotes (where a backslash escapes a double quote, a backslash, a `$` or a backtick character), bash's `$'...'` ANSI-C quoting (`\n`, `\t`, `\uXXXX`, octal escapes), backslash line continuations from bash, and caret or backtick continuations from `cmd.exe`/PowerShell. A wide set of long (`--header`, `--data-raw`, `--form`, …) and short (`-H`, `-d`, `-F`, …) flags are recognized and folded into the right JSON field; an unrecognized flag's *value* can end up looking like a stray positional argument, so the URL is picked as whichever positional token actually looks like one rather than just the first.
 
-This utility takes no parameters — its output shape is fixed, always including `method`, `url`, `headers`, `body`, `auth` and the four core `flags` (`compressed`, `insecure`, `location`, `get`), plus a `form` array when `-F`/`--form`/`--form-string` fields are present. Any other flag it sees is added to `flags` too, as `true` or with its value (`"silent": true`, `"max-time": "10"`).
+This utility takes no parameters. Its output shape is fixed, always including `method`, `url`, `headers`, `body`, `auth` and the four core `flags` (`compressed`, `insecure`, `location`, `get`), plus a `form` array when `-F`/`--form`/`--form-string` fields are present. Any other flag it sees is added to `flags` too, as `true` or with its value (`"silent": true`, `"max-time": "10"`).
 
 ## Common uses
 
@@ -123,6 +123,6 @@ This utility takes no parameters — its output shape is fixed, always including
 ## Tips and pitfalls
 
 - Repeated headers (two `-H 'X-A: 1' -H 'X-A: 2'`) fold into a JSON array rather than overwriting each other, matching how curl actually sends them.
-- `--data-urlencode` percent-encodes its value the way curl itself does — leaving only the RFC 3986 unreserved characters untouched, which is a stricter set than JavaScript's `encodeURIComponent`.
+- `--data-urlencode` percent-encodes its value the way curl itself does. It leaves only the RFC 3986 unreserved characters untouched, which is a stricter set than JavaScript's `encodeURIComponent`.
 - Input that doesn't start with `curl` or `curl.exe` (after skipping a shell prompt or leading `VAR=value` assignments) throws immediately, so a wrong tool's command line is never silently misparsed.
 - An unterminated quote, a flag that needs a value but doesn't get one, or a malformed `-H` header (no colon) all throw with a specific, actionable message.

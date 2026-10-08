@@ -1,14 +1,14 @@
 ---
-title: JSON String Unescape — Decode JSON Escape Sequences
+title: JSON String Unescape: Decode JSON Escape Sequences
 description: Decode a JSON-escaped string back to plain text, resolving \n, \t, \", \\ and \uXXXX escape sequences.
 ---
 ## What does unescaping a JSON string mean?
 
-A JSON string value can contain escape sequences for characters that aren't allowed literally inside it — a quote (`\"`), a backslash (`\\`), a newline (`\n`), a tab (`\t`), and any character written as `\uXXXX`. This tool takes the *body* of a JSON string (the part that would sit between the quotes) and decodes those escapes back to plain text, exactly the way `JSON.parse` would. It's the counterpart to [JSON escape](/util/json_escape/), and useful whenever you have JSON-escaped text outside of a JSON document — copied from a log line, a config file, or an API response you're reading by hand.
+A JSON string value can contain escape sequences for characters that aren't allowed literally inside it: a quote (`\"`), a backslash (`\\`), a newline (`\n`), a tab (`\t`), and any character written as `\uXXXX`. This tool takes the *body* of a JSON string (the part that would sit between the quotes) and decodes those escapes back to plain text, exactly the way `JSON.parse` would. It's the counterpart to [JSON escape](/util/json_escape/), and useful whenever you have JSON-escaped text outside of a JSON document, copied from a log line, a config file, or an API response you're reading by hand.
 
 ## How it works
 
-Internally the tool wraps your input in quotes and runs it through `JSON.parse`, so the decoding is exactly what any JSON parser would produce — no approximation.
+Internally the tool wraps your input in quotes and runs it through `JSON.parse`, so the decoding is exactly what any JSON parser would produce, with no approximation.
 
 ```example
 title: newline and tab escapes
@@ -41,7 +41,7 @@ input: \u0041\u00e9
 output: Aé
 ```
 
-Characters outside the Basic Multilingual Plane may appear literally in JSON, but when they are escaped JSON has to write them as a UTF-16 surrogate pair — two consecutive `\u` escapes — which decode back to a single character:
+Characters outside the Basic Multilingual Plane may appear literally in JSON, but when they are escaped JSON has to write them as a UTF-16 surrogate pair (two consecutive `\u` escapes), which decode back to a single character:
 
 ```example
 title: a surrogate pair decodes to one emoji
@@ -58,7 +58,7 @@ output: 😀
 
 ## Tips and pitfalls
 
-- The input should be the *body* of a JSON string, without its own surrounding quotes — this tool adds them internally before parsing.
+- The input should be the *body* of a JSON string, without its own surrounding quotes. This tool adds them internally before parsing.
 - Because decoding goes through `JSON.parse`, invalid or incomplete escape sequences (an unterminated `\u`, a lone trailing backslash, an unescaped control character such as a literal newline) throw an error rather than guessing at intent. So does a bare `"`, because it would end the string early.
-- This only understands JSON's own escape rules. For source-code string literals in a specific programming language — which mostly overlap with JSON's but add things like `\xNN` or octal escapes — use [code string unescape](/util/code_string_unescape/) instead.
-- To go the other direction, use [JSON escape](/util/json_escape/). If your text mixes Unicode escapes into ordinary text that isn't valid JSON, or uses other styles — `\u{...}`, Python's `\U0001F600`, CSS or HTML numeric entities — [unicode unescape](/util/unicode_escape_decode/) covers those.
+- This only understands JSON's own escape rules. For source-code string literals in a specific programming language (which mostly overlap with JSON's but add things like `\xNN` or octal escapes), use [code string unescape](/util/code_string_unescape/) instead.
+- To go the other direction, use [JSON escape](/util/json_escape/). If your text mixes Unicode escapes into ordinary text that isn't valid JSON, or uses other styles (`\u{...}`, Python's `\U0001F600`, CSS or HTML numeric entities), [unicode unescape](/util/unicode_escape_decode/) covers those.

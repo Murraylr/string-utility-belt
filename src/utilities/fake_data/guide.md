@@ -1,10 +1,10 @@
 ---
-title: Fake Data Generator Online — Mock Names & Rows
-description: Generate realistic fake test data online — names, emails, addresses, credit cards and full rows — as lines, CSV or JSON, reproducible with a seed.
+title: Fake Data Generator Online: Mock Names & Rows
+description: Generate realistic fake test data online (names, emails, addresses, credit cards and full rows) as lines, CSV or JSON, reproducible with a seed.
 ---
 ## What is a fake data generator?
 
-A fake data generator (in the tradition of tools like Faker.js or Mockaroo) produces realistic-looking but entirely made-up values — names, emails, addresses, phone numbers, and more — for populating test databases, demos, and UI mockups without using anyone's real information. Where a collision with something real could cause harm, values are built to avoid one: email and URL domains all end in `.example` (the top-level domain [reserved by RFC 2606](https://datatracker.ietf.org/doc/html/rfc2606) specifically so it can never be registered), phone numbers use the `555-0100`–`555-0199` block reserved in North America for fictional use, and generated MAC addresses have their locally-administered bit set so they can never match a real hardware vendor's address range. Other fields are simply random picks — names are common real names, and IPv4 addresses and street addresses can coincide with real ones.
+A fake data generator (in the tradition of tools like Faker.js or Mockaroo) produces realistic-looking but entirely made-up values (names, emails, addresses, phone numbers, and more) for populating test databases, demos, and UI mockups without using anyone's real information. Where a collision with something real could cause harm, values are built to avoid one: email and URL domains all end in `.example` (the top-level domain [reserved by RFC 2606](https://datatracker.ietf.org/doc/html/rfc2606) specifically so it can never be registered), phone numbers use the `555-0100`–`555-0199` block reserved in North America for fictional use, and generated MAC addresses have their locally-administered bit set so they can never match a real hardware vendor's address range. Other fields are simply random picks: names are common real names, and IPv4 addresses and street addresses can coincide with real ones.
 
 ## How it works
 
@@ -19,7 +19,7 @@ Julian Green
 Mia Young
 ```
 
-The `row` type returns a full record instead of a single field — useful for populating an entire test table at once:
+The `row` type returns a full record instead of a single field. It is useful for populating an entire test table at once:
 
 ```example
 title: a full row of fake data as json
@@ -67,11 +67,11 @@ output: email
 
 ## Options
 
-- **type** — what kind of value to generate. Scalar types: `name`, `first-name`, `last-name`, `email`, `username`, `phone`, `address`, `city`, `country`, `company`, `job-title`, `sentence`, `url`, `domain`, `ipv4`, `mac`, `date`, `price`, `credit-card`. The `row` type instead returns a full record with `id`, `firstName`, `lastName`, `email`, `username`, `phone`, `address`, `city`, `country`, `company`, `jobTitle`, `url`, `ipv4`, `date`, and `price` fields together.
-- **count** — how many values (or rows) to generate; default `5`, from 0 to 10,000.
-- **format** — `lines` (default, one value per line, or one row per line as a CSV-style record without a header), `csv` (a proper header row followed by one line per value or row, with fields containing commas or quotes automatically quoted), or `json` (an array of strings, or an array of row objects).
-- **separator** — what joins the lines; default `\n`. Typing `\n`, `\r`, or `\t` in this field is interpreted as the actual control character, since a plain text field cannot hold a literal newline.
-- **seed (0 = random)** — `0` (the default) produces fresh, different data on every run. Any other integer seeds a small deterministic PRNG and reproduces the exact same data every time, which is what makes the examples on this page repeatable and is useful for stable test fixtures.
+- **type**: what kind of value to generate. Scalar types: `name`, `first-name`, `last-name`, `email`, `username`, `phone`, `address`, `city`, `country`, `company`, `job-title`, `sentence`, `url`, `domain`, `ipv4`, `mac`, `date`, `price`, `credit-card`. The `row` type instead returns a full record with `id`, `firstName`, `lastName`, `email`, `username`, `phone`, `address`, `city`, `country`, `company`, `jobTitle`, `url`, `ipv4`, `date`, and `price` fields together.
+- **count**: how many values (or rows) to generate; default `5`, from 0 to 10,000.
+- **format**: `lines` (default, one value per line, or one row per line as a CSV-style record without a header), `csv` (a proper header row followed by one line per value or row, with fields containing commas or quotes automatically quoted), or `json` (an array of strings, or an array of row objects).
+- **separator**: what joins the lines; default `\n`. Typing `\n`, `\r`, or `\t` in this field is interpreted as the actual control character, since a plain text field cannot hold a literal newline.
+- **seed (0 = random)**: `0` (the default) produces fresh, different data on every run. Any other integer seeds a small deterministic PRNG and reproduces the exact same data every time, which is what makes the examples on this page repeatable and is useful for stable test fixtures.
 
 ## Common uses
 
@@ -81,7 +81,7 @@ output: email
 
 ## Tips and pitfalls
 
-- Generated credit card numbers pass the Luhn checksum and use brand-like prefixes (Visa, Mastercard, Discover, Amex), so they behave correctly against basic format validation — but they are random numbers, not issued cards, and not the official test numbers that payment sandboxes recognize.
-- In a `row`, the `email` and `username` are built from that row's `firstName`/`lastName`, but the other fields are generated independently — in the example above, `city` does not match the city inside `address`.
-- This tool ignores its actual text input — the input box has no effect on the generated data.
+- Generated credit card numbers pass the Luhn checksum and use brand-like prefixes (Visa, Mastercard, Discover, Amex), so they behave correctly against basic format validation. But they are random numbers, not issued cards, and not the official test numbers that payment sandboxes recognize.
+- In a `row`, the `email` and `username` are built from that row's `firstName`/`lastName`, but the other fields are generated independently. In the example above, `city` does not match the city inside `address`.
+- This tool ignores its actual text input. The input box has no effect on the generated data.
 - To generate matching unique identifiers (a primary key, a UUID) for the rows this tool produces, see [uuid](/util/uuid/) or [ulid](/util/ulid/); to turn the JSON output into a table, see [json to csv](/util/json_to_csv/).

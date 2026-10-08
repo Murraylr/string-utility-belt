@@ -1,10 +1,10 @@
 ---
-title: JSON to XML Converter Online — Convert JSON to XML
+title: JSON to XML Converter Online: Convert JSON to XML
 description: Convert JSON to XML online with control over the root element, attribute prefix, array item name, indent width and XML declaration.
 ---
 ## What is JSON to XML conversion?
 
-XML has no single, universal way to represent JSON's objects and arrays — a JSON key could become an XML element or an attribute, and an array could become repeated siblings or a wrapper element full of items. This tool picks one specific convention, the same one [xml to json](/util/xml_to_json/) reads, so that a simple XML document turned into JSON by that tool converts back to the same XML (comments, CDATA markers and mixed-content text positions are not kept). The reverse trip is not exact: XML text has no types, so numbers, booleans and `null` come back from xml to json as strings (`"1"`, `"true"`, `""`), and a one-item array comes back as a single value.
+XML has no single, universal way to represent JSON's objects and arrays. A JSON key could become an XML element or an attribute, and an array could become repeated siblings or a wrapper element full of items. This tool picks one specific convention, the same one [xml to json](/util/xml_to_json/) reads, so that a simple XML document turned into JSON by that tool converts back to the same XML (comments, CDATA markers and mixed-content text positions are not kept). The reverse trip is not exact: XML text has no types, so numbers, booleans and `null` come back from xml to json as strings (`"1"`, `"true"`, `""`), and a one-item array comes back as a single value.
 
 ## How it works
 
@@ -75,11 +75,11 @@ Keys that are not legal XML names are sanitized automatically: spaces and punctu
 
 ## Options
 
-- **root element** — the wrapping element name, `root` by default. It is used when the document is not a single-key object (or that key holds an array); set it to anything other than `root` and it wraps the document even when there is a single key.
-- **array item element** — the element name used for array items that have no property key to repeat, such as items of a nested array. Defaults to `item`.
-- **indent (0 = single line)** — spaces per nesting level, from 0 to 16. `0` renders everything on one line with no whitespace between tags.
-- **attribute prefix** — the key prefix that marks a property as an XML attribute rather than a child element. Defaults to `@`; set it to something else (such as `$`) to change which keys become attributes, or leave it empty to write every key as a child element.
-- **xml declaration** — whether to prepend `<?xml version="1.0" encoding="UTF-8"?>`. On by default.
+- **root element**: the wrapping element name, `root` by default. It is used when the document is not a single-key object (or that key holds an array); set it to anything other than `root` and it wraps the document even when there is a single key.
+- **array item element**: the element name used for array items that have no property key to repeat, such as items of a nested array. Defaults to `item`.
+- **indent (0 = single line)**: spaces per nesting level, from 0 to 16. `0` renders everything on one line with no whitespace between tags.
+- **attribute prefix**: the key prefix that marks a property as an XML attribute rather than a child element. Defaults to `@`; set it to something else (such as `$`) to change which keys become attributes, or leave it empty to write every key as a child element.
+- **xml declaration**: whether to prepend `<?xml version="1.0" encoding="UTF-8"?>`. On by default.
 
 ## Common uses
 

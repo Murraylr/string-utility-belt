@@ -8,7 +8,7 @@ Programming languages and config formats each favor a different naming conventio
 
 ## How it works
 
-The input is first split into words. A run of anything that is not a Unicode letter or number is treated as a separator, and — unlike a simple space split — a lowercase letter or digit immediately followed by an uppercase letter is also treated as a word boundary, so an already-`camelCase` or `PascalCase` identifier is split back into its original words before being rejoined:
+The input is first split into words. A run of anything that is not a Unicode letter or number is treated as a separator. Unlike a simple space split, a lowercase letter or digit immediately followed by an uppercase letter is also treated as a word boundary, so an already-`camelCase` or `PascalCase` identifier is split back into its original words before being rejoined:
 
 ```example
 title: camelCase (the default)
@@ -40,7 +40,7 @@ input: café latte
 output: caféLatte
 ```
 
-The `sentence` mode is the same as [change case](/util/case/)'s: it lowercases everything, then capitalizes the first letter of each sentence — the first letter of the input and the first letter after every `.`, `!` or `?` followed by whitespace. Surrounding whitespace is kept as it is:
+The `sentence` mode is the same as [change case](/util/case/)'s: it lowercases everything, then capitalizes the first letter of each sentence: the first letter of the input and the first letter after every `.`, `!` or `?` followed by whitespace. Surrounding whitespace is kept as it is:
 
 ```example
 title: sentence mode capitalizes each sentence and lowercases the rest
@@ -60,14 +60,14 @@ output:
 
 ## Options
 
-- **mode** (`mode`, default `camel`) — one of:
-  - `camel` — `helloWorldExample`
-  - `pascal` — `HelloWorldExample`
-  - `snake` — `hello_world_example`
-  - `kebab` — `hello-world-example`
-  - `upper` / `lower` — plain `.toUpperCase()` / `.toLowerCase()` on the whole string
-  - `title` — capitalizes the first letter of each word and lowercases the rest of it, using the same rule as [change case](/util/case/): a word must start with an ASCII letter, digit or underscore
-  - `sentence` — lowercases everything, then capitalizes the first letter of each sentence (the start of the input, and after `.`, `!` or `?` plus whitespace)
+- **mode** (`mode`, default `camel`): one of:
+  - `camel`: `helloWorldExample`
+  - `pascal`: `HelloWorldExample`
+  - `snake`: `hello_world_example`
+  - `kebab`: `hello-world-example`
+  - `upper` / `lower`: plain `.toUpperCase()` / `.toLowerCase()` on the whole string
+  - `title`: capitalizes the first letter of each word and lowercases the rest of it, using the same rule as [change case](/util/case/): a word must start with an ASCII letter, digit or underscore
+  - `sentence`: lowercases everything, then capitalizes the first letter of each sentence (the start of the input, and after `.`, `!` or `?` plus whitespace)
 
 ## Common uses
 
@@ -77,9 +77,9 @@ output:
 
 ## Tips and pitfalls
 
-- `camel`, `pascal`, `snake`, and `kebab` all use the same word-splitting logic, so they agree on what counts as a "word" — the only difference is how the words are capitalized and joined.
+- `camel`, `pascal`, `snake`, and `kebab` all use the same word-splitting logic, so they agree on what counts as a "word". The only difference is how the words are capitalized and joined.
 - Whitespace-only input under `sentence` mode is returned exactly as given, since there is no non-blank character to capitalize.
-- This tool does not validate that its output is a legal identifier in any particular language (for example, a result starting with a digit is not escaped) — check the target language's rules if that matters.
+- This tool does not validate that its output is a legal identifier in any particular language (for example, a result starting with a digit is not escaped). Check the target language's rules if that matters.
 - A word boundary is only detected where a lowercase letter or digit meets an uppercase letter, so a run of capitals stays glued to the next word: `parseHTTPResponse` becomes `parse_httpresponse` in `snake` mode. Insert a space or underscore after the acronym first if you need `parse_http_response`.
 - A digit followed by a lowercase letter is not a boundary either: `item2go` stays one word, while `2Fast` splits into `2` and `fast`.
 - To produce an ASCII-only, URL-safe slug rather than an identifier that keeps Unicode letters, use [slug](/util/slug/).

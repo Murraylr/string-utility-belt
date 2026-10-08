@@ -1,10 +1,10 @@
 ---
-title: Data URI Generator — Encode Text or Files as data:
-description: Build a data: URI from text or bytes with a chosen mime type, base64 or percent-encoded payload, and optional charset — ready to embed inline.
+title: Data URI Generator: Encode Text or Files as data:
+description: Build a data: URI from text or bytes with a chosen mime type, base64 or percent-encoded payload, and optional charset, ready to embed inline.
 ---
 ## What is a data URI?
 
-A `data:` URI embeds a small file directly inside another document instead of linking to a separate resource. It is defined by [RFC 2397](https://www.rfc-editor.org/rfc/rfc2397) and looks like `data:[<mime type>][;charset=<charset>][;base64],<data>` — everything the browser needs to render the content is right there in the string. It is how a CSS file inlines a small icon, how an HTML page embeds a tiny image without a network request, and how tools represent in-memory files as plain text. [Data URI parse](/util/data_uri_parse/) does the reverse: it takes a `data:` URI apart again.
+A `data:` URI embeds a small file directly inside another document instead of linking to a separate resource. It is defined by [RFC 2397](https://www.rfc-editor.org/rfc/rfc2397) and looks like `data:[<mime type>][;charset=<charset>][;base64],<data>`. Everything the browser needs to render the content is right there in the string. It is how a CSS file inlines a small icon, how an HTML page embeds a tiny image without a network request, and how tools represent in-memory files as plain text. [Data URI parse](/util/data_uri_parse/) does the reverse: it takes a `data:` URI apart again.
 
 ## How it works
 
@@ -36,7 +36,7 @@ output: data:image/png;base64,iVBORw==
 
 ### Non-UTF-8 payloads
 
-The **charset** parameter is only a label written into the header — it does not change how this tool encodes your input, which is always serialized as UTF-8 (or used as-is if the input is already bytes). To build a URI that actually contains non-UTF-8 bytes, convert first with [charset encode](/util/charset_encode/), then wrap the resulting bytes with a matching `charset` value:
+The **charset** parameter is only a label written into the header. It does not change how this tool encodes your input, which is always serialized as UTF-8 (or used as-is if the input is already bytes). To build a URI that actually contains non-UTF-8 bytes, convert first with [charset encode](/util/charset_encode/), then wrap the resulting bytes with a matching `charset` value:
 
 ```example
 title: labeling bytes from charset encode honestly
@@ -46,20 +46,20 @@ input: 6361 66e9
 output: data:text/plain;charset=iso-8859-1,caf%E9
 ```
 
-The four bytes above (`63 61 66 e9`) are `café` encoded as ISO-8859-1 — note the single byte `E9` for `é`, unlike its two-byte UTF-8 form. [Data URI parse](/util/data_uri_parse/) reads the `charset=iso-8859-1` label back and decodes it to `café` correctly.
+The four bytes above (`63 61 66 e9`) are `café` encoded as ISO-8859-1. Note the single byte `E9` for `é`, unlike its two-byte UTF-8 form. [Data URI parse](/util/data_uri_parse/) reads the `charset=iso-8859-1` label back and decodes it to `café` correctly.
 
 ## Options
 
-- **mime type** — defaults to `text/plain`. Must look like `type/subtype` (RFC 2045 tokens) or be left empty; anything else, such as a bare `textplain` or one with extra parameters attached, is rejected.
-- **base64 encode** — on by default. When off, the payload is percent-encoded instead, which stays more human-readable for short ASCII-heavy text but grows faster for arbitrary bytes.
-- **charset** — defaults to `utf-8`. Written into the header as a label for readers; clear it to omit the parameter entirely. Mime type and charset are both normalized to lower case in the output so a build-then-parse round trip is stable.
+- **mime type**: defaults to `text/plain`. Must look like `type/subtype` (RFC 2045 tokens) or be left empty; anything else, such as a bare `textplain` or one with extra parameters attached, is rejected.
+- **base64 encode**: on by default. When off, the payload is percent-encoded instead, which stays more human-readable for short ASCII-heavy text but grows faster for arbitrary bytes.
+- **charset**: defaults to `utf-8`. Written into the header as a label for readers; clear it to omit the parameter entirely. Mime type and charset are both normalized to lower case in the output so a build-then-parse round trip is stable.
 
 ## Common uses
 
 - Embedding a small image, icon or font directly in CSS or HTML without an extra network request.
 - Sharing a short binary fixture (a favicon, a tiny WAV file, a test payload) as a single copyable string.
 - Producing base64 or percent-encoded reference values for other tools to decode against.
-- Inlining a generated file — a QR code, a generated image, a small JSON blob — as a downloadable or embeddable link.
+- Inlining a generated file (a QR code, a generated image, a small JSON blob) as a downloadable or embeddable link.
 
 ## Tips and pitfalls
 

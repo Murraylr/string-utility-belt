@@ -1,11 +1,11 @@
 ---
-title: JSONL to JSON Converter — NDJSON to Array
+title: JSONL to JSON Converter: NDJSON to Array
 description: Collect newline-delimited JSON (JSONL or NDJSON) into a single JSON array online, skipping blank or invalid lines on request.
 ---
 ## What is JSONL, and what does converting it do?
 
 JSONL (also called NDJSON, "newline-delimited JSON") is a line-oriented
-format where every line is its own complete JSON value — an object, a
+format where every line is its own complete JSON value: an object, a
 string, a number, anything. It is common in log files, streaming APIs, and
 data pipelines because a consumer can process one record at a time without
 loading the whole file, and a producer can append new records by just
@@ -69,7 +69,7 @@ output:
 ]
 ```
 
-A JSONL file does not have to hold objects — any JSON value is valid on its
+A JSONL file does not have to hold objects. Any JSON value is valid on its
 own line (CRLF and lone-CR line endings are handled the same as LF):
 
 ```example
@@ -84,11 +84,11 @@ output: [1,"two",true,null]
 
 ## Options
 
-- **indent** — spaces of JSON indentation for the output array, from 0 to
+- **indent**: spaces of JSON indentation for the output array, from 0 to
   10 (default 2); `0` produces compact single-line JSON.
-- **skip blank lines** — on by default, ignoring empty lines; off, a blank
+- **skip blank lines**: on by default, ignoring empty lines; off, a blank
   line throws unless **on invalid line** is also set to `skip`.
-- **on invalid line** — `error` (default) stops on the first line that is
+- **on invalid line**: `error` (default) stops on the first line that is
   not valid JSON, naming its line number; `skip` drops it and continues.
 
 ## Common uses
@@ -101,7 +101,7 @@ output: [1,"two",true,null]
 
 ## Tips and pitfalls
 
-- To go the other direction — split a JSON array into one line per record —
+- To go the other direction (split a JSON array into one line per record),
   use [json to jsonl](/util/json_to_jsonl/). The two round-trip the same
   values, though not the original spacing.
 - Each line goes through JavaScript's `JSON.parse`, so integers beyond
@@ -109,7 +109,7 @@ output: [1,"two",true,null]
   last value.
 - Empty input (or input that is only whitespace) produces an empty array
   `[]` rather than an error.
-- If you need to reformat the resulting JSON further — sort keys, minify,
-  or pretty-print differently — chain [json sort keys](/util/json_sort_keys/),
+- If you need to reformat the resulting JSON further (sort keys, minify,
+  or pretty-print differently), chain [json sort keys](/util/json_sort_keys/),
   [json minify](/util/json_minify/), or [json pretty](/util/json_pretty/)
   after this step.
