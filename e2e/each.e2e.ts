@@ -17,7 +17,8 @@ test.describe('run on each', () => {
     await expect(result(page)).toHaveText('hello\nworld\n\nnot base64!')
     await expect(each.getByTestId('each-stats')).toHaveText('4 lines · 1 failed')
     // the each step counts the failure; the nested step shows the item it failed on
-    await expect(each.getByRole('alert').first()).toContainText('1 of 4 lines failed (line 4:')
+    // (the card lists its nested steps' alerts before its own summary)
+    await expect(each.getByRole('alert').filter({ hasText: /^1 of 4 lines failed/ })).toContainText('1 of 4 lines failed (line 4:')
     await expect(each.getByRole('group', { name: 'steps run on each line' }).getByRole('alert')).toContainText(/^line 4: /)
   })
 

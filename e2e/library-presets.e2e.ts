@@ -32,7 +32,7 @@ test.describe('library', () => {
     // independent of how the option's visible text/chip concatenate into an a11y name.
     await palette.locator('#cmdk-c-clear').click()
     await expect(palette).toBeHidden()
-    await expect(page.getByRole('button', { name: 'Add a utility' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^add step$/i })).toBeVisible()
     await expect(page.locator('[data-step-id]')).toHaveCount(0)
 
     // Load it back from the library.

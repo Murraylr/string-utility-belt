@@ -265,7 +265,7 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
   )
 
   return (
-    <div className="border rounded-lg bg-surface shadow-[0_16px_40px_-20px_rgb(var(--c-shadow)/var(--shadow-alpha))]">
+    <div className="min-w-0 border rounded-lg bg-surface shadow-[0_16px_40px_-20px_rgb(var(--c-shadow)/var(--shadow-alpha))]">
       {title && <div className="px-3 pt-2 text-xs text-muted">{title}</div>}
       <div className="flex items-center gap-2.5 px-3 h-11 border-b">
         <Search className="shrink-0 text-muted" size={15} aria-hidden />
