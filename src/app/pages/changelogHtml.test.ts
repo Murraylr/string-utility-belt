@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { renderChangelogHtml } from './changelogHtml'
+import { renderChangelogHtml, renderChangelogReleases } from './changelogHtml'
 
 const parse = (html: string) => {
   const el = document.createElement('div')
@@ -94,5 +94,23 @@ describe('renderChangelogHtml', () => {
     const code = root.querySelector('pre code')!
     expect(code.className).toBe('md-code-block')
     expect(code.className).not.toContain('wrap-break-word')
+  })
+})
+
+describe('renderChangelogReleases', () => {
+  it('splits the releases out, newest first, without the title, the intro or the link references', () => {
+    const releases = renderChangelogReleases(SAMPLE)
+    expect(releases.map(r => [r.version, r.date])).toEqual([['Unreleased', undefined], ['1.3.0', '2025-09-27']])
+    const unreleased = parse(releases[0].html)
+    expect([...unreleased.querySelectorAll('h3')].map(h => h.textContent)).toEqual(['Added', 'Fixed'])
+    expect(unreleased.querySelectorAll('li')).toHaveLength(4)
+    expect(releases.map(r => r.html).join('')).not.toMatch(/Intro paragraph|example\.com|<h[12]/)
+    expect(parse(releases[1].html).textContent).toBe('Baseline.')
+  })
+
+  it('reads plain headings and ignores a release-like line inside a code fence', () => {
+    const releases = renderChangelogReleases('## 2.0.0 - 2026-01-02\n\n```\n## [9.9.9]\n```\n\n## Older\n\n- x\n')
+    expect(releases.map(r => [r.version, r.date])).toEqual([['2.0.0', '2026-01-02'], ['Older', undefined]])
+    expect(parse(releases[0].html).querySelector('pre')?.textContent).toBe('## [9.9.9]')
   })
 })

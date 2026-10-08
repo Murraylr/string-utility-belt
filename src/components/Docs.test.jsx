@@ -23,13 +23,21 @@ describe('<Docs />', () => {
     try {
       render(<Docs />)
       const link = within(screen.getByRole('navigation', { name: 'Docs sections' })).getByRole('link', { name: 'Utility reference' })
-      expect(link).toHaveAttribute('href', '/docs/')
+      // a plain in-page anchor, so the jump works without scripts too
+      expect(link).toHaveAttribute('href', '/docs/#utilities')
       // fireEvent returns false when the click's default action was prevented
       expect(fireEvent.click(link)).toBe(false)
       expect(scrolledTo).toEqual(['utilities'])
     } finally {
       Element.prototype.scrollIntoView = original
     }
+  })
+
+  it('shows one of our own tools under the section list, never a sponsor', () => {
+    const { container } = render(<Docs />)
+    const promo = container.querySelector('[data-promo-slot="rail"]')
+    expect(promo).not.toBeNull()
+    expect(promo).toHaveAccessibleName('From String Utility Belt')
   })
 
   it('sets the title and description of the pre-rendered /docs/ page, restoring them on leaving', () => {

@@ -12,7 +12,7 @@ describe('<ChangelogPage />', () => {
     render(<ChangelogPage />)
     const h2s = screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)
     expect(h2s).toContain('Unreleased')
-    expect(h2s.some(t => t?.startsWith('1.3.0'))).toBe(true)
+    expect(h2s).toContain('1.3.0')
     expect(h2s.some(t => t?.includes('['))).toBe(false)
   })
 
@@ -35,18 +35,22 @@ describe('<ChangelogPage />', () => {
     expect(document.title).toBe('String Utility Belt')
   })
 
-  it('uses token classes on the article container, not bg-white', () => {
-    const { container } = render(<ChangelogPage />)
-    const article = container.querySelector('article')
-    expect(article?.className).toContain('card')
-    expect(article?.className).not.toMatch(/bg-white|text-gray/)
+  it('puts each release version, with its date, beside its notes', () => {
+    render(<ChangelogPage />)
+    const released = screen.getAllByRole('heading', { level: 2 }).find(h => h.textContent === '1.7.0')!
+    const time = released.parentElement!.querySelector('time')
+    expect(time?.getAttribute('dateTime')).toBe('2026-10-08')
+    expect(released.closest('section')?.querySelector('.md')?.textContent).toContain('Advertise page')
+    // the intro under `# Changelog` gives way to the page's own header
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'Keep a Changelog' })).toHaveAttribute('href', 'https://keepachangelog.com/en/1.1.0/')
   })
 
-  it("drops the leading heading's top margin so no blank band sits above the title", () => {
+  it('shows one of our own tools after the newest release only', () => {
     const { container } = render(<ChangelogPage />)
-    const article = container.querySelector('article') as HTMLElement
-    expect(article.className).toContain('[&>div>:first-child]:mt-0')
-    // the rule targets the rendered markdown's first block: the h1
-    expect(article.firstElementChild?.firstElementChild?.tagName).toBe('H1')
+    const promos = container.querySelectorAll('[data-promo-slot="inline"]')
+    expect(promos).toHaveLength(1)
+    expect(promos[0].previousElementSibling?.querySelector('h2')?.textContent).toBe('Unreleased')
+    expect(promos[0]).toHaveAccessibleName('From String Utility Belt')
   })
 })

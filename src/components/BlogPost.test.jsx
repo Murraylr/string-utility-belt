@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import BlogPost from './BlogPost'
+import { parseTags } from './blogManifest'
 
 const POST = `---\ntitle: Hello World\ndate: 2025-01-15\n---\n# Heading\n\nSome **bold** text.`
 
@@ -29,13 +30,20 @@ describe('<BlogPost />', () => {
     await waitFor(() => expect(screen.getByText('Post not found.')).toBeInTheDocument())
   })
 
-  it('uses token classes on the article container, not bg-white', async () => {
+  it('renders the body as prose, with token classes and no bg-white', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, text: () => Promise.resolve(POST) }))
     const { container } = render(<BlogPost slug="hello" />)
     await screen.findByText('Hello World')
     const article = container.querySelector('article')
-    expect(article.className).toContain('card')
     expect(article.className).not.toMatch(/bg-white/)
+    expect(container.querySelector('.md .md-p')?.textContent).toBe('Some bold text.')
+  })
+
+  it('links back to the blog when the post is missing', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    render(<BlogPost slug="missing" />)
+    await screen.findByRole('alert')
+    expect(screen.getByRole('link', { name: /all posts/i })).toHaveAttribute('href', '/blog/')
   })
 })
 
@@ -72,10 +80,10 @@ describe('<BlogPost /> (review regressions)', () => {
   })
 
   it('recovers from a not-found post when navigating to another slug', async () => {
-    const fetchMock = vi.fn()
+    const posts = vi.fn()
       .mockResolvedValueOnce({ ok: false })
       .mockResolvedValueOnce(res(POST))
-    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('fetch', vi.fn(url => url === '/blog/_manifest.json' ? Promise.reject(new Error('offline')) : posts(url)))
     const { rerender } = render(<BlogPost slug="missing" />)
     await screen.findByText('Post not found.')
     rerender(<BlogPost slug="hello" />)
@@ -130,5 +138,47 @@ describe('<BlogPost /> revisions and markup', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Part' })).toBeTruthy()
     expect(screen.getAllByRole('listitem').map(li => li.textContent)).toEqual(['one', 'two'])
     expect(document.title).toBe('Revised — String Utility Belt')
+  })
+})
+
+describe('<BlogPost /> header and footer', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const TAGGED = '---\ntitle: Tagged\ndescription: What it covers.\ndate: 2025-09-18\ntags: [md5, "hashing", security]\n---\n\nBody.'
+  const MANIFEST = [
+    { slug: 'tagged', title: 'Tagged' },
+    { slug: 'other', title: 'Other post' },
+  ]
+  const fetchFor = (text) => vi.fn(url => Promise.resolve(url === '/blog/_manifest.json'
+    ? { ok: true, json: () => Promise.resolve(MANIFEST) }
+    : { ok: true, headers: { get: () => 'text/markdown' }, text: () => Promise.resolve(text) }))
+
+  it('shows a breadcrumb, the description and the tags in the header, with the sponsor slot last', async () => {
+    vi.stubGlobal('fetch', fetchFor(TAGGED))
+    render(<BlogPost slug="tagged" />)
+    await screen.findByText('Tagged', { selector: 'h1' })
+    const crumbs = screen.getByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(crumbs).getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog/')
+    const header = document.querySelector('header')
+    expect(within(header).getByText('What it covers.')).toBeTruthy()
+    expect([...header.querySelectorAll('.chip')].map(c => c.textContent)).toEqual(['md5', 'hashing', 'security'])
+    expect(header.lastElementChild).toHaveClass('sponsor')
+  })
+
+  it('ends with one of our own tools and the other posts, by their crawlable paths', async () => {
+    vi.stubGlobal('fetch', fetchFor(TAGGED))
+    const { container } = render(<BlogPost slug="tagged" />)
+    const other = await screen.findByRole('link', { name: 'Other post' })
+    expect(other).toHaveAttribute('href', '/blog/other/')
+    expect(screen.queryByRole('link', { name: 'Tagged' })).toBeNull()
+    expect(container.querySelector('[data-promo-slot="inline"]')).toHaveAccessibleName('From String Utility Belt')
+  })
+})
+
+describe('parseTags', () => {
+  it('reads a bracketed or bare list, unquoting items and dropping empty ones', () => {
+    expect(parseTags('[base64, "encoding", \'cli\']')).toEqual(['base64', 'encoding', 'cli'])
+    expect(parseTags('a, b,')).toEqual(['a', 'b'])
+    expect(parseTags(undefined)).toEqual([])
+    expect(parseTags('[]')).toEqual([])
   })
 })
