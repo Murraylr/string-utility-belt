@@ -14,8 +14,13 @@ export interface IntegrationLink {
   external: boolean
 }
 
+/**
+ * Tagged so the Chrome Web Store's acquisition stats credit installs to this site (it reads
+ * `utm_*` on listing links). The Marketplace has no such report beyond the referring domain.
+ */
 export const CHROME_WEB_STORE_URL =
-  'https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh'
+  'https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh' +
+  '?utm_source=stringutilitybelt.com&utm_medium=referral'
 
 export const VSCODE_MARKETPLACE_URL =
   'https://marketplace.visualstudio.com/items?itemName=stringutilitybelt.string-utility-belt'

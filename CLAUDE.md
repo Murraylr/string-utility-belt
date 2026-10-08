@@ -183,6 +183,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `location.href`, and share links carry the user's input in the fragment.
 - Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
   params only) — GA's own history-based page views are off in the stream settings.
+- Utility pages report `snippet_copy {integration: 'cli'|'mcp', utility_id}` and `integration_click {source: 'doc_page'}` from
+  "Run it from your terminal or AI agent" (`src/app/integrations/RunElsewhere.tsx`, commands built and CLI-tested in `snippets.ts`).
 - Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`;
   page views carry `recipe_id` (register it as a custom dimension).
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,

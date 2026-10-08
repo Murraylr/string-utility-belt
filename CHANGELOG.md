@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **"Run it from your terminal or AI agent"** on every utility page that the CLI and MCP server can run: the exact
+  `npx subelt …` command for what the page's playground just did (updating as you type or change a parameter), the
+  one-line MCP install for Claude Code, and the `run_utility` arguments an agent would send — each with a copy button.
+
+### Changed
+
+- The MCP server's README starts with installing it from npm (`npx -y @string-utility-belt/mcp`) for Claude Code,
+  Claude Desktop and other clients; building from a checkout moved to its own section.
+
 ## [1.7.0] - 2026-10-08
 
 ### Added
