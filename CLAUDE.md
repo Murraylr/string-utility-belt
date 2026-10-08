@@ -6,6 +6,10 @@ same engine shipped as a CLI, HTTP API, MCP server, browser extension and VS Cod
 ## Stack
 
 - **Frontend:** React 18, TypeScript, Tailwind CSS (design tokens as CSS vars, `.dark` class), Framer Motion, CodeMirror (lazy)
+- **Design system:** tokens and component classes in `src/index.css` (`canvas`/`surface`/`surface-2`/`strip`, `line`/`line-2`,
+  `fg`/`muted`, `acc*`, `inv*`, `danger*`, `add-*`/`del-*`; `.btn`, `.btn-ghost`, `.cta`, `.btn-inv`, `.field`, `.pill`,
+  `.segmented`, `.popover`, `.menu-item`, `.page-title`, `.link-row`, `.md`). Flat hairline surfaces, one accent; a
+  shadow only on things that float. Instrument Sans + JetBrains Mono (Google Fonts, disclosed in the privacy policy)
 - **Build:** Vite 7 with `@vitejs/plugin-react`; custom plugins in `scripts/` (utility manifest, PWA service worker)
 - **Deploy:** Cloudflare Workers via Wrangler — static assets + the `/api/*` Worker. Released by the Release workflow
   (see "Releases" below); `npm run deploy` is the manual fallback
@@ -163,6 +167,12 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
   browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
   never shift; clicks are `integration_click`, `source: 'promo'`.
+- Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
+  `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
+  slot stays the page's one sponsor, as `/advertise/` promises. `promoPlan(page)` gives each slot a different
+  browser-independent tool (VS Code, MCP, CLI), never the one the sponsor slot may show, so the pre-render matches
+  the app; a slot the plan leaves empty renders nothing. Hidden below `sm`; clicks are `integration_click` with
+  `source: 'promo_<slot>'`. Never on `/advertise/` itself.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts

@@ -5,7 +5,7 @@ description: Sponsor String Utility Belt and reach developers as they decode, ha
 
 # Advertise on String Utility Belt
 
-String Utility Belt is a free toolbox of more than 240 string and data utilities — encoders, decoders, hashes, ciphers, JSON, YAML, CSV and SQL converters, date, number and colour tools — that people chain into pipelines and run in their browser. Every utility has its own page with a live playground and a guide, and step-by-step [recipes](/recipes/) solve specific jobs such as decoding a SAML request, a Kubernetes secret or CloudWatch Logs data.
+String Utility Belt is a free toolbox of more than 240 string and data utilities that people chain into pipelines and run in their browser: encoders, decoders, hashes, ciphers, JSON, YAML, CSV and SQL converters, and date, number and colour tools. Every utility has its own page with a live playground and a guide, and step-by-step [recipes](/recipes/) solve specific jobs such as decoding a SAML request, a Kubernetes secret or CloudWatch Logs data.
 
 Sponsoring a page puts your product in front of someone who is in the middle of technical work, on a page about exactly that work.
 
@@ -20,7 +20,7 @@ The pages are written for people who build and run software:
 
 Most visitors arrive from a search for the exact task a page solves. The same engine ships as a [VS Code extension, a command-line tool and an MCP server for AI agents](/integrations/), and the source is open on GitHub.
 
-We send current figures — monthly page views of the pages you are interested in, top countries and devices — with every quote, straight from our analytics.
+Every quote comes with current figures straight from our analytics: monthly page views of the pages you're interested in, plus top countries and devices.
 
 ## What we offer
 
@@ -29,7 +29,9 @@ We send current figures — monthly page views of the pages you are interested i
 | Topic sponsorship | Every page on one topic: for example auth and tokens, Kubernetes and cloud, security and hashing, or data formats | Products that solve the problem the reader is working on |
 | Site-wide sponsorship | Every utility, recipe and blog page that no topic sponsor holds | Broad developer awareness |
 
-A sponsorship is one block on the page, labelled **Sponsor**: your logo, your name, a line of text up to 100 characters and a link that opens in a new tab. It sits at the end of the page's header, above the content, on desktop and mobile. Send the logo square — SVG, PNG or WebP, up to 50 KB — as it is shown at 48 × 48 pixels. Each page shows one sponsor at a time, and a topic sponsorship is exclusive for its term.
+A sponsorship is one block on the page, labelled **Sponsor**: your logo, your name, a line of text up to 100 characters and a link that opens in a new tab. It sits at the end of the page's header, above the content, on desktop and mobile. Send the logo square, as SVG, PNG or WebP up to 50 KB. It is shown at 48 × 48 pixels. Each page shows one sponsor at a time, and a topic sponsorship is exclusive for its term.
+
+Other blocks on a page labelled **From String Utility Belt** promote our own browser extension, VS Code extension, command-line tool and MCP server. They are never sold, so your block is the only sponsor on the page.
 
 Sponsorships are sold by the month, for a flat fee quoted with the current traffic of the pages they cover. There are no impression or click caps to manage.
 
