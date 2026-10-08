@@ -9,7 +9,7 @@ const recipe: Recipe = {
   category: 'DevOps & Config',
   primaryQuery: 'decode kubernetes secret',
   published: '2026-10-07',
-  related: ['decode-helm-release-secret', 'spring-boot-yaml-to-env-vars'],
+  related: ['env-file-to-kubernetes-secret', 'decode-helm-release-secret', 'spring-boot-yaml-to-env-vars'],
   steps: [
     step('to-json', 'yaml_to_json', { indent: 2, allDocuments: false },
       'kubectl prints a Secret as YAML by default and as JSON with -o json. JSON is also valid YAML, so one parse handles both and hands the next step a JSON document.'),
