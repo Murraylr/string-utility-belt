@@ -24,7 +24,7 @@ import {
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
 import { relatedUtilities } from '../../src/app/pages/related'
-import { featuredRecipes, recipesUsing, relatedRecipes } from '../../src/app/pages/recipes/recipeHelpers'
+import { featuredRecipes, recipesUsing, relatedRecipes, stepCountText } from '../../src/app/pages/recipes/recipeHelpers'
 import { traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace } from '../../src/recipes/trace'
 import type { Recipe, RecipeMeta } from '../../src/recipes/types'
 import { metaOfRecipe } from '../gen-recipes'
@@ -578,7 +578,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
       ...manifest.map(m => ({ file: `${m.id}.png`, card: { name: displayName(m.name), category: m.category, description: m.description } })),
       ...recipeMetas.map(r => ({
         file: path.join('recipes', `${r.slug}.png`),
-        card: { name: r.name, category: `Recipe · ${r.stepCount} steps`, description: r.chain.join(' → ') },
+        card: { name: r.name, category: `Recipe · ${stepCountText(r.stepCount)}`, description: r.chain.join(' → ') },
       })),
       {
         file: 'default.png',
