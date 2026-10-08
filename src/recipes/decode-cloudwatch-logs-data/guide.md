@@ -1,6 +1,6 @@
 ---
 title: Decode CloudWatch Logs awslogs.data to Readable Log Lines
-description: Paste a Lambda awslogs event, a Kinesis or Firehose record or the bare data value and read the gzipped CloudWatch Logs events as plain log lines.
+description: Paste a Lambda awslogs event, a Kinesis or Firehose batch or the bare data value and read the gzipped CloudWatch Logs events as plain log lines.
 ---
 
 ## What a subscription filter actually sends
@@ -11,29 +11,36 @@ Each layer stops a different single tool. A Base64 decoder turns the value into 
 
 ## What each step does, and why the order matters
 
-The first [jsonpath query](/util/jsonpath/) takes `$..['data','Data']`, the first field with either name at any depth: `awslogs.data` in a subscription event, `Records[0].kinesis.data` in a Lambda event from a Kinesis stream, `records[0].data` in a Firehose transformation event, `Records[0].Data` in `aws kinesis get-records` output. It runs only when the input starts with `{`, so a bare Base64 value skips it.
+The first step, [regex extract](/util/regex_extract/), pulls out every run of Base64 that starts with `H4sI`, one per line. Every gzip stream starts with the bytes `1f 8b 08`, which Base64 writes as `H4sI`, so one pattern finds `awslogs.data` in a subscription event, the `kinesis.data` of every record in a Lambda event from a Kinesis stream, every `data` in a Firehose transformation event and every `Data` in `aws kinesis get-records` output, without knowing the shape of any of them. Because it never parses the text around the payload, it also finds one inside an event that Python's `print(event)` or Node's `console.log(event)` wrote to the log, with its single quotes and timestamp prefix. A bare value passes through as it is.
 
-[gzip decompress](/util/gzip_decompress/) recognises Base64 text by itself, so the recipe needs no separate Base64 step. A value cut short when you copied it stops here with an error instead of decoding to half a document, and the stream's CRC-32 is checked, so corrupted data is reported rather than turned into wrong text.
+The other three steps run on each line on its own, so every record, and later every message, is handled apart from the others. [gzip decompress](/util/gzip_decompress/) recognises Base64 text by itself, so the recipe needs no separate Base64 step. It inflates each gzip stream and checks its CRC-32, so a value cut short when you copied it, or damaged on the way, is reported instead of decoding to wrong text, and the result is the JSON envelope of that record on one line.
 
-The second jsonpath query, `$.logEvents[*].message`, keeps the messages and drops everything else, and [json to jsonl](/util/json_to_jsonl/) writes each one as a JSON string on its own line. In that form a stack trace is still one line with `\n` escapes in it and a quote inside a message is still `\"`, so a closing quote, a line break and an opening quote can only be the seam between two events. The [sed script](/util/sed/) turns each seam into a plain line break and drops the `\n` or `\r` escapes that ended the earlier message, which would otherwise leave a blank line after every event. That leaves one long JSON string for [code string unescape](/util/code_string_unescape/) to decode in JSON mode. Its outer quotes are kept on purpose: the unescape step strips a matching pair from the ends of its input, and would otherwise take a message's own leading and trailing apostrophes. Unescape before joining, and the line breaks and quotes inside messages would look exactly like the ones between them.
+Next, a [jsonpath query](/util/jsonpath/) takes `$.logEvents[*].message` from each envelope, and [json to jsonl](/util/json_to_jsonl/) writes every message as a JSON string on a line of its own. In that form a stack trace is still one line with `\n` escapes in it, so the line breaks between messages are the only real ones. The last step relies on that: it runs [code string unescape](/util/code_string_unescape/) in JSON mode on every message, turning `\t`, `\"` and `\n` back into a tab, a quote and a real line break, then [normalize line endings](/util/normalize_line_endings/) drops the line break that ends most Lambda log lines, which would otherwise leave a blank line after every event. Unescape before the messages sit on lines of their own, and the line breaks inside a stack trace would be indistinguishable from the ones between events.
 
 ## Limits and things to check
 
-- Only the first record is decoded. A Kinesis or Firehose batch can hold many, each with its own gzip payload: to read another, change the first step's path, for example to `$.Records[2].kinesis.data`.
-- Log group, log stream, event ids and timestamps are dropped (the gzip step's output shows the whole envelope), and Lambda's START, END and REPORT lines carry no timestamp of their own.
-- Paste JSON or the bare value, not a log line. Python's `print(event)` writes a dict with single quotes, Node's `console.log(event)` a JavaScript object literal, and Lambda's Node.js console and Python logging put a timestamp, level and request ID in front. Depending on what you copy, the first step reports "input is not valid JSON" or the gzip step "not valid gzip data". Copy from the opening brace of a logged `json.dumps(event)` or `JSON.stringify(event)`, or only the value between the quotes after `data`.
-- An empty result means no `data` or `Data` field was found. JSONPath names are case-sensitive.
-- A message that ends in a literal backslash followed by `n` or `r` (two characters, not a line break) is misread as ending in a line-break escape, and the last step stops with an escape error.
+- Log group, log stream, event ids and timestamps are dropped (step 2's output shows the whole envelope of every record), and Lambda's START, END and REPORT lines carry no timestamp of their own.
+- A bare value that a terminal or log viewer wrapped across several lines has to be joined into one line first. Otherwise each piece is read as a payload of its own and fails.
+- Payloads written with escaped slashes (`\/`, as PHP's `json_encode` and some loggers print JSON) are cut short at the first one. Replace `\/` with `/` before pasting.
+- A record that does not decode stays in the output as its line of Base64, and step 2 names the line that failed, so one damaged record never hides the rest of a batch.
+- A carriage return inside a message comes out as a line break.
+- When nothing you pasted contains `H4sI`, the first step is skipped, step 2 reports every line as not valid gzip data, and the output is your input back (or nothing, for JSON on a single line). That means there was no payload to find, often because only part of the event was copied.
 - A stream receiving subscription data can also hold records whose `messageType` is `CONTROL_MESSAGE`, which CloudWatch Logs sends mainly to check that the destination is reachable. They decode like any other record but hold no events from your log group, so code that forwards logs should skip them.
 
 ## Doing it in a terminal or in code
 
-With the event saved to a file and jq installed, this prints the same lines as the worked example:
+With a subscription event saved to a file and jq installed, this prints the same lines as the worked example:
 
 ```bash
 jq -r '.awslogs.data' event.json | base64 --decode | gunzip | jq -r '.logEvents[].message | rtrimstr("\n")'
 ```
 
-For get-records output, start with `jq -r '.Records[0].Data'` instead; for a bare value, with `printf '%s' "$DATA"`.
+A batch carries one gzip payload per record, and a record's Base64 can end in `=` padding, so the values cannot be joined and decoded as one. Decode each record on its own:
 
-Inside a handler, Python decodes the payload with `json.loads(gzip.decompress(base64.b64decode(event["awslogs"]["data"])))` and Node.js with `JSON.parse(zlib.gunzipSync(Buffer.from(event.awslogs.data, "base64")).toString("utf8"))`; either way `logEvents` arrives as a list of objects and the escaping never shows. This recipe is for the moments in between: a payload copied out of a log line, a test event, a record pulled from a stream with the CLI. What you paste is decoded in your browser, not sent anywhere.
+```bash
+jq -r '.Records[].kinesis.data' event.json | while read -r data; do printf '%s' "$data" | base64 --decode | gunzip; done | jq -r '.logEvents[].message | rtrimstr("\n")'
+```
+
+For get-records output, start with `jq -r '.Records[].Data'`, for a Firehose transformation event with `jq -r '.records[].data'`, and for a bare value with `printf '%s' "$DATA"`.
+
+Inside a handler, Python decodes one payload with `json.loads(gzip.decompress(base64.b64decode(event["awslogs"]["data"])))` and Node.js with `JSON.parse(zlib.gunzipSync(Buffer.from(event.awslogs.data, "base64")).toString("utf8"))`; for a Kinesis batch, loop over `event["Records"]` and decode each `kinesis.data` the same way. Either way `logEvents` arrives as a list of objects and the escaping never shows. This recipe is for the moments in between: a payload copied out of a log line, a test event, a batch pulled from a stream with the CLI. What you paste is decoded in your browser, not sent anywhere.

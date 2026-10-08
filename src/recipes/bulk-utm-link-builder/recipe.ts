@@ -1,15 +1,5 @@
 import type { Recipe } from '../types'
-import { step } from '../define'
-
-/** Step 2: undo HTML's &amp;, remove the utm_* pairs a link already carries, then the separator they leave dangling. */
-const STRIP = [
-  '# links copied from HTML source write & as &amp;',
-  String.raw`s/&amp;/\&/g`,
-  '# remove each utm_* pair (any case) and the & after it',
-  String.raw`s/(?<=[?&])utm_[a-z_]+=[^&#]*&?//gi`,
-  '# drop a ? or & left dangling before the # or at the end',
-  String.raw`s/[?&]+(#|$)/\1/g`,
-].join('\n')
+import { each, laneStep, step } from '../define'
 
 /** Step 4: mark where the tags go, choosing ? or & and staying in front of any #fragment. */
 const SLOT = [
@@ -27,14 +17,20 @@ const recipe: Recipe = {
   category: 'Writing & Marketing',
   primaryQuery: 'bulk utm builder',
   published: '2026-10-07',
+  updated: '2026-10-08',
   related: ['clean-chatgpt-text'],
   steps: [
     step('extract', 'extract_preset', { type: ['urls'], unique: false, sort: false, separator: '\n', count: false },
       "Pulls every link out of whatever you paste, whether a list, spreadsheet columns, a draft or HTML, one per line. Surrounding spaces, column labels, HTML tags and a sentence's trailing comma, period or closing parenthesis are left behind.",
       { label: 'pull out the links' }),
-    step('strip', 'sed', { script: STRIP, perLine: true },
-      'Removes each utm_ pair a link already carries, in any capitalization, plus the ? or & left dangling, after turning the &amp; of HTML source back into &. Otherwise a reused link ends up with two utm_source values, and which one counts depends on the software reading it.',
-      { label: 'remove old utm_ tags' }),
+    each('strip', { mode: 'lines' }, [
+      laneStep('amp', 'unescape_html', {}, { label: 'turn &amp; back into &' }),
+      laneStep('drop-utm', 'query_params_normalize', {
+        sort: false, dedupe: 'none', dropEmpty: false, drop: 'utm_*', decode: false, lowercaseHost: false,
+      }, { label: 'drop utm_* parameters' }),
+    ],
+    'Cleans one link at a time: turns the &amp; of HTML source back into &, then drops every query parameter matching utm_*, in any capitalization, with the ? or & it leaves behind. Add fbclid or gclid to the drop list to strip those too. Otherwise a reused link carries two utm_source values.',
+    { label: 'remove old utm_ tags' }),
     step('dedupe', 'line_dedupe', { caseSensitive: true },
       "Drops repeated links. It runs after the old tags are gone, so a page listed twice, once with last campaign's utm_ values and once without, comes out as one link."),
     step('slot', 'sed', { script: SLOT, perLine: true },

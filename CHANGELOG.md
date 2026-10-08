@@ -13,11 +13,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   desktop Chrome, Edge or other Chromium browser without it, the page links to the extension's Chrome Web
   Store listing instead; other browsers and phones, which can't install it, see neither.
 
+### Changed
+
+- Recipe pages show what runs inside a run-on-each or branch step: every nested step with its link, the
+  settings it changes, its condition and what happens when it fails, how an each step splits its input and
+  how a branch merges its lanes, in the pre-rendered page too.
+- **Decode CloudWatch Logs subscription data** decodes every record of a Kinesis or Firehose batch, not
+  only the first, and finds the payload in an event printed by Python or Node.js. A message ending in a
+  literal `\n` no longer stops it.
+- **Excel column to SQL IN clause** escapes and quotes each value on its own, so the `mysql` flavor
+  (backslash escapes) and the `mssql` flavor (`N'…'` for non-ASCII values) work per value.
+- **Bulk UTM link builder** removes old `utm_` parameters with *normalize query params*, so names with
+  digits, without `=` or percent-encoded are removed too, and the drop list takes more names (`fbclid`,
+  `gclid`). Tags inside a `#fragment` are no longer removed.
+
 ### Fixed
 
 - CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
   (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
   now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
+- **gzip decompress** reports short input that is not gzip (`{`, `[`, a cut-off `H4sIAAAA`) as not valid
+  gzip data instead of a failed integrity check.
+- A recipe page with one numbered step says "1 step", on the page and on its share card.
+- Leaving a recipe page stops working out its "What if you skip a step?" examples, instead of running them
+  on in the background while the next page waits for the engine.
 
 ## [1.5.0] - 2026-10-07
 

@@ -11,7 +11,9 @@ export const RECIPE_INDEX: RecipeMeta[] = [
       "extract_preset",
       "line_dedupe",
       "multi_replace",
-      "sed"
+      "query_params_normalize",
+      "sed",
+      "unescape_html"
     ],
     "chain": [
       "pull out the links",
@@ -21,7 +23,8 @@ export const RECIPE_INDEX: RecipeMeta[] = [
       "your UTM values"
     ],
     "stepCount": 5,
-    "published": "2026-10-07"
+    "published": "2026-10-07",
+    "updated": "2026-10-08"
   },
   {
     "slug": "clean-chatgpt-text",
@@ -50,25 +53,25 @@ export const RECIPE_INDEX: RecipeMeta[] = [
   {
     "slug": "decode-cloudwatch-logs-data",
     "name": "Decode CloudWatch Logs subscription data",
-    "summary": "Paste a Lambda event with awslogs.data, a Kinesis or Firehose record, or the bare Base64 value, and read the log events inside as plain lines, with the gzip, the JSON envelope and the escapes undone.",
+    "summary": "Paste a Lambda event with awslogs.data, a Kinesis or Firehose batch, or the bare Base64 value, and read the log events of every record as plain lines, with the gzip, the JSON envelope and the escapes undone.",
     "category": "Web & APIs",
     "utilityIds": [
       "code_string_unescape",
       "gzip_decompress",
       "json_to_jsonl",
       "jsonpath",
-      "sed"
+      "normalize_line_endings",
+      "regex_extract"
     ],
     "chain": [
-      "pick the data field",
-      "gzip decompress",
+      "find every payload",
+      "unzip each payload",
       "keep each message",
-      "json to jsonl",
-      "join into one string",
-      "code string unescape"
+      "decode each message"
     ],
-    "stepCount": 6,
-    "published": "2026-10-07"
+    "stepCount": 4,
+    "published": "2026-10-07",
+    "updated": "2026-10-08"
   },
   {
     "slug": "decode-flask-session-cookie",
@@ -156,7 +159,7 @@ export const RECIPE_INDEX: RecipeMeta[] = [
   {
     "slug": "excel-column-to-sql-in-clause",
     "name": "Turn an Excel column into a SQL IN clause",
-    "summary": "Paste a column copied from Excel or Google Sheets and get a ready-to-run IN (…) list: whitespace trimmed, duplicates dropped, apostrophes escaped and every value quoted.",
+    "summary": "Paste a column copied from Excel or Google Sheets and get a ready-to-run IN (…) list: whitespace trimmed, duplicates dropped, and every value escaped and quoted for your SQL dialect.",
     "category": "Data & Spreadsheets",
     "utilityIds": [
       "line_affix",
@@ -167,12 +170,13 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "chain": [
       "trim each line",
       "deduplicate lines",
-      "sql escape",
-      "quote and join values",
+      "quote each value",
+      "join with commas",
       "wrap in IN ( … )"
     ],
     "stepCount": 5,
-    "published": "2026-10-07"
+    "published": "2026-10-07",
+    "updated": "2026-10-08"
   },
   {
     "slug": "fix-bash-bad-interpreter",
