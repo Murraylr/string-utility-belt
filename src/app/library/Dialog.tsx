@@ -6,7 +6,8 @@ export interface DialogProps {
   title: string
   onClose: () => void
   children: React.ReactNode
-  className?: string
+  /** Max width of the panel, as a Tailwind class (default `max-w-[520px]`). */
+  widthClass?: string
   /** Rendered after the title, before the close button (tabs, a subtitle, …). */
   headerExtra?: React.ReactNode
   /**
@@ -26,7 +27,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), in
  * <body> so a transformed / backdrop-filtered ancestor (a sticky blurred header,
  * an animated card) cannot turn the fixed overlay into a clipped box.
  */
-export default function Dialog({ title, onClose, children, className, headerExtra, returnFocus }: DialogProps) {
+export default function Dialog({ title, onClose, children, widthClass = 'max-w-[520px]', headerExtra, returnFocus }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = useId()
   // Callers pass inline `onClose` arrows; reading it through a ref keeps the effect
@@ -70,7 +71,7 @@ export default function Dialog({ title, onClose, children, className, headerExtr
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/40"
+      className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[9vh] pb-4 bg-black/35"
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
@@ -79,16 +80,24 @@ export default function Dialog({ title, onClose, children, className, headerExtr
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`card w-full max-w-2xl max-h-[85vh] overflow-auto p-5 grid gap-4 content-start outline-hidden ${className ?? ''}`}
+        className={`w-full ${widthClass} max-h-[calc(91vh-16px)] flex flex-col bg-surface border rounded-[10px] shadow-dialog outline-hidden`}
       >
-        <div className="flex items-center justify-between gap-3">
-          <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
-          <div className="flex items-center gap-2">
-            {headerExtra}
-            <button className="icon-btn" aria-label="close dialog" onClick={onClose}><X size={18} /></button>
-          </div>
+        <div className="flex items-center gap-2.5 pl-[18px] pr-3 pt-3.5 pb-3 border-b shrink-0">
+          <h2 id={titleId} className="m-0 flex-1 min-w-0 text-[15px] font-semibold">{title}</h2>
+          {headerExtra}
+          <button
+            type="button"
+            className="grid place-items-center size-7 rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg"
+            aria-label="close dialog"
+            onClick={onClose}
+          >
+            <X size={16} aria-hidden />
+          </button>
         </div>
-        {children}
+        {/* the body scrolls, so the title and close button stay in view on a short screen */}
+        <div className="overflow-auto px-[18px] pt-3.5 pb-[18px] grid gap-3 content-start">
+          {children}
+        </div>
       </div>
     </div>,
     document.body

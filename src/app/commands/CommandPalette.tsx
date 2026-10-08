@@ -5,7 +5,7 @@
  * CustomEvents (`sub:tool-command`, handled by `ToolCommandBridge`).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Search, X } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { registry } from '@/app/registry'
 import type { UtilityMeta } from '@/core/registry'
 import { fuzzyScore, searchUtilities, type FuzzyRange } from '@/app/search/fuzzy'
@@ -28,13 +28,26 @@ const ID_PREFIX = 'cmdk-'
 
 type Mode = 'all' | 'utility'
 
+/** `section` heads a group of options in the browse lists (no query); search results are one ranked list. */
 type PaletteItem =
-  | { kind: 'command'; command: Command; key: string }
-  | { kind: 'utility'; meta: UtilityMeta; nameRanges: FuzzyRange[]; key: string }
+  | { kind: 'command'; command: Command; key: string; section?: string }
+  | { kind: 'utility'; meta: UtilityMeta; nameRanges: FuzzyRange[]; key: string; section?: string }
 
-const commandItem = (command: Command): PaletteItem => ({ kind: 'command', command, key: `${ID_PREFIX}c-${command.id}` })
-const utilityItem = (meta: UtilityMeta, nameRanges: FuzzyRange[] = []): PaletteItem =>
-  ({ kind: 'utility', meta, nameRanges, key: `${ID_PREFIX}u-${meta.id}` })
+const commandItem = (command: Command, section?: string): PaletteItem =>
+  ({ kind: 'command', command, key: `${ID_PREFIX}c-${command.id}`, section })
+const utilityItem = (meta: UtilityMeta, nameRanges: FuzzyRange[] = [], section?: string): PaletteItem =>
+  ({ kind: 'utility', meta, nameRanges, key: `${ID_PREFIX}u-${meta.id}`, section })
+
+/** Runs of consecutive items that share a section, in list order. */
+function sections(items: PaletteItem[]): { name?: string; items: { item: PaletteItem; index: number }[] }[] {
+  const out: { name?: string; items: { item: PaletteItem; index: number }[] }[] = []
+  items.forEach((item, index) => {
+    const last = out[out.length - 1]
+    if (last && last.name === item.section) last.items.push({ item, index })
+    else out.push({ name: item.section, items: [{ item, index }] })
+  })
+  return out
+}
 
 function scoreCommand(query: string, c: Command): number {
   const titleMatch = fuzzyScore(query, c.title)
@@ -104,22 +117,26 @@ export default function CommandPalette() {
     if (mode === 'utility') {
       if (!q) {
         const recentIds = new Set(recentMetas.map(m => m.id))
-        return [...recentMetas, ...registry.list().filter(m => !recentIds.has(m.id))]
-          .slice(0, MAX_RESULTS).map(m => utilityItem(m))
+        return [
+          ...recentMetas.map(m => utilityItem(m, [], 'Recent')),
+          ...registry.list().filter(m => !recentIds.has(m.id)).map(m => utilityItem(m, [], 'Utilities')),
+        ].slice(0, MAX_RESULTS)
       }
       return searchUtilities(q, registry.list()).slice(0, MAX_RESULTS).map(r => utilityItem(r.meta, r.nameRanges))
     }
 
     if (!q) {
-      // recent commands first, then recently added utilities, then every other command
+      // recent commands first, then recently added utilities, then every other command by group
       const recentCmds = recentCommands
         .map(id => commandById.get(id))
         .filter((c): c is Command => !!c && available.includes(c))
       const seen = new Set(recentCmds.map(c => c.id))
+      const rest = available.filter(c => !seen.has(c.id))
+      const groupOrder = [...new Set(rest.map(c => c.group))]
       return [
-        ...recentCmds.map(commandItem),
-        ...recentMetas.slice(0, MAX_RECENT_UTILITIES).map(m => utilityItem(m)),
-        ...available.filter(c => !seen.has(c.id)).map(commandItem),
+        ...recentCmds.map(c => commandItem(c, 'Recent')),
+        ...recentMetas.slice(0, MAX_RECENT_UTILITIES).map(m => utilityItem(m, [], 'Recent utilities')),
+        ...groupOrder.flatMap(group => rest.filter(c => c.group === group).map(c => commandItem(c, group))),
       ]
     }
 
@@ -189,9 +206,38 @@ export default function CommandPalette() {
 
   const activeKey = items[clampedIndex]?.key
   const dialogProps = { [PALETTE_DIALOG_ATTR]: '' }
+  const searching = !!query.trim()
+
+  const option = ({ item, index }: { item: PaletteItem; index: number }) => (
+    <li
+      key={item.key}
+      id={item.key}
+      role="option"
+      aria-selected={index === clampedIndex}
+      onMouseEnter={() => setActiveIndex(index)}
+      onClick={() => selectItem(item)}
+      className={`flex items-center justify-between gap-3 px-2.5 py-2 rounded-md cursor-pointer text-[13.5px] ${index === clampedIndex ? 'bg-surface-2' : ''}`}
+    >
+      {item.kind === 'command' ? (
+        <>
+          <span className="min-w-0">{item.command.title}</span>
+          <span className="flex items-center gap-2 shrink-0 font-mono text-[11px] text-muted">
+            {/* browsing shows the group as a heading; a ranked search names it per row */}
+            {searching && <span>{item.command.group}</span>}
+            {item.command.shortcut && <kbd className="kbd">{item.command.shortcut}</kbd>}
+          </span>
+        </>
+      ) : (
+        <>
+          <span className="min-w-0"><Highlight text={item.meta.name} ranges={item.nameRanges} /></span>
+          <span className="shrink-0 font-mono text-[11px] text-muted">{item.meta.category}</span>
+        </>
+      )}
+    </li>
+  )
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-24 bg-black/40" {...backdrop}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[9vh] pb-4 bg-black/35" {...backdrop}>
       <div
         ref={dialogRef}
         role="dialog"
@@ -199,16 +245,14 @@ export default function CommandPalette() {
         aria-labelledby={`${ID_PREFIX}title`}
         tabIndex={-1}
         {...dialogProps}
-        className="card w-full max-w-xl p-4 outline-hidden"
+        className="w-full max-w-[560px] bg-surface border rounded-[10px] shadow-dialog outline-hidden"
         onKeyDown={onDialogKeyDown}
       >
-        <div className="flex items-center justify-between mb-2">
-          <h2 id={`${ID_PREFIX}title`} className="text-sm font-semibold text-muted">
-            {mode === 'utility' ? 'Add a utility' : 'Command palette'}
-          </h2>
-          <button type="button" className="icon-btn" aria-label="close" onClick={close}><X size={16} /></button>
-        </div>
-        <div className="relative mb-2">
+        <h2 id={`${ID_PREFIX}title`} className="sr-only">
+          {mode === 'utility' ? 'Add a utility' : 'Command palette'}
+        </h2>
+        <div className="flex items-center gap-2.5 h-[50px] px-3.5 border-b">
+          <Search className="shrink-0 text-muted" size={16} aria-hidden />
           <input
             ref={inputRef}
             role="combobox"
@@ -217,51 +261,35 @@ export default function CommandPalette() {
             aria-controls={`${ID_PREFIX}listbox`}
             aria-activedescendant={activeKey}
             aria-label={mode === 'utility' ? 'Search utilities' : 'Search commands and utilities'}
-            className="w-full field pl-9"
-            placeholder={mode === 'utility' ? 'Search utilities…' : 'Type a command or utility…'}
+            className="flex-1 min-w-0 bg-transparent border-0 outline-hidden text-[15px]"
+            placeholder={mode === 'utility' ? 'Search utilities' : 'Type a command or a utility'}
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={onInputKeyDown}
           />
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-muted" size={16} aria-hidden />
+          <button type="button" className="kbd hover:text-fg" aria-label="close" onClick={close}>Esc</button>
         </div>
         <div role="status" className="sr-only">
-          {query.trim() ? `${items.length} ${items.length === 1 ? 'result' : 'results'}` : ''}
+          {searching ? `${items.length} ${items.length === 1 ? 'result' : 'results'}` : ''}
         </div>
         <ul
           id={`${ID_PREFIX}listbox`}
           role="listbox"
           aria-label={mode === 'utility' ? 'utilities' : 'commands and utilities'}
-          className="max-h-80 overflow-auto grid gap-1"
+          className="m-0 p-1.5 list-none max-h-[min(420px,60vh)] overflow-auto"
         >
-          {items.map((item, idx) => (
-            <li
-              key={item.key}
-              id={item.key}
-              role="option"
-              aria-selected={idx === clampedIndex}
-              onMouseEnter={() => setActiveIndex(idx)}
-              onClick={() => selectItem(item)}
-              className={`flex items-center justify-between gap-3 px-3 py-2 rounded-xl cursor-pointer border ${idx === clampedIndex ? 'bg-surface-2 border-primary-600' : 'border-transparent hover:bg-surface-2'}`}
-            >
-              {item.kind === 'command' ? (
-                <>
-                  <span>{item.command.title}</span>
-                  <span className="flex items-center gap-2 shrink-0">
-                    <span className="chip">{item.command.group}</span>
-                    {item.command.shortcut && <kbd className="chip mono">{item.command.shortcut}</kbd>}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span><Highlight text={item.meta.name} ranges={item.nameRanges} /></span>
-                  <span className="chip shrink-0">{item.meta.category}</span>
-                </>
-              )}
+          {sections(items).map((section, i) => section.name ? (
+            <li key={`${section.name}-${i}`} role="presentation">
+              <div id={`${ID_PREFIX}g-${i}`} className="px-2.5 pt-2 pb-1 text-[11.5px] font-medium text-muted">{section.name}</div>
+              <ul role="group" aria-labelledby={`${ID_PREFIX}g-${i}`} className="m-0 p-0 list-none">
+                {section.items.map(option)}
+              </ul>
             </li>
-          ))}
+          ) : section.items.map(option))}
+          {items.length === 0 && (
+            <li role="presentation" className="px-2.5 py-[18px] text-[13px] text-muted">Nothing matches “{query.trim()}”.</li>
+          )}
         </ul>
-        {items.length === 0 && <div className="text-sm text-muted px-3 py-2">No matches.</div>}
       </div>
     </div>
   )

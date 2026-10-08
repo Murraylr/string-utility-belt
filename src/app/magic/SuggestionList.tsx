@@ -22,22 +22,22 @@ export default function SuggestionList({
   const n = suggestions.length
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-2.5">
       {/* one polite region for every async outcome, so each is announced as it lands */}
-      <div role="status" aria-live="polite" className="muted text-sm">
+      <div role="status" aria-live="polite" className="text-[12.5px] text-muted">
         {loading
           ? 'analysing…'
           : error
             ? null
             : n === 0
               ? empty
-                ? "There's nothing to analyse yet — paste or produce some input first."
-                : 'Nothing obvious to decode here — try base64, hex, a JWT, JSON, gzip, and more.'
+                ? "There's nothing to analyse yet. Paste or type some input first."
+                : 'Nothing obvious to decode here. Magic spots base64, hex, JWTs, JSON, gzip and more.'
               : <span className="sr-only">{n} decoding suggestion{n === 1 ? '' : 's'}</span>}
       </div>
-      {error && <div role="alert" className="text-sm text-danger">{error}</div>}
+      {error && <div role="alert" className="text-[12.5px] text-danger-ink">{error}</div>}
       {n > 0 && (
-        <ul className="grid gap-2" aria-label="decoding suggestions">
+        <ul className="m-0 p-0 list-none grid gap-1" aria-label="decoding suggestions">
           {suggestions.map((s, i) => (
             <li key={`${s.step.utilityId}:${i}`}>
               <SuggestionButton suggestion={s} onPick={onPick} />
@@ -47,7 +47,7 @@ export default function SuggestionList({
       )}
       <button
         type="button"
-        className="btn"
+        className="btn-inv h-[30px] w-full"
         disabled={n === 0 || !!decodingAll}
         aria-busy={!!decodingAll}
         onClick={onDecodeAll}

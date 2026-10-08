@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { Check, Copy, Download, PlusSquare, Search, Pencil, Trash2, Upload, X } from 'lucide-react'
+import { Check, Copy, Download, Search, Pencil, Trash2, Upload, X } from 'lucide-react'
 import { asText, isBytes } from '@/core/coerce'
 import { countSteps, stepId } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
@@ -183,125 +183,137 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
   }
 
   const panelId = 'library-panel'
+  const rowButton = 'h-[26px] px-[9px] border rounded-[5px] bg-surface text-[12.5px] hover:bg-surface-2'
+  const rowIcon = 'grid place-items-center size-[26px] rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg'
   return (
-    <Dialog title="Library" onClose={onClose} returnFocus={returnFocus}>
+    <Dialog title="Library" widthClass="max-w-[540px]" onClose={onClose} returnFocus={returnFocus}>
       <Tabs label="library sections" tabs={TABS} value={tab} onChange={setTab} panelId={panelId} idPrefix="library-tab" />
 
       <div id={panelId} role="tabpanel" aria-labelledby={`library-tab-${tab}`} className="grid gap-3">
-        {/* the input itself is unstyled, and `.field`'s ring is `:focus` on this wrapper div,
-            which never matches — ring the wrapper while the input inside has focus instead */}
-        <div className="field flex items-center gap-2 py-1.5 focus-within:ring-2 focus-within:ring-primary-500">
-          <Search size={16} className="text-muted shrink-0" aria-hidden />
+        {tab === 'pipeline' ? (
+          <div className="grid gap-2">
+            <div className="flex flex-wrap gap-1.5">
+              <input
+                className="field flex-1 min-w-40 h-[30px]"
+                placeholder="Pipeline name"
+                value={saveName}
+                maxLength={120}
+                onChange={e => setSaveName(e.target.value)}
+                aria-label="pipeline name to save"
+              />
+              {/* the button that does what the user most likely wants is the filled one */}
+              <button
+                className={`${state.libraryId ? 'btn-inv' : 'btn'} h-[30px]`}
+                disabled={!state.libraryId}
+                title={state.libraryId ? 'Overwrite the library entry this pipeline was loaded from' : 'Load or save a pipeline first'}
+                onClick={() => doSave('save')}
+              >
+                Save
+              </button>
+              <button className={`${state.libraryId ? 'btn' : 'btn-inv'} h-[30px]`} onClick={() => doSave('saveAsNew')}>Save as new</button>
+            </div>
+            <label className="flex items-center gap-2 text-[13px] cursor-pointer has-[:disabled]:cursor-default">
+              <input
+                type="checkbox"
+                className="accent-acc"
+                checked={saveInputToo && !bytesInput}
+                disabled={bytesInput}
+                onChange={e => setSaveInputToo(e.target.checked)}
+              />
+              Save input with pipeline
+            </label>
+            <p className="m-0 text-xs text-muted">
+              {bytesInput && 'Binary input can\'t be saved with the pipeline. '}
+              Save updates the pipeline you loaded. Save as new adds another entry. Pipelines stay in this browser.
+            </p>
+          </div>
+        ) : (
+          <p className="m-0 text-xs text-muted">Select steps in the editor, then choose Save as macro. Insert adds a macro as one step.</p>
+        )}
+
+        <div className="field h-[30px] flex items-center gap-2 focus-within:border-acc">
+          <Search size={14} className="text-muted shrink-0" aria-hidden />
           <input
             ref={searchRef}
-            className="bg-transparent outline-hidden flex-1 text-sm"
-            placeholder={`search ${tab === 'pipeline' ? 'pipelines' : 'macros'}…`}
+            className="bg-transparent outline-hidden flex-1 min-w-0 text-[13px]"
+            placeholder={`Search ${tab === 'pipeline' ? 'pipelines' : 'macros'}`}
             value={query}
             onChange={e => setQuery(e.target.value)}
             aria-label={`search ${tab === 'pipeline' ? 'pipelines' : 'macros'}`}
           />
         </div>
 
-        <ul className="grid gap-2 max-h-64 overflow-auto" aria-label={`${tab} list`}>
+        <ul className="m-0 p-0 list-none border rounded-md max-h-[300px] overflow-auto" aria-label={`${tab} list`}>
           {filtered.length === 0 && (
-            <li className="muted text-sm">
-              {query ? 'no matches' : tab === 'macro' ? 'no macros yet — group steps into a macro to save one' : 'nothing here yet'}
+            <li className="px-3 py-4 text-[12.5px] text-muted">
+              {query
+                ? 'Nothing matches that search.'
+                : tab === 'macro'
+                  ? 'No macros yet. Select steps, then choose Save as macro.'
+                  : 'Nothing saved yet. Name the current pipeline above and save it.'}
             </li>
           )}
-          {filtered.map(entry => (
-            <li key={entry.id} className="card p-3 flex items-center gap-2 flex-wrap">
-              <div className="min-w-0 flex-1">
-                {renamingId === entry.id ? (
-                  <input
-                    autoFocus
-                    className="field text-sm w-full"
-                    value={renameValue}
-                    maxLength={120}
-                    aria-label={`rename ${entry.name}`}
-                    onChange={e => setRenameValue(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') { e.preventDefault(); commitRename(entry.id); focusRenameButton(entry.id) }
-                      // consumed here: Escape cancels the rename, it does not close the dialog
-                      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelRename(); focusRenameButton(entry.id) }
-                    }}
-                    onBlur={() => commitRename(entry.id)}
-                  />
-                ) : (
-                  <div className="truncate font-medium" title={entry.name}>{entry.name}</div>
-                )}
-                <div className="text-xs text-muted">
-                  {entry.id === state.libraryId && <span className="chip mr-1">open</span>}
-                  updated <time dateTime={new Date(entry.updatedAt).toISOString()}>{relativeTime(entry.updatedAt)}</time>
-                  {entry.input !== undefined && ' · with input'}
+          {filtered.map(entry => {
+            const n = countSteps(entry.steps)
+            return (
+              <li key={entry.id} className="flex items-center gap-1.5 py-[9px] pl-3 pr-2 border-b last:border-b-0">
+                <div className="min-w-0 flex-1 grid">
+                  {renamingId === entry.id ? (
+                    <input
+                      autoFocus
+                      className="field h-7 w-full"
+                      value={renameValue}
+                      maxLength={120}
+                      aria-label={`rename ${entry.name}`}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { e.preventDefault(); commitRename(entry.id); focusRenameButton(entry.id) }
+                        // consumed here: Escape cancels the rename, it does not close the dialog
+                        else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancelRename(); focusRenameButton(entry.id) }
+                      }}
+                      onBlur={() => commitRename(entry.id)}
+                    />
+                  ) : (
+                    <div className="truncate text-[13px] font-medium" title={entry.name}>{entry.name}</div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-1 font-mono text-[11px] text-muted">
+                    {entry.id === state.libraryId && <span className="chip text-acc border-acc">open</span>}
+                    <span>
+                      {n} step{n === 1 ? '' : 's'} · <time dateTime={new Date(entry.updatedAt).toISOString()}>{relativeTime(entry.updatedAt)}</time>
+                      {entry.input !== undefined && ' · with input'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
                 {tab === 'macro' ? (
-                  <button className="btn" onClick={() => insertMacro(entry)} aria-label={`Insert ${entry.name}`}>Insert</button>
+                  <button className={rowButton} onClick={() => insertMacro(entry)} aria-label={`Insert ${entry.name}`}>Insert</button>
                 ) : (
-                  <button className="btn" onClick={() => loadEntry(entry)} aria-label={`Load ${entry.name}`}>Load</button>
+                  <button className={rowButton} onClick={() => loadEntry(entry)} aria-label={`Load ${entry.name}`}>Load</button>
                 )}
                 <button
                   ref={el => { if (el) renameButtons.current.set(entry.id, el); else renameButtons.current.delete(entry.id) }}
-                  className="icon-btn"
+                  className={rowIcon}
                   aria-label={`rename ${entry.name}`}
                   onClick={() => startRename(entry)}
                 >
-                  <Pencil size={16} />
+                  <Pencil size={13} aria-hidden />
                 </button>
-                <button className="icon-btn" aria-label={`duplicate ${entry.name}`} onClick={() => duplicateEntry(entry)}><Copy size={16} /></button>
-                <button className="icon-btn text-danger" aria-label={`delete ${entry.name}`} onClick={() => removeEntry(entry)}><Trash2 size={16} /></button>
-              </div>
-            </li>
-          ))}
+                <button className={rowIcon} aria-label={`duplicate ${entry.name}`} onClick={() => duplicateEntry(entry)}><Copy size={13} aria-hidden /></button>
+                <button className={`${rowIcon} hover:text-danger`} aria-label={`delete ${entry.name}`} onClick={() => removeEntry(entry)}><Trash2 size={13} aria-hidden /></button>
+              </li>
+            )
+          })}
         </ul>
-
-        {tab === 'pipeline' && (
-          <div className="card p-3 grid gap-2">
-            <div className="font-medium text-sm">Save current pipeline</div>
-            <input
-              className="field text-sm"
-              placeholder="pipeline name"
-              value={saveName}
-              maxLength={120}
-              onChange={e => setSaveName(e.target.value)}
-              aria-label="pipeline name to save"
-            />
-            <label className="text-sm flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={saveInputToo && !bytesInput}
-                disabled={bytesInput}
-                onChange={e => setSaveInputToo(e.target.checked)}
-              />
-              save input with pipeline
-            </label>
-            {bytesInput && <div className="text-xs text-muted">binary input can&apos;t be saved with the pipeline.</div>}
-            <div className="flex gap-2">
-              <button
-                className="btn"
-                disabled={!state.libraryId}
-                title={state.libraryId ? 'overwrite the library entry this pipeline was loaded from' : 'load or save a pipeline first'}
-                onClick={() => doSave('save')}
-              >
-                Save
-              </button>
-              <button className="cta" onClick={() => doSave('saveAsNew')}>Save as new</button>
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
-        <button className="btn" onClick={exportAll}><Download size={16} /> export all</button>
-        <button className="btn" onClick={() => fileRef.current?.click()}><Upload size={16} /> import</button>
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <button className="btn-ghost" onClick={() => fileRef.current?.click()}><Upload size={13} aria-hidden /> Import .json</button>
+        <button className="btn-ghost" onClick={exportAll}><Download size={13} aria-hidden /> Export all</button>
         <input ref={fileRef} type="file" accept=".json,application/json" className="sr-only" tabIndex={-1} onChange={onImportFile} aria-label="import library file" />
       </div>
-      <div role="status" aria-live="polite" className="text-sm min-h-5">
-        {status && <span className="text-success inline-flex items-center gap-1"><Check size={14} aria-hidden /> {status}</span>}
+      <div role="status" aria-live="polite" className="text-[12.5px] text-add-ink">
+        {status && <span className="inline-flex items-center gap-1"><Check size={13} aria-hidden /> {status}</span>}
       </div>
-      {error && <div role="alert" className="text-sm text-danger inline-flex items-center gap-1"><X size={14} aria-hidden /> {error}</div>}
-      <p className="text-xs text-muted flex items-center gap-1"><PlusSquare size={12} aria-hidden /> macros are saved from a step group elsewhere in the editor; this dialog only manages them.</p>
+      {error && <div role="alert" className="text-[12.5px] text-danger-ink inline-flex items-center gap-1"><X size={13} aria-hidden /> {error}</div>}
     </Dialog>
   )
 }

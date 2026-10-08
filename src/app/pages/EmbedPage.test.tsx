@@ -12,7 +12,7 @@ beforeEach(() => {
 })
 
 /** The rendered result box (not the textarea, which also contains the input text). */
-const result = () => screen.getByLabelText('result')
+const result = () => screen.getByLabelText('Result')
 
 // Each run lazily imports its utility's chunk; cold, under a loaded machine, that
 // alone can outlast waitFor's 1s default.
@@ -28,8 +28,8 @@ describe('EmbedPage', { timeout: 30_000 }, () => {
     const payload = encodeShare({ v: 2, steps: [trim], input: '  hi  ' })
     render(<EmbedPage payload={payload} />)
 
-    expect(screen.getByLabelText('input')).toHaveValue('  hi  ')
-    expect(screen.getByRole('list', { name: 'steps' })).toHaveTextContent('trim')
+    expect(screen.getByLabelText('Input')).toHaveValue('  hi  ')
+    expect(screen.getByRole('list', { name: 'Steps' })).toHaveTextContent('trim')
 
     await waitFor(() => expect(result().textContent).toBe('hi'), RUN)
 
@@ -47,7 +47,7 @@ describe('EmbedPage', { timeout: 30_000 }, () => {
     render(<EmbedPage payload={payload} />)
     await waitFor(() => expect(result().textContent).toBe('A'), RUN)
 
-    await user.type(screen.getByLabelText('input'), 'bc')
+    await user.type(screen.getByLabelText('Input'), 'bc')
     await waitFor(() => expect(result().textContent).toBe('ABC'), RUN)
     expect(localStorage.length).toBe(0)
   })
@@ -78,7 +78,7 @@ describe('EmbedPage', { timeout: 30_000 }, () => {
       input: 'aGk=\r\n\nYnll\n',
     })
     render(<EmbedPage payload={payload} />)
-    expect(screen.getByRole('list', { name: 'steps' })).toHaveTextContent('run on each line (2 steps)')
+    expect(screen.getByRole('list', { name: 'Steps' })).toHaveTextContent('run on each line (2 steps)')
     expect(screen.getByText(/custom code.*disabled/i)).toBeInTheDocument()
     await waitFor(() => expect(result().textContent).toBe('hi\r\n\nbye\n'), RUN)
   })
@@ -100,7 +100,7 @@ describe('EmbedPage', { timeout: 30_000 }, () => {
     await waitFor(() => expect(result().textContent).toBe('one'), RUN)
     rerender(<EmbedPage payload={second} />)
     await waitFor(() => expect(result().textContent).toBe('TWO'), RUN)
-    expect(screen.getByLabelText('input')).toHaveValue('two')
+    expect(screen.getByLabelText('Input')).toHaveValue('two')
   })
 
   it('supplies its own main landmark and a single h1 (it renders without the site chrome)', () => {

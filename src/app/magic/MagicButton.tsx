@@ -149,7 +149,7 @@ export default function MagicButton() {
       const result = await magic.decodeAll(ctrl.signal)
       if (ctrl.signal.aborted) return
       if (!result.steps.length) {
-        setNotice('Nothing here decodes with enough confidence to chain automatically — pick a suggestion instead.')
+        setNotice('Nothing here decodes with enough confidence to chain automatically. Pick a suggestion instead.')
         return
       }
       dispatch({
@@ -169,12 +169,12 @@ export default function MagicButton() {
       <button
         ref={buttonRef}
         type="button"
-        className="btn"
+        className="btn-ghost"
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => (open ? closeDialog(true) : openDialog())}
       >
-        <span className="inline-flex items-center gap-2"><Wand2 size={16} aria-hidden /> Magic</span>
+        <Wand2 size={14} className="text-acc" aria-hidden /> Magic
       </button>
       {open && (
         <div
@@ -183,22 +183,32 @@ export default function MagicButton() {
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] z-20 card p-4 grid gap-3 shadow-glow"
+          className="absolute right-0 top-8 w-80 max-w-[calc(100vw-48px)] z-[25] grid gap-2.5 p-3 bg-surface border rounded-lg shadow-float outline-hidden"
           style={panelStyle ? { left: panelStyle.left, right: 'auto', width: panelStyle.width } : undefined}
         >
-          <div className="flex items-center justify-between">
-            <h2 id={titleId} className="font-medium">Magic decode</h2>
-            <button type="button" className="icon-btn" aria-label="close magic decode" onClick={() => closeDialog(true)}>
-              <X size={16} aria-hidden />
+          <div className="flex items-center justify-between gap-2">
+            <h2 id={titleId} className="m-0 text-[13.5px] font-semibold">Magic decode</h2>
+            <button
+              type="button"
+              className="grid place-items-center size-6 rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg"
+              aria-label="close magic decode"
+              onClick={() => closeDialog(true)}
+            >
+              <X size={14} aria-hidden />
             </button>
           </div>
+          <p className="m-0 text-[12.5px] text-muted">
+            {hasSteps
+              ? 'Looks at the pipeline’s output and suggests a step to decode it.'
+              : 'Looks at your input and suggests a first step.'}
+          </p>
           {waiting ? (
-            <p role="status" className="muted text-sm">
+            <p role="status" className="m-0 text-[12.5px] text-muted">
               {pending
                 ? 'Waiting for the pipeline to finish…'
                 : run.result
-                  ? 'The output is out of date — run the pipeline first; magic analyses its output.'
-                  : 'Run the pipeline first — magic analyses its output.'}
+                  ? 'The output is out of date. Run the pipeline first, because magic reads its output.'
+                  : 'Run the pipeline first. Magic reads its output.'}
             </p>
           ) : (
             <SuggestionList
@@ -211,7 +221,7 @@ export default function MagicButton() {
               decodingAll={decodingAll}
             />
           )}
-          {notice && <p role="status" className="text-sm text-warn">{notice}</p>}
+          {notice && <p role="status" className="m-0 text-[12.5px] text-warn">{notice}</p>}
         </div>
       )}
     </div>
