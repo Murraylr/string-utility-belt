@@ -1,10 +1,10 @@
 ---
-title: Sort Lines Online — Alphabetical, Numeric & Natural Sort
+title: Sort Lines Online: Alphabetical, Numeric & Natural Sort
 description: Sort lines of text online alphabetically, numerically, naturally, by length, by a column, or randomly, ascending or descending, with duplicates removed.
 ---
 ## What does sorting lines do?
 
-This tool reorders the lines of a block of text according to a chosen rule — alphabetical order, numeric value, "natural" order that treats embedded numbers as numbers, line length, a specific column, or a random shuffle. It covers the same ground as Unix `sort` and its common flags (`sort`, `sort -n`, `sort -V`, `shuf`), without leaving your browser, though its comparison rules are its own rather than an exact copy of GNU `sort`.
+This tool reorders the lines of a block of text according to a chosen rule: alphabetical order, numeric value, "natural" order that treats embedded numbers as numbers, line length, a specific column, or a random shuffle. It covers the same ground as Unix `sort` and its common flags (`sort`, `sort -n`, `sort -V`, `shuf`), without leaving your browser, though its comparison rules are its own rather than an exact copy of GNU `sort`.
 
 ## How it works
 
@@ -50,7 +50,7 @@ output: 2
 100
 ```
 
-`column` mode splits each line into fields — on whitespace by default, or on a custom `separator` — and sorts by the chosen 1-based field. When both fields start with a number and those numbers differ, they are compared numerically; otherwise the fields are compared as text, then the whole lines:
+`column` mode splits each line into fields (on whitespace by default, or on a custom `separator`) and sorts by the chosen 1-based field. When both fields start with a number and those numbers differ, they are compared numerically; otherwise the fields are compared as text, then the whole lines:
 
 ```example
 title: sort by the second whitespace-separated field
@@ -86,13 +86,13 @@ output:
 
 ## Options
 
-- **mode** (`mode`, default `alphabetical`) — `alphabetical`, `numeric`, `natural`, `length` (code points, not UTF-16 units, so an emoji such as 😀 counts as one character), `column`, or `random`.
-- **direction** (`direction`, default `asc`) — `asc` or `desc`. `desc` reverses the whole sorted list, so in `numeric` mode lines without a number come first. Ignored by `random`, which has no direction to reverse.
-- **case sensitive** (`caseSensitive`, default `false`) — affects every text comparison and what counts as a duplicate under `unique`. When on, `alphabetical` compares raw character codes instead of using locale collation, so all uppercase letters sort before lowercase ones and accented letters sort after `z`.
-- **remove duplicates** (`unique`, default `false`) — drops repeated lines before sorting, keeping the first occurrence's exact text.
-- **column** (`column`, default `1`) — the 1-based field number used by `column` mode.
-- **column separator** (`separator`, default blank = whitespace runs) — how `column` mode splits each line into fields. Any other value is matched literally (no `\t` escape).
-- **random seed** (`seed`, default `0`) — `0` shuffles unpredictably on every run; any other whole number produces a reproducible shuffle of the same input.
+- **mode** (`mode`, default `alphabetical`): `alphabetical`, `numeric`, `natural`, `length` (code points, not UTF-16 units, so an emoji such as 😀 counts as one character), `column`, or `random`.
+- **direction** (`direction`, default `asc`): `asc` or `desc`. `desc` reverses the whole sorted list, so in `numeric` mode lines without a number come first. Ignored by `random`, which has no direction to reverse.
+- **case sensitive** (`caseSensitive`, default `false`): affects every text comparison and what counts as a duplicate under `unique`. When on, `alphabetical` compares raw character codes instead of using locale collation, so all uppercase letters sort before lowercase ones and accented letters sort after `z`.
+- **remove duplicates** (`unique`, default `false`): drops repeated lines before sorting, keeping the first occurrence's exact text.
+- **column** (`column`, default `1`): the 1-based field number used by `column` mode.
+- **column separator** (`separator`, default blank = whitespace runs): how `column` mode splits each line into fields. Any other value is matched literally (no `\t` escape).
+- **random seed** (`seed`, default `0`): `0` shuffles unpredictably on every run; any other whole number produces a reproducible shuffle of the same input.
 
 ## Common uses
 

@@ -1,10 +1,10 @@
 ---
-title: MessagePack Encoder — Encode JSON to MsgPack Online
+title: MessagePack Encoder: Encode JSON to MsgPack Online
 description: Encode JSON to MessagePack binary online. See exactly how maps, arrays, integers, strings and floats are packed, with byte-level worked examples.
 ---
 ## What is MessagePack?
 
-MessagePack is a binary serialization format that stores the same kinds of data as JSON — maps, arrays, strings, numbers, booleans and null — but as compact binary instead of text. It is used where JSON's parsing overhead and text size matter: RPC protocols, caches like Redis, game networking, and inter-service messages. Because it is schemaless like JSON (unlike Protocol Buffers, see [protobuf wire decode](/util/protobuf_decode/)), any JSON-shaped value can be encoded without writing a schema first. [msgpack decode](/util/msgpack_decode/) reverses this conversion.
+MessagePack is a binary serialization format that stores the same kinds of data as JSON (maps, arrays, strings, numbers, booleans and null), but as compact binary instead of text. It is used where JSON's parsing overhead and text size matter: RPC protocols, caches like Redis, game networking, and inter-service messages. Because it is schemaless like JSON (unlike Protocol Buffers, see [protobuf wire decode](/util/protobuf_decode/)), any JSON-shaped value can be encoded without writing a schema first. [msgpack decode](/util/msgpack_decode/) reverses this conversion.
 
 ## How it works
 
@@ -45,7 +45,7 @@ utf8: �😀
 
 ## Input handling
 
-This step accepts a JSON value from a previous pipeline step, or a JSON string, which it parses before encoding. If the text is not valid JSON, it falls back to encoding it as a plain MessagePack string — so typing `hi` produces the 3-byte string encoding of `hi`, not an error. Empty input produces zero bytes.
+This step accepts a JSON value from a previous pipeline step, or a JSON string, which it parses before encoding. If the text is not valid JSON, it falls back to encoding it as a plain MessagePack string. So typing `hi` produces the 3-byte string encoding of `hi`, not an error. Empty input produces zero bytes.
 
 ## Common uses
 

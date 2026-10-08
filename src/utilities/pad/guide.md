@@ -1,6 +1,6 @@
 ---
-title: Pad String Online — Left Pad, Right Pad & Center Text
-description: Pad text to a fixed width online. Add leading zeros, left-pad or right-pad with any character, or center a string — with worked examples.
+title: Pad String Online: Left Pad, Right Pad & Center Text
+description: Pad text to a fixed width online. Add leading zeros, left-pad or right-pad with any character, or center a string, with worked examples.
 ---
 ## What does padding a string mean?
 
@@ -10,7 +10,7 @@ Padding adds filler characters to a string until it reaches a **target length**.
 
 The tool compares the length of your input with the **target length**:
 
-1. If the input is already as long as the target (or longer), it is returned **unchanged** — padding never cuts text short. Use [truncate](/util/truncate/) if you also need a maximum length.
+1. If the input is already as long as the target (or longer), it is returned **unchanged**. Padding never cuts text short. Use [truncate](/util/truncate/) if you also need a maximum length.
 2. Otherwise it works out how many characters are missing and fills them with the **pad character**, on the side you chose.
 
 The three sides:
@@ -34,7 +34,7 @@ output: 000042
 
 ### Right-padding for aligned columns
 
-Padding at the end fills short values out to the same width, so whatever follows them starts in the same column. The defaults — target length 10, a space, at the end — do exactly that with invisible trailing spaces; dots make it visible here.
+Padding at the end fills short values out to the same width, so whatever follows them starts in the same column. The defaults (target length 10, a space, at the end) do exactly that with invisible trailing spaces; dots make it visible here.
 
 ```example
 title: right-pad with dots to line up a column
@@ -76,15 +76,15 @@ output: 12345
 
 ## Options
 
-- **target length** — the length the result should have, from 0 to 1,000,000. It is a total, not the number of characters to add.
-- **pad character** — the filler; one or more characters. Leaving it empty falls back to a space.
-- **side** — `end`, `start` or `both`, as in the table above.
+- **target length**: the length the result should have, from 0 to 1,000,000. It is a total, not the number of characters to add.
+- **pad character**: the filler; one or more characters. Leaving it empty falls back to a space.
+- **side**: `end`, `start` or `both`, as in the table above.
 
 ## Things to know
 
 - Length is counted in JavaScript string units (UTF-16 code units), not visible characters. Most emoji and some rare CJK characters count as **2**, and an accented letter typed as a letter plus a combining accent also counts as 2, so such text may get less padding than you expect. Run [normalize](/util/normalize/) (NFC) first to merge combining accents.
 - Tabs count as one character even though they display wider; convert them with [tabs spaces](/util/tabs_spaces/) before padding for display.
-- The whole input is padded as one string, newlines included — it does not pad each line. To line up many rows of text, use [align columns](/util/align_columns/) instead.
+- The whole input is padded as one string, newlines included. It does not pad each line. To line up many rows of text, use [align columns](/util/align_columns/) instead.
 
 ## Common uses
 

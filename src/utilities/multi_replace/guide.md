@@ -1,5 +1,5 @@
 ---
-title: Multi Replace Online — Apply Many Find/Replace Rules
+title: Multi Replace Online: Apply Many Find/Replace Rules
 description: Run a whole list of find-and-replace rules against text in one step online, with optional regex patterns, case-insensitive matching, and cascading control.
 ---
 ## What does this tool do?
@@ -59,14 +59,14 @@ output: host:user
 
 ## Options
 
-- **rules (find / replace)** — the list of find/replace pairs, applied in order. A row with an empty find field is skipped rather than treated as an error.
-- **find is a regex** — interprets each find pattern as a regular expression (default off, meaning literal text).
-- **ignore case** — matches without regard to letter case, for both literal and regex rules (default off).
-- **apply once (rules do not cascade)** — makes one non-overlapping left-to-right pass instead of applying each rule to the whole text in turn (default off).
+- **rules (find / replace)**: the list of find/replace pairs, applied in order. A row with an empty find field is skipped rather than treated as an error.
+- **find is a regex**: interprets each find pattern as a regular expression (default off, meaning literal text).
+- **ignore case**: matches without regard to letter case, for both literal and regex rules (default off).
+- **apply once (rules do not cascade)**: makes one non-overlapping left-to-right pass instead of applying each rule to the whole text in turn (default off).
 
 ## Common uses
 
-- Bulk terminology or spelling replacements — British to American spelling, renaming a product, or standardizing abbreviations — in a single pass.
+- Bulk terminology or spelling replacements (British to American spelling, renaming a product, or standardizing abbreviations) in a single pass.
 - Building a lightweight lookup table: mapping a set of codes, tokens, or placeholders to their final values.
 - Cleaning up exported data with several known substitutions (quote styles, escaped characters, delimiters) at once.
 - Regex-based extraction-and-reshaping, such as swapping the order of a user and host in an address, using capture groups.

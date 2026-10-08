@@ -4,7 +4,7 @@ description: Add a prefix and suffix to every line of text online, skip blank li
 ---
 ## What does adding a prefix or suffix to lines do?
 
-This tool decorates every line of a multi-line text with a fixed prefix, a fixed suffix, or both — turning a plain list into Markdown bullets, HTML list items, quoted SQL values, or anything else that needs the same wrapper repeated on every line. It is the fastest way to build a repetitive structure around a list of values without writing a script.
+This tool decorates every line of a multi-line text with a fixed prefix, a fixed suffix, or both. Use it to turn a plain list into Markdown bullets, HTML list items, quoted SQL values, or anything else that needs the same wrapper repeated on every line. It is the fastest way to build a repetitive structure around a list of values without writing a script.
 
 ## How it works
 
@@ -48,7 +48,7 @@ cherry
 output: 'apple', 'banana', 'cherry'
 ```
 
-The prefix, suffix and join fields understand a few backslash escapes for characters that are awkward to type into a single-line box — `\t` for tab, `\n` for newline, `\r` for carriage return, and `\\` for a literal backslash. An escape sequence the tool does not recognize is left exactly as typed, so a LaTeX or regex snippet survives untouched instead of being misread as an escape:
+The prefix, suffix and join fields understand a few backslash escapes for characters that are awkward to type into a single-line box: `\t` for tab, `\n` for newline, `\r` for carriage return, and `\\` for a literal backslash. An escape sequence the tool does not recognize is left exactly as typed, so a LaTeX or regex snippet survives untouched instead of being misread as an escape:
 
 ```example
 title: an unrecognized escape is kept exactly as typed
@@ -59,10 +59,10 @@ output: \item x
 
 ## Options
 
-- **prefix** — text added to the start of every line (except skipped blank lines). Understands `\n`, `\r`, `\t`, `\0` and `\\` escapes.
-- **suffix** — text added to the end of every line (except skipped blank lines). Same escapes as prefix.
-- **skip blank lines** — when on (the default), a line that is empty or all whitespace is left alone instead of getting the prefix and suffix. When off, every line is affixed, blank or not.
-- **join with (blank = newline)** — when set, the affixed lines are joined into a single line with this string instead of being separated by newlines. A skipped blank line is dropped from the joined result rather than appearing as an empty item.
+- **prefix**: text added to the start of every line (except skipped blank lines). Understands `\n`, `\r`, `\t`, `\0` and `\\` escapes.
+- **suffix**: text added to the end of every line (except skipped blank lines). Same escapes as prefix.
+- **skip blank lines**: when on (the default), a line that is empty or all whitespace is left alone instead of getting the prefix and suffix. When off, every line is affixed, blank or not.
+- **join with (blank = newline)**: when set, the affixed lines are joined into a single line with this string instead of being separated by newlines. A skipped blank line is dropped from the joined result rather than appearing as an empty item.
 
 ## Common uses
 
@@ -73,8 +73,8 @@ output: \item x
 
 ## Tips and pitfalls
 
-- An empty document stays empty regardless of the options — a blank input never turns into a bare prefix/suffix pair sitting on nothing.
+- An empty document stays empty regardless of the options. A blank input never turns into a bare prefix/suffix pair sitting on nothing.
 - Leaving prefix, suffix and join with all empty is a deliberate no-op that returns the input unchanged (apart from mixed line endings, below), which is a safe way to add this step to a pipeline before deciding what to configure.
-- When **join with** is not used, the document's line ending and its trailing newline are preserved. Lines are split on LF, CRLF or a lone CR and rejoined with one ending for the whole document — CRLF if it appears anywhere in the input — so a file with mixed endings comes out uniform. With **join with**, a trailing newline is dropped.
+- When **join with** is not used, the document's line ending and its trailing newline are preserved. Lines are split on LF, CRLF or a lone CR and rejoined with one ending for the whole document (CRLF if it appears anywhere in the input), so a file with mixed endings comes out uniform. With **join with**, a trailing newline is dropped.
 - To add line numbers rather than a fixed prefix, use [number lines](/util/number_lines/) instead.
 - To reverse the order of the lines rather than decorate them, use [reverse line order](/util/line_reverse/); to add or remove consistent leading whitespace instead of a custom prefix, use [indent / dedent](/util/indent/).

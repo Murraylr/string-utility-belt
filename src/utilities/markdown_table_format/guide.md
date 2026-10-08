@@ -1,15 +1,15 @@
 ---
-title: Markdown Table Formatter — Align Pipe Tables
+title: Markdown Table Formatter: Align Pipe Tables
 description: Pad and align every markdown pipe table in a document so the pipes line up, with alignment overrides and a compact mode.
 ---
 ## What does formatting a markdown table do?
 
 A markdown pipe table renders correctly however its cells are spaced, but a
-table with uneven column widths is hard to read as raw source — which
+table with uneven column widths is hard to read as raw source, which
 matters when you are editing it by hand or reviewing a diff. This tool pads
 every cell in every table it finds so the pipes line up, while leaving
-everything else in the document — prose, code fences, block quotes, list
-items — exactly as it was.
+everything else in the document (prose, code fences, block quotes, list
+items) exactly as it was.
 
 ## How it works
 
@@ -18,18 +18,18 @@ items — exactly as it was.
    table; the body continues until a blank line, a change in block-quote
    depth, or a row with no pipe at all.
 2. Content inside fenced code blocks, opened with three or more backticks
-   or tildes, is left untouched — a table shown as a code sample is not reformatted.
+   or tildes, is left untouched. A table shown as a code sample is not reformatted.
 3. Each column is padded to the width of its widest cell, measured in
    display columns: combining marks and zero-width characters count as 0,
    and East Asian wide characters and the common emoji blocks count as 2.
-   This is an approximation of how a monospace editor draws text — emoji
+   This is an approximation of how a monospace editor draws text. Emoji
    sequences (joined families, flags) and some older symbol characters can
    still be off by a column or two.
 4. **column alignment** either preserves each column's existing alignment
    marker or overrides every column to the same one; the delimiter row is
    rewritten to match.
 5. A table with no opening pipe on its lines is never given leading spaces
-   during formatting, even under right or center alignment — four leading
+   during formatting, even under right or center alignment, since four leading
    spaces would otherwise turn the whole table into an indented code block.
 6. Indentation and block-quote markers (`> `) before a table are preserved
    exactly, so tables inside list items and block quotes stay inside them.
@@ -96,10 +96,10 @@ output:
 
 ## Options
 
-- **column alignment** — `preserve` (default) keeps each column's own
+- **column alignment**: `preserve` (default) keeps each column's own
   marker from the source; `left`, `center`, or `right` overrides every
   column in the document to that alignment.
-- **compact (no padding)** — off by default (cells are padded for
+- **compact (no padding)**: off by default (cells are padded for
   readability); on strips padding down to the minimum, useful for
   minimizing diff noise or file size.
 
@@ -107,8 +107,8 @@ output:
 
 - Cleaning up a table after editing a cell's contents, when the surrounding
   cells no longer line up.
-- Normalizing tables generated programmatically — for example by
-  [csv to markdown table](/util/csv_to_markdown/) — to a consistent
+- Normalizing tables generated programmatically (for example by
+  [csv to markdown table](/util/csv_to_markdown/)) to a consistent
   alignment style across a document.
 - Tidying the tables in documentation before committing it; the operation
   is idempotent, so formatting already-formatted output changes nothing.

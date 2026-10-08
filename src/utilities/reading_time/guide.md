@@ -1,12 +1,12 @@
 ---
-title: Reading Time Calculator Online — Estimate Read Time
+title: Reading Time Calculator Online: Estimate Read Time
 description: Estimate how long an article or draft takes to read at any words-per-minute pace, as a one-line summary or JSON with the word count.
 ---
 ## What does this calculate?
 
 This is the same kind of "X min read" estimate you see at the top of blog posts and articles. It counts
 the words in your text and divides by a reading speed (in words per minute) to estimate how long it takes
-an average reader to get through it — nothing more sophisticated than that, which is the same basic
+an average reader to get through it. Nothing more sophisticated than that, which is the same basic
 calculation behind most "min read" labels (some platforms add extra time for images).
 
 ## How it works
@@ -22,7 +22,7 @@ input: hello world
 output: less than a minute read (2 words at 200 wpm)
 ```
 
-Change **words per minute** to model a slower or faster reader — lowering it stretches the same text into
+Change **words per minute** to model a slower or faster reader. Lowering it stretches the same text into
 a longer estimate, and once the total reaches a full minute the output switches to a minute count, rounded
 up (1 minute 30 seconds is reported as "2 min read"):
 
@@ -34,7 +34,7 @@ output: 2 min read (45 words at 30 wpm)
 ```
 
 The estimate switches from "less than a minute" to "N min read" once the rounded total reaches 60 seconds
-(so 199 words at 200 wpm — 59.7 seconds — already reads as "1 min read"):
+(so 199 words at 200 wpm, or 59.7 seconds, already reads as "1 min read"):
 
 ```example
 title: exactly one minute switches the wording
@@ -66,17 +66,17 @@ output:
 
 ## Options
 
-- **words per minute** — the assumed reading speed, 200 by default (a common, slightly conservative
+- **words per minute**: the assumed reading speed, 200 by default (a common, slightly conservative
   figure for adult silent reading; estimates of roughly 200–260 are typical). Must be a positive whole
   number.
-- **output format** — `text` (default, the one-line summary shown above) or `json` (the full breakdown:
+- **output format**: `text` (default, the one-line summary shown above) or `json` (the full breakdown:
   word count, total seconds, minutes and seconds, a rounded-up minute count, a human duration, and the
   same one-line summary as `text`).
 
 ## Common uses
 
 - Showing an "X min read" label on blog posts, documentation pages, or long-form articles.
-- Estimating how long a script, transcript, or set of speaker notes will take to read aloud — lower
+- Estimating how long a script, transcript, or set of speaker notes will take to read aloud. Lower
   **words per minute** for this, since speech is usually slower than silent reading (figures around 130–160
   wpm are common).
 - Comparing draft lengths across several pieces of content at a glance.
@@ -88,9 +88,9 @@ output:
   because Chinese and Japanese are written without spaces. Korean does put spaces between words, but its
   syllable blocks are counted one by one too, so Korean text gets a noticeably higher count and a longer
   estimate. Everything else is counted by the letter-and-digit rule above.
-- This is a word-count estimate, not a true reading-speed model — it does not account for images, code
+- This is a word-count estimate, not a true reading-speed model. It does not account for images, code
   blocks, tables, unusually dense or technical vocabulary, or a reader's familiarity with the subject. For
   a difficulty-aware measure instead of a time estimate, see [readability scores](/util/readability/).
 - For word, sentence, and character counts on their own (without a time estimate), see
-  [text statistics](/util/text_stats/) — note that it splits words on spaces and does not count CJK
+  [text statistics](/util/text_stats/). Note that it splits words on spaces and does not count CJK
   characters individually, so its word count can differ from the one used here.

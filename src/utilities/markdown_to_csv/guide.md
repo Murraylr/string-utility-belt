@@ -6,8 +6,8 @@ description: Convert a markdown pipe table to CSV online, dropping the alignment
 
 A markdown pipe table (`| a | b |` with a `|---|---|` row underneath) is
 easy to read in a text editor but is not directly usable as data. This tool
-finds the table inside a larger document — skipping any surrounding
-prose — strips the alignment row, and writes the remaining cells out as
+finds the table inside a larger document, skipping any surrounding
+prose. It strips the alignment row and writes the remaining cells out as
 proper RFC 4180 CSV.
 
 ## How it works
@@ -39,7 +39,7 @@ Ada,36
 Grace,85
 ```
 
-Outer pipes are optional — a table written without leading and trailing
+Outer pipes are optional. A table written without leading and trailing
 `|` characters parses the same way:
 
 ```example
@@ -82,15 +82,15 @@ output: a,b,
 
 ## Options
 
-- **delimiter** — the CSV field separator to write, default `,`. Accepts an
+- **delimiter**: the CSV field separator to write, default `,`. Accepts an
   escape such as `\t`.
 
 ## Common uses
 
 - Turning a table copied from a README or wiki page into data you can open
   in a spreadsheet.
-- Extracting a table embedded in a longer markdown document — release
-  notes, a changelog, a spec — without hand-copying cells.
+- Extracting a table embedded in a longer markdown document (release
+  notes, a changelog, a spec) without hand-copying cells.
 - Feeding the result into [csv to json](/util/csv_to_json/) once it is in
   CSV form.
 
@@ -102,7 +102,7 @@ output: a,b,
   but a document with no pipes anywhere throws an error.
 - Only one table is converted: the first block of pipe lines that
   has an alignment row (or, if none has one, the first block).
-- To go the other direction — CSV to a padded markdown table — use
+- To go the other direction (CSV to a padded markdown table), use
   [csv to markdown table](/util/csv_to_markdown/); the two round-trip for
   ordinary rectangular data.
 - If your table already looks correct but has uneven column widths, you

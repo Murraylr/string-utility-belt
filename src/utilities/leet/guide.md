@@ -1,10 +1,10 @@
 ---
-title: Leet Speak Translator — Convert Text to 1337 Online
+title: Leet Speak Translator: Convert Text to 1337 Online
 description: Convert text to leet speak (1337) online at a basic, medium, or extreme level, or decode leet speak back to plain letters, with worked examples.
 ---
 ## What is leet speak?
 
-Leet speak (also written "l33t" or "1337") replaces ordinary letters with numbers, symbols, or short runs of characters that resemble them — `e` becomes `3`, `a` becomes `4`, and so on. It originated in early online hacker and gaming culture as an in-group style and a way to dodge simple text filters, and today survives mostly as a joke or a nostalgia font. This tool both encodes plain text into leet and decodes leet back into letters.
+Leet speak (also written "l33t" or "1337") replaces ordinary letters with numbers, symbols, or short runs of characters that resemble them. So `e` becomes `3`, `a` becomes `4`, and so on. It originated in early online hacker and gaming culture as an in-group style and a way to dodge simple text filters, and today survives mostly as a joke or a nostalgia font. This tool both encodes plain text into leet and decodes leet back into letters.
 
 ## How it works
 
@@ -35,7 +35,7 @@ input: big cat
 output: 819 <47
 ```
 
-`extreme` goes furthest, using multi-character sequences for several letters — for example `w` becomes `\^/` and `x` becomes `><`:
+`extreme` goes furthest, using multi-character sequences for several letters. For example, `w` becomes `\^/` and `x` becomes `><`:
 
 ```example
 title: extreme level uses multi-character substitutions
@@ -64,8 +64,8 @@ output:
 
 ## Options
 
-- **level** (`level`, default `basic`) — `basic` substitutes a handful of the most recognizable letters (`a e i o s t`); `medium` adds more (`b c g h l n z`); `extreme` substitutes all 26 letters, several as multi-character sequences, and swaps some of the simpler mappings too (`i` → `!`, `s` → `$`, `r` → `2`, `z` → `%`).
-- **direction** (`direction`, default `to-leet`) — `to-leet` encodes plain text; `from-leet` decodes leet speak back into ordinary letters.
+- **level** (`level`, default `basic`): `basic` substitutes a handful of the most recognizable letters (`a e i o s t`); `medium` adds more (`b c g h l n z`); `extreme` substitutes all 26 letters, several as multi-character sequences, and swaps some of the simpler mappings too (`i` → `!`, `s` → `$`, `r` → `2`, `z` → `%`).
+- **direction** (`direction`, default `to-leet`): `to-leet` encodes plain text; `from-leet` decodes leet speak back into ordinary letters.
 
 ## Common uses
 
@@ -75,8 +75,8 @@ output:
 
 ## Tips and pitfalls
 
-- Leet speak is not any kind of security measure — it is trivially readable and just as trivially decoded, including by this same tool.
-- Decoding is level-specific: text written with the `extreme` substitution table should be decoded with `level: extreme`. A lower level's table leaves the multi-character tokens as-is, and some symbols mean different letters per level — `2` decodes to `z` at `medium` but to `r` at `extreme`.
+- Leet speak is not any kind of security measure. It is trivially readable and just as trivially decoded, including by this same tool.
+- Decoding is level-specific: text written with the `extreme` substitution table should be decoded with `level: extreme`. A lower level's table leaves the multi-character tokens as-is, and some symbols mean different letters per level: `2` decodes to `z` at `medium` but to `r` at `extreme`.
 - Decoding replaces every token it finds, including digits and symbols that were never letters: `room 101` decodes to `room ioi` at the `basic` level.
 - Because letters are matched case-insensitively going into leet, every substituted letter comes back lowercase after a round trip; only letters the level leaves alone keep their capitals (`Leet Speak` → `L337 5p34k` → `Leet speak`).
 - For other playful text transforms, see [alternating case](/util/alternating_case/), [random case](/util/random_case/), and [unicode text style](/util/unicode_style/).

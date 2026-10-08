@@ -1,5 +1,5 @@
 ---
-title: Rail Fence Cipher Encoder Online — Zigzag Cipher
+title: Rail Fence Cipher Encoder Online: Zigzag Cipher
 description: Encrypt text with the rail fence zigzag transposition cipher, choosing the number of rails and a starting offset.
 ---
 ## What is the rail fence cipher?
@@ -52,8 +52,8 @@ output:
 
 ## Options
 
-- **rails** — how many horizontal lines the zigzag uses; must be a whole number from 1 to 10,000. Default is 3. More rails spread the letters further apart before you read them back.
-- **offset** — where in the zigzag pattern to start, as an integer (negative values are allowed and wrap around the cycle). Default is 0, the standard starting position at the top rail.
+- **rails**: how many horizontal lines the zigzag uses; must be a whole number from 1 to 10,000. Default is 3. More rails spread the letters further apart before you read them back.
+- **offset**: where in the zigzag pattern to start, as an integer (negative values are allowed and wrap around the cycle). Default is 0, the standard starting position at the top rail.
 
 ## Common uses
 
@@ -63,7 +63,7 @@ output:
 
 ## Tips and pitfalls
 
-- Like other classical transposition ciphers, rail fence offers no real security — with a small number of possible rail counts, an attacker can just try them all. Use [AES encrypt](/util/aes_encrypt/) for anything that needs genuine confidentiality.
+- Like other classical transposition ciphers, rail fence offers no real security. With a small number of possible rail counts, an attacker can just try them all. Use [AES encrypt](/util/aes_encrypt/) for anything that needs genuine confidentiality.
 - Both the rail count and the offset must match exactly on encode and decode; [rail fence decode](/util/rail_fence_decode/) needs the same two values to recover the original text.
 - The tool works on Unicode code points, so multi-byte characters and emoji occupy one position in the zigzag each and are never split or corrupted.
-- A very large rail count (at least the text length) is harmless — at offset 0 every character lands on its own rail and the text comes out unchanged, and the tool stays fast however large `rails` is set, since the work scales with the text length, not the rail count.
+- A very large rail count (at least the text length) is harmless. At offset 0 every character lands on its own rail and the text comes out unchanged, and the tool stays fast however large `rails` is set, since the work scales with the text length, not the rail count.

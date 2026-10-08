@@ -40,7 +40,7 @@ output: {"filter":{"color":"red","size":"xl"}}
 - `bracket` reads `a[b]` and `a[]` (only brackets).
 - `dot` reads `a.b` (only dots).
 - `auto` (the default) reads both in any mix, so `a[].b` and `a.b[c]` both work.
-- `none` disables structure entirely — every key is taken literally, brackets and dots included.
+- `none` disables structure entirely: every key is taken literally, brackets and dots included.
 
 An empty pair of brackets appends to an array; keys can also be brackets around a number for a specific index:
 
@@ -53,7 +53,7 @@ output: {"items":[{"x":"1","y":"2"}]}
 
 ### Typing values
 
-By default every value is a string, even `42` or `true`, since a query string carries no type information of its own. Turning **coerce numbers/booleans** on converts `true`/`false`/`null` and canonically-written numbers, while leaving everything else as text — including long integers that would lose precision as a JavaScript number, which are deliberately kept as strings:
+By default every value is a string, even `42` or `true`, since a query string carries no type information of its own. Turning **coerce numbers/booleans** on converts `true`/`false`/`null` and canonically-written numbers, while leaving everything else as text. That includes long integers that would lose precision as a JavaScript number, which are deliberately kept as strings:
 
 ```example
 title: typed values, long ids kept as strings
@@ -64,9 +64,9 @@ output: {"n":42,"ok":true,"id":"9007199254740993"}
 
 ## Options
 
-- **nesting** — `auto` (default), `bracket`, `dot` or `none`, as described above.
-- **coerce numbers/booleans** — off by default; when on, recognizes `true`, `false`, `null` and JSON-style numbers.
-- **indent** — spaces of indentation in the printed JSON, 0 to 10 (default 2).
+- **nesting**: `auto` (default), `bracket`, `dot` or `none`, as described above.
+- **coerce numbers/booleans**: off by default; when on, recognizes `true`, `false`, `null` and JSON-style numbers.
+- **indent**: spaces of indentation in the printed JSON, 0 to 10 (default 2).
 
 ## Common uses
 
@@ -77,7 +77,7 @@ output: {"n":42,"ok":true,"id":"9007199254740993"}
 
 ## Tips and pitfalls
 
-- A URL with no `?` at all — `https://example.dev/search` — has no query string, so the result is `{}` rather than treating the path as parameters.
+- A URL with no `?` at all, such as `https://example.dev/search`, has no query string, so the result is `{}` rather than treating the path as parameters.
 - A key such as `a[__proto__][polluted]` is stored as an ordinary data key; it can never overwrite `Object.prototype`.
 - Giving one key both a plain value and nested fields (`a=1` and `a[b]=2`, in either order) is a genuine conflict and raises an error rather than silently picking one.
 - A malformed escape such as `%ZZ` also raises an error (`invalid percent-encoding`), whereas a browser's `URLSearchParams` would pass it through unchanged.

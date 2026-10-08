@@ -1,5 +1,5 @@
 ---
-title: MIME Type Lookup — File Extension Converter Online
+title: MIME Type Lookup: File Extension Converter Online
 description: Look up the MIME type for a file extension or filename, or find the canonical file extension for a MIME type, right in your browser.
 ---
 ## What is a MIME type?
@@ -22,7 +22,7 @@ input: application/json
 output: json
 ```
 
-A path or URL works too — the tool strips directories, query strings and fragments before looking at the extension:
+A path or URL works too. The tool strips directories, query strings and fragments before looking at the extension:
 
 ```example
 title: a url's query string doesn't confuse the lookup
@@ -38,7 +38,7 @@ input: text/html; charset=utf-8
 output: html
 ```
 
-Auto mode has to guess whether an ambiguous-looking token is a MIME type or a path, since both can contain a slash. It prefers the MIME reading when the text starts with a known top-level type (`text/`, `image/`, `application/`, and so on) — but falls back to reading it as a path when that reading fails, so a filename that happens to start with a real media type's name still resolves correctly:
+Auto mode has to guess whether an ambiguous-looking token is a MIME type or a path, since both can contain a slash. It prefers the MIME reading when the text starts with a known top-level type (`text/`, `image/`, `application/`, and so on), but falls back to reading it as a path when that reading fails, so a filename that happens to start with a real media type's name still resolves correctly:
 
 ```example
 title: a path that starts with a real top-level type still works
@@ -48,8 +48,8 @@ output: text/markdown
 
 ## Options
 
-- **direction** — `auto` (default, detects the direction from the input's shape), `extension-to-mime`, or `mime-to-extension`.
-- **per line** — on by default, looking up each line independently; blank lines are preserved.
+- **direction**: `auto` (default, detects the direction from the input's shape), `extension-to-mime`, or `mime-to-extension`.
+- **per line**: on by default, looking up each line independently; blank lines are preserved.
 
 Where a MIME type has more than one common extension (`jpg`/`jpeg`, `html`/`htm`) or more than one legacy spelling (`image/jpg`, `text/xml`, `application/x-gzip`), the reverse lookup always returns one canonical extension. A round trip therefore normalizes rather than preserves: `jpeg` → `image/jpeg` → `jpg`, and an extension that shares a generic type, such as `har` or `map` (both `application/json`), comes back as `json`.
 
@@ -64,5 +64,5 @@ Where a MIME type has more than one common extension (`jpg`/`jpeg`, `html`/`htm`
 
 - An unknown extension or MIME type throws a clear error naming exactly what wasn't recognized, rather than guessing or returning a generic `application/octet-stream`.
 - A MIME type with a structured-syntax suffix that isn't in the table directly (`application/vnd.api+json`) still resolves via its suffix (`+json` → `json`) as a fallback.
-- This tool only looks at the extension or type text itself; it never inspects file contents. To identify a file type from its actual bytes — useful when the extension is missing or untrustworthy — use [detect file type](/util/mime_from_magic/) instead.
+- This tool only looks at the extension or type text itself; it never inspects file contents. To identify a file type from its actual bytes (useful when the extension is missing or untrustworthy), use [detect file type](/util/mime_from_magic/) instead.
 - To embed a file together with its MIME type as a `data:` URI, see [data uri build](/util/data_uri_build/).

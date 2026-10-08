@@ -1,10 +1,10 @@
 ---
-title: Octal Encode Online — Text to Octal Converter
-description: Convert text or bytes to zero-padded octal (base-8) byte triples online, with a custom separator — the digits used in C-style octal escapes.
+title: Octal Encode Online: Text to Octal Converter
+description: Convert text or bytes to zero-padded octal (base-8) byte triples online, with a custom separator: the digits used in C-style octal escapes.
 ---
 ## What is octal encoding?
 
-Octal (base 8) writes each byte of data as three digits from `0` to `7`. Three octal digits cover exactly 9 bits, enough to represent every byte value from 0 to 255 (`000` to `377` in octal), so — like [hex encode](/util/hex_encode/)'s two digits per byte — every byte gets a fixed-width representation. Octal is less common than hex for general-purpose byte dumps today, but it's still the standard notation for Unix file permissions (`chmod 755`) and shows up in escape sequences in C, shell `printf` and Python (`\101` for `A`). Note that this tool encodes bytes, not numbers: to write a permission value or any other number in octal, use [number base convert](/util/number_base_convert/).
+Octal (base 8) writes each byte of data as three digits from `0` to `7`. Three octal digits cover exactly 9 bits, enough to represent every byte value from 0 to 255 (`000` to `377` in octal). So, like [hex encode](/util/hex_encode/)'s two digits per byte, every byte gets a fixed-width representation. Octal is less common than hex for general-purpose byte dumps today, but it's still the standard notation for Unix file permissions (`chmod 755`) and shows up in escape sequences in C, shell `printf` and Python (`\101` for `A`). Note that this tool encodes bytes, not numbers: to write a permission value or any other number in octal, use [number base convert](/util/number_base_convert/).
 
 ## How it works
 
@@ -67,7 +67,7 @@ output:
 
 ## Options
 
-- **separator** — the text between octal triples (default a single space). Leave it empty to concatenate the triples directly; [octal decode](/util/octal_decode/) can still split such a run back into triples.
+- **separator**: the text between octal triples (default a single space). Leave it empty to concatenate the triples directly; [octal decode](/util/octal_decode/) can still split such a run back into triples.
 
 ## Common uses
 
@@ -76,6 +76,6 @@ output:
 
 ## Tips and pitfalls
 
-- Every triple is always exactly 3 digits, `000` to `377` — there's no way to produce a shorter or longer group, which keeps the output unambiguous to split back apart even without a separator.
+- Every triple is always exactly 3 digits, `000` to `377`. There's no way to produce a shorter or longer group, which keeps the output unambiguous to split back apart even without a separator.
 - Octal encoding is not compression or encryption; it makes data larger (3 characters per byte) and hides nothing.
 - To reverse this, use [octal decode](/util/octal_decode/), which also tolerates backslash-style escapes and `0o` prefixes that this tool doesn't produce itself.
