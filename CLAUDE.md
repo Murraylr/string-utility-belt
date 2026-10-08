@@ -92,17 +92,21 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Recipes (`src/recipes/`) — pre-rendered pipeline pages
 - A recipe is a hand-picked multi-step pipeline for one real task, published at `/recipes/<slug>/` (index: `/recipes/`).
-  Folder per recipe: `recipe.ts` (default export `Recipe`: steps built with `step()`/`branch()`/`each()`/`laneStep()` from
-  `define.ts`, each top-level step with a `why`; `each()` runs `laneStep()`s on every line or JSON value; 2+ `samples` with golden outputs, the first is the page's worked
-  example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
+  Folder per recipe: `recipe.ts` (default export `Recipe`: top-level steps built with `step()`/`branch()`/`each()` from
+  `define.ts`, each with a `why`; nested steps with `laneStep()`/`laneBranch()`/`laneEach()`, which carry no `why` and
+  spell out regex condition flags as `sanitizeSteps` stores them (never raw literals); `each()` runs its steps on every
+  line or JSON value; 2+ `samples` with golden outputs, the first is the page's worked example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
   example blocks). `npm run gen` also writes `src/recipes/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
   per recipe with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.
 - Rules (`check.ts`, run by `recipes.test.ts` and `check:recipes`): real utilities/params, no `dom`/`main`/`eval`
   steps (the build runs recipes in Node, the page in a worker), every sample reproduces its output on every run and
-  at any date, **every top-level step changes some sample's output when left out** (no padding), 2+ real steps or a
-  branch, title/description/primaryQuery unique across recipes and utility guides, `primaryQuery` not a utility
-  guide title's head term (no competing with `/util/<id>/`), ≥300 words of guide prose, no near-copied prose.
+  at any date, **every top-level step changes some sample's output when left out** (no padding), 2+ real utility steps
+  counting nested ones (one utility wrapped in `each` is still one), title/description/primaryQuery unique across recipes
+  and utility guides, `primaryQuery` neither inside a utility guide title nor containing its head term (the title before
+  " — ", minus "Online": "bulk slug generator" competes with `/util/slug/`), ≥300 words of guide prose, no near-copied prose.
 - `trace.ts` turns a run into what the page shows (each step's output, what leaving each step out does).
+  `RecipeArticle` renders nested steps recursively (params, conditions, failure policy, split and merge modes):
+  the pre-rendered page is all a crawler sees, so a setting inside a lane must show there.
   `scripts/seo/build.ts` traces every recipe with the static registry, **fails the build** if the first sample's
   output drifted, renders `RecipeArticle` with `renderToStaticMarkup` and embeds the trace as
   `<script type="application/json" id="recipe-trace">`. `RecipePage` reads that trace, so nothing runs on load; the
@@ -194,6 +198,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `location.href`, and share links carry the user's input in the fragment.
 - Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
   params only) — GA's own history-based page views are off in the stream settings.
+- Utility pages report `snippet_copy {integration: 'cli'|'mcp', utility_id}` and `integration_click {source: 'doc_page'}` from
+  "Run it from your terminal or AI agent" (`src/app/integrations/RunElsewhere.tsx`, commands built and CLI-tested in `snippets.ts`).
 - Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`;
   page views carry `recipe_id` (register it as a custom dimension).
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
@@ -201,6 +207,10 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
 - Silent off `stringutilitybelt.com` (dev, E2E, CI, previews). `?analytics=off|on|debug` switches a browser.
   Automation (webdriver/headless/bot UA) is reported as `visitor_type: automated`, page views only.
+- Analysing the data: GA property `507388453`; key events `pipeline_load` and `integration_click`. Data before 2026-09-26
+  includes dev traffic (`localhost`, `127.0.0.1`, `*.workers.dev`): filter `hostname` or start there. BigQuery project
+  `string-utility-belt` (US) holds the Search Console bulk export (`searchconsole`, from 2026-10-08) and the GA4 daily
+  export (`analytics_507388453`, tables expire after 426 days — the 14 months the privacy policy promises). Neither backfills.
 
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).

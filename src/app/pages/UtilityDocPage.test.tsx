@@ -223,6 +223,20 @@ describe('UtilityDocPage', () => {
     expect(fireEvent.click(within(section).getAllByRole('link')[0], { ctrlKey: true })).toBe(true)
     expect(location.pathname).toBe('/')
   })
+
+  it('shows the same run as a subelt command and MCP call, following the playground', () => {
+    render(<UtilityDocPage id="trim" />)
+    const run = screen.getByRole('region', { name: 'Run it from your terminal or AI agent' })
+    expect(within(run).getByText('npx subelt -i input.txt trim')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('playground input'), { target: { value: '  hi  ' } })
+    expect(within(run).getByText("npx subelt -t '  hi  ' trim", { normalizer: t => t })).toBeTruthy()
+    expect(within(run).getByText('{"id":"trim"}')).toBeTruthy()
+  })
+
+  it('offers no command line for a utility that needs a browser', () => {
+    render(<UtilityDocPage id="xml_to_json" />)
+    expect(screen.queryByRole('region', { name: 'Run it from your terminal or AI agent' })).toBeNull()
+  })
 })
 
 const GUIDE = `---

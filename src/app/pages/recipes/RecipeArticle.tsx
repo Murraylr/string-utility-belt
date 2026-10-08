@@ -8,13 +8,13 @@
  */
 import React from 'react'
 import { ArrowRight } from 'lucide-react'
-import type { PipelineStep } from '@/types/utility'
-import { childSequences, isBranchStep, isEachStep, isUtilityStep, utilityIds } from '@/core/steps'
+import type { BranchStep, Condition, EachStep, PipelineStep, ValueType } from '@/types/utility'
+import { isBranchStep, isEachStep, isMacroStep, isUtilityStep, utilityIds, walkSteps } from '@/core/steps'
 import { itemNoun } from '@/core/split'
 import { RECIPE_CATEGORIES, RECIPES_PATH, recipePath, type Recipe, type RecipeMeta, type RecipeSample } from '@/recipes/types'
 import type { Preview, SkipTrace, StepTrace } from '@/recipes/trace'
 import { utilityPath } from '../related'
-import { changedParams, describeString, nameOf, revealInvisible, stepTitle, stringPairs, type UtilityLookup } from './recipeHelpers'
+import { changedParams, describeString, nameOf, revealInvisible, stepCountText, stepTitle, stringPairs, type UtilityLookup } from './recipeHelpers'
 
 
 /** An inline param value. */
@@ -78,29 +78,128 @@ function PreviewBlock({ preview, label, compact }: { preview: Preview; label: st
 
 const UTILITY_LINK = 'text-[12.5px] text-muted underline decoration-line-2 underline-offset-[3px]'
 
-/** Links to the utilities a step uses (a branch's lanes, a macro's or an each step's body). */
-function StepUtilities({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
-  if (isUtilityStep(step)) {
-    return <a className={`justify-self-start ${UTILITY_LINK}`} href={utilityPath(step.utilityId)}>{nameOf(step.utilityId, utility)}</a>
-  }
-  const lanes = childSequences(step)
+const VALUE_TYPE_NAMES: Record<ValueType, string> = { string: 'text', bytes: 'bytes', json: 'JSON' }
+
+/** A regex condition's flags in words: `i` is the one recipes use. */
+function flagNote(flags = ''): string {
+  const other = flags.replace('i', '')
+  const notes = [flags.includes('i') ? 'ignoring case' : '', other ? `flags ${other}` : ''].filter(Boolean)
+  return notes.length ? ` (${notes.join(', ')})` : ''
+}
+
+/** What a step's condition does, worded the same for a top-level step and a nested one. */
+function ConditionNote({ condition }: { condition?: Condition }) {
+  if (!condition || condition.kind === 'always') return null
+  const what = condition.kind === 'regex'
+    ? <>matches <code className="font-mono">{condition.pattern}</code>{flagNote(condition.flags)}</>
+    : condition.kind === 'nonEmpty' ? 'is not empty' : `is ${VALUE_TYPE_NAMES[condition.type]}`
   return (
-    <ol className="m-0 p-0 list-none grid gap-1 text-[12.5px]">
-      {lanes.map((lane, i) => (
-        <li key={i} className="flex flex-wrap items-baseline gap-1">
-          {isBranchStep(step) && <span className="text-muted">lane {i + 1}:</span>}
-          {isEachStep(step) && <span className="text-muted">on each {itemNoun(step.split.mode, 1)}:</span>}
-          {lane.map((s, j) => (
-            <React.Fragment key={s.id}>
-              {j > 0 && <span aria-hidden className="text-muted">→</span>}
-              {isUtilityStep(s)
-                ? <a className={UTILITY_LINK} href={utilityPath(s.utilityId)}>{stepTitle(s, utility)}</a>
-                : <span>{stepTitle(s, utility)}</span>}
-            </React.Fragment>
-          ))}
+    <p className="m-0 text-xs text-muted">
+      {condition.negate
+        ? <>Skipped (its input passes through) when the input {what}.</>
+        : <>Runs only when its input {what}; otherwise the input passes through.</>}
+    </p>
+  )
+}
+
+/** A failure policy other than the default (a failed step hands its input on). */
+function ErrorNote({ step }: { step: PipelineStep }) {
+  if (!step.onError || step.onError === 'passthrough') return null
+  const noun = isEachStep(step) ? itemNoun(step.split.mode, 1) : ''
+  const text = isEachStep(step)
+    ? step.onError === 'empty' ? `A ${noun} whose steps fail comes out empty.` : `One ${noun} that fails fails the whole step.`
+    : step.onError === 'empty' ? 'If it fails, the next step gets empty input.' : 'If it fails, the steps after it do not run.'
+  return <p className="m-0 text-xs text-muted">{text}</p>
+}
+
+/** How a "run on each" step cuts its input, as the line above its steps. */
+function eachIntro(step: EachStep): React.ReactNode {
+  const empty = step.skipEmpty === false ? ', empty ones included,' : ''
+  switch (step.split.mode) {
+    case 'lines': return <>Each line{empty} goes through:</>
+    case 'delimiter': return <>Each item between <code className="font-mono">{describeString(step.split.separator)}</code>{empty} goes through:</>
+    case 'json-array': return <>Each element of the JSON array{empty} goes through:</>
+    case 'json-values': return <>Each value of the JSON object{empty} goes through:</>
+  }
+}
+
+/** How a branch puts its lanes back together, as the line above its lanes. */
+function branchIntro(step: BranchStep): React.ReactNode {
+  const merge = step.merge ?? { mode: 'concat' }
+  const sep = (separator = '\n') => <code className="font-mono">{describeString(separator)}</code>
+  switch (merge.mode) {
+    case 'concat': return <>Every lane gets the same input, and their outputs are joined with {sep(merge.separator)}:</>
+    case 'zip': return <>Every lane gets the same input, and their outputs are interleaved line by line, joined with {sep(merge.separator)}:</>
+    case 'json': return <>Every lane gets the same input, and their outputs are collected into a JSON array:</>
+    case 'pick': return <>Every lane gets the same input, and only lane {merge.index + 1}’s output is kept:</>
+  }
+}
+
+/** A nested step's name: a link to its utility's page, after the step's own label when it has one. */
+function NestedTitle({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
+  if (!isUtilityStep(step)) return <span className="text-[13px] font-medium">{stepTitle(step, utility)}</span>
+  const link = <a className={UTILITY_LINK} href={utilityPath(step.utilityId)}>{nameOf(step.utilityId, utility)}</a>
+  return step.label
+    ? <span className="text-[13px] font-medium">{step.label} <span className="text-muted">(</span>{link}<span className="text-muted">)</span></span>
+    : <span className="text-[13px]">{link}</span>
+}
+
+/** Steps inside a container, in order, each with everything it is set to. */
+function StepSequence({ steps, utility }: { steps: PipelineStep[]; utility: UtilityLookup }) {
+  return (
+    <ol className="m-0 p-0 list-none grid gap-2 border-l border-line-2 pl-3 min-w-0">
+      {steps.map(s => (
+        <li key={s.id} className="grid gap-1 min-w-0">
+          <NestedTitle step={s} utility={utility} />
+          <StepSettings step={s} utility={utility} />
         </li>
       ))}
     </ol>
+  )
+}
+
+/** What runs inside a branch, macro or "run on each" step, containers within containers included. */
+function ContainerBody({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
+  if (isEachStep(step)) {
+    return (
+      <div className="grid gap-1 min-w-0">
+        <p className="text-xs text-muted">{eachIntro(step)}</p>
+        <StepSequence steps={step.steps} utility={utility} />
+      </div>
+    )
+  }
+  if (isBranchStep(step)) {
+    return (
+      <div className="grid gap-1 min-w-0">
+        <p className="text-xs text-muted">{branchIntro(step)}</p>
+        <ol className="grid gap-2 min-w-0">
+          {step.branches.map((lane, i) => (
+            <li key={i} className="grid gap-1 min-w-0">
+              <span className="text-xs text-muted">Lane {i + 1}{lane.length === 0 ? ': its input, unchanged' : ':'}</span>
+              {lane.length > 0 && <StepSequence steps={lane} utility={utility} />}
+            </li>
+          ))}
+        </ol>
+      </div>
+    )
+  }
+  if (isMacroStep(step)) return <StepSequence steps={step.steps} utility={utility} />
+  return null
+}
+
+/**
+ * Everything a step is set to: its condition, failure policy and changed params, then
+ * (for a container) the steps it runs, each shown the same way. The pre-rendered page
+ * is all a crawler or a visitor without JavaScript gets, so nothing here may hide.
+ */
+function StepSettings({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
+  return (
+    <>
+      <ConditionNote condition={step.condition} />
+      <ErrorNote step={step} />
+      <ParamList params={changedParams(step, utility)} />
+      <ContainerBody step={step} utility={utility} />
+    </>
   )
 }
 
@@ -184,7 +283,7 @@ export function RecipeWidget(props: RecipeWidgetProps) {
         <a className="cta" href={openHref} rel="nofollow" onClick={onOpen}>Open in the editor<ArrowRight size={13} aria-hidden /></a>
         <button type="button" className="btn" onClick={onCopy}>{copied ? 'Copied' : 'Copy output'}</button>
         <span className="text-[12.5px] text-muted">
-          {stepCount} steps, all editable. It runs in your browser, so nothing you paste is uploaded.
+          {stepCountText(stepCount)}, all editable. It runs in your browser, so nothing you paste is uploaded.
         </span>
       </div>
       {extension}
@@ -215,7 +314,9 @@ export interface RecipeArticleProps {
 export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, sponsor, promo, running }: RecipeArticleProps) {
   const traceOf = new Map(steps.map(s => [s.id, s]))
   const skipOf = new Map((skip ?? []).map(s => [s.id, s]))
-  const index = new Map(recipe.steps.map((s, i) => [s.id, i + 1]))
+  // every step id, nested ones included, to the number of the top-level step it is in
+  const index = new Map<string, number>()
+  recipe.steps.forEach((top, i) => walkSteps([top], s => { index.set(s.id, i + 1) }))
   const firstSample = recipe.samples[0]
   const utilitiesUsed = utilityIds(recipe.steps)
 
@@ -259,15 +360,10 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
                   <div className="grid gap-2 content-start min-w-0">
                     <h3 className="m-0 text-[15px] leading-[22px] font-semibold"><span className="sr-only">{i + 1}. </span>{stepTitle(s, utility)}</h3>
                     <p className="m-0 text-sm leading-[22px] text-pretty">{s.why}</p>
-                    <StepUtilities step={s} utility={utility} />
-                    {s.condition?.kind === 'regex' && (
-                      <p className="m-0 text-xs text-muted">
-                        {s.condition.negate
-                          ? <>Skipped (its input passes through) when the input matches <code className="font-mono">{s.condition.pattern}</code>.</>
-                          : <>Runs only when its input matches <code className="font-mono">{s.condition.pattern}</code>; otherwise the input passes through.</>}
-                      </p>
+                    {isUtilityStep(s) && (
+                      <a className={`justify-self-start ${UTILITY_LINK}`} href={utilityPath(s.utilityId)}>{nameOf(s.utilityId, utility)}</a>
                     )}
-                    <ParamList params={changedParams(s, utility)} />
+                    <StepSettings step={s} utility={utility} />
                   </div>
                   <div className="grid gap-2 content-start min-w-0">
                     {trace?.error && <p className="m-0 text-[13px] text-danger-ink">This step failed: {trace.error}</p>}
@@ -298,10 +394,8 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
               {recipe.steps.map((s, i) => {
                 const result = skipOf.get(s.id)
                 if (!result) return null
-                const failed = result.error && recipe.steps.find(t => t.id === result.error!.stepId)
-                const where = result.error
-                  ? index.has(result.error.stepId) ? `step ${index.get(result.error.stepId)} (${stepTitle(failed!, utility)})` : 'a later step'
-                  : ''
+                const at = result.error && index.get(result.error.stepId)
+                const where = at ? `step ${at} (${stepTitle(recipe.steps[at - 1], utility)})` : 'a later step'
                 return (
                   <li key={s.id} className="grid gap-2 content-start px-3.5 pt-3 pb-3.5 border rounded-lg bg-surface min-w-0">
                     <h3 className="m-0 text-[13.5px] font-semibold">Without step {i + 1}, {stepTitle(s, utility)}</h3>

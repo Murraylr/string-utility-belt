@@ -25,6 +25,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   sponsors, and none appears on phones. The pipeline editor shows one of our own extensions under the output, and
   never a sponsor.
 
+## [1.9.1] - 2026-10-08
+
+### Changed
+
+- The privacy policy says how long Google Analytics data is kept (14 months) and that a copy is exported to Google
+  BigQuery in our own Google Cloud project, where it is also deleted after 14 months.
+
+## [1.8.0] - 2026-10-08
+
+### Added
+
+- **"Run it from your terminal or AI agent"** on every utility page that the CLI and MCP server can run: the exact
+  `npx subelt …` command for what the page's playground just did (updating as you type or change a parameter), the
+  one-line MCP install for Claude Code, and the `run_utility` arguments an agent would send — each with a copy button.
+- **Seven recipes built on run on each**: turn a `.env` file into a Kubernetes Secret; convert Unix timestamps
+  in a JSON response to dates; decode every JWT in a log, HAR file or curl trace; remove tracking parameters
+  from a list of URLs; hash an email list with SHA-256 for Customer Match; extract the domain from each URL in
+  a list; parse the user agents of an access log into a CSV.
+
+### Changed
+
+- The MCP server's README starts with installing it from npm (`npx -y @string-utility-belt/mcp`) for Claude Code,
+  Claude Desktop and other clients; building from a checkout moved to its own section.
+- Recipe pages show what runs inside a run-on-each or branch step: every nested step with its link, the
+  settings it changes, its condition and what happens when it fails, how an each step splits its input and
+  how a branch merges its lanes, in the pre-rendered page too.
+- **Decode CloudWatch Logs subscription data** decodes every record of a Kinesis or Firehose batch, not
+  only the first, and finds the payload in an event printed by Python or Node.js. A message ending in a
+  literal `\n` no longer stops it.
+- **Excel column to SQL IN clause** escapes and quotes each value on its own, so the `mysql` flavor
+  (backslash escapes) and the `mssql` flavor (`N'…'` for non-ASCII values) work per value.
+- **Bulk UTM link builder** removes old `utm_` parameters with *normalize query params*, so names with
+  digits, without `=` or percent-encoded are removed too, and the drop list takes more names (`fbclid`,
+  `gclid`). Tags inside a `#fragment` are no longer removed.
+
+### Fixed
+
+- **gzip decompress** reports short input that is not gzip (`{`, `[`, a cut-off `H4sIAAAA`) as not valid
+  gzip data instead of a failed integrity check.
+- A recipe page with one numbered step says "1 step", on the page and on its share card.
+- Leaving a recipe page stops working out its "What if you skip a step?" examples, instead of running them
+  on in the background while the next page waits for the engine.
+
 ## [1.7.0] - 2026-10-08
 
 ### Added

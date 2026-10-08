@@ -24,6 +24,9 @@ export function stepTitle(step: PipelineStep, utility: UtilityLookup): string {
   return 'Step'
 }
 
+/** "1 step", "4 steps": a recipe's numbered (top-level) steps, as the page and its share card count them. */
+export const stepCountText = (n: number): string => `${n} ${n === 1 ? 'step' : 'steps'}`
+
 /**
  * Params that differ from the utility's defaults: what the recipe actually sets,
  * each with the label the editor shows for it.

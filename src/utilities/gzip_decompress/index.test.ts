@@ -117,6 +117,25 @@ describe('gzip_decompress', () => {
     )
   })
 
+  it('calls a few bytes of non-gzip input not gzip, never damaged gzip', async () => {
+    // the streaming reader waits for a whole header before checking it, so these once
+    // reached the trailer check and were reported as a failed CRC-32
+    for (const input of ['{', '[', '}', '{"a":1}', new Uint8Array([0x7b])]) {
+      const error = await Promise.resolve(util.apply(input as never, {})).then(() => null, (e: Error) => e.message)
+      expect(error).toMatch(/^not valid gzip data/)
+      expect(error).not.toMatch(/integrity/)
+    }
+  })
+
+  it('says a gzip header cut off before a whole stream is too short to be gzip', async () => {
+    // H4sIAAAA is Base64 for 1f 8b 08 00 00 00: the start of every CloudWatch Logs payload
+    await expect(util.apply('H4sIAAAA', {})).rejects.toThrow(
+      /^not valid gzip data .*: only 6 bytes, and the shortest gzip stream is 20$/
+    )
+    const full = await gz('short')
+    await expect(util.apply(full.slice(0, 19), {})).rejects.toThrow(/only 19 bytes/)
+  })
+
   it('throws on truncated gzip data', async () => {
     const full = await gz('a reasonably long sentence to compress and then truncate')
     await expect(util.apply(full.slice(0, full.length - 6), {})).rejects.toThrow()

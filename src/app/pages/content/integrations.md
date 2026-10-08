@@ -11,7 +11,7 @@ The same 246 utilities and pipeline engine that power this site are available in
 
 Right-click selected text, or a text field you're typing in, to run a favourite utility or a saved pipeline on it. The result replaces the selection, or is copied when the text can't be edited. Pick your favourites and manage saved pipelines on the extension's options page, or use **save to extension** in the pipeline toolbar here to send the current pipeline and your starred utilities straight to it.
 
-- [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh) for Chrome, Edge, Brave and other Chromium browsers
+- [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh?utm_source=stringutilitybelt.com&utm_medium=referral) for Chrome, Edge, Brave and other Chromium browsers
 
 ## VS Code extension
 

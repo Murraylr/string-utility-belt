@@ -27,6 +27,18 @@ function meta(overrides: Partial<UtilityMeta> = {}): UtilityMeta {
 }
 
 describe('renderUtilityContent', () => {
+  it('shows how to run the utility from the shell and from an agent, right after the header', () => {
+    const html = renderUtilityContent(meta(), [], { guideHtml: '<p>guide</p>' })
+    expect(html).toContain('npx subelt -i input.txt trim')
+    expect(html).toContain('claude mcp add subelt -- npx -y @string-utility-belt/mcp')
+    expect(html.indexOf('npx subelt')).toBeGreaterThan(html.indexOf('</header>'))
+    expect(html.indexOf('npx subelt')).toBeLessThan(html.indexOf('<details>'))
+  })
+
+  it('leaves the command line out for a utility that needs a browser', () => {
+    expect(renderUtilityContent(meta({ env: ['dom'] }), [])).not.toContain('npx subelt')
+  })
+
   it('puts a supplied guide in a collapsed <details> with an h2 summary, after the header', () => {
     const html = renderUtilityContent(meta({ name: 'base64_encode' }), [], { guideHtml: '<h3 class="md-h2">What is Base64?</h3>' })
     expect(html).toContain('<details>')

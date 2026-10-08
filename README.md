@@ -13,6 +13,26 @@ operations, analysis, generators, web/dev helpers, numbers, dates and colours �
 client-side, with the same engine available as a CLI, an HTTP API, an MCP server, a browser
 extension and a VS Code extension.
 
+## Use it from your agent, terminal or editor
+
+Every utility also runs on your own machine, outside the browser:
+
+```bash
+# Give Claude Code (or any MCP client) exact hashing, encoding and decoding instead of a guess
+claude mcp add subelt -- npx -y @string-utility-belt/mcp
+
+# Pipe text through a pipeline from the shell
+echo 'eyJ1c2VyIjoiYWRhIn0=' | npx subelt base64_decode json_pretty
+```
+
+- **MCP server** — [`@string-utility-belt/mcp`](packages/mcp/README.md): five tools (search, describe, run a
+  utility, run a pipeline, detect a format); config for Claude Desktop, Cursor and other clients in its README.
+- **CLI** — [`subelt`](packages/cli/README.md): steps as arguments, stdin to stdout, share links and pipeline files.
+- **Editors and browsers** — the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=stringutilitybelt.string-utility-belt)
+  (also [on Open VSX](https://open-vsx.org/extension/stringutilitybelt/string-utility-belt) for Cursor and VSCodium) and the
+  [Chrome extension](https://chromewebstore.google.com/detail/string-utility-belt/onmlbgadajghegkcpkkhlmmognihjfbh?utm_source=github&utm_medium=referral).
+- **Library** — [`@string-utility-belt/core`](packages/core/README.md), the engine with every utility, for your own code.
+
 ## Features
 
 - **Pipelines** — add, reorder (drag and drop), duplicate, disable/solo steps; undo/redo; per-step

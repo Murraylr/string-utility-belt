@@ -21,6 +21,7 @@ import { recipePath } from '@/recipes/types'
 import { SITE_NAME, displayName, pageTitle } from './seo'
 import PageSponsor from '@/app/sponsors/PageSponsor'
 import PagePromo from '@/app/sponsors/PagePromo'
+import RunElsewhere from '@/app/integrations/RunElsewhere'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
   dom: 'Needs the DOM (DOMParser/document), so it runs on the browser main thread only.',
@@ -293,6 +294,14 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
               </div>
             </div>
           </section>
+
+          <RunElsewhere
+            meta={meta}
+            input={playInput}
+            params={playParams}
+            onCopy={integration => track('snippet_copy', { integration, utility_id: id, source: 'doc_page' })}
+            onDocsClick={integration => track('integration_click', { integration, utility_id: id, source: 'doc_page' })}
+          />
 
           <PagePromo page={{ kind: 'utility', id }} slot="inline" />
 

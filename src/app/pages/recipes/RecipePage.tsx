@@ -89,7 +89,13 @@ function readEmbeddedTrace(recipe: Recipe, steps: PipelineStep[]): RecipeTrace |
   }
 }
 
-const runInBrowser: PipelineRunner = (input, steps, previews) => execute(input, steps, { previews })
+/**
+ * The browser's runner for the skip traces, cancelled with `signal`: the in-flight run
+ * is aborted and no further one starts, so a page left behind stops taking turns on
+ * the executor that the next page's runs use.
+ */
+const runInBrowser = (signal: AbortSignal): PipelineRunner => (input, steps, previews) =>
+  signal.aborted ? Promise.reject(new Error('the recipe page was left')) : execute(input, steps, { previews, signal })
 
 const COPIED_MS = 2000
 
@@ -127,13 +133,13 @@ function RecipeView({ data }: { data: RecipeData }) {
   const [skip, setSkip] = useState<SkipTrace[] | null>(embedded?.skip ?? null)
   useEffect(() => {
     if (embedded) return
-    let cancelled = false
-    traceRecipe(recipe, runInBrowser).then(
-      trace => { if (!cancelled) setSkip(trace.skip) },
+    const left = new AbortController()
+    traceRecipe(recipe, runInBrowser(left.signal)).then(
+      trace => { if (!left.signal.aborted) setSkip(trace.skip) },
       // the section is a bonus: without it the page is still complete
-      () => { if (!cancelled) setSkip([]) },
+      () => { if (!left.signal.aborted) setSkip([]) },
     )
-    return () => { cancelled = true }
+    return () => left.abort()
   }, [recipe, embedded])
 
   const blank = held || failed

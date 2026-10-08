@@ -1,25 +1,27 @@
 import type { Recipe } from '../types'
-import { step } from '../define'
+import { each, laneStep, step } from '../define'
 
 const recipe: Recipe = {
   slug: 'excel-column-to-sql-in-clause',
   name: 'Turn an Excel column into a SQL IN clause',
   summary:
-    'Paste a column copied from Excel or Google Sheets and get a ready-to-run IN (…) list: whitespace trimmed, duplicates dropped, apostrophes escaped and every value quoted.',
+    'Paste a column copied from Excel or Google Sheets and get a ready-to-run IN (…) list: whitespace trimmed, duplicates dropped, and every value escaped and quoted for your SQL dialect.',
   category: 'Data & Spreadsheets',
   primaryQuery: 'excel column to sql in clause',
   published: '2026-10-07',
+  updated: '2026-10-08',
   related: ['nested-json-to-csv'],
   steps: [
     step('trim', 'trim_lines', { side: 'both', characters: '' },
       'Cells copied from a spreadsheet often carry leading or trailing spaces, tabs or non-breaking spaces, which would end up inside the quotes.'),
     step('dedupe', 'line_dedupe', { caseSensitive: true },
       'Repeated values make the list longer without changing the result. Exact matches only, so values that differ in case stay distinct.'),
-    step('escape', 'sql_escape', { flavor: 'ansi', wrap: false },
-      "Doubles every apostrophe, the standard SQL escape, so O'Connor stays one value in PostgreSQL, SQL Server, Oracle and SQLite. MySQL, MariaDB and Snowflake also need backslashes doubled first."),
-    step('quote', 'line_affix', { prefix: "'", suffix: "'", skipBlank: true, joinWith: ', ' },
-      'Wraps each value in single quotes and joins them with commas, skipping the blank cells between rows.',
-      { label: 'quote and join values' }),
+    each('quote', { mode: 'lines' }, [laneStep('escape', 'sql_escape', { flavor: 'ansi', wrap: true })],
+      "Turns each value into a SQL string literal on its own: doubles every apostrophe, so O'Connor stays one value, and wraps it in single quotes. Switch the flavor to mysql for MySQL and MariaDB backslash escapes, or mssql for an N prefix on non-ASCII names.",
+      { label: 'quote each value' }),
+    step('join', 'line_affix', { prefix: '', suffix: '', skipBlank: true, joinWith: ', ' },
+      'Joins the quoted values with commas onto one line, skipping the blank cells between rows, which have nothing to quote.',
+      { label: 'join with commas' }),
     step('wrap', 'line_affix', { prefix: 'IN (', suffix: ')', skipBlank: true, joinWith: '' },
       'Adds the IN ( … ) around the list, so the result pastes straight after WHERE column_name in your query.',
       { label: 'wrap in IN ( … )' }),

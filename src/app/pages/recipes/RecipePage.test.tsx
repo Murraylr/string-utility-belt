@@ -9,6 +9,7 @@ import recipe from '@/recipes/excel-column-to-sql-in-clause/recipe'
 import { execute } from '@/app/engine/executor'
 import { track } from '@/app/analytics/analytics'
 import { toPipelineSteps } from '@/recipes/types'
+import { countSteps, STEP_TYPES } from '@/core/steps'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension } from '@/app/extension/fakeExtension'
 import * as openInEditor from './openInEditor'
@@ -60,6 +61,26 @@ describe('RecipePage', () => {
     expect(within(steps).getAllByText('Output after this step', { exact: false })).toHaveLength(recipe.steps.length)
     const skip = screen.getByRole('heading', { name: 'What if you skip a step?' }).closest('section')!
     await waitFor(() => expect(within(skip).getAllByRole('heading', { level: 3 })).toHaveLength(recipe.steps.length))
+  })
+
+  it('stops working out the skip traces once the page is left', async () => {
+    const real = await vi.importActual<typeof import('@/app/engine/executor')>('@/app/engine/executor')
+    // slow runs, so the page is left while the trace (a main run, then one per left-out step) is under way
+    vi.mocked(execute).mockImplementation(async (...args) => {
+      await new Promise(resolve => setTimeout(resolve, 30))
+      return real.execute(...args)
+    })
+    try {
+      const { unmount } = render(<RecipePage slug={SLUG} />)
+      await waitFor(() => expect(execute).toHaveBeenCalled())
+      unmount()
+      const started = vi.mocked(execute).mock.calls.length
+      await new Promise(resolve => setTimeout(resolve, 30 * (recipe.steps.length + 2)))
+      expect(vi.mocked(execute).mock.calls.length).toBe(started)
+    } finally {
+      vi.mocked(execute).mockReset()
+      vi.mocked(execute).mockImplementation(real.execute)
+    }
   })
 
   it("sets the guide's search title and description", async () => {
@@ -149,7 +170,7 @@ describe('RecipePage', () => {
     }))
     try {
       fireEvent.change(input(), { target: { value: 'x' } })
-      expect((await screen.findByRole('alert')).textContent).toBe('Step 3 (sql escape) failed: boom')
+      expect((await screen.findByRole('alert')).textContent).toBe('Step 3 (quote each value) failed: boom')
     } finally {
       vi.mocked(execute).mockReset()
       const real = await vi.importActual<typeof import('@/app/engine/executor')>('@/app/engine/executor')
@@ -173,7 +194,7 @@ describe('RecipePage', () => {
     expect(loadState().steps.map(s => ('utilityId' in s ? s.utilityId : ''))).toEqual(recipe.steps.map(s => ('utilityId' in s ? s.utilityId : '')))
     expect(loadState().name).toBe(recipe.name)
     expect(sessionStorage.getItem('sub:handoff-input')).toBe('mine')
-    expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe', recipe_id: SLUG, step_count: recipe.steps.length })
+    expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe', recipe_id: SLUG, step_count: countSteps(toPipelineSteps(recipe.steps)) })
   })
 
   it('follows the share link instead when storage refuses the recipe, counting it as a share-link load', async () => {
@@ -187,7 +208,7 @@ describe('RecipePage', () => {
       fireEvent.click(open)
       expect(follow).toHaveBeenCalledWith(open.getAttribute('href'))
       expect(location.pathname).toBe(`/recipes/${SLUG}/`)
-      expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe_share_link', recipe_id: SLUG, step_count: recipe.steps.length })
+      expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe_share_link', recipe_id: SLUG, step_count: countSteps(toPipelineSteps(recipe.steps)) })
     } finally {
       vi.restoreAllMocks()
     }
@@ -214,7 +235,7 @@ describe('RecipePage', () => {
 
   it('offers to save the recipe to the browser extension, under the recipe\'s name, once it answers', async () => {
     __resetExtensionBridgeForTests()
-    const fake = installFakeExtension()
+    const fake = installFakeExtension({ stepTypes: [...STEP_TYPES] })
     try {
       render(<RecipePage slug={SLUG} />)
       const widget = (await screen.findByRole('heading', { name: 'Try it with your own data' })).closest('section')!

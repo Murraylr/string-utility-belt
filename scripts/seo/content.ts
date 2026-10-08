@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { UtilityMeta } from '../../src/core/registry'
+import { defaultParams } from '../../src/core/params'
 import type { ParamSpec, UtilityExample } from '../../src/types/utility'
 import { escapeHtml } from './html'
 import type { BlogPostMeta } from './blog'
@@ -10,6 +11,7 @@ import { POPULAR_UTILITY_IDS, SITE_NAME, displayName } from '../../src/app/pages
 import Docs from '../../src/components/Docs'
 import { en } from '../../src/app/i18n/locales/en'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
+import RunElsewhere from '../../src/app/integrations/RunElsewhere'
 import { RecipeArticle, RecipesIndex, RecipeWidget } from '../../src/app/pages/recipes/RecipeArticle'
 import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
 import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
@@ -182,6 +184,7 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
       <p>accepts <code>${escapeHtml(typesOf(meta.accepts))}</code> → produces <code>${escapeHtml(typesOf(meta.produces))}</code></p>
       ${renderSponsor(extras.sponsor)}
     </header>
+    ${renderToStaticMarkup(createElement(RunElsewhere, { meta, input: '', params: defaultParams(meta) }))}
     ${guideHtml}
     ${paramsHtml}
     ${examplesHtml}
