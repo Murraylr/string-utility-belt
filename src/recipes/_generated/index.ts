@@ -51,6 +51,24 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "convert-unix-timestamps-in-json",
+    "name": "Convert Unix timestamps in a JSON response to dates",
+    "summary": "Paste an API response and get the same JSON back with its epoch seconds and milliseconds turned into ISO 8601 dates at any depth, while small ids, prices and phone numbers stay as they are.",
+    "category": "Web & APIs",
+    "utilityIds": [
+      "json_flatten",
+      "json_unflatten",
+      "timestamp_convert"
+    ],
+    "chain": [
+      "flatten to paths",
+      "convert epoch values",
+      "rebuild the JSON"
+    ],
+    "stepCount": 3,
+    "published": "2026-10-08"
+  },
+  {
     "slug": "decode-cloudwatch-logs-data",
     "name": "Decode CloudWatch Logs subscription data",
     "summary": "Paste a Lambda event with awslogs.data, a Kinesis or Firehose batch, or the bare Base64 value, and read the log events of every record as plain lines, with the gzip, the JSON envelope and the escapes undone.",
@@ -117,6 +135,25 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "decode-jwts-in-log-file",
+    "name": "Decode every JWT in a log or HAR file",
+    "summary": "Paste a log, a HAR export or a curl -v trace and read the claims of every JSON Web Token in it, each once, with iat, exp and auth_time shown as dates instead of epoch seconds.",
+    "category": "Web & APIs",
+    "utilityIds": [
+      "extract_preset",
+      "jsonl_to_json",
+      "jwt_decode",
+      "timestamp_convert"
+    ],
+    "chain": [
+      "find every token",
+      "decode each token",
+      "one JSON array"
+    ],
+    "stepCount": 3,
+    "published": "2026-10-08"
+  },
+  {
     "slug": "decode-kubernetes-secret",
     "name": "Decode a Kubernetes Secret",
     "summary": "Paste a Secret from kubectl get secret -o yaml or -o json and read every value under data in plain text, with the keys kept, instead of decoding each one with base64 by hand.",
@@ -157,6 +194,26 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "env-file-to-kubernetes-secret",
+    "name": "Turn a .env file into a Kubernetes Secret",
+    "summary": "Paste a .env file and get a Secret manifest with every value Base64-encoded under data, ready for kubectl apply, with quotes, export prefixes, comments and multi-line values handled.",
+    "category": "DevOps & Config",
+    "utilityIds": [
+      "base64_encode",
+      "env_to_json",
+      "json_to_yaml",
+      "replace"
+    ],
+    "chain": [
+      "parse the .env file",
+      "encode every value",
+      "wrap in a Secret",
+      "json to yaml"
+    ],
+    "stepCount": 4,
+    "published": "2026-10-08"
+  },
+  {
     "slug": "excel-column-to-sql-in-clause",
     "name": "Turn an Excel column into a SQL IN clause",
     "summary": "Paste a column copied from Excel or Google Sheets and get a ready-to-run IN (…) list: whitespace trimmed, duplicates dropped, and every value escaped and quoted for your SQL dialect.",
@@ -177,6 +234,24 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "stepCount": 5,
     "published": "2026-10-07",
     "updated": "2026-10-08"
+  },
+  {
+    "slug": "extract-domains-from-urls",
+    "name": "Extract the domain from a list of URLs",
+    "summary": "Paste a column of links and get each one’s hostname on the same line, lowercased and without www., whether or not the link starts with https://, so it pastes back beside its URL.",
+    "category": "Data & Spreadsheets",
+    "utilityIds": [
+      "jsonpath",
+      "line_affix",
+      "replace",
+      "url_parse"
+    ],
+    "chain": [
+      "hostname of every URL",
+      "drop www."
+    ],
+    "stepCount": 2,
+    "published": "2026-10-08"
   },
   {
     "slug": "fix-bash-bad-interpreter",
@@ -222,6 +297,25 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "hash-email-list-for-customer-match",
+    "name": "Hash an email list for Customer Match",
+    "summary": "Paste a column of customer emails and get one SHA-256 hash per line, normalized the way Google Ads Customer Match expects, with header and blank rows kept so rows still line up.",
+    "category": "Writing & Marketing",
+    "utilityIds": [
+      "case",
+      "hash",
+      "replace"
+    ],
+    "chain": [
+      "remove spaces and quotes",
+      "change case",
+      "drop Gmail dots",
+      "SHA-256 every address"
+    ],
+    "stepCount": 4,
+    "published": "2026-10-08"
+  },
+  {
     "slug": "nested-json-to-csv",
     "name": "Convert nested JSON to CSV",
     "summary": "Paste an API response or a JSON array and get a spreadsheet-ready CSV: the records picked out of their envelope, nested objects and arrays spread into columns of their own, and headers renamed to snake_case.",
@@ -238,6 +332,42 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     ],
     "stepCount": 3,
     "published": "2026-10-07"
+  },
+  {
+    "slug": "parse-user-agents-from-access-log",
+    "name": "Parse user agents from an access log into a CSV",
+    "summary": "Paste nginx or Apache access log lines, or a column of user-agent strings, and get a CSV row per line with the browser, OS, device and a bot flag.",
+    "category": "Web & APIs",
+    "utilityIds": [
+      "json_to_csv",
+      "jsonl_to_json",
+      "replace",
+      "user_agent_parse"
+    ],
+    "chain": [
+      "keep the user-agent field",
+      "parse every line",
+      "collect into an array",
+      "pick columns as CSV"
+    ],
+    "stepCount": 4,
+    "published": "2026-10-08"
+  },
+  {
+    "slug": "remove-tracking-parameters-from-urls",
+    "name": "Remove tracking parameters from a list of URLs",
+    "summary": "Paste links one per line and get them back without utm_ tags, fbclid, gclid, srsltid and other click ids, with the parameters a page needs, the order and any #anchor kept.",
+    "category": "Writing & Marketing",
+    "utilityIds": [
+      "query_params_normalize",
+      "unescape_html"
+    ],
+    "chain": [
+      "undo &amp;",
+      "clean every link"
+    ],
+    "stepCount": 2,
+    "published": "2026-10-08"
   },
   {
     "slug": "spring-boot-yaml-to-env-vars",

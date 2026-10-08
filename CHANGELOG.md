@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Seven recipes built on run on each**: turn a `.env` file into a Kubernetes Secret; convert Unix timestamps
+  in a JSON response to dates; decode every JWT in a log, HAR file or curl trace; remove tracking parameters
+  from a list of URLs; hash an email list with SHA-256 for Customer Match; extract the domain from each URL in
+  a list; parse the user agents of an access log into a CSV.
+
 ### Changed
 
 - Recipe pages show what runs inside a run-on-each or branch step: every nested step with its link, the
