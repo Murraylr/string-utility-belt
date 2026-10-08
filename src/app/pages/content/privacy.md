@@ -1,18 +1,19 @@
 ---
 title: Privacy Policy
-description: How String Utility Belt handles data: your text is processed in your browser, while Google Analytics and Google AdSense use cookies. Your choices explained.
+description: How String Utility Belt handles data: your text is processed in your browser, and Google Analytics measures visits to the site. Your choices explained.
 ---
 
 # Privacy Policy
 
-*Last updated: 6 October 2026*
+*Last updated: 7 October 2026*
 
 String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and publishes the String Utility Belt browser extension, VS Code extension, command-line tool (`subelt`), MCP server and code library. This policy explains what information is collected when you use the site or these tools, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
 
 ## The short version
 
 - The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except as described under "Features that contact our server".
-- We use **Google Analytics** to understand how the site is used and **Google AdSense** to show the ads that keep it free. Both use cookies and similar technologies.
+- We use **Google Analytics** to understand how the site is used. Outside the European Economic Area, the UK and Switzerland it uses cookies; inside them it runs without cookies.
+- The site loads **no advertising scripts**. A sponsor's message, where a page shows one, is part of the page itself: it runs no code, sets no cookies and never sees what you type.
 - There are no user accounts, and we do not sell your personal information.
 - The browser extension, VS Code extension, command-line tool, MCP server and library run on your own device. They contain no analytics or ads and do not send your text anywhere, except when you choose to open text in the website (see "Browser and editor extensions and developer tools").
 
@@ -55,24 +56,11 @@ The extension does not sell or transfer your data to anyone, and uses it for not
 
 These run entirely on your computer, on the text you give them, and make no network requests. They contain no analytics, telemetry or ads. The only thing any of them keeps is the VS Code extension's list of your recently used utilities, stored by VS Code on your computer. The MCP server only receives what the AI application you connect it to sends it, and returns results only to that application.
 
-## Cookies, analytics and advertising
+## Cookies and analytics
 
 ### Google Analytics
 
 We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. It also records which features you use — for example which utilities you add to a pipeline, how large your input is (as a rough size range), that you copied or downloaded a result, or what you typed into a utility search box — but never the text, files or share links you work with: a shared pipeline is reported only as "a shared pipeline". To tell people from automated traffic, the site notes whether a visit showed real mouse, keyboard or touch input, and remembers that on your device. With Google signals turned on, Google also associates this data with your Google account if you are signed in and have allowed ads personalization, which gives us aggregate reports on visitors' age range, gender and interests; you can stop this in [Google's Ads Settings](https://adssettings.google.com/). We only look at this information in aggregate. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
-
-### Google AdSense
-
-The site shows ads served by Google AdSense.
-
-- Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this website or other websites.
-- Google's use of advertising cookies enables it and its partners to serve ads to you based on your visit to this site and/or other sites on the internet.
-- You may opt out of personalised advertising by visiting [Google's Ads Settings](https://adssettings.google.com/). You can also opt out of some third-party vendors' use of cookies for personalised advertising at [aboutads.info](https://www.aboutads.info/choices/) or, in Europe, [youronlinechoices.eu](https://www.youronlinechoices.eu/).
-- Google may let other certified ad technology providers serve or measure ads through AdSense. Visitors in the European Economic Area, the UK and Switzerland can see and control these providers in the consent message described below.
-
-If you opt out, you will still see ads, but they will not be personalised to you.
-
-Learn more in [how Google uses information from sites that use its services](https://policies.google.com/technologies/partner-sites) and in [Google's privacy policy](https://policies.google.com/privacy).
 
 ### Google Fonts
 
@@ -80,15 +68,15 @@ The site's typefaces are loaded from Google Fonts. To download them, your browse
 
 ## Your choices and consent
 
-- **In the European Economic Area, the UK and Switzerland**, we ask for your consent before cookies are used for analytics or personalised advertising, through a consent message provided by Google, a Google-certified consent management platform. You can change or withdraw your consent at any time with the "Privacy and cookie settings" link on the site.
-- **Everywhere**, you can block or delete cookies in your browser settings, and turn off personalised ads using the links above. The tools keep working without cookies.
-- **In some US states**, you may have the right to opt out of the "sale" or "sharing" of personal information for targeted advertising. We do not sell personal information for money; to stop your information being used for personalised ads, use Google's Ads Settings as described above.
+- **In the European Economic Area, the UK and Switzerland**, Google Analytics sets no cookies. Google receives only cookieless measurements (the page, the time, your browser and device type, and an approximate location derived from your IP address), with no identifier that persists between visits. The site shows no consent message, so this does not change.
+- **Everywhere**, you can block or delete cookies in your browser settings, or use the opt-out add-on above. The tools keep working without cookies.
+- **In some US states**, you may have the right to opt out of the "sale" or "sharing" of personal information for targeted advertising. We do not sell personal information for money. To stop Google using your visits for personalised ads, use [Google's Ads Settings](https://adssettings.google.com/) as described above.
 
 ## Your rights
 
 Depending on where you live — for example under the GDPR or the UK GDPR — you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data collected by Google, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
 
-We process data on the basis of your consent (analytics and advertising cookies, where consent is required) and of our legitimate interest in running a secure and reliable service (rate limiting and operational logs).
+We process data on the basis of our legitimate interest in understanding how the site is used (analytics, without cookies where the law requires consent for them) and in running a secure and reliable service (rate limiting and operational logs).
 
 ## Children
 

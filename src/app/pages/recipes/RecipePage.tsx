@@ -5,7 +5,6 @@ import { countSteps } from '@/core/steps'
 import { isPlainLeftClick } from '@/lib/router'
 import { execute } from '@/app/engine/executor'
 import { useRunner } from '@/app/engine/useRunner'
-import AdSlot from '@/app/ads/AdSlot'
 import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { toPipelineSteps, type Recipe } from '@/recipes/types'
@@ -203,7 +202,6 @@ function RecipeView({ data }: { data: RecipeData }) {
       steps={stepOutputs}
       skip={skip}
       related={relatedRecipes(recipe, RECIPE_INDEX)}
-      ad={<AdSlot placement="recipe-page" />}
       running={live && run.running}
       live={(
         <RecipeWidget

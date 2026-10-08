@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Advertise page** (`/advertise/`, linked from the footer): who the site is for, the sponsorship formats on offer,
+  what sponsors may and may not do, and how to book.
+
+### Changed
+
+- **No more Google AdSense.** The site loads no advertising scripts; any sponsorship is shown as part of the page,
+  with no scripts, pixels or cookies, and never in the tool, embeds, extensions, CLI or MCP server. Without
+  AdSense there is no consent message either: in the EEA, the UK and Switzerland Google Analytics now always runs
+  without cookies. The privacy policy, about and contact pages say so.
+
+### Security
+
+- **Content-Security-Policy** on every page: scripts only from the site itself and Google Analytics, inline scripts
+  only by hash, no plugins, no `<base>` changes, forms only to the site. The custom JavaScript sandbox runs under it
+  too. Every build checks the pre-rendered pages against it, and the end-to-end tests run under it.
+
 ## [1.5.0] - 2026-10-07
 
 ### Added

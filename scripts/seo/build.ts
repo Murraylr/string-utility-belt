@@ -178,7 +178,7 @@ function breadcrumbLd(items: Array<{ name: string; url: string }>) {
   }
 }
 
-const SITE_PAGE_TYPES: Record<SitePageSlug, string> = { about: 'AboutPage', privacy: 'WebPage', contact: 'ContactPage', integrations: 'WebPage' }
+const SITE_PAGE_TYPES: Record<SitePageSlug, string> = { about: 'AboutPage', privacy: 'WebPage', contact: 'ContactPage', integrations: 'WebPage', advertise: 'WebPage' }
 
 // ---------------------------------------------------------------------------
 // Page builders — each starts from the built `index.html` template (with any

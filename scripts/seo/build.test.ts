@@ -130,10 +130,10 @@ describe('buildSeo over a built dist/', () => {
     expect(recipeDirs.sort()).toEqual(STATIC_RECIPES.map(r => r.slug).sort())
     for (const rel of ['utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
-      'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', '404.html']) {
+      'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', 'advertise/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + STATIC_RECIPES.length + 12)
+    expect(result.pages).toBe(MANIFEST.length + STATIC_RECIPES.length + 13)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -206,7 +206,7 @@ describe('buildSeo over a built dist/', () => {
     for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
-      expect(footer, rel).toEqual(['/utilities/', '/recipes/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/'])
+      expect(footer, rel).toEqual(['/utilities/', '/recipes/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/', '/advertise/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="main"] a')].map(a => a.getAttribute('href')), rel)
         .toEqual(['/', '/docs/', '/utilities/', '/recipes/', '/blog/', '/changelog/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="Integrations"] a')].map(a => a.getAttribute('href')), rel)
@@ -249,7 +249,7 @@ describe('buildSeo over a built dist/', () => {
     }
   })
 
-  it('pre-renders the about, privacy, contact and integrations pages from their markdown', () => {
+  it('pre-renders the about, privacy, contact, integrations and advertise pages from their markdown', () => {
     for (const slug of SITE_PAGES) {
       const doc = html(read(dist, `${slug}/index.html`))
       expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href'), slug).toBe(`${SITE}/${slug}/`)
@@ -259,10 +259,11 @@ describe('buildSeo over a built dist/', () => {
       expect(ld.map(d => d['@type'])[1], slug).toBe('BreadcrumbList')
     }
     expect(html(read(dist, 'privacy/index.html')).title).toBe('Privacy Policy — String Utility Belt')
-    // AdSense's required disclosures, with the opt-out link
+    // the Google Analytics disclosures, with the opt-out links
     const privacy = html(read(dist, 'privacy/index.html')).querySelector('#root main')!
-    expect(privacy.textContent).toContain('Third-party vendors, including Google, use cookies to serve ads')
-    expect([...privacy.querySelectorAll('a')].map(a => a.getAttribute('href'))).toContain('https://adssettings.google.com/')
+    expect(privacy.textContent).toContain('Google Analytics sets no cookies')
+    expect([...privacy.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual(
+      expect.arrayContaining(['https://tools.google.com/dlpage/gaoptout', 'https://adssettings.google.com/']))
   })
 
   it('writes a 404 page that is kept out of the index and links back into the site', () => {
@@ -314,7 +315,7 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
-      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`, `${SITE}/recipes/`,
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`, `${SITE}/advertise/`, `${SITE}/recipes/`,
       ...STATIC_RECIPES.map(r => `${SITE}/recipes/${r.slug}/`),
     ]))
     // every page `pages` counts but the 404, plus the home page (written apart from the count)
@@ -337,14 +338,17 @@ describe('buildSeo over a built dist/', () => {
     // item comes and goes; buildRssItems' own tests cover when it appears and how it is dated.
     const released = items.filter(i => i.title !== 'Unreleased changes')
     expect(released.map(i => i.title)).toEqual([
+      'Release 1.5.0',
       'Release 1.4.0',
       ...shipped.map(p => p.title),
       'Release 1.3.0',
     ])
-    expect(released[0].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
+    expect(released[0].pubDate).toBe(new Date('2026-10-07T00:00:00Z').toUTCString())
+    expect(released[1].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
     // undated release: no pubDate rather than the build date or the epoch
-    expect(released[3].pubDate).toBeUndefined()
-    expect(released[3].guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
+    const undated = released[released.length - 1]
+    expect(undated.pubDate).toBeUndefined()
+    expect(undated.guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
   })
 
   it('is idempotent: a second run over its own output changes nothing', async () => {
@@ -452,7 +456,7 @@ describe('buildSeo recipes', () => {
     const urls = [...doc.getElementsByTagName('url')].map(u => [u.getElementsByTagName('loc')[0].textContent, u.getElementsByTagName('lastmod')[0].textContent])
     expect(urls).toContainEqual([`${SITE}/recipes/shout-slugs/`, '2026-06-02'])
     expect(urls).toContainEqual([`${SITE}/recipes/`, '2026-06-02'])
-    expect(result.pages).toBe(MANIFEST.length + 1 + 12)
+    expect(result.pages).toBe(MANIFEST.length + 1 + 13)
   })
 
   it('fails the build when a recipe no longer produces its first sample', async () => {

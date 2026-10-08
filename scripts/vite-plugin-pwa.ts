@@ -240,7 +240,7 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return; // cross-origin (analytics/ads/fonts): untouched
+  if (url.origin !== self.location.origin) return; // cross-origin (analytics, fonts): untouched
 
   if (url.pathname.indexOf('/api/') === 0) {
     event.respondWith(fetch(request)); // network-only

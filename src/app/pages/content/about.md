@@ -36,7 +36,7 @@ Every worked example on this site â€” on each utility's page and in its guide â€
 
 ## How the site is funded
 
-String Utility Belt is free to use and is supported by advertising through Google AdSense. Ads are shown alongside the content and never change how the tools work or what they do with your data.
+String Utility Belt is free to use and has no paid tier. It accepts sponsorship on its own terms: a sponsor's message is clearly labelled and sits beside a page's content: never inside the tool, never in the extensions, the command-line tool or the MCP server, and never with a tracking script. Sponsors never see what you type, and never change how the tools work or what they do with your data. See [advertising](/advertise/) to sponsor the site.
 
 ## Get in touch
 

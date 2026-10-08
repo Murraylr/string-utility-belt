@@ -209,11 +209,6 @@
   .guide .guide-example-title { @apply font-medium text-sm; }
   .guide .guide-example-params { @apply text-xs text-muted; }
   .guide .guide-example-label { @apply text-xs text-muted mt-1; }
-
-  /* AdSlot (src/app/ads): the unit's height is reserved before the ad arrives, so it
-     cannot shift the content below it; an unfilled unit collapses instead of leaving a gap */
-  .ad-slot { @apply block min-h-[280px]; }
-  .ad-slot:has(ins[data-ad-status="unfilled"]) { @apply hidden; }
 }
 
 /* fancy background gradient helpers */

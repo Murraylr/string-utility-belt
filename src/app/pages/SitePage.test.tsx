@@ -11,7 +11,7 @@ describe('SitePage', () => {
     document.title = 'String Utility Belt'
     const { unmount } = render(<SitePage slug="privacy" />)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Privacy Policy')
-    expect(screen.getByRole('heading', { level: 2, name: 'Cookies, analytics and advertising' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: 'Cookies and analytics' })).toBeTruthy()
     expect(screen.getAllByRole('listitem').length).toBeGreaterThan(5)
     for (const link of screen.getAllByRole('link', { name: "Google's Ads Settings" })) {
       expect(link.getAttribute('href')).toBe('https://adssettings.google.com/')
