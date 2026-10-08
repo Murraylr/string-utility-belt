@@ -135,6 +135,10 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
   pre-render use — titles go through `pageTitle()` (site name only when it fits 60 chars). Change a
   title/description there, never in only one place: Google indexes the rendered page.
+- Sitemap `lastmod` is when the page's content last changed, never the build time: a utility page's folder's last
+  commit on the first-parent history (or a newer recipe it links to), the file a docs/site page renders, a recipe's or
+  post's own dates; an index takes its newest entry (`scripts/seo/lastmod.ts`, one `git log` pass). A shallow clone
+  gives every git-dated page HEAD's date, so the deploy job checks out full history.
 - Site pages: `src/app/pages/content/{about,privacy,contact}.md` (frontmatter title/description, guide
   markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by `build.ts`. The privacy
   policy carries AdSense's required disclosures — keep it accurate when data flows change.
