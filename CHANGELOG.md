@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Advertise page** (`/advertise/`, linked from the footer): who the site is for, the sponsorship formats on offer,
+  what sponsors may and may not do, and how to book.
+- **Sponsor block** on utility, recipe and blog pages: while a sponsorship is booked, the sponsor's logo, name, one
+  line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie. Until
+  then it introduces our own tools, matched to the page (not shown on phones): the command-line tool on Kubernetes and
+  cloud pages, the MCP server on hashing and security pages, the VS Code extension on data-format and recipe pages, and
+  elsewhere the browser extension in a desktop Chrome, Edge or other Chromium browser that doesn't have it yet,
+  otherwise the VS Code extension.
+
+### Changed
+
+- **No more Google AdSense.** The site loads no advertising scripts; any sponsorship is shown as part of the page,
+  with no scripts, pixels or cookies, and never in the tool, embeds, extensions, CLI or MCP server. Without
+  AdSense there is no consent message either: in the EEA, the UK and Switzerland Google Analytics now always runs
+  without cookies. The privacy policy, about and contact pages say so.
+
+### Security
+
+- **Content-Security-Policy** on every page: scripts only from the site itself and Google Analytics, inline scripts
+  only by hash, no plugins, no `<base>` changes, forms only to the site. The custom JavaScript sandbox runs under it
+  too. Every build checks the pre-rendered pages against it, and the end-to-end tests run under it.
+
 ## [1.6.0] - 2026-10-08
 
 ### Added

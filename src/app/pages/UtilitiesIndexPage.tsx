@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react'
 import { registry } from '@/app/registry'
-import AdSlot from '@/app/ads/AdSlot'
 import { useSearchTracking } from '@/app/analytics/analytics'
 import { utilityPath } from './related'
 import { displayName, utilitiesDescription, utilitiesTitle } from './seo'
@@ -17,16 +16,6 @@ function matches(u: ReturnType<typeof registry.list>[number], needle: string): b
     u.tags.some(t => t.toLowerCase().includes(n)) ||
     u.aliases.some(a => a.toLowerCase().includes(n))
   )
-}
-
-/**
- * The ad unit after the first category, not beside the filter box. Keyed on its own,
- * so filtering (which changes which category comes first) moves it rather than
- * remounting it — a remount would be a new ad request on every keystroke.
- */
-function withAd(sections: React.ReactElement[]): React.ReactNode[] {
-  if (sections.length === 0) return sections
-  return [sections[0], <AdSlot key="ad:utilities-index" placement="utilities-index" />, ...sections.slice(1)]
 }
 
 /** Every utility, filterable and grouped by category, linking to its doc page. */
@@ -67,7 +56,7 @@ export default function UtilitiesIndexPage() {
 
       {groups.length === 0 && <p className="muted">No utilities match "{q}".</p>}
 
-      {withAd(groups.map(({ category, items }) => (
+      {groups.map(({ category, items }) => (
         <section key={category} className="grid gap-2">
           <h2 className="text-lg font-medium">{category} <span className="muted text-sm font-normal">({items.length})</span></h2>
           <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -82,7 +71,7 @@ export default function UtilitiesIndexPage() {
             ))}
           </ul>
         </section>
-      )))}
+      ))}
     </div>
   )
 }

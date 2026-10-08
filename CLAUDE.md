@@ -121,7 +121,7 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
   `#/util/:id`, `#/recipes`, `#/recipes/:slug`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
-  `#/about` | `#/privacy` | `#/contact` (`SITE_PAGES`).
+  `#/about` | `#/privacy` | `#/contact` | `#/integrations` | `#/advertise` (`SITE_PAGES`).
 - A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/recipes/<slug>/`, `/docs/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex`. The host answers
   it with `dist/404.html` and a 404 status (`not_found_handling: "404-page"`), so a new path-routed page must also be
@@ -131,22 +131,51 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   href into `navigateToPath` (pushState, no reload). It listens on `document`, so a link's click must bubble:
   a React `stopPropagation()` on it (or an ancestor) means a full page load. Hash routes still resolve for old links and commands.
 
-### SEO & ads
+### SEO & sponsorship
 - `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
   pre-render use — titles go through `pageTitle()` (site name only when it fits 60 chars). Change a
   title/description there, never in only one place: Google indexes the rendered page.
-- Site pages: `src/app/pages/content/{about,privacy,contact}.md` (frontmatter title/description, guide
-  markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by `build.ts`. The privacy
-  policy carries AdSense's required disclosures — keep it accurate when data flows change.
+- Site pages: `src/app/pages/content/{about,privacy,contact,integrations,advertise}.md` (frontmatter
+  title/description, guide markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by
+  `build.ts`. The privacy policy carries the Google Analytics disclosures — keep it accurate when data flows change.
+  `advertise.md` is the sponsors' media kit: keep its promises (formats, rules) in step with what the site does.
 - Usage guide: `src/components/Docs.tsx` (`/docs/`), pre-rendered by `build.ts` with `renderToStaticMarkup` of the
   component itself — keep its render free of browser APIs (effects are fine).
-- Ads: the AdSense loader and Consent Mode defaults live in `index.html` (ads are paused inside frames and
-  `#/embed`). Manual units are `<AdSlot placement>` (`src/app/ads/`), inert until `AD_SLOTS` has unit ids.
-  Content pages only; never in the pipeline editor or embed; never remount a unit without a navigation.
+- No ad network: sponsorship is sold directly (`/advertise/`) and must render as part of the page — no
+  third-party script, pixel or cookie (the CSP blocks them, and people paste tokens and secrets into this site).
+  Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server.
+- Sponsors (`src/app/sponsors/`): bookings in `sponsorships.ts` (scope `site` or a topic from `topics.ts`, inclusive
+  UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
+  link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
+  name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
+  of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
+  event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
+  Both go through `Slot` (the shared layout).
+- An unbooked slot shows one of our own tools (`HousePromo` → `PromoBlock`, `promos.ts`; one promo per
+  `INTEGRATION_LINKS` entry, same links and `INTEGRATION_ICONS`): labelled "From String Utility Belt", never "Sponsor".
+  A topic's own tool first (`TOPIC_PROMOS`: Kubernetes/cloud → CLI, security/hashing → MCP, data formats → VS Code),
+  then VS Code on other recipe pages (`RecipeExtension` offers the browser extension), else the browser extension where
+  `canInstallExtension()` and it has not answered, else VS Code. Store pages open in a new tab, the CLI/MCP sections of
+  /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
+  browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
+  never shift; clicks are `integration_click`, `source: 'promo'`.
+
+### Content-Security-Policy (`public/_headers`)
+- Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts
+  and the custom-code sandbox's bootstrap (`SANDBOX_BOOTSTRAP_SCRIPT`). Editing one changes its hash:
+  `scripts/csp.test.ts` names the hash to add and the one to drop. Every `npm run build` checks all built pages
+  (`scripts/csp.ts`) and fails on an unlisted inline script, an inline `on*=` handler or a `javascript:` URL.
+- The sandbox's srcdoc frame and its Blob-URL Worker inherit the site policy on top of their own, so its per-run
+  job travels in a JSON data block and the bootstrap stays constant; `'unsafe-eval'` is there because the
+  sandbox Worker compiles the user's code (engine.e2e.ts fails without it).
+- `vite preview` serves the `/*` headers (`scripts/headers.ts`), so Playwright runs under the real policy
+  (`e2e/csp.e2e.ts` fails on any violation report). A new third-party script needs a CSP entry, and a privacy
+  policy update.
 
 ### Analytics (`src/app/analytics/analytics.ts`)
 - GA4 property `G-EFVMEMB86E`. index.html only loads gtag.js and sets Consent Mode defaults; `initAnalytics()`
-  (from `main.tsx`) configures the tag. Never add a `gtag('config')` to index.html: it would report
+  (from `main.tsx`) configures the tag. There is no consent message: in the EEA, the UK and Switzerland the Consent
+  Mode defaults stay denied, so GA gets cookieless pings there. Never add a `gtag('config')` to index.html: it would report
   `location.href`, and share links carry the user's input in the fragment.
 - Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
   params only) — GA's own history-based page views are off in the stream settings.

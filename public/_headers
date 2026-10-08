@@ -1,10 +1,26 @@
-# Workers Static Assets response headers (the /api/* Worker sets its own).
+# Workers Static Assets response headers (the /api/* Worker sets its own). `vite preview`
+# serves the /* rule too (scripts/headers.ts), so the E2E suite runs under this CSP.
 # No X-Frame-Options / frame-ancestors: #/embed shares this document and must stay
 # frameable; AppShell refuses to render anything else inside a frame.
+#
+# Content-Security-Policy — what each directive is for:
+# - script-src: this site's files, Google Analytics' gtag.js, and three inline scripts by
+#   SHA-256 (no 'unsafe-inline'): index.html's theme and Consent Mode scripts, and the
+#   custom-code sandbox's bootstrap (src/app/sandbox/frame.ts) — a srcdoc frame and the
+#   Blob-URL Worker it starts inherit this policy on top of their own. `npm test`
+#   (scripts/csp.test.ts) names the hash to add or drop after any of them changes, and
+#   every build checks the built pages against it. 'unsafe-eval': the sandbox Worker
+#   compiles the user's custom JavaScript, under this policy too. 'wasm-unsafe-eval':
+#   the WebAssembly utilities (hash-wasm: SHA-3, BLAKE, bcrypt, Argon2).
+# - connect-src https:: "fetch a URL" input tries the user's URL from the browser first
+#   (src/app/io/fetchInput.ts); it also covers Google Analytics' collection endpoints.
+# - img-src: data:/blob: for generated images; Google Analytics and Google signals pixels.
+# - style-src 'unsafe-inline': CodeMirror and Framer Motion inject styles; styles run no code.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-1vD0G2u6HxMsRuzeJrDja6uqhzcCB6+OZqSM7tcGIPw=' 'sha256-eslJAb/3HuXGqyPFI8TcmVqu1JJi+AH5Qsj83dLfhFk=' 'sha256-e3JLvqPIAXkjEg3QWQg3qfG5KAeariOwujRV06XHyn8=' 'unsafe-eval' 'wasm-unsafe-eval' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.google.com; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'
 
 # Raw markdown the app fetches to render each guide and post. Crawlers must still be
 # able to fetch it (search engines render the pages with it), but the pre-rendered
