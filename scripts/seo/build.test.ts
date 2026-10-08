@@ -14,6 +14,8 @@ import { STATIC_RECIPES } from '../../src/recipes/_generated/static'
 import { step } from '../../src/recipes/define'
 import { TRACE_ELEMENT_ID, type RecipeTrace } from '../../src/recipes/trace'
 import type { Recipe } from '../../src/recipes/types'
+import { metaOfRecipe } from '../gen-recipes'
+import { readSourceDates, type SourceDates } from './lastmod'
 import type { Sponsorship } from '../../src/app/sponsors/sponsors'
 
 const ROOT = process.cwd()
@@ -60,6 +62,9 @@ const xml = (source: string) => {
   expect(doc.getElementsByTagName('parsererror')).toHaveLength(0)
   return doc
 }
+/** Each sitemap URL's lastmod, by URL. */
+const sitemapLastmods = (dist: string) => new Map([...xml(read(dist, 'sitemap.xml')).getElementsByTagName('url')]
+  .map(u => [u.getElementsByTagName('loc')[0].textContent!, u.getElementsByTagName('lastmod')[0]?.textContent]))
 const silent = () => {}
 /** The shipped `src/utilities/<id>/guide.md`, parsed, when there is one. */
 const shippedGuide = (id: string) => {
@@ -353,6 +358,17 @@ describe('buildSeo over a built dist/', () => {
     expect(oldest.guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
   })
 
+  it('dates the sitemap by content, not the build: a later build of the same commit writes the same sitemap', async () => {
+    // this checkout's real history; a file not committed yet (a new page in a working tree) is
+    // dated by the build by design, so it gets a fixed date here instead
+    const history = readSourceDates(ROOT, { fallback: '2000-01-01' })
+    const sourceDates: SourceDates = paths => history(paths) ?? '2000-01-01'
+    const [first, later] = [fixtureDist(), fixtureDist()]
+    await buildSeo({ outDir: first, root: ROOT, og: false, now: NOW, log: silent, sourceDates })
+    await buildSeo({ outDir: later, root: ROOT, og: false, now: new Date('2027-06-30T23:59:59Z'), log: silent, sourceDates })
+    expect(read(later, 'sitemap.xml')).toBe(read(first, 'sitemap.xml'))
+  }, 60000)
+
   it('is idempotent: a second run over its own output changes nothing', async () => {
     const files = ['index.html', 'util/trim/index.html', 'changelog/index.html', 'docs/index.html', 'sitemap.xml', 'rss.xml']
     const before = files.map(f => read(dist, f))
@@ -624,5 +640,58 @@ describe('buildRssItems', () => {
 
     const justCut = buildRssItems([], [release('Unreleased', '  \n'), release('1.4.0', '- shipped', '2026-10-06')], '2026-10-07')
     expect(justCut.map(i => i.title)).toEqual(['Release 1.4.0'])
+  })
+})
+
+describe('buildSeo sitemap lastmod', () => {
+  const recipe = { ...STATIC_RECIPES[0], published: '2026-05-01', updated: '2026-06-02' }
+  const guide = readFileSync(path.join(ROOT, 'src', 'recipes', recipe.slug, 'guide.md'), 'utf8')
+  const [usedId] = metaOfRecipe(recipe).utilityIds
+  const used = MANIFEST.find(m => m.id === usedId)!
+  const trim = MANIFEST.find(m => m.id === 'trim')!
+  const untracked: UtilityMeta = { ...trim, id: 'brand_new_util' }
+  // when each source last changed; `brand_new_util` has no history (not committed yet)
+  const SOURCES: Record<string, string> = {
+    'src/utilities/trim': '2026-03-01',
+    [`src/utilities/${usedId}`]: '2026-02-01',
+    'src/components/Docs.tsx': '2026-04-04',
+    'CHANGELOG.md': '2025-01-01',
+    ...Object.fromEntries(SITE_PAGES.map((slug, i) => [`src/app/pages/content/${slug}.md`, `2026-01-1${i}`])),
+  }
+  const sourceDates: SourceDates = paths => paths.map(p => SOURCES[p]).filter(Boolean).sort().pop()
+  let lastmods: Map<string, string | null | undefined>
+
+  beforeAll(async () => {
+    const dist = fixtureDist()
+    await buildSeo({
+      outDir: dist, root: ROOT, og: false, now: NOW, log: silent, sourceDates,
+      manifest: [trim, used, untracked], recipes: [{ recipe, guide }],
+    })
+    lastmods = sitemapLastmods(dist)
+  }, 60000)
+
+  it("dates a utility page by its own folder's last change, or a newer recipe it links to", () => {
+    expect(trim.id).not.toBe(usedId)
+    expect(lastmods.get(`${SITE}/util/trim/`)).toBe('2026-03-01')
+    expect(lastmods.get(`${SITE}/util/${usedId}/`)).toBe('2026-06-02')
+  })
+
+  it('dates a page with no history (an uncommitted utility) by the build', () => {
+    expect(lastmods.get(`${SITE}/util/brand_new_util/`)).toBe('2026-01-02')
+  })
+
+  it('dates an index by its newest entry, and the home page by the newest of what it lists', () => {
+    expect(lastmods.get(`${SITE}/utilities/`)).toBe('2026-03-01')
+    expect(lastmods.get(`${SITE}/recipes/`)).toBe('2026-06-02')
+    expect(lastmods.get(`${SITE}/`)).toBe('2026-06-02')
+    const posts = [...lastmods].filter(([loc]) => /\/blog\/[^/]+\/$/.test(loc)).map(([, d]) => d!)
+    expect(posts.length).toBeGreaterThan(0)
+    expect(lastmods.get(`${SITE}/blog/`)).toBe(posts.sort().pop())
+  })
+
+  it('dates the usage guide and the site pages by the files they render, a recipe by its own dates', () => {
+    expect(lastmods.get(`${SITE}/docs/`)).toBe('2026-04-04')
+    SITE_PAGES.forEach((slug, i) => expect(lastmods.get(`${SITE}/${slug}/`), slug).toBe(`2026-01-1${i}`))
+    expect(lastmods.get(`${SITE}/recipes/${recipe.slug}/`)).toBe('2026-06-02')
   })
 })

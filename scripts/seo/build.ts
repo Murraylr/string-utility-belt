@@ -22,6 +22,7 @@ import {
   renderSiteChrome, renderRecipeContent, renderRecipesIndexContent, type PageSponsorSpec,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
+import { newest, readSourceDates, type SourceDates } from './lastmod'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
 import { relatedUtilities } from '../../src/app/pages/related'
 import { featuredRecipes, recipesUsing, relatedRecipes } from '../../src/app/pages/recipes/recipeHelpers'
@@ -50,7 +51,7 @@ export interface BuildSeoOptions {
   /** Render the Open Graph PNGs (default true; ~0.4s each). */
   og?: boolean
   ogConcurrency?: number
-  /** Build timestamp for undated sitemap entries (default: now). */
+  /** Build time: the copyright year, the day's live sponsorships, and the lastmod of a page whose sources have no git history (default: now). */
   now?: Date
   log?: (message: string) => void
   /** Utilities to publish (default: the generated manifest + examples). */
@@ -60,6 +61,8 @@ export interface BuildSeoOptions {
   guides?: Record<string, string>
   /** Recipes to publish, each with its guide markdown (default: every `src/recipes/<slug>/` under `root`). */
   recipes?: Array<{ recipe: Recipe; guide: string }>
+  /** When each source file under `root` last changed (default: its git history, `readSourceDates`). */
+  sourceDates?: SourceDates
   /** Booked sponsorships (default: `SPONSORSHIPS`); pages show those live on `now`'s UTC day. */
   sponsorships?: readonly Sponsorship[]
 }
@@ -552,23 +555,38 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   // removable: this file is the next run's template
   writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest, featuredRecipes(recipeMetas)), year)))
 
+  // lastmod: when the page's content last changed — its source files' last commit, or a recipe's
+  // or post's own dates; an index takes its newest entry. Never the build time: the site deploys
+  // several times a day, and search engines ignore a lastmod that moves without the page changing.
+  // Shared templates (scripts/seo/content.ts, the site chrome) and head strings (seo.ts) don't count.
   const buildDate = toIsoDate(now)
-  const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? buildDate
+  const sourceDates = options.sourceDates ?? readSourceDates(root, { fallback: buildDate, log })
+  // a path with no history is uncommitted: changed now
+  const changed = (...paths: string[]) => sourceDates(paths) ?? buildDate
+  const recipeLastmod = (r: { published: string; updated?: string }) => r.updated ?? r.published
+  const utilityContent = new Map(manifest.map(m => [m.id, changed(`src/utilities/${m.id}`)]))
+  // its own module and guide, and the recipes it links to
+  const utilityLastmod = (id: string) => newest([utilityContent.get(id), ...recipesUsing(id, recipeMetas).map(recipeLastmod)])!
+  const utilitiesLastmod = newest([...utilityContent.values()]) ?? changed('src/utilities')
+  const recipesLastmod = newest(recipes.map(r => recipeLastmod(r.recipe))) ?? changed('src/recipes')
+  const postLastmods = posts.map(p => {
+    const dated = p.updated ?? p.date
+    return dated ? toIsoDate(dated) : changed(`public/blog/${p.meta.slug}.md`)
+  })
+  const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? changed('CHANGELOG.md')
   const sitemapUrls: SitemapUrl[] = [
-    { loc: `${SITE}/`, lastmod: buildDate },
-    { loc: docsUrl, lastmod: buildDate },
-    { loc: utilitiesUrl, lastmod: buildDate },
-    ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: buildDate })),
+    // the home page lists popular utilities and featured recipes
+    { loc: `${SITE}/`, lastmod: newest([utilitiesLastmod, recipesLastmod])! },
+    { loc: docsUrl, lastmod: changed('src/components/Docs.tsx') },
+    { loc: utilitiesUrl, lastmod: utilitiesLastmod },
+    ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: utilityLastmod(m.id) })),
     // the index changes when a recipe is added or revised; a recipe when it is revised
-    { loc: recipesUrl, lastmod: recipes.map(r => r.recipe.updated ?? r.recipe.published).sort().pop() ?? buildDate },
-    ...recipes.map(({ recipe }) => ({ loc: `${SITE}/recipes/${recipe.slug}/`, lastmod: recipe.updated ?? recipe.published })),
-    { loc: blogUrl, lastmod: buildDate },
-    ...posts.map(p => {
-      const changed = p.updated ?? p.date
-      return { loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: changed ? toIsoDate(changed) : buildDate }
-    }),
+    { loc: recipesUrl, lastmod: recipesLastmod },
+    ...recipes.map(({ recipe }) => ({ loc: `${SITE}/recipes/${recipe.slug}/`, lastmod: recipeLastmod(recipe) })),
+    { loc: blogUrl, lastmod: newest(postLastmods) ?? changed('public/blog') },
+    ...posts.map((p, i) => ({ loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: postLastmods[i] })),
     { loc: `${SITE}/changelog/`, lastmod: changelogLastmod },
-    ...SITE_PAGES.map(slug => ({ loc: `${SITE}/${slug}/`, lastmod: buildDate })),
+    ...SITE_PAGES.map(slug => ({ loc: `${SITE}/${slug}/`, lastmod: changed(`src/app/pages/content/${slug}.md`) })),
   ]
   writeOut(outDir, 'sitemap.xml', buildSitemap(sitemapUrls))
 
