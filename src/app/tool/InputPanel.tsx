@@ -6,7 +6,7 @@ import { useTool } from '@/app/ToolContext'
 import { usePref } from '@/app/prefs'
 import { trackInput } from '@/app/analytics/analytics'
 import { decodeUtf8Lossy } from '@/app/io/bytes'
-import FetchUrlDialog, { type FetchedMeta } from '@/app/io/FetchUrlDialog'
+import FetchUrlForm, { type FetchedMeta } from '@/app/io/FetchUrlForm'
 import { readFileAsInput, type FileInputMeta } from '@/app/io/fileInput'
 import { formatOffset, hexDumpRows } from '@/app/io/hex'
 import { HISTORY_PREF, saveHistory } from '@/app/io/history'
@@ -40,12 +40,6 @@ function pastedFile(dt: DataTransfer | null): File | null {
   return isJustTheName ? file : null
 }
 
-/**
- * React bubbles events through portals, so a paste/drop in the (portalled) fetch dialog would
- * otherwise reach the panel's handlers; only events from the panel's own DOM count.
- */
-const fromPanel = (e: React.SyntheticEvent) => e.currentTarget.contains(e.target as Node)
-
 function nameFromUrl(url: string): string {
   try {
     const u = new URL(url)
@@ -69,12 +63,17 @@ export default function InputPanel() {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fetchOpen, setFetchOpen] = useState(false)
+  // kept here, not in the form, so a closed and reopened row still holds the last URL tried
+  const [fetchUrl, setFetchUrl] = useState('')
   const [caret, setCaret] = useState(0)
   const [goToLine, setGoToLine] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const goToLineRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fetchButtonRef = useRef<HTMLButtonElement>(null)
+  const fetchError = useRef<string | null>(null)
+  const focusAfterFetch = useRef<'input' | 'button' | null>(null)
   const textPasteFlag = useRef(false)
   const readSeq = useRef(0)
   const lastResult = useRef(run.result)
@@ -128,14 +127,13 @@ export default function InputPanel() {
 
   const onDrop = (e: React.DragEvent) => {
     setDragOver(false)
-    if (!fromPanel(e)) return
     const file = e.dataTransfer?.files?.[0]
     if (!file) return // plain text drops: let the textarea insert the text natively
     e.preventDefault()
     applyFile(file, 'drop')
   }
   const onDragOver = (e: React.DragEvent) => {
-    if (!fromPanel(e) || !hasFiles(e.dataTransfer)) return
+    if (!hasFiles(e.dataTransfer)) return
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
     if (!dragOver) setDragOver(true)
@@ -147,7 +145,6 @@ export default function InputPanel() {
 
   // Files pasted anywhere in the panel (the textarea, or the binary view's buttons).
   const onPanelPaste = (e: React.ClipboardEvent) => {
-    if (!fromPanel(e)) return
     const file = pastedFile(e.clipboardData)
     if (!file) return
     e.preventDefault()
@@ -244,6 +241,32 @@ export default function InputPanel() {
     trackInput('history', restored)
   }
 
+  /** Closes the fetch row; a fetch error it showed goes with it. */
+  const closeFetch = (focus: 'input' | 'button' | null) => {
+    focusAfterFetch.current = focus
+    setFetchOpen(false)
+    const shown = fetchError.current
+    fetchError.current = null
+    if (shown !== null) setError(e => (e === shown ? null : e))
+  }
+  // after the commit that removed the row, when a fetched text input's textarea exists
+  useEffect(() => {
+    if (fetchOpen) return
+    const target = focusAfterFetch.current
+    focusAfterFetch.current = null
+    // binary input has no textarea; the button is the next best place
+    if (target === 'input') (textareaRef.current ?? fetchButtonRef.current)?.focus()
+    else if (target === 'button') fetchButtonRef.current?.focus()
+  }, [fetchOpen])
+  const toggleFetch = () => {
+    if (fetchOpen) closeFetch(null) // the click already focused the button
+    else setFetchOpen(true)
+  }
+  const onFetchError = (message: string | null) => {
+    fetchError.current = message
+    setError(message)
+  }
+
   const onFetched = (value: Value, meta: FetchedMeta) => {
     setInput(value)
     setError(null)
@@ -251,6 +274,8 @@ export default function InputPanel() {
     setSource(isBytes(value)
       ? { value, data: { name: nameFromUrl(meta.url), size: value.length, mime: meta.contentType ?? '' } }
       : null)
+    setFetchUrl('')
+    closeFetch('input')
   }
 
   return (
@@ -268,13 +293,22 @@ export default function InputPanel() {
         <span className="font-mono text-[11px] text-muted pl-1">{TYPE_LABEL[valueType(input)]}</span>
         <div className="flex-1" />
         <button type="button" className="btn-ghost" onClick={() => fileInputRef.current?.click()}><FileUp size={14} aria-hidden /> Open file</button>
-        <button type="button" className="btn-ghost" aria-haspopup="dialog" onClick={() => setFetchOpen(true)}><Globe size={14} aria-hidden /> Fetch URL</button>
+        <button ref={fetchButtonRef} type="button" className="btn-ghost" aria-expanded={fetchOpen} onClick={toggleFetch}><Globe size={14} aria-hidden /> Fetch URL</button>
         {!binary && (
           <button type="button" className="btn-ghost" onClick={pasteFromClipboard}><Clipboard size={14} aria-hidden /> Paste</button>
         )}
         <HistoryMenu onRestore={restoreFromHistory} />
       </div>
       <input ref={fileInputRef} type="file" hidden onChange={onFileChosen} aria-label="choose a file to use as input" />
+      {fetchOpen && (
+        <FetchUrlForm
+          url={fetchUrl}
+          onUrlChange={setFetchUrl}
+          onFetched={onFetched}
+          onError={onFetchError}
+          onCancel={() => closeFetch('button')}
+        />
+      )}
 
       {error && <div role="alert" className="px-3.5 py-2 text-[12.5px] text-danger-ink bg-danger-bg border-b border-danger-line">{error}</div>}
       {decodeWarning && <div role="status" className="px-3.5 py-2 text-[12.5px] text-warn border-b">{decodeWarning}</div>}
@@ -349,7 +383,6 @@ export default function InputPanel() {
         )}
         <StatsBar value={input} className="ml-auto" />
       </div>
-      <FetchUrlDialog open={fetchOpen} onClose={() => setFetchOpen(false)} onFetched={onFetched} />
     </div>
   )
 }
