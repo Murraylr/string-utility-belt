@@ -17,6 +17,7 @@ import type { Recipe } from '../../src/recipes/types'
 import { metaOfRecipe } from '../gen-recipes'
 import { readSourceDates, type SourceDates } from './lastmod'
 import type { Sponsorship } from '../../src/app/sponsors/sponsors'
+import { promoPlan } from '../../src/app/sponsors/promos'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -522,6 +523,16 @@ describe('buildSeo recipes', () => {
     expect(promo.getAttribute('aria-label')).toBe('From String Utility Belt')
     expect(promo.className).toBe('sponsor hidden sm:grid')
     expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
+  })
+
+  it('pre-renders the inline promo the app shows after "Step by step", and one after the index\'s first category', () => {
+    const page = html(read(dist, 'recipes/shout-slugs/index.html'))
+    const inline = page.querySelector('#root main aside[data-promo-slot="inline"]')!
+    expect(inline.getAttribute('data-promo')).toBe(promoPlan({ kind: 'recipe', slug: 'shout-slugs' }).inline)
+    expect(inline.previousElementSibling?.querySelector('#recipe-steps-h')).toBeTruthy()
+    const index = html(read(dist, 'recipes/index.html')).querySelector('#root main aside[data-promo-slot="inline"]')!
+    expect(index.getAttribute('data-promo')).toBe(promoPlan({ kind: 'index' }).inline)
+    expect(index.previousElementSibling?.tagName).toBe('SECTION')
   })
 
   it('lists recipes on their index, links them from the utilities they use and the sitemap', () => {

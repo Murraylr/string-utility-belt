@@ -151,7 +151,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   component itself — keep its render free of browser APIs (effects are fine).
 - No ad network: sponsorship is sold directly (`/advertise/`) and must render as part of the page — no
   third-party script, pixel or cookie (the CSP blocks them, and people paste tokens and secrets into this site).
-  Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server.
+  Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server. The pipeline
+  editor shows only our own tools (`ToolPromo`, house-only by design: no sponsor's content sits beside pasted secrets).
 - Sponsors (`src/app/sponsors/`): bookings in `sponsorships.ts` (scope `site` or a topic from `topics.ts`, inclusive
   UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
   link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics

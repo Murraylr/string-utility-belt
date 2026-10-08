@@ -19,7 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **More of our own tools on content pages.** Besides the sponsor block, utility, recipe, blog, docs, changelog and
   index pages show our VS Code extension, command-line tool or MCP server in a thin strip under the header, a
   banner in the content or a card in the side column. Each is labelled "From String Utility Belt", none is sold to
-  sponsors, and none appears in the pipeline editor or on phones.
+  sponsors, and none appears on phones. The pipeline editor shows one of our own extensions under the output, and
+  never a sponsor.
 
 ## [1.7.0] - 2026-10-08
 
