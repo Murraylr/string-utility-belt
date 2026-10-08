@@ -1,1 +1,1 @@
-Decode, format, hash, and transform text from Chrome's right-click menu or toolbar popup. Runs locally in your browser.
+Run 242 text utilities, or whole pipelines you build on our site, on any selection. The utilities run in your browser.

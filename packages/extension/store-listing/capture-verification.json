@@ -1,41 +1,37 @@
 {
   "extensionVersion": "1.5.0",
-  "source": "Real unpacked extension in isolated Chromium; no mocked Chrome APIs.",
-  "fonts": "Instrument Sans and JetBrains Mono, the typefaces the extension names first, loaded into the captured pages.",
-  "examples": [
-    {
-      "example": "base64_decode",
-      "theme": "light",
-      "input": "SGVsbG8sIGRldmVsb3BlciE=",
-      "output": "Hello, developer!",
-      "offeredUtilities": 242
-    },
-    {
-      "example": "json_pretty",
-      "theme": "light",
-      "input": "{\"name\":\"Ada\",\"role\":\"developer\",\"active\":true}",
-      "output": "{\n  \"name\": \"Ada\",\n  \"role\": \"developer\",\n  \"active\": true\n}",
-      "offeredUtilities": 242
-    },
-    {
-      "example": "case",
-      "theme": "light",
-      "input": "make every word count",
-      "output": "Make Every Word Count",
-      "offeredUtilities": 242
-    },
-    {
-      "example": "hash",
-      "theme": "dark",
-      "input": "hello",
-      "output": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
-      "offeredUtilities": 242
-    },
-    {
-      "example": "options",
-      "favourites": 4,
-      "importedPipeline": "Clean up a URL slug"
-    }
+  "website": {
+    "pipeline": "Tidy an email list",
+    "input": "  Ada@Example.com\nbob@example.org\nCarol@Example.NET  \nada@example.com\n  BOB@example.org",
+    "output": "ada@example.com\nbob@example.org\ncarol@example.net"
+  },
+  "saveToExtension": "Saved \"Tidy an email list\". It's on the right-click menu.",
+  "popup": {
+    "ran": "Tidy an email list",
+    "summary": "5 steps: run on each line → deduplicate lines → sort lines. Runs with its saved settings.",
+    "output": "ada@example.com\nbob@example.org\ncarol@example.net",
+    "offeredUtilities": 242
+  },
+  "darkPopup": {
+    "utility": "hash",
+    "input": "my-api-key-1234",
+    "output": "51d85da2d2535bf0053a0bc3731feb1ed901ea22ce807afde32ceb1cfae06487"
+  },
+  "options": {
+    "favourites": 4,
+    "savedPipeline": "Tidy an email list"
+  },
+  "menu": [
+    "Apply: base64 decode",
+    "Apply: base64_encode",
+    "Apply: url decode",
+    "Apply: url encode",
+    "—",
+    "Pipeline: Tidy an email list",
+    "—",
+    "Open selection in String Utility Belt"
   ],
+  "source": "The real unpacked extension and this repository's website build, in isolated Chromium, with no mocked Chrome APIs. Only the right-click menu, which is Chrome's own, is drawn, with the items the extension created.",
+  "fonts": "Instrument Sans and JetBrains Mono, the typefaces the site and the extension name first, loaded into the captured pages.",
   "pageErrors": []
 }
