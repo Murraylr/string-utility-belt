@@ -1,40 +1,35 @@
 import type { Recipe } from '../types'
-import { step } from '../define'
-
-/** Step 5, over the whole text: one JSON string per line becomes one long JSON string. */
-const JOIN = [
-  '# where one message ends and the next begins: drop the closing quote,',
-  '# any \\n or \\r escapes before it and the next opening quote',
-  String.raw`s/(\\[rn])*"\n"/\n/g`,
-  '# the last message: drop the \\n or \\r escapes before its closing quote',
-  String.raw`s/(\\[rn])*"$/"/`,
-].join('\n')
+import { each, laneStep, step } from '../define'
 
 const recipe: Recipe = {
   slug: 'decode-cloudwatch-logs-data',
   name: 'Decode CloudWatch Logs subscription data',
   summary:
-    'Paste a Lambda event with awslogs.data, a Kinesis or Firehose record, or the bare Base64 value, and read the log events inside as plain lines, with the gzip, the JSON envelope and the escapes undone.',
+    'Paste a Lambda event with awslogs.data, a Kinesis or Firehose batch, or the bare Base64 value, and read the log events of every record as plain lines, with the gzip, the JSON envelope and the escapes undone.',
   category: 'Web & APIs',
   primaryQuery: 'decode cloudwatch logs subscription data',
   published: '2026-10-07',
+  updated: '2026-10-08',
   related: ['decode-helm-release-secret', 'unescape-stringified-json'],
   steps: [
-    step('data', 'jsonpath', { path: "$..['data','Data']", mode: 'first', indent: 2 },
-      'Picks the Base64 payload out of what you pasted: the first field named data at any depth (awslogs.data in a Lambda event, kinesis.data in a Kinesis event), or Data as aws kinesis get-records prints it. A bare value does not start with {, so the step is skipped and the value passes through.',
-      { label: 'pick the data field', condition: { kind: 'regex', pattern: '^\\s*\\{' } }),
-    step('gunzip', 'gzip_decompress', { output: 'text' },
-      'CloudWatch Logs gzips the JSON payload and the event carries it as Base64. This step decodes the Base64 itself, so no separate decode step is needed, then inflates the gzip stream and checks its CRC-32, leaving the JSON envelope with logGroup, logStream and the logEvents array.'),
-    step('messages', 'jsonpath', { path: '$.logEvents[*].message', mode: 'values', indent: 2 },
-      "Keeps the message of every log event, in order, and drops the rest: the envelope fields (messageType, owner, logGroup, logStream, subscriptionFilters) and each event's id and timestamp. The result is a JSON array of strings.",
-      { label: 'keep each message' }),
-    step('lines', 'json_to_jsonl', {},
-      'Writes each message as a JSON string on a line of its own. Line breaks inside a message stay escaped as \\n, so the only real line breaks are the ones between events, a boundary the next step cannot confuse with message text.'),
-    step('join', 'sed', { script: JOIN, perLine: false },
-      "Turns the lines into one JSON string. Where one message ends and the next begins, it drops the closing quote, any \\n or \\r escapes just before it and the next opening quote, so a message's own trailing newline leaves no blank line. Quotes inside messages are still escaped here, so none is mistaken for these.",
-      { label: 'join into one string' }),
-    step('unescape', 'code_string_unescape', { language: 'json' },
-      'Decodes that string: strips the first and last quotes as a pair, then turns \\t back into a tab, \\" into a quote, \\\\ into a backslash and \\n into a real line break, so JSON logged inside a message and multi-line stack traces read as they were written.'),
+    step('payloads', 'regex_extract', { pattern: '(?<![A-Za-z0-9+/])H4sI[A-Za-z0-9+/]+={0,2}', flags: 'g' },
+      'Pulls out every gzip payload, one per line: awslogs.data in a Lambda event, each record of a Kinesis or Firehose batch, or a bare value. Gzip data starts with the bytes 1f 8b 08, which Base64 writes as H4sI. Input without H4sI passes through, so the next step says what is wrong.',
+      { label: 'find every payload', condition: { kind: 'regex', pattern: 'H4sI' } }),
+    each('gunzip', { mode: 'lines' }, [laneStep('gunzip-one', 'gzip_decompress', { output: 'text' })],
+      'Decodes the Base64 of each payload, inflates its gzip and checks the CRC-32. Each becomes the JSON envelope CloudWatch Logs built, on one line: messageType, owner, logGroup, logStream, subscriptionFilters and the logEvents array.',
+      { label: 'unzip each payload' }),
+    each('messages', { mode: 'lines' }, [
+      laneStep('pick', 'jsonpath', { path: '$.logEvents[*].message', mode: 'values', indent: 2 }, { label: 'pick every message' }),
+      laneStep('lines', 'json_to_jsonl', {}),
+    ],
+    'Keeps the message of every log event, in order, and drops the envelope and the event ids and timestamps. Each message is written as a JSON string on its own line, so a stack trace is still one line here.',
+    { label: 'keep each message' }),
+    each('decode', { mode: 'lines' }, [
+      laneStep('unescape', 'code_string_unescape', { language: 'json' }),
+      laneStep('final-newline', 'normalize_line_endings', { mode: 'lf', finalNewline: 'remove' }, { label: "drop the message's final line break" }),
+    ],
+    "Decodes every message on its own: strips its quotes and turns \\t, \\\" and \\n back into a tab, a quote and a real line break, so stack traces and logged JSON read as written. Then it drops the message's own final line break, which would otherwise leave a blank line after it.",
+    { label: 'decode each message' }),
   ],
   samples: [
     {
@@ -57,7 +52,7 @@ const recipe: Recipe = {
     },
     {
       id: 'kinesis-event',
-      title: 'Kinesis event (VPC Flow Logs)',
+      title: 'Kinesis batch, two records (VPC Flow Logs)',
       input: JSON.stringify({
         Records: [{
           kinesis: {
@@ -65,16 +60,35 @@ const recipe: Recipe = {
             partitionKey: '4f7d0a39c2be41e6a8c5d03b9e1f2a74',
             sequenceNumber: '49656730452213654784910876123508261927354016482103914498',
             data:
-              'H4sIAAAAAAAAALXRTWvCQBAG4L+y7NmEmdmPZHsLNhVaSkv1VqREXWVpTCSJShH/e0elH0J7qiWXMG94d57NTi592xYLP3pb' +
-              'eXklr7NR9nKfD4fZIJc9WW8r3/AYSWljk9QBEo/LejFo6vWKk81qGs3LehvxrD1Fw67xxZIzX4UICpzQVM20N3MLCaZRUZb8' +
-              'XbuetNMmrLpQVzeh7HzTyqtn2dXRa6h8G1o5PpblG191h2gnw4w7lSNQvAyQMi61pFEdWp0C1ImxiOC0VUDGqRTJKExRawDg' +
-              'I7vA1q5Y8tqYOFT2GAD0Pu6A60l8p4ofBQJdGhuMESAmLXifGGJExQOhHRoSWithuUlgqkF8Hfb5apzI+v38cSQe7uS+9zcb' +
-              'XtJ2pjmHHlQnH9tAGEX/b6PL/jdiG8VJcs40yI+go0vY31BP+W3eP6HG+3cMyhcpOAMAAA==',
+              'H4sIAAAAAAAAA63QTWvCQBAG4L+yzDkJMzu7m2xuwaYeSmlBb0VK1FWW5otsVIr434tKv6CHQnsbeOF9eeYIjQuh2rr5a+8gh5ti' +
+              'Xjzfl7NZMS0hgu7QugFyIMlKmzSzSBIiqLvtdOh2PeSw71fxpu4Ocd1twzWajYOrGsjBtT7GipZyxWvl9MZgSllc1TVEEHbLsBp8' +
+              'P/quvfX16IYA+ROMXfziWxd8gMWlrNy7djxHR/BryIGtRGalUbK2mZGK+NxqGUml2hChVYZRassZSc2UkVKICBGMvnFhrJoeckot' +
+              'sbkEiNH7DyAHKb5SxY8CQTZLNCWEmEglJHKCCREnhEJZ0lIoxcIIkoIyheJz7OPUVhSTSfk4Fw93cIr+ZqP/tH3TfIeeVVefEYRC' +
+              's/yFbXF6Aw99yYtjAgAA',
             approximateArrivalTimestamp: 1791364462.731,
           },
           eventSource: 'aws:kinesis',
           eventVersion: '1.0',
           eventID: 'shardId-000000000000:49656730452213654784910876123508261927354016482103914498',
+          eventName: 'aws:kinesis:record',
+          invokeIdentityArn: 'arn:aws:iam::123456789012:role/flow-log-consumer',
+          awsRegion: 'us-east-1',
+          eventSourceARN: 'arn:aws:kinesis:us-east-1:123456789012:stream/flow-logs',
+        }, {
+          kinesis: {
+            kinesisSchemaVersion: '1.0',
+            partitionKey: '4f7d0a39c2be41e6a8c5d03b9e1f2a74',
+            sequenceNumber: '49656730452213654784910876123508261927354016482103914499',
+            data:
+              'H4sIAAAAAAAAA22Qy0rDQBSGX2U46yScM7dkZhc0FhQRbHdSJG2nZTDJhMy0RUrfXaJ4Wbj74YP/doHexdge3Op9dGDhtl7Vr4/N' +
+              'clkvGsggnAc3gQXiQipdVgaJQwZdOCymcBzBwmnc5vsunPMuHOIXWqbJtT1YcIPPsaUN34qddGqvsaQqb7sOMojHTdxOfkw+DHe+' +
+              'S26KYF8ghfzNDy76COtPs+bkhjSjC/gdWBCGoxBSIRfKVJpLErOrEUiyVJoIjdQCuTKiIq4EVSQl4tw6+d7F1PYjWCoNCT0DRMy+' +
+              'PwALnP2dyv5dwMjwAgtelCXjKAosiERByBQpUoxzphkxjew35Ucqw56b++ZmxZ4e4Lq+fgAhm4v1gAEAAA==',
+            approximateArrivalTimestamp: 1791364462.945,
+          },
+          eventSource: 'aws:kinesis',
+          eventVersion: '1.0',
+          eventID: 'shardId-000000000000:49656730452213654784910876123508261927354016482103914499',
           eventName: 'aws:kinesis:record',
           invokeIdentityArn: 'arn:aws:iam::123456789012:role/flow-log-consumer',
           awsRegion: 'us-east-1',

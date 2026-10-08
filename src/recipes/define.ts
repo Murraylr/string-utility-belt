@@ -3,7 +3,7 @@
  * than a wall of `{ id, utilityId, enabled, params }` objects. Every builder
  * returns plain step data: what the engine, share links and the library store.
  */
-import type { Condition, ErrorPolicy, MergeSpec, PipelineStep, SplitSpec, UtilityStep } from '../types/utility'
+import type { BranchStep, Condition, EachStep, ErrorPolicy, MergeSpec, PipelineStep, SplitSpec, UtilityStep } from '../types/utility'
 import type { RecipeStep } from './types'
 
 export interface StepOptions {
@@ -35,7 +35,12 @@ export function laneStep(id: string, utilityId: string, params: Record<string, u
 
 /** A top-level branch: every lane runs on the same input and the outputs are merged. */
 export function branch(id: string, lanes: PipelineStep[][], merge: MergeSpec, why: string, opts: StepOptions = {}): RecipeStep {
-  return { id, type: 'branch', enabled: true, branches: lanes, merge, ...options(opts), why }
+  return { ...laneBranch(id, lanes, merge, opts), why }
+}
+
+/** A branch inside a branch lane or a "run on each" body (no reason: its container has one). */
+export function laneBranch(id: string, lanes: PipelineStep[][], merge: MergeSpec, opts: StepOptions = {}): BranchStep {
+  return { id, type: 'branch', enabled: true, branches: lanes, merge, ...options(opts) }
 }
 
 export interface EachOptions extends StepOptions {
@@ -49,5 +54,10 @@ export interface EachOptions extends StepOptions {
  * an item whose steps fail becomes.
  */
 export function each(id: string, split: SplitSpec, steps: PipelineStep[], why: string, opts: EachOptions = {}): RecipeStep {
-  return { id, type: 'each', enabled: true, split, skipEmpty: !opts.includeEmpty, steps, ...options(opts), why }
+  return { ...laneEach(id, split, steps, opts), why }
+}
+
+/** A "run on each" step inside a branch lane or another "run on each" body (no reason: its container has one). */
+export function laneEach(id: string, split: SplitSpec, steps: PipelineStep[], opts: EachOptions = {}): EachStep {
+  return { id, type: 'each', enabled: true, split, skipEmpty: !opts.includeEmpty, steps, ...options(opts) }
 }

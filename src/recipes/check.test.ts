@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { runPipeline } from '../core/runner'
 import { staticRegistry, STATIC_UTILITIES } from '../utilities/static-registry'
 import { MANIFEST } from '../utilities/_generated/manifest'
-import { checkRecipe, checkRecipeSet, overlap, shingles, type RecipeCheckContext } from './check'
-import { branch, each, laneStep, step } from './define'
+import { checkRecipe, checkRecipeSet, headTerm, overlap, shingles, type RecipeCheckContext } from './check'
+import { branch, each, laneBranch, laneStep, step } from './define'
 import type { Recipe } from './types'
 
 const byId = new Map(STATIC_UTILITIES.map(u => [u.id, u]))
@@ -101,7 +101,36 @@ describe('checkRecipe', () => {
         { id: 'b', title: 'B', input: 'cd ', output: 'CD' },
       ],
     }), 'upper-slugs', guide(), ctx())
-    expect(problems.join('\n')).toContain('needs ≥ 2 steps besides')
+    expect(problems.join('\n')).toContain('needs ≥ 2 utility steps besides')
+  })
+
+  it('counts the utilities inside a container: one utility wrapped in "run on each" is still one', async () => {
+    const wrapped = (steps: Recipe['steps']) => checkRecipe(recipe({
+      steps,
+      samples: [
+        { id: 'a', title: 'A', input: ' ab\ncd', output: 'AB\nCD' },
+        { id: 'b', title: 'B', input: 'x', output: 'X' },
+      ],
+    }), 'upper-slugs', guide(), ctx())
+    const perLine = each('per-line', { mode: 'lines' }, [laneStep('l1', 'case', { mode: 'upper' })],
+      'Uppercases every line on its own, which one utility does for the whole text.')
+    const trimmed = step('t', 'trim_lines', { side: 'both', characters: '' }, 'Removes the spaces around every line before anything else.')
+    expect((await wrapped([perLine])).join('\n')).toContain('needs ≥ 2 utility steps besides')
+    expect((await wrapped([trimmed, perLine])).join('\n')).toContain('needs ≥ 2 utility steps besides')
+  })
+
+  it('accepts one container holding two utilities across a nested branch and a pass-through lane', async () => {
+    const counted = each('per-line', { mode: 'lines' }, [
+      laneBranch('both', [[laneStep('n', 'text_stats', {}), laneStep('g', 'jsonpath', { path: '$.graphemes', mode: 'first', indent: 2 })], []],
+        { mode: 'concat', separator: ' · ' }),
+    ], 'Writes how many characters each line has in front of the line itself.')
+    expect(await checkRecipe(recipe({
+      steps: [counted],
+      samples: [
+        { id: 'a', title: 'A', input: 'ab\ncde', output: '2 · ab\n3 · cde' },
+        { id: 'b', title: 'B', input: 'é', output: '1 · é' },
+      ],
+    }), 'upper-slugs', guide(), ctx())).toEqual([])
   })
 
   it('accepts a branch as the multi-step part', async () => {
@@ -260,6 +289,16 @@ describe('checkRecipeSet', () => {
     expect(problems.join('\n')).toContain('is the head term of /util/csv_to_sql/')
   })
 
+  it("refuses a target query that contains a utility page's head term, and only its head term", () => {
+    const utils = [utilGuide('slug', 'Slug Generator Online — URL-Safe Slugs From Any Text'), utilGuide('case', 'Change Case Online')]
+    const check = (primaryQuery: string) => checkRecipeSet([{ recipe: recipe({ primaryQuery }), guide: guide() }], utils).join('\n')
+    expect(check('bulk slug generator')).toContain('primary query "bulk slug generator" contains "slug generator", the head term of /util/slug/')
+    expect(check('change case of every heading')).toContain('contains "change case", the head term of /util/case/')
+    // words of the subtitle, or of the head term on their own, are fine
+    expect(check('url-safe slugs from a list of titles')).toBe('')
+    expect(check('slug list from titles')).toBe('')
+  })
+
   it('refuses near-copied prose, from another recipe or a utility the recipe uses', () => {
     const shared = filler('s', 300)
     const problems = checkRecipeSet([
@@ -269,6 +308,14 @@ describe('checkRecipeSet', () => {
     const text = problems.join('\n')
     expect(text).toContain("recipe:upper-slugs: 100% of its guide's 8-word runs also appear in recipe:other-recipe")
     expect(text).toContain('also appear in util:case')
+  })
+})
+
+describe('headTerm', () => {
+  it('is the title before " — ", without a trailing "Online", lowercased', () => {
+    expect(headTerm('Slug Generator Online — URL-Safe Slugs From Any Text')).toBe('slug generator')
+    expect(headTerm('CSV to SQL INSERT Generator Online')).toBe('csv to sql insert generator')
+    expect(headTerm('Tabs to Spaces Converter Online (and Back)')).toBe('tabs to spaces converter online (and back)')
   })
 })
 

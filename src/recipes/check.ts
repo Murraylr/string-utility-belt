@@ -5,10 +5,10 @@
  * Two kinds of rule. Engine rules keep the page honest: real utilities and
  * params, every sample reproduces its golden output on every run, and every
  * step earns its place (leaving any one out changes some sample's output).
- * Search rules keep it from being a thin or competing page: two real steps or
- * a branch, a guide long enough to be worth a visit, a title and target query
- * that no utility page already owns, and prose that is not a near-copy of
- * another page's.
+ * Search rules keep it from being a thin or competing page: two real utility
+ * steps (nested ones count), a guide long enough to be worth a visit, a title
+ * and target query that no utility page already owns, and prose that is not a
+ * near-copy of another page's.
  */
 import type { PipelineStep, Utility } from '../types/utility'
 import type { UtilityMeta } from '../core/registry'
@@ -48,8 +48,8 @@ export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * Tidying steps: useful, but no recipe on their own. A page needs two real steps besides
- * these, or a container (branch, macro or "run on each") holding the work.
+ * Tidying steps: useful, but no recipe on their own. A page needs two real utility steps
+ * besides these, at the top level or inside a branch, macro or "run on each" step.
  */
 export const HELPER_UTILITIES: ReadonlySet<string> = new Set([
   'trim', 'trim_lines', 'remove_blank_lines', 'collapse_whitespace', 'normalize_line_endings',
@@ -138,9 +138,11 @@ function checkSteps(recipe: Recipe, steps: PipelineStep[], ctx: RecipeCheckConte
   const runnable = problems.length === 0
   if (!sameData(sanitizeSteps(steps), steps)) problems.push('steps change when sanitized (as share links and the library store them): use plain JSON params')
 
-  const real = recipe.steps.filter(s => !isUtilityStep(s) || !HELPER_UTILITIES.has(s.utilityId))
-  if (!recipe.steps.some(s => !isUtilityStep(s)) && real.length < 2) {
-    problems.push(`needs ≥ 2 steps besides ${[...HELPER_UTILITIES].join('/')} (or a branch, macro or each step): one utility is its own page, at /util/<id>/`)
+  // counted through containers too: one utility wrapped in a branch or "run on each" is still one utility
+  let real = 0
+  walkSteps(steps, s => { if (isUtilityStep(s) && !HELPER_UTILITIES.has(s.utilityId)) real++ })
+  if (real < 2) {
+    problems.push(`needs ≥ 2 utility steps besides ${[...HELPER_UTILITIES].join('/')}, nested ones included: one utility is its own page, at /util/<id>/`)
   }
   for (const s of recipe.steps) {
     const n = words(s.why ?? '')
@@ -242,6 +244,13 @@ export interface GuideEntry {
   source: string
 }
 
+/**
+ * What a utility page ranks for: its guide title before " — ", without a trailing
+ * "Online" ("Slug Generator Online — URL-Safe Slugs" → "slug generator").
+ */
+export const headTerm = (title: string): string =>
+  title.split(' — ')[0].replace(/\s+online$/i, '').trim().toLowerCase()
+
 /** A guide's prose (code spans and fenced blocks dropped) as a set of `shingleWords`-word runs. */
 export function shingles(source: string, size = RECIPE_RULES.shingleWords): Set<string> {
   const text = proseLines(source).join(' ').replace(/`[^`\n]*`/g, ' ').replace(/\]\([^)]*\)/g, ']')
@@ -261,8 +270,9 @@ export function overlap(a: Set<string>, b: Set<string>): number {
 
 /**
  * Problems no single recipe shows: duplicate names, titles, descriptions or target
- * queries; a target query some utility page already leads with; prose that is a
- * near-copy of another recipe's guide or of a guide for a utility it uses.
+ * queries; a target query some utility page already leads with, or that contains its
+ * head term ("bulk slug generator"); prose that is a near-copy of another recipe's
+ * guide or of a guide for a utility it uses.
  */
 export function checkRecipeSet(
   recipes: Array<{ recipe: Recipe; guide: string | null }>,
@@ -294,8 +304,13 @@ export function checkRecipeSet(
     }
     const query = recipe.primaryQuery.trim().toLowerCase()
     for (const u of utilTitles) {
-      if (query && u.guide.title?.toLowerCase().includes(query)) {
-        problems.push(`${owner}: primary query ${show(query)} is the head term of /util/${u.id}/ (${show(u.guide.title!)}) — the pages would compete; target the task, not the tool`)
+      const title = u.guide.title
+      if (!query || !title) continue
+      const head = headTerm(title)
+      if (title.toLowerCase().includes(query)) {
+        problems.push(`${owner}: primary query ${show(query)} is the head term of /util/${u.id}/ (${show(title)}) — the pages would compete; target the task, not the tool`)
+      } else if (head && query.includes(head)) {
+        problems.push(`${owner}: primary query ${show(query)} contains ${show(head)}, the head term of /util/${u.id}/ (${show(title)}) — the pages would compete; target the task, not the tool`)
       }
     }
   }
