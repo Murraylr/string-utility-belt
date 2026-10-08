@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-08
+
 ### Added
 
 - **Seven recipes built on run on each**: turn a `.env` file into a Kubernetes Secret; convert Unix timestamps
