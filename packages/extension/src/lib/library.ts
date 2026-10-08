@@ -8,6 +8,8 @@ import {
   type AppRequest, type BridgeResult,
 } from '../../../../src/core/extensionBridge'
 import { sanitizeSteps } from '../../../../src/core/serialize'
+import { itemNoun } from '../../../../src/core/split'
+import { countSteps, isBranchStep, isEachStep, isMacroStep } from '../../../../src/core/steps'
 import type { PipelineStep } from '../../../../src/types/utility'
 import { getEdgeSafeUtilityMeta, getUtilityMeta } from './registry'
 import {
@@ -26,6 +28,19 @@ export function pipelineProblem(steps: PipelineStep[]): string | null {
   }
   if (JSON.stringify(steps).length > MAX_PIPELINE_CHARS) return 'The pipeline is too large to save in the extension.'
   return null
+}
+
+function stepTitle(step: PipelineStep): string {
+  if (isBranchStep(step)) return `branch (${step.branches.length} lanes)`
+  if (isMacroStep(step)) return step.name
+  if (isEachStep(step)) return step.label || `run on each ${itemNoun(step.split.mode, 1)}`
+  return step.label || getUtilityMeta(step.utilityId)?.name || step.utilityId
+}
+
+/** "3 steps: base64 decode → json pretty → trim", for a saved pipeline in the popup and on the options page. */
+export function pipelineSummary(steps: PipelineStep[]): string {
+  const n = countSteps(steps)
+  return `${n} ${n === 1 ? 'step' : 'steps'}: ${steps.map(stepTitle).join(' → ')}`
 }
 
 /**

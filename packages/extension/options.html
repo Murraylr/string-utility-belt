@@ -3,97 +3,145 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="color-scheme" content="light dark" />
-<title>String Utility Belt — Options</title>
+<title>String Utility Belt · Options</title>
+<link rel="stylesheet" href="./src/ui.css" />
 <style>
-  :root {
-    color-scheme: light dark;
-    --bg: #ffffff; --fg: #1a1a1a; --muted: #6b7280; --line: #d9dce1; --accent: #4f46e5; --accent-fg: #ffffff; --danger: #dc2626;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #17181c; --fg: #f2f3f5; --muted: #9aa0ac; --line: #33353c; --accent: #8b8ff9; --accent-fg: #14151a; --danger: #f87171; }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0 auto; max-width: 600px; padding: 24px 20px 60px;
-    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: var(--bg); color: var(--fg);
-  }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  h2 { font-size: 15px; margin: 32px 0 4px; padding-top: 20px; border-top: 1px solid var(--line); }
-  p.muted { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
-  label.field-label { display: block; font-size: 12px; color: var(--muted); margin: 16px 0 4px; }
-  input[type="text"], input[type="search"] {
-    width: 100%; font: inherit; color: var(--fg); background: var(--bg);
-    border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
-  }
-  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; margin: 8px 0 0; max-height: 360px; overflow-y: auto; }
-  fieldset legend { padding: 0 6px; font-size: 12px; color: var(--muted); }
-  .category { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 12px 0 4px; }
-  .category:first-of-type { margin-top: 2px; }
-  .option-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
-  .actions { display: flex; gap: 10px; margin-top: 20px; }
-  button {
-    font: inherit; border: 1px solid var(--line); border-radius: 6px;
-    padding: 8px 14px; background: var(--accent); color: var(--accent-fg); cursor: pointer;
-  }
-  button.secondary, .item-list button { background: transparent; color: var(--fg); }
-  .item-list button { padding: 3px 8px; font-size: 13px; }
-  .item-list button:disabled { opacity: 0.35; cursor: default; }
-  .item-list button.danger { color: var(--danger); }
-  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
-  input[aria-invalid="true"] { border-color: var(--danger); }
-  a { color: var(--accent); }
-  .item-list { list-style: none; margin: 8px 0 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; }
+  body { background: var(--bg); padding: 36px 24px 48px; }
+  .page { max-width: 600px; margin: 0 auto; display: grid; gap: 36px; }
+  .intro { display: grid; gap: 8px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .keycap { font-size: 11px; padding: 5px 6px 4px; border-radius: 4px; }
+  h1 { margin: 0; font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.015em; }
+  h2 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+  .lede { margin: 0; font-size: 14px; line-height: 22px; color: var(--muted); text-wrap: pretty; }
+  section { display: grid; gap: 12px; }
+  .heading { display: grid; gap: 4px; }
+  .hint { margin: 0; font-size: 13px; line-height: 19px; color: var(--muted); }
+  .hint strong { color: var(--ink); }
+
+  .item-list, .empty, details { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .item-list { list-style: none; margin: 0; padding: 0; }
   .item-list:empty { display: none; }
-  .item-list li { display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
+  .item-list li { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 12px; }
   .item-list li + li { border-top: 1px solid var(--line); }
-  .item-list .grow { flex: 1; min-width: 0; }
-  .item-list .summary { display: block; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item-list input[type="text"] { padding: 3px 6px; }
-  .empty { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
-  .inline { display: flex; gap: 8px; }
-  .inline input { flex: 1; }
-  #status, #pipeline-status { margin-top: 10px; font-size: 12px; color: var(--muted); min-height: 16px; }
+  .item-list .num { width: 20px; flex-shrink: 0; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .item-list .grow { flex: 1; min-width: 0; display: grid; }
+  .item-list .name { font-size: 13.5px; font-weight: 500; overflow-wrap: anywhere; }
+  .item-list .meta { font-size: 11.5px; line-height: 16px; color: var(--muted); }
+  .empty { margin: 0; padding: 12px; font-size: 13px; color: var(--muted); }
+
+  #pipelines li { padding: 8px 8px 8px 12px; }
+  #pipelines .grow { gap: 3px; }
+  .pipeline-name {
+    height: 28px; padding: 0 6px; margin-left: -6px; border: 1px solid transparent; border-radius: 5px;
+    background: none; font-size: 13.5px; font-weight: 500; outline: none; min-width: 0;
+  }
+  .pipeline-name:hover { border-color: var(--line); }
+  .pipeline-name:focus { border-color: var(--acc); background: var(--bg); }
+  #pipelines .meta { font-family: var(--mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  summary { padding: 10px 12px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .picker { display: grid; gap: 8px; padding: 0 12px 12px; }
+  #search { height: 32px; padding: 0 10px; background: var(--bg); font-size: 13px; }
+  #utility-list {
+    margin: 0; padding: 0; border: 0; min-width: 0; max-height: 260px; overflow: auto;
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; align-content: start;
+  }
+  #utility-list .category, #utility-list .no-match { grid-column: 1 / -1; }
+  #utility-list .category { padding: 10px 0 4px; font-size: 11.5px; line-height: 16px; font-weight: 500; color: var(--muted); }
+  #utility-list .no-match { margin: 0; padding: 10px 0 4px; font-size: 13px; color: var(--muted); }
+  .option-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; min-width: 0; }
+
+  .address { gap: 6px; }
+  #base-url { height: 34px; padding: 0 10px; background: var(--surface); font-family: var(--mono); font-size: 12.5px; }
+  .address .hint { font-size: 12.5px; line-height: 18px; }
+
+  .save-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -12px; padding: 14px 0;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .save-bar .btn { height: 34px; }
+  .status { min-height: 18px; font-size: 12.5px; line-height: 18px; color: var(--muted); }
+  .status.error { color: var(--danger); }
+  #status { padding-left: 4px; }
+
+  .import { display: grid; gap: 4px; margin: 0; }
+  .import label { font-size: 12px; color: var(--muted); }
+  .import .inline { display: flex; gap: 6px; }
+  #import-link { flex: 1; height: 32px; padding: 0 10px; background: var(--surface); font-family: var(--mono); font-size: 12px; }
+
+  footer {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-top: 16px;
+    border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+  footer a:hover { color: var(--acc); }
+
+  @media (max-width: 520px) {
+    body { padding: 24px 16px 40px; }
+    #utility-list { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>
 </head>
 <body>
-  <h1>String Utility Belt</h1>
-  <p class="muted">Your favourite utilities and saved pipelines appear on the right-click menu for selected text, and at the top of the toolbar popup.</p>
+  <main class="page">
+    <header class="intro">
+      <div class="brand"><span class="keycap" aria-hidden="true">sub</span><h1>String Utility Belt</h1></div>
+      <p class="lede">Your favourites and saved pipelines show up when you right-click selected text, and at the top of the toolbar popup.</p>
+    </header>
 
-  <label class="field-label" for="base-url">App base URL</label>
-  <input id="base-url" type="text" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="base-url-hint" />
-  <p id="base-url-hint" class="hint">An http(s) address; the selection is sent to it as <code>?text=</code>.</p>
+    <section aria-labelledby="favorites-heading">
+      <div class="heading">
+        <h2 id="favorites-heading">Favourites</h2>
+        <p class="hint">Shown on the menu in this order. Star utilities on the website and use <strong>Save to extension</strong> to add them from there.</p>
+      </div>
+      <ol id="favorites" class="item-list" aria-labelledby="favorites-heading"></ol>
+      <p id="favorites-empty" class="empty">No favourites. The menu only has your saved pipelines and &ldquo;Open selection in String Utility Belt&rdquo;.</p>
+      <details>
+        <summary>Add or remove utilities</summary>
+        <div class="picker">
+          <input id="search" class="field" type="search" placeholder="Filter by name, category or tag" aria-label="Filter utilities" autocomplete="off" />
+          <fieldset id="utility-list">
+            <legend class="visually-hidden">All utilities</legend>
+          </fieldset>
+        </div>
+      </details>
+    </section>
 
-  <h2 id="favorites-heading">Favourites</h2>
-  <p class="hint">Shown on the right-click menu in this order. On the web app, star utilities and use <strong>save to extension</strong> to add them here.</p>
-  <ol id="favorites" class="item-list" aria-labelledby="favorites-heading"></ol>
-  <p id="favorites-empty" class="empty">No favourites — only your saved pipelines and "Open selection…" are on the menu.</p>
+    <section class="address" aria-labelledby="base-url-heading">
+      <h2 id="base-url-heading"><label for="base-url">Website address</label></h2>
+      <input id="base-url" class="field" type="text" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="base-url-hint" />
+      <p id="base-url-hint" class="hint">Where &ldquo;Open selection in String Utility Belt&rdquo; goes. The selected text is added to the address as <code>?text=</code>.</p>
+    </section>
 
-  <label class="field-label" for="search">Add or remove utilities</label>
-  <input id="search" type="search" placeholder="Filter by name, id or tag&hellip;" autocomplete="off" />
+    <div class="save-bar">
+      <button id="save" type="button" class="btn btn-primary">Save</button>
+      <button id="reset" type="button" class="btn">Reset to defaults</button>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+    </div>
 
-  <fieldset id="utility-list">
-    <legend>All utilities</legend>
-  </fieldset>
+    <section aria-labelledby="pipelines-heading">
+      <div class="heading">
+        <h2 id="pipelines-heading">Saved pipelines</h2>
+        <p class="hint">Each one is a single menu item. Changes here save straight away. To add one, use <strong>Save to extension</strong> on the website (same name updates it), or paste a share link below.</p>
+      </div>
+      <ol id="pipelines" class="item-list" aria-labelledby="pipelines-heading"></ol>
+      <p id="pipelines-empty" class="empty">No saved pipelines yet.</p>
+      <form id="import-form" class="import">
+        <label for="import-link">Add from a share link</label>
+        <div class="inline">
+          <input id="import-link" class="field" type="text" autocomplete="off" spellcheck="false" placeholder="https://stringutilitybelt.com/#/p/&hellip;" />
+          <button id="import" type="submit" class="btn">Add</button>
+        </div>
+      </form>
+      <span id="pipeline-status" class="status" role="status" aria-live="polite"></span>
+    </section>
 
-  <div class="actions">
-    <button id="save" type="button">Save</button>
-    <button id="reset" type="button" class="secondary">Reset to defaults</button>
-  </div>
-  <div id="status" role="status" aria-live="polite"></div>
-
-  <h2 id="pipelines-heading">Saved pipelines</h2>
-  <p class="hint">Each runs as one right-click menu item. Save one from the web app with <strong>save to extension</strong> (saving under an existing name updates it), or add one from a share link. Changes here apply immediately.</p>
-  <ol id="pipelines" class="item-list" aria-labelledby="pipelines-heading"></ol>
-  <p id="pipelines-empty" class="empty">No saved pipelines yet.</p>
-
-  <label class="field-label" for="import-link">Add from a share link</label>
-  <div class="inline">
-    <input id="import-link" type="text" autocomplete="off" spellcheck="false" placeholder="https://stringutilitybelt.com/#/p/&hellip;" />
-    <button id="import" type="button" class="secondary">Add</button>
-  </div>
-  <div id="pipeline-status" role="status" aria-live="polite"></div>
+    <footer>
+      <span>No analytics, no ads, no network requests.</span>
+      <a href="https://stringutilitybelt.com/privacy/" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+    </footer>
+  </main>
 
   <script type="module" src="./src/options.ts"></script>
 </body>

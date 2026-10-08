@@ -7,6 +7,7 @@ import { validateParams } from '../../../src/core/params'
 import type { UtilityMeta } from '../../../src/core/registry'
 import type { Value } from '../../../src/types/utility'
 import { edgeSafeUtilities, getEdgeSafeUtilityMeta, resultToText, runPipelineSteps, runUtilityById } from './lib/registry'
+import { pipelineSummary } from './lib/library'
 import { readParamValues, renderParamControls } from './lib/paramControls'
 import {
   getBaseUrl, getLastError, getLastResult, getMenuUtilities, getPipelines, setLastError, setLastResult,
@@ -57,8 +58,10 @@ export async function init(): Promise<void> {
   const paramsEl = byId<HTMLDivElement>('params')
   const inputEl = byId<HTMLTextAreaElement>('input')
   const outputEl = byId<HTMLTextAreaElement>('output')
-  const errorEl = byId<HTMLDivElement>('error')
-  const statusEl = byId<HTMLDivElement>('status')
+  const errorEl = byId<HTMLParagraphElement>('error')
+  const statusEl = byId<HTMLSpanElement>('status')
+  const summaryEl = byId<HTMLParagraphElement>('pipeline-summary')
+  const lastErrorEl = byId<HTMLDivElement>('last-error')
   const openAppLink = byId<HTMLAnchorElement>('open-app')
   const runButton = byId<HTMLButtonElement>('run')
   const copyButton = byId<HTMLButtonElement>('copy')
@@ -79,15 +82,28 @@ export async function init(): Promise<void> {
     const meta = currentMeta()
     if (meta) renderParamControls(paramsEl, meta)
     else paramsEl.innerHTML = '' // a saved pipeline runs with the params it was saved with
+    const pipeline = currentPipeline()
+    summaryEl.hidden = !pipeline
+    summaryEl.textContent = pipeline ? `${pipelineSummary(pipeline.steps)}. Runs with its saved settings.` : ''
   }
   renderParams()
   utilitySelect.addEventListener('change', renderParams)
 
   inputEl.value = lastResult
   openAppLink.href = `${baseUrl}/`
+  byId<HTMLAnchorElement>('open-options').addEventListener('click', e => {
+    if (!chrome.runtime?.openOptionsPage) return // the link opens the page itself
+    e.preventDefault()
+    void chrome.runtime.openOptionsPage()
+  })
+  byId<HTMLButtonElement>('dismiss-error').addEventListener('click', () => {
+    lastErrorEl.hidden = true
+    inputEl.focus()
+  })
   if (lastError) {
     // Shown once: the failure the context menu flagged with the toolbar badge.
-    errorEl.textContent = lastError
+    byId<HTMLSpanElement>('last-error-text').textContent = lastError
+    lastErrorEl.hidden = false
     chrome.action?.setBadgeText?.({ text: '' })
     await setLastError('')
   }
@@ -137,7 +153,7 @@ export async function init(): Promise<void> {
   copyButton.addEventListener('click', () => {
     navigator.clipboard.writeText(outputEl.value).then(
       () => { statusEl.textContent = 'Copied.' },
-      () => { statusEl.textContent = 'Copy failed — select the result and copy it manually.' },
+      () => { statusEl.textContent = 'Couldn’t copy. Select the result and copy it yourself.' },
     )
   })
 }

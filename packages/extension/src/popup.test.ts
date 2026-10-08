@@ -83,13 +83,31 @@ describe('popup', () => {
     expect(ids).toContain('base64_encode')
   })
 
+  it('opens the options page from the header', () => {
+    const openOptionsPage = vi.fn()
+    vi.stubGlobal('chrome', { ...chrome, runtime: { openOptionsPage } })
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+    $('open-options').dispatchEvent(event)
+    expect(openOptionsPage).toHaveBeenCalled()
+    expect(event.defaultPrevented).toBe(true)
+  })
+
   it('shows a failure flagged by the context menu once, then clears it and the badge', async () => {
     await open({ lastResult: 'not json', lastError: 'json pretty failed: Unexpected token' })
 
-    expect($('error').textContent).toBe('json pretty failed: Unexpected token')
+    expect($('last-error').hidden).toBe(false)
+    expect($('last-error-text').textContent).toBe('json pretty failed: Unexpected token')
+    expect($('error').textContent).toBe('')
     expect($<HTMLTextAreaElement>('input').value).toBe('not json')
     expect(setBadgeText).toHaveBeenCalledWith({ text: '' })
     expect(local.store.lastError).toBe('')
+
+    $('dismiss-error').click()
+    expect($('last-error').hidden).toBe(true)
+  })
+
+  it('shows no failure banner when the last menu run succeeded', () => {
+    expect($('last-error').hidden).toBe(true)
   })
 
   it('renders labelled param controls for the selected utility and re-renders on change', () => {
@@ -163,7 +181,7 @@ describe('popup', () => {
   it('says so when copying fails', async () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) }, configurable: true })
     $('copy').click()
-    await vi.waitFor(() => expect($('status').textContent).toMatch(/copy failed/i))
+    await vi.waitFor(() => expect($('status').textContent).toMatch(/couldn’t copy/i))
   })
 
   describe('favourites and saved pipelines', () => {
@@ -184,8 +202,11 @@ describe('popup', () => {
     })
 
     it('runs a saved pipeline with its own params and shows no param controls for it', async () => {
+      expect($('pipeline-summary').hidden).toBe(true)
       choose('pipeline:p1')
       expect($('params').children).toHaveLength(0)
+      expect($('pipeline-summary').hidden).toBe(false)
+      expect($('pipeline-summary').textContent).toBe('2 steps: trim → change case. Runs with its saved settings.')
       run('  quiet ')
       await vi.waitFor(() => expect($<HTMLTextAreaElement>('output').value).toBe('QUIET'))
     })

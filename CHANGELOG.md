@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   JetBrains Mono for data, in light and dark. The header now has a search box for the command palette, icon links
   to the extensions, CLI and MCP server, and a keyboard shortcuts button. Every page and the pipeline editor were
   rebuilt in the new style; every feature works as before.
+- **Browser extension: new look** for the toolbar popup and options page, matching the site in light and dark. The
+  popup shows a clear banner when a right-click run fails and links to the options page; deleting a saved pipeline
+  now takes a second click on "Confirm delete" instead of a browser dialog.
 - **Plainer wording** on buttons, hints and the about, contact, integrations and advertise pages.
 
 ### Added

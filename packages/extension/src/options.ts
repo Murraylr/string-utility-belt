@@ -7,13 +7,11 @@
  */
 import { decodeShare, encodeShare } from '../../../src/core/serialize'
 import { MAX_PIPELINE_NAME, normalizePipelineName } from '../../../src/core/extensionBridge'
-import { countSteps, isBranchStep, isEachStep, isMacroStep } from '../../../src/core/steps'
-import { itemNoun } from '../../../src/core/split'
 import type { UtilityMeta } from '../../../src/core/registry'
-import type { PipelineStep } from '../../../src/types/utility'
 import { DEFAULT_BASE_URL, DEFAULT_MENU_UTILITIES } from './lib/constants'
-import { move, upsertPipeline } from './lib/library'
-import { edgeSafeUtilities, getEdgeSafeUtilityMeta, getUtilityMeta } from './lib/registry'
+import { icon } from './lib/icons'
+import { move, pipelineSummary, upsertPipeline } from './lib/library'
+import { edgeSafeUtilities, getEdgeSafeUtilityMeta } from './lib/registry'
 import {
   getBaseUrl, getMenuUtilities, getPipelines, normalizeBaseUrl, setBaseUrl, setMenuUtilities, setPipelines,
   type SavedPipeline,
@@ -31,6 +29,18 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLEl
 
 const errorText = (e: unknown) => (e as Error)?.message || String(e)
 
+/** A name in a status message or label, in the curly quotes the rest of the page uses. */
+const quoted = (name: string) => `“${name}”`
+
+/** Shows `text` in a status line, in the danger colour when it says something went wrong. */
+function say(status: HTMLElement, text: string, isError = false): void {
+  status.textContent = text
+  status.classList.toggle('error', isError)
+}
+
+/** How long a "Confirm delete" button waits for its second click. */
+const CONFIRM_MS = 5000
+
 function matches(meta: UtilityMeta, query: string): boolean {
   if (!query) return true
   return [meta.id, meta.name, meta.category, ...meta.tags, ...meta.aliases]
@@ -39,7 +49,7 @@ function matches(meta: UtilityMeta, query: string): boolean {
 
 function renderList(container: HTMLElement, metas: UtilityMeta[], selected: string[], query: string): void {
   container.innerHTML = ''
-  container.appendChild(el('legend', { textContent: 'All utilities' }))
+  container.appendChild(el('legend', { className: 'visually-hidden', textContent: 'All utilities' }))
 
   const q = query.trim().toLowerCase()
   let lastCategory = ''
@@ -56,27 +66,37 @@ function renderList(container: HTMLElement, metas: UtilityMeta[], selected: stri
     row.appendChild(document.createTextNode(meta.name))
     container.appendChild(row)
   }
-  if (shown === 0) container.appendChild(el('p', { textContent: 'No utilities match your search.' }))
+  if (shown === 0) container.appendChild(el('p', { className: 'no-match', textContent: 'No utilities match your search.' }))
 }
 
-function actionButton(text: string, action: string, label: string, disabled = false): HTMLButtonElement {
-  const button = el('button', { type: 'button', textContent: text, disabled })
+function actionButton(content: string | SVGSVGElement, action: string, label: string, disabled = false): HTMLButtonElement {
+  const button = el('button', { type: 'button', disabled })
+  button.append(content)
+  button.className = typeof content === 'string' ? 'ghost' : 'ghost icon-only'
+  if (action === 'remove') button.classList.add('danger')
   button.dataset.action = action
   button.setAttribute('aria-label', label)
-  if (action === 'remove') button.className = 'danger'
   return button
 }
 
-/** One row of an ordered list: the label content, then move up / move down / remove buttons. */
-function itemRow(label: string, index: number, total: number, content: Node[], removeText = 'Remove'): HTMLLIElement {
+/**
+ * One row of an ordered list: its position (when `numbered`), the label
+ * content, any `extra` controls, then move up / move down / remove buttons.
+ */
+function itemRow(
+  label: string, index: number, total: number, content: Node[],
+  { removeText = 'Remove', numbered = false, extra = [] }: { removeText?: string; numbered?: boolean; extra?: Node[] } = {},
+): HTMLLIElement {
   const li = el('li')
   li.dataset.index = String(index)
+  if (numbered) li.appendChild(el('span', { className: 'num', textContent: String(index + 1) }))
   const grow = el('div', { className: 'grow' })
   grow.append(...content)
   li.append(
     grow,
-    actionButton('↑', 'up', `Move ${label} up`, index === 0),
-    actionButton('↓', 'down', `Move ${label} down`, index === total - 1),
+    ...extra,
+    actionButton(icon('arrow-up'), 'up', `Move ${label} up`, index === 0),
+    actionButton(icon('arrow-down'), 'down', `Move ${label} down`, index === total - 1),
     actionButton(removeText, 'remove', `${removeText} ${label}`),
   )
   return li
@@ -93,21 +113,11 @@ function refocus(list: HTMLOListElement, index: number, action: string): void {
 function renderFavorites(list: HTMLOListElement, empty: HTMLElement, ids: string[]): void {
   list.innerHTML = ''
   const metas = ids.map(getEdgeSafeUtilityMeta).filter((m): m is UtilityMeta => !!m)
-  metas.forEach((meta, i) => list.appendChild(itemRow(meta.name, i, metas.length, [document.createTextNode(meta.name)])))
+  metas.forEach((meta, i) => list.appendChild(itemRow(meta.name, i, metas.length, [
+    el('span', { className: 'name', textContent: meta.name }),
+    el('span', { className: 'meta', textContent: meta.category }),
+  ], { numbered: true })))
   empty.hidden = metas.length > 0
-}
-
-function stepTitle(step: PipelineStep): string {
-  if (isBranchStep(step)) return `branch (${step.branches.length} lanes)`
-  if (isMacroStep(step)) return step.name
-  if (isEachStep(step)) return step.label || `run on each ${itemNoun(step.split.mode, 1)}`
-  return step.label || getUtilityMeta(step.utilityId)?.name || step.utilityId
-}
-
-/** "3 steps: base64 decode → json pretty → trim", for a pipeline's row. */
-export function pipelineSummary(steps: PipelineStep[]): string {
-  const n = countSteps(steps)
-  return `${n} ${n === 1 ? 'step' : 'steps'}: ${steps.map(stepTitle).join(' → ')}`
 }
 
 /** Where the web app opens `pipeline` for editing (a share link; its steps are in the fragment, never sent to a server). */
@@ -120,10 +130,9 @@ function renderPipelines(list: HTMLOListElement, empty: HTMLElement, pipelines: 
   pipelines.forEach((pipeline, i) => {
     const name = el('input', { type: 'text', value: pipeline.name, className: 'pipeline-name', spellcheck: false, maxLength: MAX_PIPELINE_NAME })
     name.setAttribute('aria-label', `Name of pipeline ${i + 1}`)
-    const summary = el('span', { className: 'summary', textContent: pipelineSummary(pipeline.steps), title: pipelineSummary(pipeline.steps) })
-    const open = el('a', { href: pipelineAppUrl(baseUrl, pipeline), target: '_blank', rel: 'noopener noreferrer', textContent: 'Open in app' })
-    open.className = 'summary'
-    list.appendChild(itemRow(`"${pipeline.name}"`, i, pipelines.length, [name, summary, open], 'Delete'))
+    const summary = el('span', { className: 'meta', textContent: pipelineSummary(pipeline.steps), title: pipelineSummary(pipeline.steps) })
+    const open = el('a', { href: pipelineAppUrl(baseUrl, pipeline), target: '_blank', rel: 'noopener noreferrer', textContent: 'Open in app', className: 'ghost' })
+    list.appendChild(itemRow(quoted(pipeline.name), i, pipelines.length, [name, summary], { removeText: 'Delete', extra: [open] }))
   })
   empty.hidden = pipelines.length > 0
 }
@@ -141,12 +150,12 @@ export async function init(): Promise<void> {
   const list = byId<HTMLFieldSetElement>('utility-list')
   const search = byId<HTMLInputElement>('search')
   const baseUrlInput = byId<HTMLInputElement>('base-url')
-  const status = byId<HTMLDivElement>('status')
+  const status = byId<HTMLElement>('status')
   const favoritesList = byId<HTMLOListElement>('favorites')
   const favoritesEmpty = byId<HTMLElement>('favorites-empty')
   const pipelinesList = byId<HTMLOListElement>('pipelines')
   const pipelinesEmpty = byId<HTMLElement>('pipelines-empty')
-  const pipelineStatus = byId<HTMLDivElement>('pipeline-status')
+  const pipelineStatus = byId<HTMLElement>('pipeline-status')
   const importInput = byId<HTMLInputElement>('import-link')
 
   let [selected, savedBaseUrl, pipelines] = await Promise.all([getMenuUtilities(), getBaseUrl(), getPipelines()])
@@ -164,7 +173,7 @@ export async function init(): Promise<void> {
   const edit = (next: string[], fromChecklist = false) => {
     selected = next
     dirty = true
-    status.textContent = 'Unsaved changes.'
+    say(status, 'Unsaved changes.')
     if (fromChecklist) renderFavorites(favoritesList, favoritesEmpty, selected)
     else showFavorites()
   }
@@ -192,6 +201,7 @@ export async function init(): Promise<void> {
   baseUrlInput.addEventListener('input', () => {
     baseUrlInput.removeAttribute('aria-invalid')
     dirty = true
+    say(status, 'Unsaved changes.')
   })
 
   const save = async (ids: string[], url: string, done: string) => {
@@ -199,10 +209,10 @@ export async function init(): Promise<void> {
       await Promise.all([setMenuUtilities(ids), setBaseUrl(url)])
       dirty = false
       savedBaseUrl = url
-      status.textContent = done
+      say(status, done)
       showPipelines() // "Open in app" links follow the base URL
     } catch (e) {
-      status.textContent = `Could not save: ${errorText(e)}`
+      say(status, `Could not save: ${errorText(e)}`, true)
     }
   }
 
@@ -210,12 +220,12 @@ export async function init(): Promise<void> {
     const url = normalizeBaseUrl(baseUrlInput.value || DEFAULT_BASE_URL)
     if (!url) {
       baseUrlInput.setAttribute('aria-invalid', 'true')
-      status.textContent = 'Not saved: the app URL must start with https:// or http://.'
+      say(status, 'Not saved. The address needs to start with https:// or http://.', true)
       baseUrlInput.focus()
       return
     }
     baseUrlInput.value = url
-    void save([...selected], url, 'Saved.')
+    void save([...selected], url, 'Saved. The menu is updated.')
   })
 
   byId<HTMLButtonElement>('reset').addEventListener('click', () => {
@@ -223,18 +233,40 @@ export async function init(): Promise<void> {
     baseUrlInput.value = DEFAULT_BASE_URL
     baseUrlInput.removeAttribute('aria-invalid')
     showFavorites()
-    void save([...selected], DEFAULT_BASE_URL, 'Reset to defaults.')
+    void save([...selected], DEFAULT_BASE_URL, 'Back to the defaults.')
   })
 
   const commitPipelines = async (next: SavedPipeline[], done: string) => {
     try {
       await setPipelines(next)
       pipelines = next
-      pipelineStatus.textContent = done
+      say(pipelineStatus, done)
     } catch (e) {
-      pipelineStatus.textContent = `Could not save: ${errorText(e)}`
+      say(pipelineStatus, `Could not save: ${errorText(e)}`, true)
     }
     showPipelines()
+  }
+
+  // Deleting takes two clicks on the same button: the first turns it into
+  // "Confirm delete" for a few seconds.
+  let confirming: { button: HTMLButtonElement; timer: ReturnType<typeof setTimeout> } | null = null
+  const resetConfirm = () => {
+    if (!confirming) return
+    clearTimeout(confirming.timer)
+    const { button } = confirming
+    button.textContent = 'Delete'
+    button.classList.remove('confirming')
+    button.setAttribute('aria-label', button.dataset.label ?? 'Delete')
+    confirming = null
+  }
+  const askToConfirm = (button: HTMLButtonElement, pipeline: SavedPipeline) => {
+    resetConfirm()
+    button.dataset.label = button.getAttribute('aria-label') ?? ''
+    button.textContent = 'Confirm delete'
+    button.classList.add('confirming')
+    button.setAttribute('aria-label', `Confirm delete ${quoted(pipeline.name)}`)
+    say(pipelineStatus, `Delete ${quoted(pipeline.name)}? Select Confirm delete to go ahead.`)
+    confirming = { button, timer: setTimeout(resetConfirm, CONFIRM_MS) }
   }
 
   pipelinesList.addEventListener('click', e => {
@@ -243,10 +275,21 @@ export async function init(): Promise<void> {
     const pipeline = pipelines[index]
     if (!button || !pipeline) return
     const action = button.dataset.action ?? ''
-    if (action === 'remove' && !window.confirm(`Delete the pipeline "${pipeline.name}"?`)) return
+    if (action === 'remove' && confirming?.button !== button) {
+      askToConfirm(button, pipeline)
+      return
+    }
+    resetConfirm()
     const next = action === 'remove' ? pipelines.filter((_, i) => i !== index) : move(pipelines, index, action === 'up' ? -1 : 1)
-    void commitPipelines(next, action === 'remove' ? `Deleted "${pipeline.name}".` : 'Order saved.')
+    void commitPipelines(next, action === 'remove' ? `Deleted ${quoted(pipeline.name)}.` : 'Order saved.')
       .then(() => refocus(pipelinesList, index, action))
+  })
+
+  pipelinesList.addEventListener('keydown', e => {
+    const input = e.target
+    if (!(input instanceof HTMLInputElement) || !input.classList.contains('pipeline-name')) return
+    if (e.key === 'Escape') input.value = pipelines[Number(input.closest('li')?.dataset.index)]?.name ?? input.value
+    if (e.key === 'Enter' || e.key === 'Escape') input.blur()
   })
 
   pipelinesList.addEventListener('change', e => {
@@ -259,37 +302,38 @@ export async function init(): Promise<void> {
     const clash = pipelines.some((p, i) => i !== index && p.name.toLocaleLowerCase() === name.toLocaleLowerCase())
     if (!name || clash) {
       input.value = pipeline.name
-      pipelineStatus.textContent = name ? `Another pipeline is already named "${name}".` : 'A pipeline needs a name.'
+      say(pipelineStatus, name ? `There’s already a pipeline called ${quoted(name)}.` : 'A pipeline needs a name.', true)
       return
     }
     if (name === pipeline.name) {
       input.value = name
       return
     }
-    void commitPipelines(pipelines.map((p, i) => (i === index ? { ...p, name, updatedAt: Date.now() } : p)), `Renamed to "${name}".`)
+    void commitPipelines(pipelines.map((p, i) => (i === index ? { ...p, name, updatedAt: Date.now() } : p)), `Renamed to ${quoted(name)}.`)
   })
 
-  byId<HTMLButtonElement>('import').addEventListener('click', () => {
+  byId<HTMLFormElement>('import-form').addEventListener('submit', e => {
+    e.preventDefault()
     const payload = sharePayload(importInput.value)
     if (!payload) {
-      pipelineStatus.textContent = 'Paste a share link from the web app (it contains #/p/).'
+      say(pipelineStatus, 'Paste a share link from the website. It has #/p/ in it.', true)
       return
     }
     let doc
     try {
       doc = decodeShare(payload)
     } catch (e) {
-      pipelineStatus.textContent = errorText(e)
+      say(pipelineStatus, errorText(e), true)
       return
     }
     const outcome = upsertPipeline(pipelines, doc.name || 'Imported pipeline', doc.steps, Date.now())
     if (!outcome.ok) {
-      pipelineStatus.textContent = outcome.error
+      say(pipelineStatus, outcome.error, true)
       return
     }
     importInput.value = ''
     const { saved, replaced } = outcome.value
-    void commitPipelines(outcome.value.list, `${replaced ? 'Updated' : 'Added'} "${saved.name}".`)
+    void commitPipelines(outcome.value.list, `${replaced ? 'Updated' : 'Added'} ${quoted(saved.name)}.`)
   })
 
   // Changes from elsewhere — the web app's "save to extension", another options tab.
