@@ -18,7 +18,11 @@ describe('UtilityDocPage', () => {
     render(<UtilityDocPage id="trim" />)
     const heading = screen.getByRole('heading', { level: 1, name: 'trim' })
     expect(screen.getByText('Remove leading and trailing whitespace.')).toBeTruthy()
-    expect(within(heading.closest('header')!).getByText('String Ops')).toBeTruthy()
+    const header = within(heading.closest('header')!)
+    // the breadcrumb names it, and so does the category chip
+    expect(within(header.getByRole('navigation', { name: 'Breadcrumb' })).getByText('String Ops')).toBeTruthy()
+    expect(header.getAllByText('String Ops')).toHaveLength(2)
+    expect(header.getByRole('link', { name: 'Utilities' }).getAttribute('href')).toBe('/utilities/')
   })
 
   it('sets the document title and meta description, and restores both on leaving', () => {
@@ -37,7 +41,7 @@ describe('UtilityDocPage', () => {
 
   it('shows a friendly not-found for an unknown id, with a link to browse utilities', () => {
     render(<UtilityDocPage id="does-not-exist" />)
-    expect(screen.getByText(/unknown utility/i)).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'No utility called “does-not-exist”' })).toBeTruthy()
     const link = screen.getByRole('link', { name: /browse all utilities/i })
     expect(link.getAttribute('href')).toBe('/utilities/')
   })
@@ -65,12 +69,35 @@ describe('UtilityDocPage', () => {
     render(<UtilityDocPage id="pad" />)
     const table = within(screen.getByRole('table'))
     expect(table.getByText('length')).toBeTruthy()
+    expect(table.getByText('pad character')).toBeTruthy() // a label different from its key
     expect(table.getByText('char')).toBeTruthy()
     expect(table.getByText('side')).toBeTruthy()
     expect(table.getByText('10')).toBeTruthy() // length's default
     expect(table.getByText(/0–1000000/)).toBeTruthy() // length's bounds (capped: amplifying param)
     expect(table.getByText('end, start, both')).toBeTruthy() // side's options
-    expect(table.getByText('target length')).toBeTruthy() // no description: falls back to the label
+    expect(table.getByText('target length')).toBeTruthy()
+    expect(table.getByText('number')).toBeTruthy() // length's kind
+  })
+
+  it('shows our own tools after the playground and in the side column', () => {
+    const { container } = render(<UtilityDocPage id="trim" />)
+    expect(container.querySelector('[data-promo-slot="inline"]')).toBeTruthy()
+    expect(container.querySelector('[data-promo-slot="rail"]')).toBeTruthy()
+  })
+
+  it('copies the playground output', async () => {
+    const writeText = vi.fn(async () => {})
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } })
+    try {
+      render(<UtilityDocPage id="trim" />)
+      fireEvent.change(screen.getByLabelText('playground input'), { target: { value: '  padded  ' } })
+      await waitFor(() => expect(playgroundOutput().textContent).toBe('padded'), { timeout: 5000 })
+      fireEvent.click(screen.getByRole('button', { name: 'Copy output' }))
+      expect(writeText).toHaveBeenCalledWith('padded')
+      expect(await screen.findByRole('button', { name: 'Copied' })).toBeTruthy()
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 
   it('shows environment notes', () => {
@@ -165,8 +192,9 @@ describe('UtilityDocPage', () => {
   it('lists the most closely related utilities first', () => {
     render(<UtilityDocPage id="url_decode" />)
     const section = screen.getByRole('heading', { name: 'Related utilities' }).closest('section')!
-    const links = within(section).getAllByRole('link')
+    const links = within(section).getAllByRole('link').filter(a => a.getAttribute('href')!.startsWith('/util/'))
     expect(links.length).toBeLessThanOrEqual(6)
+    expect(within(section).getByRole('link', { name: /all utilities/i }).getAttribute('href')).toBe('/utilities/')
     // a crawlable path, not a #/ fragment search engines would drop
     expect(links[0].getAttribute('href')).toBe('/util/url_encode/')
   })

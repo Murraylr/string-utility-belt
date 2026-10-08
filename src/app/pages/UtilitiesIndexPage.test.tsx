@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { registry } from '@/app/registry'
 import UtilitiesIndexPage from './UtilitiesIndexPage'
 import { utilitiesTitle } from './seo'
@@ -26,7 +26,7 @@ describe('UtilitiesIndexPage', () => {
   it('shows each category with its count', () => {
     render(<UtilitiesIndexPage />)
     const n = registry.byCategory('String Ops').length
-    expect(screen.getByRole('heading', { level: 2, name: `String Ops (${n})` })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: `String Ops ${n}` })).toBeTruthy()
   })
 
   it('filters case-insensitively by name, updating the counts', () => {
@@ -48,7 +48,31 @@ describe('UtilitiesIndexPage', () => {
   it('shows a message when nothing matches', () => {
     render(<UtilitiesIndexPage />)
     fireEvent.change(screen.getByLabelText('Filter utilities'), { target: { value: 'zzzznotarealutility' } })
-    expect(screen.getByText(/no utilities match/i)).toBeTruthy()
+    expect(screen.getByText('Nothing matches “zzzznotarealutility”. Try a format name like base64, json or hex.')).toBeTruthy()
     expect(screen.getByRole('status').textContent).toMatch(/^0 of /)
+  })
+
+  it('jumps to a category from its pill', () => {
+    const original = Element.prototype.scrollIntoView // jsdom has none
+    const scroll = vi.fn()
+    Element.prototype.scrollIntoView = scroll
+    try {
+      render(<UtilitiesIndexPage />)
+      const nav = screen.getByRole('navigation', { name: 'Categories' })
+      const n = registry.byCategory('String Ops').length
+      fireEvent.click(within(nav).getByRole('button', { name: `String Ops ${n}` }))
+      expect(scroll).toHaveBeenCalledTimes(1)
+      expect(scroll.mock.contexts[0]).toBe(screen.getByRole('heading', { level: 2, name: `String Ops ${n}` }).closest('section'))
+    } finally {
+      Element.prototype.scrollIntoView = original
+    }
+  })
+
+  it('shows one of our own tools after the second category', () => {
+    const { container } = render(<UtilitiesIndexPage />)
+    const promo = container.querySelector('[data-promo-slot="inline"]')!
+    expect(promo).toBeTruthy()
+    const sections = container.querySelectorAll('section')
+    expect(sections[1].nextElementSibling).toBe(promo)
   })
 })
