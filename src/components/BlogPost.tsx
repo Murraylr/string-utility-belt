@@ -3,6 +3,7 @@ import { parseFrontmatter } from '@/lib/markdown'
 import { useT } from '@/app/i18n/useT'
 import { renderMarkdownDocument } from '@/app/pages/guide'
 import { pageTitle } from '@/app/pages/seo'
+import PageSponsor from '@/app/sponsors/PageSponsor'
 
 type BlogPostProps = { slug: string }
 type Frontmatter = Record<string, string>
@@ -72,6 +73,7 @@ export default function BlogPost({ slug }: BlogPostProps) {
           {meta.updated && meta.updated !== meta.date && (
             <p className="muted text-sm">Updated <time dateTime={meta.updated}>{formatDate(meta.updated, { dateStyle: 'long' })}</time></p>
           )}
+          <PageSponsor page={{ kind: 'blog', slug }} className="mt-3" />
         </header>
       )}
       {post?.status === 'ok' && <div dangerouslySetInnerHTML={{ __html: post.html }} />}

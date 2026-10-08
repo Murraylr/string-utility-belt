@@ -19,7 +19,7 @@ import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './chan
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
   renderChangelogContent, renderHomeContent, renderDocsContent, renderSitePageContent, renderNotFoundContent,
-  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent,
+  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent, type PageSponsorSpec,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
@@ -28,6 +28,8 @@ import { featuredRecipes, recipesUsing, relatedRecipes } from '../../src/app/pag
 import { traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace } from '../../src/recipes/trace'
 import type { Recipe, RecipeMeta } from '../../src/recipes/types'
 import { metaOfRecipe } from '../gen-recipes'
+import { sponsorFor, utcDay, type SponsorPage, type Sponsorship } from '../../src/app/sponsors/sponsors'
+import { SPONSORSHIPS } from '../../src/app/sponsors/sponsorships'
 import { parseSitePage } from '../../src/app/pages/sitePages'
 import {
   SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
@@ -58,6 +60,8 @@ export interface BuildSeoOptions {
   guides?: Record<string, string>
   /** Recipes to publish, each with its guide markdown (default: every `src/recipes/<slug>/` under `root`). */
   recipes?: Array<{ recipe: Recipe; guide: string }>
+  /** Booked sponsorships (default: `SPONSORSHIPS`); pages show those live on `now`'s UTC day. */
+  sponsorships?: readonly Sponsorship[]
 }
 
 export interface BuildSeoResult {
@@ -220,7 +224,7 @@ function readGuide(root: string, id: string): string | undefined {
   return existsSync(file) ? readFileSync(file, 'utf8') : undefined
 }
 
-function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[]): PageSpec {
+function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[], sponsor?: PageSponsorSpec): PageSpec {
   // the guide's search-facing title/description, as `UtilityDocPage` also sets them
   const name = displayName(meta.name)
   const title = pageTitle(guide?.title ?? name)
@@ -235,7 +239,7 @@ function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | 
       webApplicationLd(meta, canonical, description),
       breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: `${SITE}/utilities/` }, { name, url: canonical }]),
     ],
-    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes }),
+    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes, sponsor }),
   }
 }
 
@@ -362,6 +366,12 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   const now = options.now ?? new Date()
   const year = now.getUTCFullYear()
   const t0 = Date.now()
+  const sponsorships = options.sponsorships ?? SPONSORSHIPS
+  const sponsorDay = utcDay(now)
+  const sponsorOf = (page: SponsorPage): PageSponsorSpec | undefined => {
+    const sponsorship = sponsorFor(page, sponsorDay, sponsorships)
+    return sponsorship && { sponsorship, page }
+  }
 
   const indexHtmlPath = path.join(outDir, 'index.html')
   if (!existsSync(indexHtmlPath)) {
@@ -395,7 +405,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const guide = source === undefined ? undefined : parseGuide(source)
     if (guide) guides++
     page(path.join('util', meta.id, 'index.html'),
-      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas)))
+      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas),
+        sponsorOf({ kind: 'utility', id: meta.id })))
   }
   if (guides < manifest.length) log(`[build-seo] warning: ${manifest.length - guides} of ${manifest.length} utilities have no guide.md`)
 
@@ -453,6 +464,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
         trace,
         utility: id => utilityById.get(id),
         related: relatedRecipes(recipe, recipeMetas),
+        sponsor: sponsorOf({ kind: 'recipe', slug: recipe.slug }),
       }),
     })
   }
@@ -480,7 +492,8 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
         blogPostingLd(post, url),
         breadcrumbLd([HOME_CRUMB, { name: 'Blog', url: blogUrl }, { name: post.title, url }]),
       ],
-      content: renderBlogPostContent({ title: post.title, date: post.date, updated: post.updated }, post.bodyHtml),
+      content: renderBlogPostContent({ title: post.title, date: post.date, updated: post.updated }, post.bodyHtml,
+        sponsorOf({ kind: 'blog', slug: post.meta.slug })),
     })
   }
 

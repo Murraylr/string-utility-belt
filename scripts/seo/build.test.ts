@@ -14,6 +14,7 @@ import { STATIC_RECIPES } from '../../src/recipes/_generated/static'
 import { step } from '../../src/recipes/define'
 import { TRACE_ELEMENT_ID, type RecipeTrace } from '../../src/recipes/trace'
 import type { Recipe } from '../../src/recipes/types'
+import type { Sponsorship } from '../../src/app/sponsors/sponsors'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -360,6 +361,58 @@ describe('buildSeo over a built dist/', () => {
     expect(after).toEqual(before)
     expect(html(after[1]).querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
   }, 60000)
+})
+
+describe('buildSeo sponsorships', () => {
+  const pick = (id: string) => MANIFEST.find(m => m.id === id)!
+  const saml = STATIC_RECIPES.find(r => r.slug === 'decode-saml-request')!
+  const samlGuide = readFileSync(path.join(ROOT, 'src', 'recipes', saml.slug, 'guide.md'), 'utf8')
+  const live = { start: '2026-01-01', end: '2026-01-31' }
+  const sponsorships: Sponsorship[] = [
+    { id: 'auth-jan', scope: 'auth-tokens', name: 'AuthCo', text: `Tokens ${XSS}`, url: 'https://auth.example/', logo: 'auth.svg', ...live },
+    { id: 'site-jan', scope: 'site', name: 'SiteCo', text: 'Everywhere else.', url: 'https://site.example/', logo: 'site.png', ...live },
+    { id: 'kube-dec', scope: 'kubernetes-cloud', name: 'Old', text: 'Expired.', url: 'https://old.example/', logo: 'old.svg', start: '2025-12-01', end: '2026-01-01' },
+  ]
+  let dist: string
+
+  beforeAll(async () => {
+    dist = fixtureDist()
+    await buildSeo({
+      outDir: dist, root: ROOT, og: false, now: NOW, log: silent, sponsorships,
+      manifest: [pick('jwt_decode'), pick('trim'), pick('cron_describe')], examples: {}, guides: {},
+      recipes: [{ recipe: saml, guide: samlGuide }],
+    })
+  }, 60000)
+
+  const sponsorOn = (rel: string) => html(read(dist, rel)).querySelector('#root main aside[aria-label="Sponsor"]')
+
+  it("pre-renders each page's sponsor on the build's day: topic first, then site-wide", () => {
+    expect(sponsorOn('util/jwt_decode/index.html')?.getAttribute('data-sponsorship')).toBe('auth-jan')
+    expect(sponsorOn('recipes/decode-saml-request/index.html')?.getAttribute('data-sponsorship')).toBe('auth-jan')
+    expect(sponsorOn('util/trim/index.html')?.getAttribute('data-sponsorship')).toBe('site-jan')
+    // its topic's booking ended before the build day, so the site-wide sponsor holds it
+    expect(sponsorOn('util/cron_describe/index.html')?.getAttribute('data-sponsorship')).toBe('site-jan')
+    expect(sponsorOn('blog/md5-insecure-but-useful/index.html')?.getAttribute('data-sponsorship')).toBe('site-jan')
+  })
+
+  it('renders the block in the page header, escaped, with a plain sponsored link', () => {
+    const source = read(dist, 'util/jwt_decode/index.html')
+    expect(source).not.toContain('<script>alert(1)</script>')
+    const block = sponsorOn('util/jwt_decode/index.html')!
+    expect(block.closest('header')).toBeTruthy()
+    const link = block.querySelector('a[rel="sponsored noopener"]')!
+    expect(link.getAttribute('href')).toBe(
+      'https://auth.example/?utm_source=stringutilitybelt&utm_medium=sponsorship&utm_campaign=auth-jan&utm_content=util%2Fjwt_decode')
+    expect(link.textContent).toContain(`Tokens ${XSS}`)
+    expect(block.querySelector('img')?.getAttribute('src')).toBe('/sponsors/auth.svg')
+  })
+
+  it('never puts a sponsor on the tool or the index and site pages', () => {
+    for (const rel of ['index.html', 'utilities/index.html', 'recipes/index.html', 'blog/index.html', 'docs/index.html',
+      'about/index.html', 'advertise/index.html', 'changelog/index.html', '404.html']) {
+      expect(sponsorOn(rel), rel).toBeNull()
+    }
+  })
 })
 
 describe('buildSeo recipes', () => {

@@ -18,6 +18,7 @@ import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { RecipeCards } from './recipes/RecipeArticle'
 import { recipesUsing } from './recipes/recipeHelpers'
 import { SITE_NAME, displayName, pageTitle } from './seo'
+import PageSponsor from '@/app/sponsors/PageSponsor'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
   dom: 'Needs the DOM (DOMParser/document) — browser main thread only.',
@@ -199,6 +200,8 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
             {meta.tags.map(t => <span key={`t:${t}`} className="chip" title="tag">{t}</span>)}
           </div>
         )}
+        {/* in the header, never in the playground below it */}
+        <PageSponsor page={{ kind: 'utility', id }} />
       </header>
 
       {/* first after the header: most visitors arrive from a search for the tool itself */}

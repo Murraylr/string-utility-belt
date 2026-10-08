@@ -193,11 +193,13 @@ export interface RecipeArticleProps {
   /** The live widget (`RecipeWidget`). */
   live: React.ReactNode
   related: RecipeMeta[]
+  /** The page's sponsor block, at the end of the header, before the live widget. */
+  sponsor?: React.ReactNode
   /** A run is in progress: the step outputs shown are about to change. */
   running?: boolean
 }
 
-export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, running }: RecipeArticleProps) {
+export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, sponsor, running }: RecipeArticleProps) {
   const traceOf = new Map(steps.map(s => [s.id, s]))
   const skipOf = new Map((skip ?? []).map(s => [s.id, s]))
   const index = new Map(recipe.steps.map((s, i) => [s.id, i + 1]))
@@ -222,6 +224,7 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
             </li>
           ))}
         </ol>
+        {sponsor}
       </header>
 
       {live}

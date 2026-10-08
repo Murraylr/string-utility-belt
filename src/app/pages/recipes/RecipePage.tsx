@@ -20,6 +20,7 @@ import { openInEditorHref, relatedRecipes, stepTitle } from './recipeHelpers'
 import { loadRecipeData, peekRecipeData, type RecipeData } from './recipeData'
 import { followLink, openPipelineInEditor } from './openInEditor'
 import RecipeExtension from './RecipeExtension'
+import PageSponsor from '@/app/sponsors/PageSponsor'
 
 type Load = { status: 'loading' } | { status: 'missing' } | { status: 'error' } | { status: 'ok'; data: RecipeData }
 
@@ -203,6 +204,7 @@ function RecipeView({ data }: { data: RecipeData }) {
       steps={stepOutputs}
       skip={skip}
       related={relatedRecipes(recipe, RECIPE_INDEX)}
+      sponsor={<PageSponsor page={{ kind: 'recipe', slug: recipe.slug }} />}
       running={live && run.running}
       live={(
         <RecipeWidget

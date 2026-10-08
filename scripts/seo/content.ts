@@ -14,6 +14,18 @@ import { RecipeArticle, RecipesIndex, RecipeWidget } from '../../src/app/pages/r
 import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
 import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
 import type { RecipeTrace } from '../../src/recipes/trace'
+import SponsorBlock from '../../src/app/sponsors/SponsorBlock'
+import type { SponsorPage, Sponsorship } from '../../src/app/sponsors/sponsors'
+
+/** A page's sponsor at build time, rendered by the app's own `SponsorBlock`. */
+export interface PageSponsorSpec {
+  sponsorship: Sponsorship
+  page: SponsorPage
+}
+
+const sponsorElement = (spec: PageSponsorSpec, className?: string) => createElement(SponsorBlock, { ...spec, className })
+const renderSponsor = (spec: PageSponsorSpec | undefined, className?: string): string =>
+  spec ? renderToStaticMarkup(sponsorElement(spec, className)) : ''
 
 const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' | ') : t)
 
@@ -89,6 +101,8 @@ export interface UtilityContentExtras {
   related?: UtilityMeta[]
   /** Recipes that use this utility, linked by their `/recipes/<slug>/` paths. */
   recipes?: RecipeMeta[]
+  /** The page's sponsor, at the end of the header as in `UtilityDocPage`. */
+  sponsor?: PageSponsorSpec
 }
 
 /**
@@ -163,6 +177,7 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
       <p>${escapeHtml(meta.category)}</p>
       <p>${escapeHtml(meta.description)}</p>
       <p>accepts <code>${escapeHtml(typesOf(meta.accepts))}</code> → produces <code>${escapeHtml(typesOf(meta.produces))}</code></p>
+      ${renderSponsor(extras.sponsor)}
     </header>
     ${guideHtml}
     ${paramsHtml}
@@ -268,7 +283,7 @@ export function renderBlogIndexContent(posts: BlogPostMeta[]): string {
 }
 
 /** Static snapshot of `BlogPost`: pre-rendered markdown body (already HTML-escaped by `renderMarkdownDocument`). */
-export function renderBlogPostContent(meta: { title?: string; date?: string; updated?: string }, bodyHtml: string): string {
+export function renderBlogPostContent(meta: { title?: string; date?: string; updated?: string }, bodyHtml: string, sponsor?: PageSponsorSpec): string {
   const updated = meta.updated && meta.updated !== meta.date
     ? `<p>Updated <time datetime="${escapeHtml(meta.updated)}">${escapeHtml(meta.updated)}</time></p>`
     : ''
@@ -278,6 +293,7 @@ export function renderBlogPostContent(meta: { title?: string; date?: string; upd
       ${meta.title ? `<h1>${escapeHtml(meta.title)}</h1>` : ''}
       ${meta.date ? `<time datetime="${escapeHtml(meta.date)}">${escapeHtml(meta.date)}</time>` : ''}
       ${updated}
+      ${renderSponsor(sponsor, 'mt-3')}
     </header>
     <div>${bodyHtml}</div>
   </article>`
@@ -302,8 +318,9 @@ export function renderRecipeContent(opts: {
   trace: RecipeTrace
   utility: (id: string) => UtilityMeta | undefined
   related: RecipeMeta[]
+  sponsor?: PageSponsorSpec
 }): string {
-  const { recipe, guideHtml, trace, utility, related } = opts
+  const { recipe, guideHtml, trace, utility, related, sponsor } = opts
   const steps = toPipelineSteps(recipe.steps)
   const first = recipe.samples[0]
   const live = createElement(RecipeWidget, {
@@ -316,6 +333,7 @@ export function renderRecipeContent(opts: {
   })
   return renderToStaticMarkup(createElement(RecipeArticle, {
     recipe, utility, guideHtml, steps: trace.steps, skip: trace.skip, live, related,
+    sponsor: sponsor && sponsorElement(sponsor),
   }))
 }
 

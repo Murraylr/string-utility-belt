@@ -29,13 +29,13 @@ We send current figures — monthly page views of the pages you are interested i
 | Topic sponsorship | Every page on one topic: for example auth and tokens, Kubernetes and cloud, security and hashing, or data formats | Products that solve the problem the reader is working on |
 | Site-wide sponsorship | Every utility, recipe and blog page that no topic sponsor holds | Broad developer awareness |
 
-A sponsorship is one block on the page, labelled **Sponsor**: your logo, a line of text up to 100 characters and a link. It sits beside the page's content, near the top, on desktop and mobile. Each page shows one sponsor at a time, and a topic sponsorship is exclusive for its term.
+A sponsorship is one block on the page, labelled **Sponsor**: your logo, your name, a line of text up to 100 characters and a link that opens in a new tab. It sits at the end of the page's header, above the content, on desktop and mobile. Send the logo square — SVG, PNG or WebP, up to 50 KB — as it is shown at 48 × 48 pixels. Each page shows one sponsor at a time, and a topic sponsorship is exclusive for its term.
 
 Sponsorships are sold by the month, for a flat fee quoted with the current traffic of the pages they cover. There are no impression or click caps to manage.
 
 ## What makes it different
 
-- **No scripts, pixels or cookies.** We host your logo and render the block as part of the page. Your link is a plain link with UTM parameters, so you measure visits and sign-ups in your own analytics. Each month we report the page views of your pages.
+- **No scripts, pixels or cookies.** We host your logo and render the block as part of the page. Your link is a plain link with UTM parameters, so you measure visits and sign-ups in your own analytics. Each month we report the page views of your pages and the clicks on your link.
 - **Never in the work.** Sponsors never appear inside the pipeline editor, in embedded pipelines, or in the extensions, the command-line tool or the MCP server. People paste tokens and secrets into this site, so no sponsor's code ever runs beside them.
 - **Content first.** Sponsorship never changes which utilities exist, what they do, or what a guide recommends.
 

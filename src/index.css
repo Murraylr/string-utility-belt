@@ -164,6 +164,24 @@
   .chip {
     @apply text-[11px] px-2 py-0.5 rounded-full border bg-surface-2;
   }
+  /* SponsorBlock (src/app/sponsors): one compact row, its size fixed by the 48px logo box so it never shifts the page */
+  .sponsor {
+    @apply flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border bg-surface-2 px-3 py-2 text-sm;
+  }
+  .sponsor-link {
+    /* a 16rem basis wraps the label onto its own line before the text gets squeezed */
+    @apply flex items-center gap-3 min-w-0 grow basis-64 hover:underline underline-offset-2;
+    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 rounded-lg;
+  }
+  .sponsor-logo {
+    @apply size-12 shrink-0 rounded-lg object-contain bg-white;
+  }
+  .sponsor-label {
+    @apply text-[11px] uppercase tracking-wide text-muted sm:order-last;
+  }
+  .sponsor-label a {
+    @apply underline underline-offset-2;
+  }
   .muted {
     @apply text-sm text-muted;
   }

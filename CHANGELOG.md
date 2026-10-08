@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Advertise page** (`/advertise/`, linked from the footer): who the site is for, the sponsorship formats on offer,
   what sponsors may and may not do, and how to book.
+- **Sponsor block** on utility, recipe and blog pages, shown only while a sponsorship is booked: the sponsor's logo,
+  name, one line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie.
 
 ### Changed
 

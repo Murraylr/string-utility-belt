@@ -144,6 +144,12 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - No ad network: sponsorship is sold directly (`/advertise/`) and must render as part of the page — no
   third-party script, pixel or cookie (the CSP blocks them, and people paste tokens and secrets into this site).
   Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server.
+- Sponsors (`src/app/sponsors/`): bookings in `sponsorships.ts` (scope `site` or a topic from `topics.ts`, inclusive
+  UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
+  link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
+  name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
+  of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
+  event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts
