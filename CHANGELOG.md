@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **New icons in the new brand**: the "sub" keycap on an orange tile, for the site (browser tab, home-screen and
   installed-app icons, with a sharp 32 px favicon) and the browser extension's toolbar. At 16 px the toolbar icon is a
   bold "s" key, so it stays legible.
+- **Share cards in the new design**: the preview image a page shows when it's shared (Slack, X, LinkedIn and the
+  like) uses the site's warm canvas, the keycap mark, Instrument Sans and JetBrains Mono.
 - Plainer wording when the browser extension confirms a saved pipeline.
 
 ## [1.10.0] - 2026-10-08

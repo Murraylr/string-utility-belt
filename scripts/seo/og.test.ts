@@ -41,7 +41,7 @@ describe('runPool', () => {
   })
 })
 
-describe('OG glyph coverage (Plus Jakarta Sans latin has no arrows or U+2011)', () => {
+describe('OG glyph coverage (symbols the Latin subsets lack are mapped to ASCII)', () => {
   it('ogText maps symbols the font lacks to ASCII equivalents', () => {
     expect(ogText('number ↔ words')).toBe('number <-> words')
     expect(ogText('1 → 1st, 2 ← 3')).toBe('1 -> 1st, 2 <- 3')

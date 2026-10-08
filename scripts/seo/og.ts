@@ -27,17 +27,30 @@ export function ensureResvgInit(): Promise<void> {
 
 export interface OgFonts {
   regular: Buffer
-  bold: Buffer
+  semibold: Buffer
+  mono: Buffer
 }
 
-/** Loads the Plus Jakarta Sans weights satori needs (400 + 700, Latin). */
+/** Loads the site's typefaces as satori needs them (Latin, .woff): Instrument Sans 400 + 600, JetBrains Mono 500. */
 export function loadOgFonts(): OgFonts {
-  const base = path.dirname(require.resolve('@fontsource/plus-jakarta-sans/package.json'))
+  const sans = path.dirname(require.resolve('@fontsource/instrument-sans/package.json'))
+  const mono = path.dirname(require.resolve('@fontsource/jetbrains-mono/package.json'))
   return {
-    regular: readFileSync(path.join(base, 'files/plus-jakarta-sans-latin-400-normal.woff')),
-    bold: readFileSync(path.join(base, 'files/plus-jakarta-sans-latin-700-normal.woff')),
+    regular: readFileSync(path.join(sans, 'files/instrument-sans-latin-400-normal.woff')),
+    semibold: readFileSync(path.join(sans, 'files/instrument-sans-latin-600-normal.woff')),
+    mono: readFileSync(path.join(mono, 'files/jetbrains-mono-latin-500-normal.woff')),
   }
 }
+
+/** The brand mark (scripts/icons.ts), for the card's lockup. */
+let mark: string | undefined
+const brandMark = (): string => {
+  mark ??= `data:image/png;base64,${readFileSync(path.join(path.dirname(require.resolve('../../package.json')), 'public/icons/icon-192.png')).toString('base64')}`
+  return mark
+}
+
+// The site's light tokens (src/index.css).
+const COLOR = { canvas: '#f8f7f3', ink: '#1f1915', muted: '#69625d', line: '#dcd9d3', accent: '#ca4b20' }
 
 export interface OgCardOptions {
   name: string
@@ -50,9 +63,9 @@ const truncate = (s: string, max: number): string => (s.length > max ? `${s.slic
 const sub = (codePoint: number, text: string): [string, string] => [String.fromCodePoint(codePoint), text]
 
 /**
- * Symbols utility names/descriptions use that the Latin subset of Plus Jakarta
- * Sans has no glyph for (satori would draw a .notdef box), mapped to text it
- * can draw. `findMissingGlyphs` (and its manifest-wide test) catches new ones.
+ * Symbols utility names/descriptions use that the Latin subsets of the card's
+ * fonts have no glyph for, or draw in a mismatched face, mapped to plain text.
+ * `findMissingGlyphs` (and its manifest-wide test) catches new ones.
  */
 const OG_SUBSTITUTES = new Map<string, string>([
   sub(0x2010, '-'), // hyphen
@@ -74,8 +87,9 @@ export function ogText(text: string): string {
 }
 
 const satoriFonts = (fonts: OgFonts) => [
-  { name: 'Plus Jakarta Sans', data: fonts.regular, weight: 400 as const, style: 'normal' as const },
-  { name: 'Plus Jakarta Sans', data: fonts.bold, weight: 700 as const, style: 'normal' as const },
+  { name: 'Instrument Sans', data: fonts.regular, weight: 400 as const, style: 'normal' as const },
+  { name: 'Instrument Sans', data: fonts.semibold, weight: 600 as const, style: 'normal' as const },
+  { name: 'JetBrains Mono', data: fonts.mono, weight: 500 as const, style: 'normal' as const },
 ]
 
 /**
@@ -92,7 +106,7 @@ const missingGlyphHook = (onMissing: (segment: string) => void) =>
 export async function findMissingGlyphs(text: string, fonts: OgFonts): Promise<string[]> {
   const unique = [...new Set(text)].filter(ch => ch.trim() !== '').join(' ')
   const missing = new Set<string>()
-  await satori({ type: 'div', props: { style: { display: 'flex', flexWrap: 'wrap', fontFamily: 'Plus Jakarta Sans' }, children: unique } } as unknown as Parameters<typeof satori>[0], {
+  await satori({ type: 'div', props: { style: { display: 'flex', flexWrap: 'wrap', fontFamily: 'Instrument Sans' }, children: unique } } as unknown as Parameters<typeof satori>[0], {
     width: WIDTH,
     height: HEIGHT,
     fonts: satoriFonts(fonts),
@@ -106,11 +120,12 @@ export async function findMissingGlyphs(text: string, fonts: OgFonts): Promise<s
 /** Minimal shape satori's object syntax needs — avoids depending on React's JSX types. */
 interface SatoriNode {
   type: string
-  props: { style?: Record<string, string | number>; children?: SatoriNode[] | SatoriNode | string }
+  props: { style?: Record<string, string | number>; src?: string; width?: number; height?: number; children?: SatoriNode[] | SatoriNode | string }
 }
 
-/** The 1200x630 satori element tree (object syntax, no JSX) for one OG card. */
+/** The 1200x630 satori element tree (object syntax, no JSX) for one OG card, in the site's design. */
 function ogTemplate({ name, category, description }: OgCardOptions): SatoriNode {
+  const text = (style: Record<string, string | number>, children: string): SatoriNode => ({ type: 'div', props: { style: { display: 'flex', ...style }, children } })
   return {
     type: 'div',
     props: {
@@ -120,35 +135,19 @@ function ogTemplate({ name, category, description }: OgCardOptions): SatoriNode 
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        backgroundColor: '#0b1220',
-        backgroundImage: 'linear-gradient(135deg, #0b1220 0%, #111827 60%, #0b1220 100%)',
-        padding: '64px',
-        fontFamily: 'Plus Jakarta Sans',
-        color: '#f8fafc',
+        backgroundColor: COLOR.canvas,
+        padding: '64px 72px 56px',
+        fontFamily: 'Instrument Sans',
+        color: COLOR.ink,
       },
       children: [
         {
           type: 'div',
           props: {
-            style: { display: 'flex', alignItems: 'center', gap: '14px' },
+            style: { display: 'flex', alignItems: 'center', gap: '16px' },
             children: [
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    width: '32px', height: '32px', borderRadius: '10px',
-                    backgroundColor: '#38bdf8', display: 'flex',
-                  },
-                  children: [],
-                },
-              },
-              {
-                type: 'div',
-                props: {
-                  style: { fontSize: '26px', fontWeight: 700, letterSpacing: '-0.01em' },
-                  children: BRAND,
-                },
-              },
+              { type: 'img', props: { src: brandMark(), width: 48, height: 48, style: { borderRadius: '11px' } } },
+              text({ fontSize: '28px', fontWeight: 600, letterSpacing: '-0.01em' }, BRAND),
             ],
           },
         },
@@ -158,40 +157,24 @@ function ogTemplate({ name, category, description }: OgCardOptions): SatoriNode 
             style: { display: 'flex', flexDirection: 'column', gap: '22px' },
             children: [
               category
-                ? {
-                    type: 'div',
-                    props: {
-                      style: {
-                        display: 'flex', fontSize: '18px', fontWeight: 700, color: '#38bdf8',
-                        backgroundColor: 'rgba(56,189,248,0.14)', padding: '8px 20px', borderRadius: '999px',
-                        letterSpacing: '0.08em', textTransform: 'uppercase', alignSelf: 'flex-start',
-                      },
-                      children: category,
-                    },
-                  }
+                ? text({
+                    fontFamily: 'JetBrains Mono', fontSize: '20px', fontWeight: 500, color: COLOR.accent,
+                    border: `1.5px solid ${COLOR.accent}`, borderRadius: '8px', padding: '6px 14px', alignSelf: 'flex-start',
+                  }, category)
                 : { type: 'div', props: { style: { display: 'flex' }, children: [] } },
-              {
-                type: 'div',
-                props: {
-                  style: { display: 'flex', fontSize: '68px', fontWeight: 700, lineHeight: 1.08 },
-                  children: truncate(name, 60),
-                },
-              },
-              {
-                type: 'div',
-                props: {
-                  style: { display: 'flex', fontSize: '28px', color: '#cbd5e1', maxWidth: '980px' },
-                  children: truncate(description, 140),
-                },
-              },
+              text({ fontSize: '72px', fontWeight: 600, lineHeight: 1.06, letterSpacing: '-0.03em' }, truncate(name, 60)),
+              text({ fontSize: '30px', lineHeight: 1.4, color: COLOR.muted, maxWidth: '1000px' }, truncate(description, 140)),
             ],
           },
         },
         {
           type: 'div',
           props: {
-            style: { display: 'flex', fontSize: '22px', color: '#64748b' },
-            children: SITE_HOST,
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '22px', borderTop: `1px solid ${COLOR.line}` },
+            children: [
+              text({ fontFamily: 'JetBrains Mono', fontSize: '22px', fontWeight: 500, color: COLOR.muted }, SITE_HOST),
+              text({ fontSize: '22px', color: COLOR.muted }, 'Free. Runs in your browser.'),
+            ],
           },
         },
       ],
