@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-10-08
+
 ### Changed
 
 - **New look across the whole site.** Warm, flat surfaces with a single orange accent, Instrument Sans for text and
