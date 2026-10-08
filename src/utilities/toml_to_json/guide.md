@@ -1,10 +1,10 @@
 ---
-title: TOML to JSON Converter — Parse TOML Online
+title: TOML to JSON Converter: Parse TOML Online
 description: Convert TOML config files to JSON online. Handles tables, array-of-tables, dotted keys and dates, with a configurable indent or minified output.
 ---
 ## What is TOML to JSON conversion?
 
-TOML is the configuration format behind tools like Cargo, Poetry and many app config files, but most code that consumes configuration at runtime — a web server, a build script, a browser app — wants plain JSON. This tool parses a TOML document and re-emits it as JSON, so you can read a `Cargo.toml` or `pyproject.toml` value from JavaScript, diff a config against a JSON schema, or just inspect a TOML file's structure more easily. [json to toml](/util/json_to_toml/) converts back the other way.
+TOML is the configuration format behind tools like Cargo, Poetry and many app config files, but most code that consumes configuration at runtime (a web server, a build script, a browser app) wants plain JSON. This tool parses a TOML document and re-emits it as JSON, so you can read a `Cargo.toml` or `pyproject.toml` value from JavaScript, diff a config against a JSON schema, or just inspect a TOML file's structure more easily. [json to toml](/util/json_to_toml/) converts back the other way.
 
 ## How it works
 
@@ -61,7 +61,7 @@ A document that holds only comments parses to an empty object `{}` rather than a
 
 ## Options
 
-- **indent** — the number of spaces used to pretty-print the JSON, from 0 to 10. `0` produces minified, single-line JSON with no extra whitespace. The default is 2.
+- **indent**: the number of spaces used to pretty-print the JSON, from 0 to 10. `0` produces minified, single-line JSON with no extra whitespace. The default is 2.
 
 ## Common uses
 
@@ -71,7 +71,7 @@ A document that holds only comments parses to an empty object `{}` rather than a
 
 ## Tips and pitfalls
 
-- Malformed TOML — an unterminated string, a stray `=` — is reported with the underlying parser's message rather than a generic failure.
+- Malformed TOML (an unterminated string, a stray `=`) is reported with the underlying parser's message rather than a generic failure.
 - TOML's `inf`, `-inf` and `nan` have no JSON form and come through as `null`; check the source TOML if a numeric field unexpectedly turns into `null`.
 - TOML integers are 64-bit, but a JavaScript number is exact only up to 2^53 − 1. An integer beyond that (such as `9007199254740993`) is rejected with an error rather than silently rounded.
 - If you need to go the other way, [json to toml](/util/json_to_toml/) has the opposite restriction: TOML has no `null`, so it rejects null-valued keys instead of silently dropping them.

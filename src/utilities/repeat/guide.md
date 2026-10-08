@@ -1,5 +1,5 @@
 ---
-title: Repeat String Online — Duplicate Text N Times
+title: Repeat String Online: Duplicate Text N Times
 description: Repeat any text a chosen number of times online, optionally joined by a separator, for test data, patterns, and quick duplication.
 ---
 ## What does this tool do?
@@ -44,8 +44,8 @@ output: 😀 😀
 
 ## Options
 
-- **count** — how many copies to produce, from 0 to 10,000 (default 2). The lower and upper bounds are enforced by the pipeline's own parameter validation, which keeps a single step from generating an unbounded amount of output and rejects a negative count before it ever reaches the utility.
-- **separator** — inserted between each copy, never before the first or after the last (default empty).
+- **count**: how many copies to produce, from 0 to 10,000 (default 2). The lower and upper bounds are enforced by the pipeline's own parameter validation, which keeps a single step from generating an unbounded amount of output and rejects a negative count before it ever reaches the utility.
+- **separator**: inserted between each copy, never before the first or after the last (default empty).
 
 ## Common uses
 
@@ -56,8 +56,8 @@ output: 😀 😀
 
 ## Tips and pitfalls
 
-- The **count** option is capped at 10,000 specifically because repetition multiplies the size of the output — an uncapped repeat count on even a modest input could produce output far larger than intended. If you need more copies than that, chain two repeat steps together (every step's output is still capped at 64 MiB).
-- The separator is inserted strictly between copies, so the total output length is `count` copies of the input plus `count - 1` copies of the separator — there is no separator before the first copy or trailing after the last one.
+- The **count** option is capped at 10,000 specifically because repetition multiplies the size of the output. An uncapped repeat count on even a modest input could produce output far larger than intended. If you need more copies than that, chain two repeat steps together (every step's output is still capped at 64 MiB).
+- The separator is inserted strictly between copies, so the total output length is `count` copies of the input plus `count - 1` copies of the separator. There is no separator before the first copy or trailing after the last one.
 - Repeating text is measured in whole copies of the string, not individual characters, so multi-character and Unicode input (including emoji) repeats correctly as a unit rather than being split apart.
 - The separator is used exactly as typed: backslash escapes such as `\n` are not translated, so the web app's single-line separator field cannot put each copy on its own line. End the input itself with a line break instead (the output then ends with one too).
 - Repetition cannot vary the copies. To add a running number to copies that sit on separate lines, follow this step with [number_lines](/util/number_lines/).

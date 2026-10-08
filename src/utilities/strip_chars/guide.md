@@ -1,10 +1,10 @@
 ---
-title: Strip Characters Online — Remove Punctuation or Emoji
+title: Strip Characters Online: Remove Punctuation or Emoji
 description: Remove punctuation, digits, letters, whitespace, emoji, non-ASCII text or a custom character set from text online, in one pass.
 ---
 ## What does stripping characters do?
 
-Stripping characters removes every character that belongs to a chosen category — punctuation, digits, letters, whitespace, non-ASCII characters, non-printable characters, emoji, or a set you type in yourself. It is a fast way to clean up text without writing a regular expression: pick a category, and every matching character is removed (or, with the invert option, every character *except* that category is removed).
+Stripping characters removes every character that belongs to a chosen category: punctuation, digits, letters, whitespace, non-ASCII characters, non-printable characters, emoji, or a set you type in yourself. It is a fast way to clean up text without writing a regular expression: pick a category, and every matching character is removed (or, with the invert option, every character *except* that category is removed).
 
 ## How it works
 
@@ -42,7 +42,7 @@ input: a-b_c/d
 output: abcd
 ```
 
-**Invert** flips the logic so that only characters in the chosen category are *kept*, and everything else is removed — useful for extracting just the digits out of a messy string, for example:
+**Invert** flips the logic so that only characters in the chosen category are *kept*, and everything else is removed. That is useful for extracting just the digits out of a messy string, for example:
 
 ```example
 title: invert to keep only digits
@@ -64,10 +64,10 @@ Empty input always returns empty output, no matter what the other options are se
 
 ## Options
 
-- **strip** — the category to match: `punctuation`, `digits`, `letters`, `whitespace`, `non-alphanumeric`, `non-ascii`, `non-printable`, `emoji`, or `custom`. Defaults to `punctuation`.
-- **custom characters** — the exact characters to match when **strip** is set to `custom`. Required in that mode; every character in this field is treated as an individual character to match, not a pattern, and backslash escapes like `\n` are not interpreted.
-- **invert (keep only these)** — when on, characters that do *not* match the category are removed instead, so the category becomes an allowlist rather than a blocklist. Default off.
-- **replace with** — text inserted in place of each removed character (or emoji cluster) instead of deleting it outright. Defaults to an empty string, which deletes matches.
+- **strip**: the category to match: `punctuation`, `digits`, `letters`, `whitespace`, `non-alphanumeric`, `non-ascii`, `non-printable`, `emoji`, or `custom`. Defaults to `punctuation`.
+- **custom characters**: the exact characters to match when **strip** is set to `custom`. Required in that mode; every character in this field is treated as an individual character to match, not a pattern, and backslash escapes like `\n` are not interpreted.
+- **invert (keep only these)**: when on, characters that do *not* match the category are removed instead, so the category becomes an allowlist rather than a blocklist. Default off.
+- **replace with**: text inserted in place of each removed character (or emoji cluster) instead of deleting it outright. Defaults to an empty string, which deletes matches.
 
 ## Common uses
 
@@ -80,9 +80,9 @@ Empty input always returns empty output, no matter what the other options are se
 
 - "punctuation" means the Unicode punctuation categories, which do not include symbols: `+`, `$`, `=`, `<`, `>`, `^`, `|`, `~`, the backtick and currency signs survive it. Use "non-alphanumeric" or a custom set to remove those too.
 - "digits" matches any Unicode number character, so superscripts like `²`, fractions like `½` and Roman numeral characters are removed along with `0`–`9` and non-Latin digits.
-- "non-alphanumeric" removes everything that is not a Unicode letter, mark or number — so it keeps accented letters, but strips spaces, line breaks, punctuation and symbols together.
+- "non-alphanumeric" removes everything that is not a Unicode letter, mark or number. So it keeps accented letters, but strips spaces, line breaks, punctuation and symbols together.
 - "non-printable" strips control characters (like NUL and BEL), Unicode format characters (like zero-width spaces, the byte-order mark and the zero-width joiner inside emoji sequences) and private-use characters, but deliberately keeps tab, newline and carriage return so a document is not shredded.
 - "emoji" uses the Unicode Extended_Pictographic property, which also covers `©`, `®` and `™`, so those are removed too.
-- To remove diacritics (accents) specifically while keeping the base letters, use [diacritics](/util/diacritics/) instead — that is a different operation from stripping "letters" here, which would remove the letters entirely.
+- To remove diacritics (accents) specifically while keeping the base letters, use [diacritics](/util/diacritics/) instead. That is a different operation from stripping "letters" here, which would remove the letters entirely.
 - For pattern-based removal rather than category-based (matching a specific regex), use [find and replace](/util/replace/) with an empty replacement.
 - To strip HTML tags rather than characters, use [strip html tags](/util/strip_html_tags/).

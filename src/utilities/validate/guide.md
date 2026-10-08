@@ -1,14 +1,14 @@
 ---
-title: Validate Email, URL, UUID & More Online — Format Check
+title: Validate Email, URL, UUID & More Online: Format Check
 description: Check whether text is a valid email, URL, UUID, IP address, semver, credit card, ISBN, date, JWT, slug, or 8 other formats, with clear reasons.
 ---
 ## What does this validate?
 
-This tool checks a piece of text against the rules of a specific format — email address, URL, UUID, IPv4
+This tool checks a piece of text against the rules of a specific format (email address, URL, UUID, IPv4
 or IPv6 address, semantic version, credit card number, ISBN, MAC address, hex color, JSON, base64, date,
-ISO 8601 date-time, domain name, port number, JWT, slug, or hostname — and tells you whether it's valid.
+ISO 8601 date-time, domain name, port number, JWT, slug, or hostname) and tells you whether it's valid.
 When it's valid, you usually also get a normalized form; when it isn't, you get a specific reason rather
-than a plain yes/no. These are syntax and checksum checks only — nothing is looked up online, so a valid
+than a plain yes/no. These are syntax and checksum checks only. Nothing is looked up online, so a valid
 email address or URL is not proof that it exists.
 
 ## How it works
@@ -78,7 +78,7 @@ output:
 ```
 
 `jwt` checks that the token has three well-formed base64url segments whose header and payload decode to
-JSON, and reports the algorithm and expiry claim if present — but it never checks the signature itself,
+JSON, and reports the algorithm and expiry claim if present, but it never checks the signature itself,
 since that requires a secret or key this tool doesn't have:
 
 ```example
@@ -135,32 +135,32 @@ output:
 
 ## Options
 
-- **type** — the format to check against: `email`, `url`, `uuid`, `ipv4`, `ipv6`, `semver`, `credit-card`,
+- **type**: the format to check against: `email`, `url`, `uuid`, `ipv4`, `ipv6`, `semver`, `credit-card`,
   `isbn`, `mac`, `hex-color`, `json`, `base64`, `date`, `iso8601`, `domain`, `port`, `jwt`, `slug`, or
   `hostname`. Defaults to `email`.
-- **validate each line** — off by default. When on, blank lines are skipped and every remaining line is
+- **validate each line**: off by default. When on, blank lines are skipped and every remaining line is
   validated on its own, with a summary of how many passed and failed.
 
 ## Common uses
 
 - Checking user-submitted data (emails, URLs, identifiers like credit card numbers or ISBNs) before it
   goes into a form, database, or API request.
-- Validating a batch of values — a list of emails from a spreadsheet, a list of UUIDs from a database
-  export — all at once with **validate each line**.
+- Validating a batch of values (a list of emails from a spreadsheet, a list of UUIDs from a database
+  export) all at once with **validate each line**.
 - Confirming a version string is valid SemVer, a date is a real calendar date, or a JSON blob actually
   parses before using it somewhere that expects strict input.
 - Sanity-checking configuration values like ports, hostnames, and domain names.
 
 ## Tips and pitfalls
 
-- Several validators return a **normalized** form even when the input differs only cosmetically from it —
+- Several validators return a **normalized** form even when the input differs only cosmetically from it:
   an email's domain is lowercased, IPv6 addresses are compressed per RFC 5952, and a UUID's hex digits are
-  lowercased — so you can use `normalized` as a canonical form once a value passes.
+  lowercased. So you can use `normalized` as a canonical form once a value passes.
 - `email` uses pragmatic rules, not the full RFC 5322 grammar: a local part of up to 64 characters (quoted
   local parts and non-ASCII letters are allowed), a domain of at least two labels with an alphabetic or
   `xn--` top-level domain, and 254 characters overall. IP-address domains such as `user@[192.168.0.1]` are
   rejected.
-- `url` accepts anything the browser's WHATWG URL parser accepts as an absolute URL, with any scheme — only
+- `url` accepts anything the browser's WHATWG URL parser accepts as an absolute URL, with any scheme. Only
   `http`, `https`, `ftp`, `ftps`, `ws` and `wss` URLs are also required to have a host. A value like
   `javascript:alert(1)` is reported as a valid URL, so check the scheme yourself before using a URL from
   untrusted input.
@@ -176,7 +176,7 @@ output:
   see [jwt decode](/util/jwt_decode/); to check an HMAC (HS256/384/512) signature, see
   [jwt verify](/util/jwt_verify/).
 - `iso8601` accepts calendar dates, week dates, ordinal dates, years, year-months, date-times, durations,
-  and two-part intervals — a plain date like `2024-03-01` is valid ISO 8601, but so is a duration like
+  and two-part intervals. A plain date like `2024-03-01` is valid ISO 8601, but so is a duration like
   `P3Y6M4D` or an interval like `2024-01-01/P1M`. Recurring intervals (`R5/…`) are not accepted.
 - For pulling values like emails or URLs out of a larger block of text rather than checking one value you
   already have, see [extract matches](/util/extract_preset/).

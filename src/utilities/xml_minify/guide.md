@@ -1,14 +1,14 @@
 ---
-title: XML Minifier Online — Remove Whitespace from XML
+title: XML Minifier Online: Remove Whitespace from XML
 description: Minify XML online by stripping indentation whitespace and comments, while keeping the spaces inside text and CDATA sections intact.
 ---
 ## What is XML minification?
 
-Hand-formatted or pretty-printed XML carries whitespace that exists purely for human readability — the newlines and indentation between tags. That whitespace adds size with no semantic value, so before transmitting or storing an XML document you often want it collapsed onto as few characters as possible, a job similar to `xmllint --noblanks`. Unlike a naive "remove all whitespace" approach, this tool only touches whitespace-only text and the line-break runs that wrap real text, so spaces within a line of text are kept.
+Hand-formatted or pretty-printed XML carries whitespace that exists purely for human readability: the newlines and indentation between tags. That whitespace adds size with no semantic value, so before transmitting or storing an XML document you often want it collapsed onto as few characters as possible, a job similar to `xmllint --noblanks`. Unlike a naive "remove all whitespace" approach, this tool only touches whitespace-only text and the line-break runs that wrap real text, so spaces within a line of text are kept.
 
 ## How it works
 
-Whitespace-only text sitting between two tags — usually pure indentation — is removed entirely:
+Whitespace-only text sitting between two tags (usually pure indentation) is removed entirely:
 
 ```example
 title: strips indentation whitespace between tags
@@ -29,7 +29,7 @@ input: <a>
 output: <a><b>1</b></a>
 ```
 
-The tricky case is text that sits right next to real content. Indentation immediately inside an element's own tags is stripped, but a line break that separates two words — one before a sibling element, one after — is collapsed to a single space instead of being deleted outright, since deleting it would glue the words together:
+The tricky case is text that sits right next to real content. Indentation immediately inside an element's own tags is stripped, but a line break that separates two words (one before a sibling element, one after) is collapsed to a single space instead of being deleted outright, since deleting it would glue the words together:
 
 ```example
 title: a line break next to a sibling element becomes one space, not nothing
@@ -53,7 +53,7 @@ CDATA sections, processing instructions and the doctype declaration are always c
 
 ## Options
 
-- **remove comments** — when on (the default), `<!-- ... -->` comments are deleted along with their surrounding whitespace. When off, comments are kept exactly as written.
+- **remove comments**: when on (the default), `<!-- ... -->` comments are deleted along with their surrounding whitespace. When off, comments are kept exactly as written.
 
 ## Common uses
 
@@ -63,7 +63,7 @@ CDATA sections, processing instructions and the doctype declaration are always c
 
 ## Tips and pitfalls
 
-- Running this tool twice in a row is idempotent — minifying already-minified XML changes nothing further.
+- Running this tool twice in a row is idempotent. Minifying already-minified XML changes nothing further.
 - Every whitespace-only text node goes, even a meaningful one: `<b>a</b> <i>b</i>` becomes `<b>a</b><i>b</i>`, and `<a> </a>` becomes `<a></a>`. `xml:space="preserve"` is not honoured, so avoid it for XHTML-like mixed content or whitespace-sensitive data.
 - Minifying does not validate the document beyond checking that tags are properly nested and closed; malformed XML raises a specific error naming the problem.
 - To reverse this and make XML readable again, see [xml pretty](/util/xml_pretty/); to work with the data as JSON instead of markup, see [xml to json](/util/xml_to_json/).

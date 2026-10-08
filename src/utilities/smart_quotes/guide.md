@@ -1,5 +1,5 @@
 ---
-title: Smart Quotes Converter — Curly Quotes Online
+title: Smart Quotes Converter: Curly Quotes Online
 description: Convert straight quotes to typographic curly quotes online, or the reverse. Also handles em/en dashes and ellipses, in English, German, French, or Polish style.
 ---
 ## What are smart quotes?
@@ -8,7 +8,7 @@ description: Convert straight quotes to typographic curly quotes online, or the 
 
 ## How it works
 
-The **direction** option picks which way the conversion runs. Converting **to straight** (the default) replaces every curly quote, dash, and ellipsis with its plain ASCII equivalent — including French guillemets (`« »`) and their inner spacing, which are removed along with the quote marks themselves:
+The **direction** option picks which way the conversion runs. Converting **to straight** (the default) replaces every curly quote, dash, and ellipsis with its plain ASCII equivalent, including French guillemets (`« »`) and their inner spacing, which are removed along with the quote marks themselves:
 
 ```example
 title: converting typographic punctuation to plain ASCII
@@ -45,7 +45,7 @@ output: ’90s music
 
 ### Locale-specific quote styles
 
-The **locale** option (used only going to-smart) picks which pair of quote marks is used for double and single quotes — English `“ ”`, German `„ “`, French `« » ` with the narrow spacing built in, or Polish `„ ”`:
+The **locale** option (used only going to-smart) picks which pair of quote marks is used for double and single quotes: English `“ ”`, German `„ “`, French `« » ` with the narrow spacing built in, or Polish `„ ”`:
 
 ```example
 title: French guillemets, with their built-in spacing
@@ -64,11 +64,11 @@ output:
 
 ## Options
 
-- **direction** (`direction`, default `to-straight`) — `to-straight` converts typographic punctuation to plain ASCII; `to-smart` does the reverse.
-- **quotes** (`quotes`, default `true`) — whether curly/straight double and single quotes (and guillemets) are converted.
-- **dashes** (`dashes`, default `true`) — whether `--`/`---` and en/em dashes are converted.
-- **ellipsis** (`ellipsis`, default `true`) — whether `...` and the single ellipsis character `…` are converted.
-- **locale** (`locale`, default `en`) — `en`, `de`, `fr`, or `pl`; which quote character pair `to-smart` uses. Ignored going to-straight, since every locale's quotes straighten to the same plain `"` and `'`.
+- **direction** (`direction`, default `to-straight`): `to-straight` converts typographic punctuation to plain ASCII; `to-smart` does the reverse.
+- **quotes** (`quotes`, default `true`): whether curly/straight double and single quotes (and guillemets) are converted.
+- **dashes** (`dashes`, default `true`): whether `--`/`---` and en/em dashes are converted.
+- **ellipsis** (`ellipsis`, default `true`): whether `...` and the single ellipsis character `…` are converted.
+- **locale** (`locale`, default `en`): `en`, `de`, `fr`, or `pl`; which quote character pair `to-smart` uses. Ignored going to-straight, since every locale's quotes straighten to the same plain `"` and `'`.
 
 ## Common uses
 

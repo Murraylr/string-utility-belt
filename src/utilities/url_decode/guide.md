@@ -1,14 +1,14 @@
 ---
-title: URL Decode Online — Percent-Decode URL Text
+title: URL Decode Online: Percent-Decode URL Text
 description: Percent-decode a URL-encoded string back to plain text with decodeURIComponent, including UTF-8 multi-byte sequences.
 ---
 ## What does URL decoding do?
 
-URLs represent characters outside their safe set — spaces, punctuation with structural meaning, non-ASCII text — as `%` followed by two hex digits (a percent-encoded byte). This tool reverses that: it's the counterpart to [URL encode](/util/url_encode/), using JavaScript's `decodeURIComponent` to turn a percent-encoded string back into the plain text it represents, correctly reassembling multi-byte UTF-8 sequences along the way.
+URLs represent characters outside their safe set (spaces, punctuation with structural meaning, non-ASCII text) as `%` followed by two hex digits (a percent-encoded byte). This tool reverses that: it's the counterpart to [URL encode](/util/url_encode/), using JavaScript's `decodeURIComponent` to turn a percent-encoded string back into the plain text it represents, correctly reassembling multi-byte UTF-8 sequences along the way.
 
 ## How it works
 
-The tool scans the input for `%XX` groups, converts each back to its byte value, and decodes the resulting bytes as UTF-8. Anything that isn't a `%XX` sequence — including characters that were never encoded in the first place — passes through unchanged.
+The tool scans the input for `%XX` groups, converts each back to its byte value, and decodes the resulting bytes as UTF-8. Anything that isn't a `%XX` sequence, including characters that were never encoded in the first place, passes through unchanged.
 
 ```example
 title: percent-decode
@@ -47,7 +47,7 @@ output: /path/to/file
 
 ## Tips and pitfalls
 
-- A malformed percent sequence — `%` not followed by two valid hex digits, or `%XX` bytes that don't form valid UTF-8 (such as `%E9`, which is `é` in Latin-1 but not in UTF-8) — throws an error rather than guessing at the intended character. If you're decoding text from an unreliable source, expect to handle that error.
+- A malformed percent sequence throws an error rather than guessing at the intended character. Malformed means `%` not followed by two valid hex digits, or `%XX` bytes that don't form valid UTF-8 (such as `%E9`, which is `é` in Latin-1 but not in UTF-8). If you're decoding text from an unreliable source, expect to handle that error.
 - This decodes one component's worth of encoding. If you have a full URL with a query string attached, take it apart first with [URL parse](/util/url_parse/), which decodes each part appropriately, rather than decoding the whole URL as one blob.
 - To go the other direction, use [URL encode](/util/url_encode/).
-- A literal `+` in the input is left as a literal `+` character, not converted to a space — that conversion is specific to `application/x-www-form-urlencoded` form data, not to URL decoding in general. If you're decoding a form-encoded body, convert `+` to a space yourself first.
+- A literal `+` in the input is left as a literal `+` character, not converted to a space. That conversion is specific to `application/x-www-form-urlencoded` form data, not to URL decoding in general. If you're decoding a form-encoded body, convert `+` to a space yourself first.

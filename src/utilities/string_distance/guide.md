@@ -1,5 +1,5 @@
 ---
-title: String Distance Calculator — Levenshtein & More Online
+title: String Distance Calculator: Levenshtein & More Online
 description: Compare two strings with Levenshtein, Damerau-Levenshtein, Jaro-Winkler, Dice, Jaccard, cosine, or LCS distance and similarity scores.
 ---
 ## What is string distance?
@@ -30,8 +30,8 @@ output:
 }
 ```
 
-Damerau-Levenshtein adds one more edit type — swapping two adjacent characters counts as a single edit
-instead of two substitutions — so a simple transposition scores lower than plain Levenshtein would give it.
+Damerau-Levenshtein adds one more edit type: swapping two adjacent characters counts as a single edit
+instead of two substitutions. So a simple transposition scores lower than plain Levenshtein would give it.
 This tool implements the common "optimal string alignment" variant, in which no substring is edited more
 than once: `ca` to `abc` is 3 here, where the unrestricted Damerau-Levenshtein distance is 2.
 
@@ -107,12 +107,12 @@ output:
 
 ## Options
 
-- **other string** — the string to compare the input against.
-- **algorithm** — `levenshtein` (default), `damerau-levenshtein`, `hamming`, `jaro`, `jaro-winkler`, `dice`,
+- **other string**: the string to compare the input against.
+- **algorithm**: `levenshtein` (default), `damerau-levenshtein`, `hamming`, `jaro`, `jaro-winkler`, `dice`,
   `jaccard`, `lcs`, or `cosine`.
-- **ignore case** — off by default. When on, both strings are lowercased before comparing (the `a` and `b`
+- **ignore case**: off by default. When on, both strings are lowercased before comparing (the `a` and `b`
   fields in the result still show your original, unmodified strings).
-- **normalized distance (0-1)** — off by default, so `distance` is the raw edit count for Levenshtein,
+- **normalized distance (0-1)**: off by default, so `distance` is the raw edit count for Levenshtein,
   Damerau-Levenshtein, Hamming, and LCS. Turn it on to scale those same distances into 0..1 (dividing by
   the longer string's length, or by the combined length for LCS) so results from different string lengths
   are comparable. The coefficient-based algorithms (Jaro, Jaro-Winkler, Dice, Jaccard, cosine) are always
@@ -120,15 +120,15 @@ output:
 
 ## Which algorithm to use
 
-- **levenshtein** / **damerau-levenshtein** — general-purpose edit distance; use Damerau-Levenshtein when
+- **levenshtein** / **damerau-levenshtein**: general-purpose edit distance; use Damerau-Levenshtein when
   transposed letters (a common typo) should count as a smaller error than two substitutions.
-- **hamming** — only meaningful for strings you expect to already be the same length, such as comparing
+- **hamming**: only meaningful for strings you expect to already be the same length, such as comparing
   fixed-width codes or hashes.
-- **jaro** / **jaro-winkler** — tuned for short strings like names, especially when the strings tend to
+- **jaro** / **jaro-winkler**: tuned for short strings like names, especially when the strings tend to
   share a prefix.
-- **dice** / **jaccard** / **cosine** — bigram-overlap measures that are less sensitive to where a
+- **dice** / **jaccard** / **cosine**: bigram-overlap measures that are less sensitive to where a
   difference falls in the string, useful for fuzzy deduplication of longer text.
-- **lcs** — distance is the combined length minus twice the longest common subsequence, i.e. the number
+- **lcs**: distance is the combined length minus twice the longest common subsequence, i.e. the number
   of insertions and deletions (no substitutions) needed. Useful when shared characters may be spread out
   with other text in between; they still have to appear in the same order.
 
@@ -136,21 +136,21 @@ output:
 
 - Fuzzy-matching user input against a list of known values (city names, product names, commands) to
   suggest a correction.
-- Deduplicating near-identical records — customer names, addresses, log lines — that differ by a typo or
+- Deduplicating near-identical records (customer names, addresses, log lines) that differ by a typo or
   small formatting difference.
 - Scoring "did you mean" suggestions or autocomplete candidates by similarity.
 - Comparing two versions of a short string as a numeric alternative to a full [text diff](/util/text_diff/).
 
 ## Tips and pitfalls
 
-- `similarity` is always `1 − distance` on the algorithm's natural 0..1 scale — for Levenshtein and
+- `similarity` is always `1 − distance` on the algorithm's natural 0..1 scale. For Levenshtein and
   Damerau-Levenshtein without **normalized distance** on, `distance` is a raw edit count that can exceed 1,
   so compare `similarity` (not `distance`) when you want a score you can compare across different string
   lengths.
 - Every algorithm here counts by Unicode code point, so an emoji or a precomposed accented letter counts as
   one unit, not one per UTF-16 code unit. Text is not Unicode-normalized, though: an accent typed as a
   separate combining mark is a second code point, so `é` and `e` + U+0301 are not treated as equal.
-- Hamming distance throws an error rather than guessing when the two strings have different lengths — pad
+- Hamming distance throws an error rather than guessing when the two strings have different lengths. Pad
   or truncate first with [pad](/util/pad/) or [truncate](/util/truncate/) if you need to compare
   different-length strings that way anyway.
 - Floating-point rounding can leave two identical strings a hair away from a perfect score internally; this

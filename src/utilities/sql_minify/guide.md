@@ -1,10 +1,10 @@
 ---
-title: SQL Minifier Online — Collapse SQL to One Line
+title: SQL Minifier Online: Collapse SQL to One Line
 description: Minify SQL online by collapsing whitespace onto one line and stripping -- and /* */ comments, while leaving string literals untouched.
 ---
 ## What is SQL minification?
 
-A pretty-printed SQL query spread across many lines is easy to read but bulky to store, log, or embed in a single-line config value or shell command. This tool collapses a SQL query onto one line — squeezing each run of whitespace down to a single space and, optionally, removing comments — while being careful never to touch the contents of a string literal or quoted identifier, including a comment marker that only looks like one inside a string.
+A pretty-printed SQL query spread across many lines is easy to read but bulky to store, log, or embed in a single-line config value or shell command. This tool collapses a SQL query onto one line. It squeezes each run of whitespace down to a single space and can remove comments, while being careful never to touch the contents of a string literal or quoted identifier, including a comment marker that only looks like one inside a string.
 
 ## How it works
 
@@ -47,8 +47,8 @@ from t
 
 ## Options
 
-- **remove comments** — on by default, strips both `--` line comments and `/* */` block comments. When off, comments are preserved exactly, with only a mandatory line break after a `--` comment.
-- **newline after each ;** — off by default, which packs multiple statements onto one line. When on, each `;` is followed by a line break, so a script of several statements becomes one statement per line rather than one continuous line.
+- **remove comments**: on by default, strips both `--` line comments and `/* */` block comments. When off, comments are preserved exactly, with only a mandatory line break after a `--` comment.
+- **newline after each ;**: off by default, which packs multiple statements onto one line. When on, each `;` is followed by a line break, so a script of several statements becomes one statement per line rather than one continuous line.
 
 ## Common uses
 

@@ -1,10 +1,10 @@
 ---
-title: XML Formatter Online — Pretty Print and Indent XML
+title: XML Formatter Online: Pretty Print and Indent XML
 description: Pretty-print and re-indent XML online with a configurable indent width. Comments, CDATA, processing instructions and the doctype stay intact.
 ---
 ## What is XML pretty printing?
 
-Minified or machine-generated XML — a single long line straight out of an API response or a build tool — is hard to read and even harder to diff. This tool re-indents XML so that each element sits on its own line, nested according to the document's structure, the same job tools like `xmllint --format` or `tidy` do. Because it uses a hand-written tokenizer rather than a DOM parser, comments, CDATA sections, processing instructions and the doctype declaration all survive untouched instead of being dropped or rewritten.
+Minified or machine-generated XML (a single long line straight out of an API response or a build tool) is hard to read and even harder to diff. This tool re-indents XML so that each element sits on its own line, nested according to the document's structure, the same job tools like `xmllint --format` or `tidy` do. Because it uses a hand-written tokenizer rather than a DOM parser, comments, CDATA sections, processing instructions and the doctype declaration all survive untouched instead of being dropped or rewritten.
 
 ## How it works
 
@@ -19,7 +19,7 @@ output: <root>
 </root>
 ```
 
-An element that contains only text stays on one line rather than pushing the text onto its own line — `<a>1</a>`, not `<a>\n  1\n</a>` — since text-only elements read better compact. The same is true for "mixed content", where text sits alongside inline elements like `<b>`:
+An element that contains only text stays on one line rather than pushing the text onto its own line (`<a>1</a>`, not `<a>\n  1\n</a>`), since text-only elements read better compact. The same is true for "mixed content", where text sits alongside inline elements like `<b>`:
 
 ```example
 title: mixed content stays on one line instead of reflowing words
@@ -55,8 +55,8 @@ output: <!DOCTYPE root SYSTEM "r.dtd">
 
 ## Options
 
-- **indent** — the number of spaces per nesting level, from 0 to 16. `0` puts every element on its own line with no leading spaces, useful for a line-based diff. The default is 2.
-- **collapse empty elements** — when on (the default), an element with no children and no text renders as a self-closing tag (`<b/>`); when off, it renders as an explicit open/close pair (`<b></b>`).
+- **indent**: the number of spaces per nesting level, from 0 to 16. `0` puts every element on its own line with no leading spaces, useful for a line-based diff. The default is 2.
+- **collapse empty elements**: when on (the default), an element with no children and no text renders as a self-closing tag (`<b/>`); when off, it renders as an explicit open/close pair (`<b></b>`).
 
 ## Common uses
 
@@ -68,5 +68,5 @@ output: <!DOCTYPE root SYSTEM "r.dtd">
 
 - Attributes spread across multiple source lines are collapsed onto the tag's own line and normalized to single spaces between them.
 - Text is tidied, not kept byte for byte: line breaks inside text become single spaces, leading and trailing whitespace in an element's text is trimmed (`<a>  x  </a>` becomes `<a>x</a>`), and whitespace-only text between elements is dropped, so `<b>a</b> <i>b</i>` loses the space between them. `xml:space="preserve"` is not honoured; skip this tool for whitespace-sensitive content.
-- Running this tool on already-formatted XML is idempotent — it produces the same output again rather than drifting.
+- Running this tool on already-formatted XML is idempotent. It produces the same output again rather than drifting.
 - Malformed XML (a mismatched or unclosed tag) raises a specific error rather than guessing at the intended structure. It is not a full validator, though: an unescaped `&` or an undeclared entity passes through unchanged. To go the opposite direction and collapse XML back onto one compact line, see [xml minify](/util/xml_minify/); to convert between XML and JSON, see [xml to json](/util/xml_to_json/) and [json to xml](/util/json_to_xml/).

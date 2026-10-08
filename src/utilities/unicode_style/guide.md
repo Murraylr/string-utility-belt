@@ -1,14 +1,14 @@
 ---
-title: Unicode Text Style Generator — Fancy Fonts Online
+title: Unicode Text Style Generator: Fancy Fonts Online
 description: Restyle text online with Unicode look-alike characters: bold, italic, script, fraktur, bubble, fullwidth, upside-down, small caps, and glitchy zalgo text.
 ---
 ## What is Unicode text styling?
 
-Unicode includes several blocks of characters that look like styled Latin letters — bold, italic, script, monospace, circled, or fullwidth forms — even though, to a computer, they are entirely different characters from the plain letters they resemble. This tool maps ordinary ASCII letters and digits onto those look-alike characters, producing "fancy" text you can paste anywhere plain text is accepted, such as a bio or a chat message, since no real formatting (like actual bold) is involved — it is achieved entirely through different characters.
+Unicode includes several blocks of characters that look like styled Latin letters (bold, italic, script, monospace, circled, or fullwidth forms) even though, to a computer, they are entirely different characters from the plain letters they resemble. This tool maps ordinary ASCII letters and digits onto those look-alike characters, producing "fancy" text you can paste anywhere plain text is accepted, such as a bio or a chat message, since no real formatting (like actual bold) is involved. It is achieved entirely through different characters.
 
 ## How it works
 
-Each style is either a **range mapping** — shifting a letter's code point into a parallel Unicode block, such as the Mathematical Alphanumeric Symbols used for bold, italic, script, and fraktur — or a **lookup table** for styles like small caps, superscript, subscript, and upside-down text, where the look-alike characters are scattered across several unrelated Unicode blocks rather than sitting in one contiguous range. A handful of styles append a combining mark to each character instead of replacing it.
+Each style is either a **range mapping**, which shifts a letter's code point into a parallel Unicode block such as the Mathematical Alphanumeric Symbols used for bold, italic, script, and fraktur, or a **lookup table** for styles like small caps, superscript, subscript, and upside-down text, where the look-alike characters are scattered across several unrelated Unicode blocks rather than sitting in one contiguous range. A handful of styles append a combining mark to each character instead of replacing it.
 
 ```example
 title: bold, using the mathematical bold letters
@@ -64,9 +64,9 @@ output:
 
 ## Options
 
-- **style** (`style`, default `fullwidth`) — one of 18 styles: `fullwidth`, `small-caps`, `bubble`, `bubble-filled`, `square`, `upside-down`, `bold`, `italic`, `bold-italic`, `monospace`, `script`, `fraktur`, `double-struck`, `strikethrough`, `underline`, `superscript`, `subscript`, or `zalgo`.
-- **zalgo intensity** (`intensity`, default `3`, range 0–200) — the maximum number of combining marks stacked above and below each character (with up to half as many more struck through it); each character gets a random count up to that limit. Only used by the `zalgo` style; `0` leaves the text unmarked.
-- **zalgo seed** (`seed`, default `0`) — `0` derives a seed from the input text itself, so the same text always looks the same across runs even without picking a seed; any other whole number picks a specific reproducible pattern independent of the text.
+- **style** (`style`, default `fullwidth`): one of 18 styles: `fullwidth`, `small-caps`, `bubble`, `bubble-filled`, `square`, `upside-down`, `bold`, `italic`, `bold-italic`, `monospace`, `script`, `fraktur`, `double-struck`, `strikethrough`, `underline`, `superscript`, `subscript`, or `zalgo`.
+- **zalgo intensity** (`intensity`, default `3`, range 0–200): the maximum number of combining marks stacked above and below each character (with up to half as many more struck through it); each character gets a random count up to that limit. Only used by the `zalgo` style; `0` leaves the text unmarked.
+- **zalgo seed** (`seed`, default `0`): `0` derives a seed from the input text itself, so the same text always looks the same across runs even without picking a seed; any other whole number picks a specific reproducible pattern independent of the text.
 
 `upside-down` also reverses reading order: each line's characters are reversed, and the lines themselves swap top-to-bottom, so a whole multi-line block reads correctly upside down, not just each character individually.
 
@@ -78,7 +78,7 @@ output:
 
 ## Tips and pitfalls
 
-- These are not "fonts" in any typographic sense — they are distinct Unicode characters, so **most search boxes, case-insensitive matching and screen readers treat styled text as different from the plain letters it resembles.** A screen reader may spell mathematical letters out one by one by their character names ("mathematical bold capital H…") or skip them entirely. Do not use them anywhere the text needs to remain searchable or accessible, such as a name, a heading or a link.
+- These are not "fonts" in any typographic sense. They are distinct Unicode characters, so **most search boxes, case-insensitive matching and screen readers treat styled text as different from the plain letters it resembles.** A screen reader may spell mathematical letters out one by one by their character names ("mathematical bold capital H…") or skip them entirely. Do not use them anywhere the text needs to remain searchable or accessible, such as a name, a heading or a link.
 - `superscript` and `subscript` are incomplete because Unicode is: there is no superscript `q`, and no subscript `b`, `c`, `d`, `f`, `g`, `q`, `w`, `y` or `z`, so those letters stay full-size in otherwise raised or lowered text. Capitals with no superscript form fall back to the lowercase superscript letter.
 - Some renderers and older systems do not have glyphs for every mathematical alphanumeric or bubble character and will show a placeholder box (tofu) instead.
 - High `zalgo` intensity values produce a lot of combining marks per character; very long input at high intensity can produce a correspondingly large amount of output.
