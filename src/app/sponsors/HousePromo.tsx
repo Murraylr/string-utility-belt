@@ -9,7 +9,7 @@ import { choosePromo, fixedPromo } from './promos'
 import { pageKey, type SponsorPage } from './sponsors'
 
 /**
- * Our own extension in the sponsor slot of a page no sponsor has booked (`PromoBlock`).
+ * Our own tool in the sponsor slot of a page no sponsor has booked (`PromoBlock`).
  * The browser extension only where this browser can install it and it has not answered;
  * while it is still answering, nothing — unless the page's promo does not depend on the
  * browser (`fixedPromo`), which the pre-render then shows too, so the page never shifts.

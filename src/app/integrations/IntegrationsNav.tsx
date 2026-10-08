@@ -1,17 +1,9 @@
 import React from 'react'
-import { SquareTerminal } from 'lucide-react'
 import { usePref } from '@/app/prefs'
 import { track } from '@/app/analytics/analytics'
 import { useT } from '@/app/i18n/useT'
 import { INTEGRATION_LINKS, INTEGRATIONS_SEEN_PREF, type IntegrationId } from './links'
-import { ChromeIcon, McpIcon, VsCodeIcon } from './icons'
-
-const ICONS: Record<IntegrationId, React.ComponentType<{ size?: number; className?: string }>> = {
-  chrome: ChromeIcon,
-  vscode: VsCodeIcon,
-  mcp: McpIcon,
-  cli: ({ size, className }) => <SquareTerminal size={size} className={className} aria-hidden="true" focusable="false" />,
-}
+import { INTEGRATION_ICONS as ICONS } from './icons'
 
 // visible text, and the accessible name that starts with it (WCAG 2.5.3, label in name)
 const TEXT = {

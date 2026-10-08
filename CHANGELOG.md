@@ -12,8 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   what sponsors may and may not do, and how to book.
 - **Sponsor block** on utility, recipe and blog pages: while a sponsorship is booked, the sponsor's logo, name, one
   line of text and a plain link, labelled "Sponsor" — served by this site, with no script, pixel or cookie. Until
-  then it introduces our own extensions: the browser extension in a desktop Chrome, Edge or other Chromium browser
-  that doesn't have it yet, otherwise the VS Code extension (not shown on phones).
+  then it introduces our own tools, matched to the page (not shown on phones): the command-line tool on Kubernetes and
+  cloud pages, the MCP server on hashing and security pages, the VS Code extension on data-format and recipe pages, and
+  elsewhere the browser extension in a desktop Chrome, Edge or other Chromium browser that doesn't have it yet,
+  otherwise the VS Code extension.
 
 ### Changed
 

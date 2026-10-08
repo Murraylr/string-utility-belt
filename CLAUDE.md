@@ -151,11 +151,14 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
   event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
   Both go through `Slot` (the shared layout).
-- An unbooked slot shows our own extension (`HousePromo` → `PromoBlock`, `promos.ts`): labelled "From String Utility
-  Belt", never "Sponsor"; the browser extension only where `canInstallExtension()` and it has not answered, never on
-  recipe pages (`RecipeExtension` offers it) or data-format pages, else VS Code; hidden below `sm`; nothing while the
-  extension is still answering, unless the page's promo is browser-independent (`fixedPromo`). Recipe pages, whose
-  pre-render matches the app, pre-render that promo so they never shift; clicks are `integration_click`, `source: 'promo'`.
+- An unbooked slot shows one of our own tools (`HousePromo` → `PromoBlock`, `promos.ts`; one promo per
+  `INTEGRATION_LINKS` entry, same links and `INTEGRATION_ICONS`): labelled "From String Utility Belt", never "Sponsor".
+  A topic's own tool first (`TOPIC_PROMOS`: Kubernetes/cloud → CLI, security/hashing → MCP, data formats → VS Code),
+  then VS Code on other recipe pages (`RecipeExtension` offers the browser extension), else the browser extension where
+  `canInstallExtension()` and it has not answered, else VS Code. Store pages open in a new tab, the CLI/MCP sections of
+  /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
+  browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
+  never shift; clicks are `integration_click`, `source: 'promo'`.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts

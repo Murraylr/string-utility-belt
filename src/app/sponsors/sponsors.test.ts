@@ -8,7 +8,7 @@ import { MAX_SPONSOR_NAME, MAX_SPONSOR_TEXT, pageKey, sponsorFor, sponsoredHref,
 import { SPONSORSHIPS } from './sponsorships'
 import { SPONSOR_TOPICS } from './topics'
 import { PROMOS } from './promos'
-import { CHROME_WEB_STORE_URL, VSCODE_MARKETPLACE_URL } from '@/app/integrations/links'
+import { CHROME_WEB_STORE_URL, INTEGRATION_LINKS, VSCODE_MARKETPLACE_URL } from '@/app/integrations/links'
 
 const booking = (over: Partial<Sponsorship> = {}): Sponsorship => ({
   id: 'acme-2026-11', scope: 'auth-tokens', name: 'Acme', text: 'Single sign-on in an afternoon.',
@@ -134,12 +134,14 @@ describe('bookings', () => {
 })
 
 describe('house promos', () => {
-  it('fit the slot a sponsor gets, and link to the store pages', () => {
+  it('cover every integration the header links to, fit the slot a sponsor gets, and go where the header goes', () => {
+    expect(Object.keys(PROMOS).sort()).toEqual(INTEGRATION_LINKS.map(l => l.id).sort())
     for (const [id, p] of Object.entries(PROMOS)) {
       expect(p.text.length, id).toBeLessThanOrEqual(MAX_SPONSOR_TEXT)
       expect(p.name.length, id).toBeLessThanOrEqual(MAX_SPONSOR_NAME)
+      expect(p.link, id).toBe(INTEGRATION_LINKS.find(l => l.id === id))
     }
-    expect(PROMOS.chrome.href).toBe(CHROME_WEB_STORE_URL)
-    expect(PROMOS.vscode.href).toBe(VSCODE_MARKETPLACE_URL)
+    expect(PROMOS.chrome.link.href).toBe(CHROME_WEB_STORE_URL)
+    expect(PROMOS.vscode.link.href).toBe(VSCODE_MARKETPLACE_URL)
   })
 })

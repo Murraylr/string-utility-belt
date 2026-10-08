@@ -62,7 +62,7 @@ describe('PageSponsor', () => {
     expect(block.className).toBe('sponsor hidden sm:flex mt-3')
     expect(block.getAttribute('data-promo')).toBe('vscode')
     const link = screen.getByRole('link', { name: `${PROMOS.vscode.name} — ${PROMOS.vscode.text} (opens in a new tab)` })
-    expect(link.getAttribute('href')).toBe(PROMOS.vscode.href)
+    expect(link.getAttribute('href')).toBe(PROMOS.vscode.link.href)
     expect(link.getAttribute('rel')).toBe('noopener')
     expect(block.textContent).toContain('From String Utility Belt · Advertise')
   })
@@ -118,6 +118,25 @@ describe('HousePromo', () => {
     fireEvent.click(screen.getByRole('link', { name: /String Utility Belt for Chrome/ }))
     expect(track).toHaveBeenCalledWith('integration_click', { integration: 'chrome', source: 'promo', sponsor_page: 'util/trim' })
     expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
+  })
+
+  it('offers each topic the tool its readers reach for, whatever the browser', () => {
+    browser('checking', true)
+    expect(promoOn({ kind: 'utility', id: 'cron_describe' })).toBe('cli')
+    expect(promoOn({ kind: 'recipe', slug: 'decode-kubernetes-secret' })).toBe('cli')
+    expect(promoOn({ kind: 'utility', id: 'sha3' })).toBe('mcp')
+    expect(promoOn({ kind: 'utility', id: 'json_pretty' })).toBe('vscode')
+    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+  })
+
+  it('opens the CLI and MCP sections of /integrations/ in place, not in a new tab', () => {
+    render(<PageSponsor page={{ kind: 'utility', id: 'sha3' }} sponsorships={[]} />)
+    const link = screen.getByRole('link', { name: `${PROMOS.mcp.name} — ${PROMOS.mcp.text}` })
+    expect(link.getAttribute('href')).toBe('/integrations/#mcp-server-for-ai-agents')
+    expect(link.hasAttribute('target')).toBe(false)
+    expect(link.hasAttribute('rel')).toBe(false)
+    fireEvent.click(link)
+    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'mcp', source: 'promo', sponsor_page: 'util/sha3' })
   })
 
   it('gives way to a paid sponsor', () => {
