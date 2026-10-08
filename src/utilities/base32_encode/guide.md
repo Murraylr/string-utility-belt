@@ -1,10 +1,10 @@
 ---
-title: Base32 Encode Online — Text to Base32 Converter
+title: Base32 Encode Online: Text to Base32 Converter
 description: Encode text or bytes to Base32 online with the RFC 4648, extended-hex, or z-base-32 alphabet, plus worked examples of padding and grouping.
 ---
 ## What is Base32 encoding?
 
-Base32 writes binary data using only **32 printable characters**, so the result is safe wherever a system only tolerates plain ASCII — the same problem [base64 encode](/util/base64_encode/) solves, but with a smaller, case-insensitive alphabet. The standard (RFC 4648) alphabet is `A–Z` plus the digits `2–7`, so it contains no `0` or `1` to confuse with the letters `O` and `I`/`L`. That makes Base32 a common choice for values a person might read aloud, type by hand, or store in a case-insensitive filesystem — most notably TOTP secret keys for authenticator apps.
+Base32 writes binary data using only **32 printable characters**, so the result is safe wherever a system only tolerates plain ASCII. It solves the same problem as [base64 encode](/util/base64_encode/), but with a smaller, case-insensitive alphabet. The standard (RFC 4648) alphabet is `A–Z` plus the digits `2–7`, so it contains no `0` or `1` to confuse with the letters `O` and `I`/`L`. That makes Base32 a common choice for values a person might read aloud, type by hand, or store in a case-insensitive filesystem. The best-known examples are TOTP secret keys for authenticator apps.
 
 Like all encodings, Base32 is not encryption: it hides nothing and anyone can reverse it with [base32 decode](/util/base32_decode/).
 
@@ -16,7 +16,7 @@ Base32 works on **5 bits at a time**: each output character represents one of 32
 2. The bytes are treated as one long bit stream and sliced into 5-bit chunks, most significant bits first.
 3. Each 5-bit chunk (0–31) is looked up in the chosen alphabet.
 
-`hello` is 5 bytes — 40 bits exactly, which divides evenly into eight 5-bit groups, so no padding is needed:
+`hello` is 5 bytes, or exactly 40 bits, which divides evenly into eight 5-bit groups, so no padding is needed:
 
 ```example
 title: five bytes divide evenly into 5-bit groups
@@ -34,7 +34,7 @@ input: foo
 output: MZXW6===
 ```
 
-Padding is optional — turning it off just omits the trailing `=` characters; a decoder can still work out the byte count from the number of characters:
+Padding is optional. Turning it off just omits the trailing `=` characters; a decoder can still work out the byte count from the number of characters:
 
 ```example
 title: padding off drops the trailing =
@@ -45,9 +45,9 @@ output: MZXW6
 
 ### Choosing an alphabet
 
-- **`rfc4648`** (default) — the standard alphabet described above.
-- **`rfc4648-hex`** — RFC 4648 §7's "extended hex" alphabet (`0–9A–V`), whose encoded strings sort in the same order as the bytes they encode; DNSSEC's NSEC3 records use it.
-- **`z-base-32`** — a lowercase, reshuffled alphabet designed for easier human reading and typing; conventionally used without padding.
+- **`rfc4648`** (default): the standard alphabet described above.
+- **`rfc4648-hex`**: RFC 4648 §7's "extended hex" alphabet (`0–9A–V`), whose encoded strings sort in the same order as the bytes they encode; DNSSEC's NSEC3 records use it.
+- **`z-base-32`**: a lowercase, reshuffled alphabet designed for easier human reading and typing; conventionally used without padding.
 
 ```example
 title: z-base-32 conventionally omits padding
@@ -68,8 +68,8 @@ output: MNQWNQ5J
 
 ## Options
 
-- **variant** — `rfc4648` (default), `rfc4648-hex`, or `z-base-32`. Pick the alphabet that the system consuming the output expects; they are not interchangeable.
-- **padding** — whether to add trailing `=` characters (default on). Turn it off for TOTP secrets and other contexts that don't need or want padding.
+- **variant**: `rfc4648` (default), `rfc4648-hex`, or `z-base-32`. Pick the alphabet that the system consuming the output expects; they are not interchangeable.
+- **padding**: whether to add trailing `=` characters (default on). Turn it off for TOTP secrets and other contexts that don't need or want padding.
 
 ## Common uses
 
@@ -81,6 +81,6 @@ output: MNQWNQ5J
 ## Tips and pitfalls
 
 - Base32 output is about **60% larger** than the input: 5 bytes always become 8 characters.
-- The three variants are not interchangeable — encoding with `rfc4648-hex` and decoding with the default `rfc4648` variant produces garbage or an error.
+- The three variants are not interchangeable. Encoding with `rfc4648-hex` and decoding with the default `rfc4648` variant produces garbage or an error.
 - This is an encoding, not a secret. Anyone can run [base32 decode](/util/base32_decode/) on the output; do not use it to hide sensitive data.
 - If you need the raw bytes back out instead of text, [base32 decode](/util/base32_decode/)'s output option switches between text and bytes.

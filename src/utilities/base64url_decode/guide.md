@@ -1,10 +1,10 @@
 ---
-title: Base64URL Decode Online — URL-Safe Base64 Decoder
-description: Decode URL-safe or standard Base64 to text or raw bytes online, tolerating missing padding and whitespace — ideal for JWT segments.
+title: Base64URL Decode Online: URL-Safe Base64 Decoder
+description: Decode URL-safe or standard Base64 to text or raw bytes online, tolerating missing padding and whitespace. Ideal for JWT segments.
 ---
 ## What is Base64url decoding?
 
-This reverses [base64url encode](/util/base64url_encode/): it takes a URL-safe Base64 string — using `-` and `_` in place of `+` and `/`, usually without `=` padding — and recovers the original text or bytes. It is what you need to read a [JWT](/util/jwt_decode/)'s header and payload by hand, since both are Base64url-encoded JSON.
+This reverses [base64url encode](/util/base64url_encode/): it takes a URL-safe Base64 string (using `-` and `_` in place of `+` and `/`, usually without `=` padding) and recovers the original text or bytes. It is what you need to read a [JWT](/util/jwt_decode/)'s header and payload by hand, since both are Base64url-encoded JSON.
 
 Unlike [base64 decode](/util/base64_decode/), which only recognizes `+` and `/` and rejects a wrong amount of `=` padding, this tool accepts **either** alphabet and ignores any run of trailing `=`, which makes it the more forgiving choice whenever you're not sure which flavor of Base64 you're looking at.
 
@@ -41,7 +41,7 @@ output: héllo ✓ 🎉
 
 ### Raw bytes
 
-Set **output** to `bytes` whenever the original data wasn't text — for instance, the raw signature bytes of a JWT, or a token that packs binary data rather than JSON:
+Set **output** to `bytes` whenever the original data wasn't text: for instance, the raw signature bytes of a JWT, or a token that packs binary data rather than JSON:
 
 ```example
 title: bytes output shows the decimal, hex, and text form together
@@ -54,7 +54,7 @@ utf8: hi
 
 ## Options
 
-- **output** — `text` (default) decodes the result as UTF-8; `bytes` returns the bytes untouched.
+- **output**: `text` (default) decodes the result as UTF-8; `bytes` returns the bytes untouched.
 
 ## Common uses
 
@@ -64,7 +64,7 @@ utf8: hi
 
 ## Tips and pitfalls
 
-- A **"lone trailing character"** error means the last group holds a single character (the length, after whitespace and padding are removed, leaves a remainder of 1 when divided by 4) — that combination can never come from valid Base64, padded or not, so it's rejected outright.
-- If decoding throws "not valid UTF-8", the original data was binary — switch the output option to `bytes`.
+- A **"lone trailing character"** error means the last group holds a single character (the length, after whitespace and padding are removed, leaves a remainder of 1 when divided by 4). That combination can never come from valid Base64, padded or not, so it's rejected outright.
+- If decoding throws "not valid UTF-8", the original data was binary. Switch the output option to `bytes`.
 - Decoding a JWT's payload (via [JWT decode](/util/jwt_decode/)) only reveals its contents; it does **not** verify the signature. Never trust a JWT's claims without verifying it against the issuer's key.
-- Base64url is not encryption — it hides nothing, and no key is needed to reverse it.
+- Base64url is not encryption. It hides nothing, and no key is needed to reverse it.

@@ -1,10 +1,10 @@
 ---
-title: BLAKE2 & BLAKE3 Hash Generator Online — Keyed
+title: BLAKE2 & BLAKE3 Hash Generator Online: Keyed
 description: Compute a BLAKE2b, BLAKE2s, or BLAKE3 digest, optionally keyed as a built-in MAC, output as hex or base64, in your browser.
 ---
 ## What are BLAKE2 and BLAKE3?
 
-BLAKE2 and BLAKE3 are modern cryptographic hash functions designed to be significantly faster than SHA-2 and SHA-3 in software while keeping strong security guarantees. BLAKE2 (2012) comes in two variants — **BLAKE2b**, tuned for 64-bit platforms, and **BLAKE2s**, tuned for smaller or 32-bit ones — and is derived from BLAKE, a finalist in the SHA-3 competition. **BLAKE3** (2020) is a newer, even faster redesign built around a Merkle tree, which is why it scales especially well on large input.
+BLAKE2 and BLAKE3 are modern cryptographic hash functions designed to be significantly faster than SHA-2 and SHA-3 in software while keeping strong security guarantees. BLAKE2 (2012) comes in two variants, **BLAKE2b** (tuned for 64-bit platforms) and **BLAKE2s** (tuned for smaller or 32-bit ones), and is derived from BLAKE, a finalist in the SHA-3 competition. **BLAKE3** (2020) is a newer, even faster redesign built around a Merkle tree, which is why it scales especially well on large input.
 
 A distinctive feature of both families, and one this tool exposes directly, is **built-in keyed hashing**: pass a key and you get a message authentication code (MAC) without needing a separate HMAC construction.
 
@@ -25,7 +25,7 @@ input: abc
 output: aa4938119b1dc7b87cbad0ffd200d0ae
 ```
 
-Supplying a **key** turns the hash into a MAC — the same input produces a completely different digest depending on the key, and without the key, nobody can reproduce or verify the output:
+Supplying a **key** turns the hash into a MAC. The same input produces a completely different digest depending on the key, and without the key, nobody can reproduce or verify the output:
 
 ```example
 title: BLAKE3-256, keyed with an exact 32-byte key
@@ -49,9 +49,9 @@ output:
 
 ## Options
 
-- **algorithm** — `BLAKE2b-256`, `BLAKE2b-512`, `BLAKE2s-128`, `BLAKE2s-256`, or `BLAKE3-256`.
-- **key (optional)** — leave blank for a plain, unkeyed hash. The key is read as UTF-8 bytes, and its length is measured in bytes, not characters — a key with accented letters or emoji can be longer in bytes than it looks. BLAKE2b accepts up to 64 key bytes, BLAKE2s up to 32, and BLAKE3 requires **exactly** 32 — anything else throws a clear error naming the limit.
-- **output** — `hex` (default) or `base64`.
+- **algorithm**: `BLAKE2b-256`, `BLAKE2b-512`, `BLAKE2s-128`, `BLAKE2s-256`, or `BLAKE3-256`.
+- **key (optional)**: leave blank for a plain, unkeyed hash. The key is read as UTF-8 bytes, and its length is measured in bytes, not characters, so a key with accented letters or emoji can be longer in bytes than it looks. BLAKE2b accepts up to 64 key bytes, BLAKE2s up to 32, and BLAKE3 requires **exactly** 32. Anything else throws a clear error naming the limit.
+- **output**: `hex` (default) or `base64`.
 
 ## Common uses
 
@@ -61,8 +61,8 @@ output:
 
 ## Tips and pitfalls
 
-- A BLAKE3-256 key must be **exactly** 32 bytes — 31 or 33 is rejected, unlike BLAKE2b/BLAKE2s, which merely cap the key length. The key field is text, not hex: a 64-character hex string (such as a SHA-256 digest from [hash](/util/hash/)) counts as 64 bytes and is rejected, so a BLAKE3 key here is 32 bytes of UTF-8 text, for example 32 ASCII characters.
-- Keyed BLAKE2/BLAKE3 is a MAC, but it doesn't come with expiry, sequence numbers, or the other pieces of a full authentication protocol — pair it with your own message design (nonces, timestamps) rather than assuming keying alone stops replay attacks.
-- None of these algorithms include salting or slow iteration for you, so like SHA-2 and SHA-3, they are not appropriate for hashing passwords on their own — use [bcrypt hash](/util/bcrypt_hash/), [argon2 hash](/util/argon2_hash/), or [pbkdf2](/util/pbkdf2/) instead.
+- A BLAKE3-256 key must be **exactly** 32 bytes. 31 or 33 is rejected, unlike BLAKE2b/BLAKE2s, which merely cap the key length. The key field is text, not hex: a 64-character hex string (such as a SHA-256 digest from [hash](/util/hash/)) counts as 64 bytes and is rejected, so a BLAKE3 key here is 32 bytes of UTF-8 text, for example 32 ASCII characters.
+- Keyed BLAKE2/BLAKE3 is a MAC, but it doesn't come with expiry, sequence numbers, or the other pieces of a full authentication protocol. Pair it with your own message design (nonces, timestamps) rather than assuming keying alone stops replay attacks.
+- None of these algorithms include salting or slow iteration for you, so like SHA-2 and SHA-3, they are not appropriate for hashing passwords on their own. Use [bcrypt hash](/util/bcrypt_hash/), [argon2 hash](/util/argon2_hash/), or [pbkdf2](/util/pbkdf2/) instead.
 - Empty input produces an empty result, not the digest of the empty message.
 - For the NIST-standardized SHA-2 and SHA-3 families, see [hash](/util/hash/) and [sha3](/util/sha3/).

@@ -1,5 +1,5 @@
 ---
-title: CSV to JSON Converter Online — Typed Records
+title: CSV to JSON Converter Online: Typed Records
 description: Convert CSV to JSON arrays of objects online, with delimiter detection, header keys, number and boolean typing, and trimming.
 ---
 ## What does converting CSV to JSON do?
@@ -7,7 +7,7 @@ description: Convert CSV to JSON arrays of objects online, with delimiter detect
 CSV is a great format for spreadsheets but an awkward one for code: every
 value is text, and there is no standard way to represent nested data. This
 tool parses CSV (or TSV, semicolon- or pipe-delimited data) with a full
-RFC 4180 reader — quoted fields, embedded newlines, `""` escapes — and turns
+RFC 4180 reader (quoted fields, embedded newlines, `""` escapes) and turns
 each row into a JSON object keyed by the header row, or into a plain array
 of arrays if you turn the header off.
 
@@ -15,14 +15,14 @@ of arrays if you turn the header off.
 
 1. The delimiter is auto-detected, or set explicitly.
 2. Rows are parsed, and blank lines (a lone empty, unquoted field) are
-   dropped — but a deliberately empty quoted field (`""`) is kept as real
+   dropped, but a deliberately empty quoted field (`""`) is kept as real
    data.
 3. With **first row is header** on (the default), row one supplies the
    object keys. A blank or duplicate header gets a positional fallback name
    (`column_2`) or a `_2` suffix, so no field ever silently overwrites
    another.
 4. Fields are trimmed by default, unless a field was written as a quoted
-   value — quoting is treated as an explicit "keep this whitespace" signal,
+   value. Quoting is treated as an explicit "keep this whitespace" signal,
    the same convention [json to csv](/util/json_to_csv/) uses when writing
    fields that need to survive a trimming reader.
 5. With **coerce numbers/booleans/null** on, plain-looking values become
@@ -51,7 +51,7 @@ output:
 ]
 ```
 
-With **first row is header** off, every row — including the first — becomes
+With **first row is header** off, every row (including the first) becomes
 an array of strings instead of an object:
 
 ```example
@@ -121,19 +121,19 @@ output:
 
 ## Options
 
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly, including delimiter names like `pipe` or an escape
   like `\t`.
-- **first row is header** — on (default) produces an array of objects
+- **first row is header**: on (default) produces an array of objects
   keyed by the header row; off produces an array of arrays.
-- **coerce numbers/booleans/null** — off by default. On, converts
+- **coerce numbers/booleans/null**: off by default. On, converts
   `true`/`false`/`null` (in any letter case) and plain decimal numbers to
   real JSON types, while long integers and forms such as `007`, `+5`, `.5`,
   or `1,000` stay text. Quoting a value in the CSV does not stop it being
-  coerced — `"42"` still becomes `42`.
-- **trim fields** — on by default, trimming whitespace from unquoted
+  coerced: `"42"` still becomes `42`.
+- **trim fields**: on by default, trimming whitespace from unquoted
   fields only; quoted fields keep their whitespace exactly as written.
-- **indent** — spaces of JSON indentation, from 0 to 16 (default 2); `0`
+- **indent**: spaces of JSON indentation, from 0 to 16 (default 2); `0`
   produces compact single-line JSON.
 
 ## Common uses
@@ -141,13 +141,13 @@ output:
 - Feeding a CSV export into a script or API that expects JSON.
 - Turning a database export into JSON test fixtures.
 - Checking a [json to csv](/util/json_to_csv/) export by converting it
-  back — flat records round-trip, but flattened `a.b` columns come back as
+  back. Flat records round-trip, but flattened `a.b` columns come back as
   literal `"a.b"` keys, not nested objects.
 
 ## Tips and pitfalls
 
 - Every record gets the same set of keys, even if some rows are missing
-  trailing fields — those keys just get an empty string.
+  trailing fields; those keys just get an empty string.
 - An unterminated quoted field (a stray `"` with no matching close) throws
   an error rather than silently mangling the rest of the file.
 - Typed numbers pass through a JavaScript double, so `1.50` becomes `1.5`,

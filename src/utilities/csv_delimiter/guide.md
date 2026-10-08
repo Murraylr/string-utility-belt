@@ -1,5 +1,5 @@
 ---
-title: CSV Delimiter Converter — Comma, Tab, Pipe & More
+title: CSV Delimiter Converter: Comma, Tab, Pipe & More
 description: Convert CSV or TSV between comma, tab, pipe, and semicolon delimiters online, with automatic re-quoting and source detection.
 ---
 ## What is a CSV delimiter?
@@ -8,8 +8,8 @@ CSV ("comma-separated values") is really a family of formats: the character
 that separates fields varies between comma, tab (often called TSV), pipe,
 and semicolon depending on the tool that produced the file. A file exported
 by one system will not always import cleanly into another that expects a
-different delimiter. This tool re-delimits the table, and — unlike a plain
-find-and-replace — it re-quotes every field correctly for the new
+different delimiter. This tool re-delimits the table, and, unlike a plain
+find-and-replace, it re-quotes every field correctly for the new
 separator, so a field that used to be safely unquoted can gain quotes if the
 new delimiter appears inside it, and a field that no longer needs quoting
 loses them.
@@ -23,7 +23,7 @@ loses them.
 2. The text is parsed as RFC 4180 CSV: quoted fields, `""` escapes, and
    embedded newlines and delimiters inside quotes are all preserved as data.
 3. Every field is re-emitted with the **to delimiter**, wrapped in quotes
-   only when it actually needs them for the new character — when it
+   only when it actually needs them for the new character: when it
    contains a quote, a newline, or the new delimiter itself.
 
 ```example
@@ -67,7 +67,7 @@ output:
 "1";"2"
 ```
 
-A quoted empty field (`""`) is data — a deliberately empty value — and stays
+A quoted empty field (`""`) is data (a deliberately empty value) and stays
 distinguishable from a genuinely blank line, which the converter drops:
 
 ```example
@@ -85,13 +85,13 @@ z
 
 ## Options
 
-- **from delimiter** — `auto` (default) detects the source delimiter; or set
+- **from delimiter**: `auto` (default) detects the source delimiter; or set
   it explicitly, including delimiter names (`tab`, `comma`, `semicolon`,
   `pipe`, `space`, `colon`) and escapes such as `\t`.
-- **to delimiter** — the output delimiter, defaulting to `\t` (tab); left
+- **to delimiter**: the output delimiter, defaulting to `\t` (tab); left
   empty, it also falls back to tab. It accepts the same names and escapes,
   and cannot be the quote character (`"`) or a line break.
-- **quote every field** — off by default (quote only what needs it); on
+- **quote every field**: off by default (quote only what needs it); on
   wraps every field in quotes.
 
 ## Common uses
@@ -112,8 +112,8 @@ z
 - The output always uses one line-ending style: CRLF if the source's row
   separators (outside quoted fields) were at least as often CRLF as LF,
   otherwise LF.
-- If rows come out with fewer fields than expected — often a whole row as
-  one field — the source was parsed with the wrong **from delimiter**; a
+- If rows come out with fewer fields than expected (often a whole row as
+  one field), the source was parsed with the wrong **from delimiter**; a
   wrong source delimiter merges fields instead of raising an error. Auto-detection only considers comma, tab,
   semicolon, and pipe (judged on the first 20 rows), so name any other
   source delimiter explicitly.

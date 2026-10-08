@@ -7,7 +7,7 @@ description: Convert CSV rows into SQL INSERT statements for Postgres, MySQL, SQ
 Loading a spreadsheet export into a database often means writing `INSERT`
 statements by hand, or reaching for a full ETL tool for what is really a
 one-off job. This tool reads CSV and emits ready-to-run `INSERT INTO`
-statements — one per row, or batched into a single multi-row statement — with
+statements (one per row, or batched into a single multi-row statement) with
 identifiers quoted correctly for the SQL dialect you choose, and can also
 emit a best-guess `CREATE TABLE` from the data it sees.
 
@@ -24,9 +24,9 @@ emit a best-guess `CREATE TABLE` from the data it sees.
    becomes a single-quoted string literal. Embedded single quotes are
    doubled (`O'Brien` → `'O''Brien'`) in every dialect; for MySQL,
    backslashes are doubled too.
-4. Identifiers (table and column names) are quoted per dialect — double
+4. Identifiers (table and column names) are quoted per dialect (double
    quotes for ANSI/Postgres/SQLite, backticks for MySQL, square brackets for
-   SQL Server — and a dotted **table name** like `app.people` is split into
+   SQL Server), and a dotted **table name** like `app.people` is split into
    a schema and table, each quoted separately, while a dot inside a column
    name is kept as part of that one identifier.
 
@@ -58,7 +58,7 @@ INSERT INTO "my_table" ("id", "name") VALUES
   (2, 'Bob');
 ```
 
-Values are typed automatically — a number stays unquoted, a boolean becomes
+Values are typed automatically: a number stays unquoted, a boolean becomes
 `TRUE`/`FALSE` in ANSI, and an empty cell becomes `NULL`. A number with a
 leading zero, such as the zip-code-like `007`, does not count as a number,
 so it is written as the string `'007'`:
@@ -72,7 +72,7 @@ output: INSERT INTO "my_table" ("n", "b", "z", "s") VALUES (42, TRUE, NULL, '007
 ```
 
 With **emit CREATE TABLE** on, a header-only CSV (no data rows) still
-produces a full table definition — every column defaults to a text type
+produces a full table definition. Every column defaults to a text type
 when there is no data to infer a narrower one from:
 
 ```example
@@ -88,23 +88,23 @@ CREATE TABLE "my_table" (
 
 ## Options
 
-- **table name** — the target table, default `my_table`. A dotted name
+- **table name**: the target table, default `my_table`. A dotted name
   (`app.people`) is written as a schema-qualified, separately quoted
   identifier.
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly.
-- **dialect** — `ansi` (default), `mysql`, `postgres`, `mssql`, or
+- **dialect**: `ansi` (default), `mysql`, `postgres`, `mssql`, or
   `sqlite`. Controls identifier quoting, boolean literals, and the inferred
   column types for `CREATE TABLE`.
-- **single multi-row insert** — off by default (one `INSERT` per row); on
+- **single multi-row insert**: off by default (one `INSERT` per row); on
   writes all rows as one statement with a `VALUES` list. SQL Server accepts
   at most 1,000 rows in one `VALUES` list, so leave this off for larger
   files there.
-- **null token** — the CSV value that should become SQL `NULL`. Empty by
+- **null token**: the CSV value that should become SQL `NULL`. Empty by
   default, so a blank cell means `NULL`; set it to a sentinel like `\N` if
   your export uses one, letting an empty cell become a literal empty string
   instead.
-- **emit CREATE TABLE** — off by default. On, prepends a `CREATE TABLE`
+- **emit CREATE TABLE**: off by default. On, prepends a `CREATE TABLE`
   statement with column types inferred from the data (or the dialect's text
   type, when there is none). The text type is `VARCHAR(255)` for ANSI and
   `NVARCHAR(255)` for SQL Server, so widen it if your values are longer.

@@ -1,14 +1,14 @@
 ---
-title: Binary Decode Online — Binary to Text Converter
+title: Binary Decode Online: Binary to Text Converter
 description: Decode a string of 0s and 1s back to text or raw bytes online, ignoring whitespace, punctuation, and 0b prefixes, with 7- or 8-bit groups.
 ---
 ## What is binary decoding?
 
-This reverses [binary encode](/util/binary_encode/): it reads a string made of `0`s and `1`s and turns each fixed-width group back into the byte it represents. It's useful whenever you have data written out bit by bit — from a textbook exercise, a protocol dump, or a previous pipeline step — and need the actual bytes or text back.
+This reverses [binary encode](/util/binary_encode/): it reads a string made of `0`s and `1`s and turns each fixed-width group back into the byte it represents. It's useful whenever you have data written out bit by bit (from a textbook exercise, a protocol dump, or a previous pipeline step) and need the actual bytes or text back.
 
 ## How it works
 
-1. Anything that isn't a `0`, `1`, letter, or digit is treated as a separator and stripped — spaces, commas, dashes, arrows, even em dashes all work. An optional `0b` prefix on a group is also removed.
+1. Anything that isn't a `0`, `1`, letter, or digit is treated as a separator and stripped: spaces, commas, dashes, arrows, even em dashes all work. An optional `0b` prefix on a group is also removed.
 2. The remaining digits must be only `0` and `1`, and their total count must be a multiple of the group width (8, or 7 in 7-bit mode); anything else is rejected rather than guessed at.
 3. Each group of digits is parsed as one byte.
 4. The bytes are decoded as UTF-8 text, unless you ask for raw bytes.
@@ -21,7 +21,7 @@ output: Hi
 
 ### Tolerant of separators and `0b` prefixes
 
-Because [binary encode](/util/binary_encode/)'s separator field is free-form, this decoder doesn't rely on a fixed punctuation whitelist — it strips **any** non-alphanumeric character between groups, plus a leading `0b` on each group:
+Because [binary encode](/util/binary_encode/)'s separator field is free-form, this decoder doesn't rely on a fixed punctuation whitelist. It strips **any** non-alphanumeric character between groups, plus a leading `0b` on each group:
 
 ```example
 title: mixed punctuation and a 0b prefix both work
@@ -31,7 +31,7 @@ output: Hi
 
 ### 7-bit groups
 
-Set **bits per byte** to `7` to decode groups that were encoded without the leading zero bit — matching whatever [binary encode](/util/binary_encode/) produced with the same setting:
+Set **bits per byte** to `7` to decode groups that were encoded without the leading zero bit, matching whatever [binary encode](/util/binary_encode/) produced with the same setting:
 
 ```example
 title: 7-bit groups
@@ -53,8 +53,8 @@ utf8: Hi
 
 ## Options
 
-- **bits per byte** — `8` (default) or `7`. Must match how the value was encoded.
-- **output** — `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is required whenever the original data wasn't text.
+- **bits per byte**: `8` (default) or `7`. Must match how the value was encoded.
+- **output**: `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is required whenever the original data wasn't text.
 
 ## Common uses
 
@@ -64,6 +64,6 @@ utf8: Hi
 
 ## Tips and pitfalls
 
-- A letter or a stray digit outside `0`/`1` inside the input — `2`, `x`, an accented letter — is treated as invalid data and rejected, not silently skipped like a separator would be.
+- A letter or a stray digit outside `0`/`1` inside the input (`2`, `x`, an accented letter) is treated as invalid data and rejected, not silently skipped like a separator would be.
 - The total digit count must divide evenly by the group width; a truncated or extra bit at the end is an error, not a guess.
-- If decoding throws "not valid UTF-8", the original data was binary, not text — switch the output option to `bytes`.
+- If decoding throws "not valid UTF-8", the original data was binary, not text. Switch the output option to `bytes`.

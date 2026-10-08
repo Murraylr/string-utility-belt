@@ -1,5 +1,5 @@
 ---
-title: Base32 Decode Online — Base32 to Text Converter
+title: Base32 Decode Online: Base32 to Text Converter
 description: Decode Base32 (RFC 4648, extended-hex, or z-base-32) back to text or raw bytes online, tolerating case, missing padding, and whitespace.
 ---
 ## What is Base32 decoding?
@@ -8,7 +8,7 @@ This reverses [base32 encode](/util/base32_encode/): it turns a Base32 string ba
 
 ## How it works
 
-1. Whitespace and `=` padding characters are stripped, and the remaining characters are looked up in the chosen alphabet — case-insensitively, so `NBSWY3DP` and `nbswy3dp` decode identically.
+1. Whitespace and `=` padding characters are stripped, and the remaining characters are looked up in the chosen alphabet. The lookup ignores case, so `NBSWY3DP` and `nbswy3dp` decode identically.
 2. Each character contributes 5 bits to a running bit stream.
 3. Every full 8 bits collected becomes one output byte.
 4. The bytes are decoded as UTF-8 text, unless you ask for raw bytes instead.
@@ -29,7 +29,7 @@ output: foobar
 
 ### Choosing an alphabet and output type
 
-Pick the same **variant** the data was encoded with (`rfc4648`, `rfc4648-hex`, or `z-base-32`) — decoding with the wrong one usually throws (on a character that alphabet lacks, a non-canonical ending, or invalid UTF-8), but it can occasionally "succeed" with the wrong bytes:
+Pick the same **variant** the data was encoded with (`rfc4648`, `rfc4648-hex`, or `z-base-32`). Decoding with the wrong one usually throws (on a character that alphabet lacks, a non-canonical ending, or invalid UTF-8), but it can occasionally "succeed" with the wrong bytes:
 
 ```example
 title: z-base-32 needs the matching variant
@@ -38,7 +38,7 @@ input: pb1sa5dx
 output: hello
 ```
 
-Set **output** to `bytes` to skip the UTF-8 step entirely, which is required whenever the underlying data was never text — a TOTP shared secret, a hash, a compressed blob. The result then shows the byte values in decimal and hex, plus the text they'd form if you did decode them:
+Set **output** to `bytes` to skip the UTF-8 step entirely, which is required whenever the underlying data was never text: a TOTP shared secret, a hash, a compressed blob. The result then shows the byte values in decimal and hex, plus the text they'd form if you did decode them:
 
 ```example
 title: raw bytes, shown as decimal, hex, and text together
@@ -52,8 +52,8 @@ utf8: abc
 
 ## Options
 
-- **variant** — `rfc4648` (default), `rfc4648-hex`, or `z-base-32`. Must match how the value was encoded.
-- **output** — `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is the only safe choice when the original data was not text.
+- **variant**: `rfc4648` (default), `rfc4648-hex`, or `z-base-32`. Must match how the value was encoded.
+- **output**: `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is the only safe choice when the original data was not text.
 
 ## Common uses
 
@@ -65,5 +65,5 @@ utf8: abc
 
 - **Not every string of the right length is valid Base32.** A character count (after removing padding and whitespace) that leaves a remainder of 1, 3 or 6 when divided by 8 can never come from real 5-bit groups, so it is rejected rather than silently truncated.
 - **Unused bits in the last character must be zero.** Base32's last character often carries a few padding bits alongside real data; if those bits are non-zero the input is not the canonical output of any encoder, and this tool rejects it rather than guess. A single mistyped character near the end is the usual cause.
-- If decoding throws "not valid UTF-8", the original data was binary, not text — switch the output option to `bytes`.
+- If decoding throws "not valid UTF-8", the original data was binary, not text. Switch the output option to `bytes`.
 - This is an encoding, not encryption: Base32 hides nothing, and decoding requires no key or password.

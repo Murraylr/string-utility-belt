@@ -127,13 +127,13 @@ output:
 
 ## Options
 
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly, including `\t` for tab.
-- **first row is header** — on (default) renders row one as `<thead>`; off
+- **first row is header**: on (default) renders row one as `<thead>`; off
   puts every row in `<tbody>`.
-- **table class** — an optional CSS class added to the `<table>` tag, for
+- **table class**: an optional CSS class added to the `<table>` tag, for
   example `table table-striped` for Bootstrap.
-- **indent** — spaces per nesting level, from 0 to 16 (default 2).
+- **indent**: spaces per nesting level, from 0 to 16 (default 2).
 
 ## Common uses
 
@@ -146,17 +146,17 @@ output:
 
 ## Tips and pitfalls
 
-- The output has no visual styling — it is plain semantic markup, and
+- The output has no visual styling. It is plain semantic markup, and
   browsers draw tables without borders by default. Add CSS through the
   **table class** option and your own stylesheet.
-- To go the other direction — pull a table back out of HTML — use
+- To go the other direction (pull a table back out of HTML), use
   [html table to csv](/util/html_table_to_csv/), which understands the same
   `<br>` convention, so embedded line breaks survive the round trip (runs
   of spaces and leading or trailing whitespace in a cell are collapsed).
 - For a lighter-weight table format meant for plain text or markdown
   documents, use [csv to markdown table](/util/csv_to_markdown/) instead.
 - If later rows have more columns than the header, the header row is
-  padded with empty `<th>` cells like any other short row — add the extra
+  padded with empty `<th>` cells like any other short row. Add the extra
   header names to your CSV yourself so every column has a label.
 - Blank lines are not skipped: a blank line in the middle of the CSV
   becomes a row of empty cells.

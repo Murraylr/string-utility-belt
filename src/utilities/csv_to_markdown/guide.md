@@ -4,8 +4,8 @@ description: Turn CSV data into a padded markdown pipe table online, with left, 
 ---
 ## What does converting CSV to a markdown table do?
 
-Markdown pipe tables — the `| a | b |` syntax used by GitHub, GitLab, and
-most static-site generators — are easy to write by hand for a couple of
+Markdown pipe tables (the `| a | b |` syntax used by GitHub, GitLab, and
+most static-site generators) are easy to write by hand for a couple of
 rows, but tedious to align once the values vary in length. This tool parses
 CSV and writes it back out as a markdown table with every column padded to
 the same width, so the pipes line up and the raw text is as readable as the
@@ -90,11 +90,11 @@ output:
 
 ## Options
 
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly, including `\t` for tab.
-- **align** — `left` (default), `center`, `right`, or `none` (a plain
+- **align**: `left` (default), `center`, `right`, or `none` (a plain
   `---` separator with no explicit alignment).
-- **first row is a header** — on (default) uses row one as the header; off
+- **first row is a header**: on (default) uses row one as the header; off
   emits a blank header row and treats every row as data.
 
 ## Common uses
@@ -109,7 +109,7 @@ output:
 ## Tips and pitfalls
 
 - To go the other direction, use
-  [markdown table to csv](/util/markdown_to_csv/) — the two are inverses for
+  [markdown table to csv](/util/markdown_to_csv/). The two are inverses for
   ordinary rectangular data.
 - The output is a pure markdown table with no surrounding prose; add any
   heading or caption yourself.

@@ -1,5 +1,5 @@
 ---
-title: Brotli Decompress Online — Decode .br Data to Text
+title: Brotli Decompress Online: Decode .br Data to Text
 description: Decompress a Brotli (.br) stream in your browser to readable text or raw bytes, with worked examples covering Unicode and empty input.
 ---
 ## What is Brotli?
@@ -7,15 +7,15 @@ description: Decompress a Brotli (.br) stream in your browser to readable text o
 Brotli is a general-purpose compression format Google introduced in 2013, standardized as
 [RFC 7932](https://www.rfc-editor.org/rfc/rfc7932). It combines a large, curated dictionary of common
 web strings (HTML tags, JavaScript keywords, CSS properties) with context modeling and Huffman
-coding, which typically lets it beat gzip and plain DEFLATE on text — especially small payloads,
+coding, which typically lets it beat gzip and plain DEFLATE on text, especially small payloads,
 where the shared dictionary does much of the work before the input even needs repeating patterns of
 its own. Browsers negotiate it automatically for HTTP responses (`Content-Encoding: br`), and it also
 shows up as standalone `.br` files next to a `.js` or `.css` asset in a static site's build output.
 
 This tool decompresses a Brotli stream back to its original bytes. It does not compress: there is no
-matching "brotli compress" utility here — only the Brotli decoder ships with this app. If you need to
+matching "brotli compress" utility here; only the Brotli decoder ships with this app. If you need to
 produce a compressed stream in this app, use
-[gzip compress](/util/gzip_compress/) or [deflate compress](/util/deflate_compress/) instead — both are
+[gzip compress](/util/gzip_compress/) or [deflate compress](/util/deflate_compress/) instead. Both are
 widely supported and have full encode/decode pairs here.
 
 ## How it works
@@ -24,11 +24,11 @@ Decompression walks the stream's meta-blocks, whose commands insert literal byte
 output or entries from Brotli's built-in static dictionary, and reassembles them into the original
 data. Brotli carries no integrity checksum (unlike gzip's CRC-32 or zlib's Adler-32). A truncated or
 structurally broken stream fails with a "not valid brotli data" error, but a damaged byte that still
-leaves a decodable stream can come out as silently wrong data — there is nothing to check it against.
+leaves a decodable stream can come out as silently wrong data, because there is nothing to check it against.
 
 Once the raw bytes are recovered, the **output** option decides what you get back: `text` (the
 default) decodes them as UTF-8, and `bytes` returns them untouched. Pick `bytes` whenever the
-decompressed payload might not be text at all — an image, a font, or another format's binary header —
+decompressed payload might not be text at all (an image, a font, or another format's binary header),
 because `text` throws on bytes that are not valid UTF-8.
 
 ```example
@@ -40,7 +40,7 @@ output: Hello, Brotli! Hello, Brotli!
 ```
 
 Brotli decodes to exact bytes, not merely equivalent text, so accented letters and emoji survive
-intact — they are just more UTF-8 bytes for the decoder to reproduce:
+intact. They are just more UTF-8 bytes for the decoder to reproduce:
 
 ```example
 title: unicode text round-trips exactly
@@ -60,7 +60,7 @@ output:
 
 ## Options
 
-The only setting is **output** — `text` (default) or `bytes`. Leave it on `text` for HTML, CSS,
+The only setting is **output**: `text` (default) or `bytes`. Leave it on `text` for HTML, CSS,
 JavaScript, JSON, or any other Brotli-compressed text payload. Switch to `bytes` when the decompressed
 result feeds a binary-aware step, such as [zip extract](/util/zip_extract/) on an embedded archive, or
 when you plan to inspect the raw bytes with [hex dump](/util/hex_dump/).
@@ -79,7 +79,7 @@ when you plan to inspect the raw bytes with [hex dump](/util/hex_dump/).
 ## Tips and pitfalls
 
 Feed this step actual bytes, or a "binary string" where each character's code is one byte (the kind
-`atob()` produces) — not a hex or Base64 string typed as plain text. Unlike
+`atob()` produces), not a hex or Base64 string typed as plain text. Unlike
 [gzip decompress](/util/gzip_decompress/) and [deflate decompress](/util/deflate_decompress/), this
 utility does not try to auto-detect a hex or Base64 transport encoding in its text input; if your
 compressed data arrives as one of those, decode it first with [hex decode](/util/hex_decode/) or

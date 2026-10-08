@@ -1,10 +1,10 @@
 ---
-title: Align Columns Online — Format Text Into Aligned Tables
+title: Align Columns Online: Format Text Into Aligned Tables
 description: Free online column aligner. Pad whitespace, CSV, or custom-delimited text into neat aligned tables, like the Unix column -t command, with worked examples.
 ---
 ## What does aligning columns do?
 
-Plain text organized into rows and columns — a whitespace-separated list, a CSV export, a log file — only looks like a table if every column starts in the same place. This tool measures each column's widest value and pads every cell out to that width, the same job the Unix `column -t` command does. It splits each line on a delimiter and pads the resulting cells; it does not parse quoted CSV fields or escape sequences inside them.
+Plain text organized into rows and columns (a whitespace-separated list, a CSV export, a log file) only looks like a table if every column starts in the same place. This tool measures each column's widest value and pads every cell out to that width, the same job the Unix `column -t` command does. It splits each line on a delimiter and pads the resulting cells; it does not parse quoted CSV fields or escape sequences inside them.
 
 ## How it works
 
@@ -58,20 +58,20 @@ output:
 
 ## Options
 
-- **input delimiter** (`delimiter`, default `auto`) — `auto` splits on whitespace runs (spaces and tabs alike); anything else is used literally once `\t`, `\r`, `\n` and `\\` escapes are interpreted. An empty string throws, since there would be nothing to split on.
-- **output delimiter** (`outputDelimiter`, default two spaces) — the text placed between padded columns. Supports the same backslash escapes as the input delimiter.
-- **align** (`align`, default `left`) — `left` pads on the right, `right` pads on the left, and `auto` decides per column based on whether its data is numeric.
-- **header** (`header`, default `false`) — treats the first row as a header and inserts a `-`-filled rule under it, and excludes that row from the `auto` alignment vote so a text label cannot force its own column left.
+- **input delimiter** (`delimiter`, default `auto`): `auto` splits on whitespace runs (spaces and tabs alike); anything else is used literally once `\t`, `\r`, `\n` and `\\` escapes are interpreted. An empty string throws, since there would be nothing to split on.
+- **output delimiter** (`outputDelimiter`, default two spaces): the text placed between padded columns. Supports the same backslash escapes as the input delimiter.
+- **align** (`align`, default `left`): `left` pads on the right, `right` pads on the left, and `auto` decides per column based on whether its data is numeric.
+- **header** (`header`, default `false`): treats the first row as a header and inserts a `-`-filled rule under it, and excludes that row from the `auto` alignment vote so a text label cannot force its own column left.
 
 ## Common uses
 
 - Turning `ls -l`-style or log output copied from a terminal into something readable.
-- Previewing a CSV or TSV export as a table before importing it elsewhere — see [CSV to Markdown](/util/csv_to_markdown/) or [Markdown table format](/util/markdown_table_format/) for a formatted destination.
+- Previewing a CSV or TSV export as a table before importing it elsewhere. See [CSV to Markdown](/util/csv_to_markdown/) or [Markdown table format](/util/markdown_table_format/) for a formatted destination.
 - Lining up key-value pairs, environment variable dumps, or any whitespace-separated report.
 
 ## Tips and pitfalls
 
-- This is whole-table alignment, not single-value padding — use [pad](/util/pad/) when you only need to pad one string to a fixed width.
+- This is whole-table alignment, not single-value padding. Use [pad](/util/pad/) when you only need to pad one string to a fixed width.
 - With the `auto` delimiter a tab is just whitespace and splits cells. With any other delimiter, a tab inside a cell is measured as one column rather than expanded to a tab stop; run [tabs ↔ spaces](/util/tabs_spaces/) first if that matters.
 - Blank lines stay blank, and the line-ending style (CRLF, LF or CR) and any trailing newline are kept. Mixed endings are normalized: if the input contains any CRLF, every output line ends in CRLF.
 - With `header` on, the `auto` alignment vote looks only at a column's data rows, so a numeric column stays right-aligned under a text heading. With `header` off, the first row votes too, and a text label keeps its column left-aligned.

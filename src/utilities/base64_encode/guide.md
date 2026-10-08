@@ -1,10 +1,10 @@
 ---
-title: Base64 Encode Online — Convert Text to Base64
+title: Base64 Encode Online: Convert Text to Base64
 description: Free online Base64 encoder. Convert text or raw bytes to Base64 in your browser, and learn exactly how Base64 works with step-by-step examples.
 ---
 ## What is Base64 encoding?
 
-Base64 is a way of writing **any binary data using only 64 safe, printable characters**: `A–Z`, `a–z`, `0–9`, `+` and `/`, with `=` used for padding. It exists because many systems — email (MIME), JSON, XML, URLs, HTTP headers, config files — were built to carry text, and can mangle or reject raw bytes such as `0x00` or invalid UTF-8. Encoding those bytes as Base64 turns them into plain ASCII that survives any text channel, and [base64 decode](/util/base64_decode/) turns them back into exactly the same bytes.
+Base64 is a way of writing **any binary data using only 64 safe, printable characters**: `A–Z`, `a–z`, `0–9`, `+` and `/`, with `=` used for padding. It exists because many systems were built to carry text (email via MIME, JSON, XML, URLs, HTTP headers, config files), and they can mangle or reject raw bytes such as `0x00` or invalid UTF-8. Encoding those bytes as Base64 turns them into plain ASCII that survives any text channel, and [base64 decode](/util/base64_decode/) turns them back into exactly the same bytes.
 
 Base64 is an *encoding*, not encryption: anyone can reverse it, and it hides nothing. Its job is safe transport, not secrecy.
 
@@ -53,7 +53,7 @@ output: Y2Fmw6kg8J+YgA==
 
 ### Binary input
 
-When the input is already bytes — a file you dropped in, or the output of a step such as gzip compress or a hash — those exact bytes are encoded without any text conversion. Here are the five bytes `48 65 6c 6c 6f` given as hex:
+When the input is already bytes (a file you dropped in, or the output of a step such as gzip compress or a hash), those exact bytes are encoded without any text conversion. Here are the five bytes `48 65 6c 6c 6f` given as hex:
 
 ```example
 title: raw bytes (hex input)
@@ -73,7 +73,7 @@ output: SGVsbG8=
 - Embedding images or fonts directly in HTML or CSS as `data:` URIs (see [data URI build](/util/data_uri_build/)).
 - Sending binary attachments or non-ASCII text through email (MIME) and older text protocols.
 - HTTP Basic authentication, where `user:password` is sent as Base64 in the `Authorization` header.
-- Storing binary values — keys, hashes, certificates, small files — inside JSON, YAML or environment variables.
+- Storing binary values (keys, hashes, certificates, small files) inside JSON, YAML or environment variables.
 - Reading the header and payload of a JWT, which are Base64url-encoded JSON.
 
 ## Tips and pitfalls
