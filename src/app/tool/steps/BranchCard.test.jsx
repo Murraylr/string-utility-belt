@@ -93,28 +93,28 @@ describe('<BranchCard />', () => {
   it('switches to pick mode with a lane select, and json mode drops the separator', async () => {
     const user = userEvent.setup()
     render(<Stateful initial={makeBranch()} />)
-    await user.selectOptions(screen.getByLabelText('merge'), 'pick')
+    await user.selectOptions(screen.getByLabelText('Merge lanes'), 'pick')
     expect(dispatch).toHaveBeenLastCalledWith({ type: 'UPDATE_STEP', id: 'b1', patch: { merge: { mode: 'pick', index: 0 } } })
-    expect(screen.getByLabelText('lane')).toBeTruthy()
+    expect(screen.getByLabelText('Lane')).toBeTruthy()
     expect(screen.queryByLabelText('merge separator')).toBeNull()
-    await user.selectOptions(screen.getByLabelText('merge'), 'json')
+    await user.selectOptions(screen.getByLabelText('Merge lanes'), 'json')
     expect(dispatch).toHaveBeenLastCalledWith({ type: 'UPDATE_STEP', id: 'b1', patch: { merge: { mode: 'json' } } })
-    expect(screen.queryByLabelText('lane')).toBeNull()
+    expect(screen.queryByLabelText('Lane')).toBeNull()
     expect(screen.queryByLabelText('merge separator')).toBeNull()
   })
 
   it('lets a pick mode branch choose its lane', async () => {
     const user = userEvent.setup()
     render(<BranchCard step={makeBranch({ merge: { mode: 'pick', index: 0 } })} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    await user.selectOptions(screen.getByLabelText('lane'), 'lane 2')
+    await user.selectOptions(screen.getByLabelText('Lane'), 'Lane 2')
     expect(dispatch).toHaveBeenLastCalledWith({ type: 'UPDATE_STEP', id: 'b1', patch: { merge: { mode: 'pick', index: 1 } } })
   })
 
   it('shows a picked lane that no longer exists instead of silently showing lane 1', () => {
     render(<BranchCard step={makeBranch({ merge: { mode: 'pick', index: 3 } })} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    const select = screen.getByLabelText('lane')
+    const select = screen.getByLabelText('Lane')
     expect(select).toHaveValue('3')
-    expect(within(select).getByRole('option', { name: /lane 4.*missing/ })).toBeTruthy()
+    expect(within(select).getByRole('option', { name: /Lane 4.*missing/ })).toBeTruthy()
   })
 
   it('adds and removes lanes', async () => {
@@ -143,7 +143,7 @@ describe('<BranchCard />', () => {
     mockShowPreviews = true
     mockRun = { result: result({ previews: { l1s1: 'TRIMMED' } }) }
     render(<BranchCard step={makeBranch()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    expect(screen.getByText('lane 1 output')).toBeTruthy()
+    expect(screen.getByText('Lane 1 output')).toBeTruthy()
     expect(screen.getAllByText('TRIMMED').length).toBeGreaterThan(0)
   })
 
@@ -151,9 +151,9 @@ describe('<BranchCard />', () => {
     mockShowPreviews = true
     mockRun = { result: result({ inputs: { b1: 'BRANCH-IN', l1s1: 'LANE1-IN' }, err: { l1s1: 'boom' } }) }
     render(<BranchCard step={makeBranch()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    const lane1 = screen.getByText('lane 1 output').closest('[data-preview]')
+    const lane1 = screen.getByText('Lane 1 output').closest('[data-preview]')
     expect(lane1.textContent).toContain('LANE1-IN')
-    const lane2 = screen.getByText('lane 2 output').closest('[data-preview]')
+    const lane2 = screen.getByText('Lane 2 output').closest('[data-preview]')
     expect(lane2.textContent).toContain('BRANCH-IN')
   })
 
@@ -161,7 +161,7 @@ describe('<BranchCard />', () => {
     mockShowPreviews = true
     mockRun = { result: result({ previews: { b1: 'MERGED', l1s1: 'x' } }) }
     render(<BranchCard step={makeBranch()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    const merged = screen.getByText('merged output').closest('[data-preview]')
+    const merged = screen.getByText('Merged output').closest('[data-preview]')
     expect(merged.textContent).toContain('MERGED')
     expect(within(merged).getByRole('button', { name: 'copy' })).toBeTruthy()
   })
@@ -170,18 +170,18 @@ describe('<BranchCard />', () => {
     const user = userEvent.setup()
     // empty lanes, so the only "advanced" toggle is the branch's own
     render(<Stateful initial={makeBranch({ branches: [[], []] })} />)
-    await user.click(screen.getByRole('button', { name: 'advanced' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced' }))
     await user.selectOptions(screen.getByLabelText('run condition'), 'nonEmpty')
     expect(dispatch).toHaveBeenLastCalledWith({ type: 'UPDATE_STEP', id: 'b1', patch: { condition: { kind: 'nonEmpty', negate: false } } })
     await user.selectOptions(screen.getByLabelText('on error'), 'stop')
     expect(dispatch).toHaveBeenLastCalledWith({ type: 'UPDATE_STEP', id: 'b1', patch: { onError: 'stop' } })
-    expect(screen.getByText('if non-empty')).toBeTruthy()
-    expect(screen.getByText('on error: stop')).toBeTruthy()
+    expect(screen.getByText('if not empty')).toBeTruthy()
+    expect(screen.getByText('stops on error')).toBeTruthy()
   })
 
   it('labels a skipped branch', () => {
     mockRun = { result: result({ skipped: { b1: 'condition' } }) }
     render(<BranchCard step={makeBranch()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    expect(screen.getByText('skipped: condition')).toBeTruthy()
+    expect(screen.getByText(/^Skipped: the run condition/)).toBeTruthy()
   })
 })

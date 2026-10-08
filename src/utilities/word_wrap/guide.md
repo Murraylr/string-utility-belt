@@ -1,5 +1,5 @@
 ---
-title: Word Wrap Online — Wrap Text to a Fixed Column Width
+title: Word Wrap Online: Wrap Text to a Fixed Column Width
 description: Wrap text to a fixed column width online, breaking on word boundaries. Optional long-word breaking, line indent, paragraph reflow, and trailing spaces.
 ---
 ## What does word wrapping do?
@@ -84,11 +84,11 @@ output:
 
 ## Options
 
-- **width** (`width`, default `80`, whole numbers ≥ 1) — the maximum number of columns per line, measured in Unicode code points (so an emoji or other astral character counts as one, not as two UTF-16 code units).
-- **break long words** (`breakLongWords`, default `false`) — hard-breaks a single word that is longer than the available width, instead of letting it overflow.
-- **line indent** (`indent`, default empty) — text prepended to every output line, subtracted from the available width for wrapping. Blank lines between paragraphs stay empty, without the indent. It may not contain a line break.
-- **reflow wrapped lines** (`preserveParagraphs`, default `true`) — when `true`, a paragraph's existing line breaks are discarded and it is rewrapped as one block; when `false`, each existing line is wrapped independently.
-- **keep trailing space** (`trailingSpaces`, default `false`) — keeps the space from an actual word-boundary break at the end of the line it broke from. A break forced through the middle of a long word never gets a trailing space, since that space would otherwise glue itself onto the broken word if the text were ever reflowed.
+- **width** (`width`, default `80`, whole numbers ≥ 1): the maximum number of columns per line, measured in Unicode code points (so an emoji or other astral character counts as one, not as two UTF-16 code units).
+- **break long words** (`breakLongWords`, default `false`): hard-breaks a single word that is longer than the available width, instead of letting it overflow.
+- **line indent** (`indent`, default empty): text prepended to every output line, subtracted from the available width for wrapping. Blank lines between paragraphs stay empty, without the indent. It may not contain a line break.
+- **reflow wrapped lines** (`preserveParagraphs`, default `true`): when `true`, a paragraph's existing line breaks are discarded and it is rewrapped as one block; when `false`, each existing line is wrapped independently.
+- **keep trailing space** (`trailingSpaces`, default `false`): keeps the space from an actual word-boundary break at the end of the line it broke from. A break forced through the middle of a long word never gets a trailing space, since that space would otherwise glue itself onto the broken word if the text were ever reflowed.
 
 ## Common uses
 
@@ -98,7 +98,7 @@ output:
 
 ## Tips and pitfalls
 
-- With `preserveParagraphs` on (the default), wrapping a paragraph and then running it through [unwrap](/util/unwrap/) usually gives back the original paragraph — provided it had single spaces between words, no word had to be hard-broken, and no wrapped line happens to start with something unwrap takes for a list marker, such as `- ` or `1. `.
+- With `preserveParagraphs` on (the default), wrapping a paragraph and then running it through [unwrap](/util/unwrap/) usually gives back the original paragraph, provided it had single spaces between words, no word had to be hard-broken, and no wrapped line happens to start with something unwrap takes for a list marker, such as `- ` or `1. `.
 - Width is measured in code points, not display columns, so wide CJK characters and combining marks are not weighted specially the way they are in [box text](/util/box_text/) or [align columns](/util/align_columns/).
 - An `indent` that is as wide as, or wider than, `width` leaves no room for any text and is rejected rather than producing an empty or broken wrap.
 - To rejoin wrapped lines back into full paragraphs, use [unwrap / reflow](/util/unwrap/); to pad or box a single already-short line instead of wrapping long text, see [pad](/util/pad/) or [box text](/util/box_text/).

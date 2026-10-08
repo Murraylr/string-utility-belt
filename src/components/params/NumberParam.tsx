@@ -11,7 +11,7 @@ export default function NumberParam({ id, spec, value, onChange, error, describe
     <input
       id={id}
       type="number"
-      className="field"
+      className="field h-[30px] min-w-0 font-mono text-[12.5px]"
       min={spec.min}
       max={spec.max}
       step={spec.step ?? (spec.integer ? 1 : 'any')}

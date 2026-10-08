@@ -1,10 +1,10 @@
 /**
- * The step card's "more" menu (§8.13): duplicate, solo, rename, move, delete.
+ * The step card's "more" menu (§8.13): duplicate, solo, rename, move, change utility, delete.
  * An accessible menu button — role="menu"/"menuitem", arrow-key navigation,
  * Escape closes and returns focus to the trigger.
  */
 import React, { useEffect, useRef, useState } from 'react'
-import { MoreVertical } from 'lucide-react'
+import { Ellipsis } from 'lucide-react'
 
 export interface StepMenuProps {
   index: number
@@ -12,19 +12,33 @@ export interface StepMenuProps {
   label?: string
   onDuplicate: () => void
   onSolo: () => void
-  onRename: (label: string) => void
+  /** Omit for a step whose name is edited elsewhere (a macro's own name field). */
+  onRename?: (label: string) => void
   onMoveUp: () => void
   onMoveDown: () => void
   onDelete: () => void
+  /** Offered only for utility steps. */
+  onChangeUtility?: () => void
 }
 
-function MenuItemButtons({ items }: { items: Array<{ label: string; action: () => void; disabled?: boolean }> }) {
+interface Item {
+  label: string
+  action: () => void
+  disabled?: boolean
+  /** Shown muted after the label; not part of the item's name. */
+  hint?: string
+  keys?: string
+  danger?: boolean
+}
+
+function MenuItemButtons({ items }: { items: Item[] }) {
   return (
     <>
       {items.map(it => (
         <button key={it.label} type="button" role="menuitem" disabled={it.disabled} onClick={it.action}
-          className="icon-btn justify-start w-full text-left px-2 disabled:opacity-40">
+          aria-keyshortcuts={it.keys} className={`menu-item ${it.danger ? 'text-danger' : ''}`}>
           {it.label}
+          {it.hint && <span className="font-mono text-[10.5px] text-muted" aria-hidden="true">{it.hint}</span>}
         </button>
       ))}
     </>
@@ -32,7 +46,7 @@ function MenuItemButtons({ items }: { items: Array<{ label: string; action: () =
 }
 
 export default function StepMenu({
-  index, total, label, onDuplicate, onSolo, onRename, onMoveUp, onMoveDown, onDelete,
+  index, total, label, onDuplicate, onSolo, onRename, onMoveUp, onMoveDown, onDelete, onChangeUtility,
 }: StepMenuProps) {
   const [open, setOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
@@ -75,13 +89,15 @@ export default function StepMenu({
 
   const startRename = () => { setDraft(label ?? ''); setRenaming(true) }
 
-  const items: Array<{ label: string; action: () => void; disabled?: boolean }> = [
+  const items: Item[] = [
     { label: 'Duplicate', action: () => { onDuplicate(); close() } },
-    { label: 'Solo', action: () => { onSolo(); close() } },
-    { label: 'Rename', action: startRename },
-    { label: 'Move up', action: () => { onMoveUp(); close() }, disabled: index === 0 },
-    { label: 'Move down', action: () => { onMoveDown(); close() }, disabled: index === total - 1 },
-    { label: 'Delete', action: () => { onDelete(); close() } },
+    { label: 'Solo', hint: 'others off', action: () => { onSolo(); close() } },
+    ...(onRename ? [{ label: 'Rename', action: startRename }] : []),
+    { label: 'Move up', hint: 'Alt+↑', keys: 'Alt+ArrowUp', action: () => { onMoveUp(); close() }, disabled: index === 0 },
+    { label: 'Move down', hint: 'Alt+↓', keys: 'Alt+ArrowDown', action: () => { onMoveDown(); close() }, disabled: index === total - 1 },
+    // the picker opens in the card and takes focus, so the trigger does not get it back
+    ...(onChangeUtility ? [{ label: 'Change utility', action: () => { close(false); onChangeUtility() } }] : []),
+    { label: 'Delete', danger: true, action: () => { onDelete(); close() } },
   ]
 
   const onMenuKeyDown = (e: React.KeyboardEvent) => {
@@ -99,24 +115,25 @@ export default function StepMenu({
   }
 
   const submitRename = () => {
-    onRename(draft)
+    onRename?.(draft)
     close()
   }
 
   return (
     <div className="relative">
-      <button ref={btnRef} type="button" className="icon-btn" aria-haspopup="menu" aria-expanded={open}
+      <button ref={btnRef} type="button" className="size-7 grid place-items-center rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg"
+        aria-haspopup="menu" aria-expanded={open} title="Step actions"
         aria-label={`step ${index + 1} menu`} onClick={() => setOpen(o => !o)} onKeyDown={onTriggerKeyDown}>
-        <MoreVertical size={16} />
+        <Ellipsis size={15} aria-hidden="true" />
       </button>
       {open && (
         // while renaming it holds a text field, which a role="menu" may not contain
         <div ref={menuRef} role={renaming ? 'group' : 'menu'} aria-label={renaming ? `rename step ${index + 1}` : `step ${index + 1} actions`}
-          className="absolute right-0 z-10 mt-1 min-w-44 card p-1 grid gap-0.5" onKeyDown={onMenuKeyDown}>
+          className="popover absolute right-0 top-8 z-20 min-w-[180px] grid" onKeyDown={onMenuKeyDown}>
           {renaming ? (
             <form className="p-1" onSubmit={e => { e.preventDefault(); submitRename() }}>
               {/* 120: the longest label a share link / import keeps (core/serialize) */}
-              <input autoFocus className="field w-full" aria-label="step name" value={draft} maxLength={120}
+              <input autoFocus className="field w-full min-w-48" aria-label="step name" value={draft} maxLength={120}
                 onChange={e => setDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); close() } }} />
             </form>

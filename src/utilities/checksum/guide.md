@@ -1,10 +1,10 @@
 ---
-title: CRC32 & Checksum Calculator Online — Hash Text
+title: CRC32 & Checksum Calculator Online: Hash Text
 description: Compute non-cryptographic checksums like CRC-32, CRC-16, Adler-32, FNV-1a, MurmurHash3, and xxHash from text or bytes.
 ---
 ## What is a checksum, and how is it different from a hash?
 
-A checksum is a short fingerprint computed from data, designed to catch accidental corruption — a flipped bit from a bad network link, a truncated file, a typo in a copy-pasted value. Algorithms like CRC-32, Adler-32, and the others here are fast and good at that job, but they are **not cryptographic**: it's computationally easy to construct different inputs that produce the same checksum on purpose. For that kind of guarantee — resisting a deliberate attacker, not just bad luck — use [hash](/util/hash/), [sha3](/util/sha3/), or [blake](/util/blake/) instead.
+A checksum is a short fingerprint computed from data, designed to catch accidental corruption: a flipped bit from a bad network link, a truncated file, a typo in a copy-pasted value. Algorithms like CRC-32, Adler-32, and the others here are fast and good at that job, but they are **not cryptographic**: it's computationally easy to construct different inputs that produce the same checksum on purpose. For that kind of guarantee (resisting a deliberate attacker, not just bad luck), use [hash](/util/hash/), [sha3](/util/sha3/), or [blake](/util/blake/) instead.
 
 ## How it works
 
@@ -47,9 +47,9 @@ output:
 
 ## Options
 
-- **algorithm** — CRC-32, CRC-32C, CRC-16-CCITT, CRC-16-MODBUS, Adler-32, FNV-1a-32, FNV-1a-64, MurmurHash3-32, xxHash-32, xxHash-64, Java-hashCode, djb2, or sdbm. Defaults to CRC-32, the most widely recognized (used in zip files, PNG, and Ethernet frame checks).
-- **output** — `hex` (default) or `decimal`. Java-hashCode's decimal form is signed, matching what `String.hashCode()` returns in Java; every other algorithm's decimal form is unsigned.
-- **seed** — `0` (default) means "the algorithm's standard starting value." For CRC-32, CRC-32C, and Adler-32, a non-zero seed is treated as a previous running result, letting you resume a checksum across chunks of a larger stream. For the others (CRC-16, FNV, MurmurHash3, xxHash, Java-hashCode, djb2, sdbm), a non-zero seed simply changes the starting value, producing a different but still deterministic digest for the same input.
+- **algorithm**: CRC-32, CRC-32C, CRC-16-CCITT, CRC-16-MODBUS, Adler-32, FNV-1a-32, FNV-1a-64, MurmurHash3-32, xxHash-32, xxHash-64, Java-hashCode, djb2, or sdbm. Defaults to CRC-32, the most widely recognized (used in zip files, PNG, and Ethernet frame checks).
+- **output**: `hex` (default) or `decimal`. Java-hashCode's decimal form is signed, matching what `String.hashCode()` returns in Java; every other algorithm's decimal form is unsigned.
+- **seed**: `0` (default) means "the algorithm's standard starting value." For CRC-32, CRC-32C, and Adler-32, a non-zero seed is treated as a previous running result, letting you resume a checksum across chunks of a larger stream. For the others (CRC-16, FNV, MurmurHash3, xxHash, Java-hashCode, djb2, sdbm), a non-zero seed simply changes the starting value, producing a different but still deterministic digest for the same input.
 
 ## Common uses
 
@@ -60,7 +60,7 @@ output:
 
 ## Tips and pitfalls
 
-- None of these algorithms resist a deliberate attacker: given a target checksum, it's practical to construct different data that produces it. Never rely on a checksum to show that data hasn't been *tampered with* by someone who wants to fool you — compare a SHA-256 digest from a trusted source with [checksum verify](/util/checksum_verify/), or use [hmac](/util/hmac/) when you share a secret key. For password storage, neither these nor fast cryptographic hashes are suitable; use [bcrypt hash](/util/bcrypt_hash/) or [argon2 hash](/util/argon2_hash/).
+- None of these algorithms resist a deliberate attacker: given a target checksum, it's practical to construct different data that produces it. Never rely on a checksum to show that data hasn't been *tampered with* by someone who wants to fool you. Compare a SHA-256 digest from a trusted source with [checksum verify](/util/checksum_verify/), or use [hmac](/util/hmac/) when you share a secret key. For password storage, neither these nor fast cryptographic hashes are suitable; use [bcrypt hash](/util/bcrypt_hash/) or [argon2 hash](/util/argon2_hash/).
 - CRC-32 is usually shown as unsigned hex, as it is here; some other tools print it as a signed decimal integer, which looks completely different for the same bytes even though the underlying bits match.
 - Text input is hashed as its UTF-8 bytes for every algorithm except Java-hashCode, which is defined over UTF-16 code units. Byte input to Java-hashCode is first decoded as UTF-8, so bytes in another encoding (or invalid UTF-8) won't reproduce Java's value for the original string.
 - For comparing a computed digest against a known-good one automatically, see [checksum verify](/util/checksum_verify/), which handles common formats like `hash  filename` lines.

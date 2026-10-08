@@ -1,10 +1,45 @@
 import React from 'react'
 import { registry, type UtilityMeta } from '@/app/registry'
+import { recipePath } from '@/recipes/types'
 import { utilityPath } from './related'
 import { POPULAR_UTILITY_IDS, displayName } from './seo'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
-import { RecipeCards } from './recipes/RecipeArticle'
 import { featuredRecipes } from './recipes/recipeHelpers'
+
+interface Entry { href: string; name: string; description: string }
+
+/** One block: a heading, a line about it and a "browse all" link beside a hairline link list. */
+function Block({ id, title, intro, more, entries, minWidth }: {
+  id: string
+  title: string
+  intro: string
+  more: { href: string; label: string }
+  entries: Entry[]
+  /** Narrowest column of the link list. */
+  minWidth: 'wide' | 'narrow'
+}) {
+  return (
+    <section className="grid gap-8 lg:grid-cols-3" aria-labelledby={id}>
+      <div className="grid gap-2 content-start max-w-[340px]">
+        <h2 id={id} className="m-0 text-[17px] leading-6 font-semibold tracking-[-0.01em]">{title}</h2>
+        <p className="m-0 text-[13px] text-muted text-pretty">{intro}</p>
+        <a className="more-link mt-1.5 w-fit" href={more.href}>{more.label} <span aria-hidden>→</span></a>
+      </div>
+      <ul className={`m-0 p-0 list-none grid gap-x-7 lg:col-span-2 ${minWidth === 'wide'
+        ? 'grid-cols-[repeat(auto-fill,minmax(min(100%,240px),1fr))]'
+        : 'grid-cols-[repeat(auto-fill,minmax(min(100%,200px),1fr))]'}`}>
+        {entries.map(e => (
+          <li key={e.href} className="border-t">
+            <a className="grid gap-px py-2.5" href={e.href}>
+              <span className="text-[13.5px] font-medium">{e.name}</span>
+              <span className="text-xs text-muted line-clamp-2">{e.description}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
 /**
  * Below the pipeline editor on the home page: featured recipes and the popular
@@ -18,37 +53,25 @@ export default function HomeDirectory() {
   const recipes = featuredRecipes(RECIPE_INDEX)
 
   return (
-    <>
-    {recipes.length > 0 && (
-      <section className="card p-6 grid gap-4" aria-labelledby="home-recipes-h">
-        <div className="grid gap-1">
-          <h2 id="home-recipes-h" className="text-lg font-medium">Recipes</h2>
-          <p className="muted text-sm">Ready-made pipelines for jobs one tool can't do alone. Each shows every step with its output.</p>
-        </div>
-        <RecipeCards recipes={recipes} />
-        <a className="btn w-fit" href="/recipes/">Browse all {RECIPE_INDEX.length} recipes</a>
-      </section>
-    )}
-    <section className="card p-6 grid gap-4" aria-labelledby="home-directory-h">
-      <div className="grid gap-1">
-        <h2 id="home-directory-h" className="text-lg font-medium">Popular tools</h2>
-        <p className="muted text-sm">
-          Every utility also has its own page with a guide, worked examples and a playground.
-          They all run in your browser: nothing you paste is uploaded.
-        </p>
-      </div>
-      <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {popular.map(u => (
-          <li key={u.id}>
-            <a className="block h-full p-3 rounded-xl border bg-surface hover:border-primary-600 hover:shadow-glow transition" href={utilityPath(u.id)}>
-              <div className="font-medium">{displayName(u.name)}</div>
-              <div className="text-xs text-muted line-clamp-2">{u.description}</div>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <a className="btn w-fit" href="/utilities/">Browse all {total} utilities</a>
-    </section>
-    </>
+    <div className="grid gap-10 pt-10 pb-6 border-t">
+      {recipes.length > 0 && (
+        <Block
+          id="home-recipes-h"
+          title="Recipes"
+          intro="Ready-made pipelines for jobs one tool can't do alone. Each one shows every step with its output."
+          more={{ href: '/recipes/', label: `Browse all ${RECIPE_INDEX.length} recipes` }}
+          entries={recipes.map(r => ({ href: recipePath(r.slug), name: r.name, description: r.summary }))}
+          minWidth="wide"
+        />
+      )}
+      <Block
+        id="home-directory-h"
+        title="Popular tools"
+        intro="Every utility has its own page with a guide, worked examples and a playground."
+        more={{ href: '/utilities/', label: `Browse all ${total} utilities` }}
+        entries={popular.map(u => ({ href: utilityPath(u.id), name: displayName(u.name), description: u.description }))}
+        minWidth="narrow"
+      />
+    </div>
   )
 }

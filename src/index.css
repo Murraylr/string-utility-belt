@@ -7,29 +7,47 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: Plus Jakarta Sans, ui-sans-serif, system-ui;
-  --font-mono: JetBrains Mono, ui-monospace, SFMono-Regular;
+  --font-sans: Instrument Sans, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: JetBrains Mono, ui-monospace, SFMono-Regular, monospace;
 
   --color-canvas: rgb(var(--c-canvas));
   --color-surface: rgb(var(--c-surface));
   --color-surface-2: rgb(var(--c-surface-2));
+  --color-strip: rgb(var(--c-strip));
   --color-fg: rgb(var(--c-fg));
   --color-muted: rgb(var(--c-muted));
   --color-line: rgb(var(--c-line));
+  --color-line-2: rgb(var(--c-line-2));
+  --color-acc: rgb(var(--c-acc));
+  --color-acc-hover: rgb(var(--c-acc-hover));
+  --color-acc-soft: rgb(var(--c-acc-soft));
+  --color-on-acc: rgb(var(--c-on-acc));
+  --color-inv: rgb(var(--c-inv));
+  --color-inv-hover: rgb(var(--c-inv-hover));
+  --color-on-inv: rgb(var(--c-on-inv));
   --color-danger: rgb(var(--c-danger));
+  --color-danger-ink: rgb(var(--c-danger-ink));
+  --color-danger-bg: rgb(var(--c-danger-bg));
+  --color-danger-line: rgb(var(--c-danger-line));
   --color-success: rgb(var(--c-success));
   --color-warn: rgb(var(--c-warn));
+  --color-add-bg: rgb(var(--c-add-bg));
+  --color-add-ink: rgb(var(--c-add-ink));
+  --color-del-bg: rgb(var(--c-del-bg));
+  --color-del-ink: rgb(var(--c-del-ink));
 
-  --color-ink-50: #f8fafc;
-  --color-ink-100: #eef2f7;
-  --color-ink-200: #e2e8f0;
-  --color-ink-900: #0b132a;
+  --color-ink-50: #f8f7f3;
+  --color-ink-100: #f2f0ec;
+  --color-ink-200: #dcd9d3;
+  --color-ink-900: #1f1915;
 
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #5458ee;
-  --color-primary-700: #4338ca;
+  /* The accent as a fixed scale, for the few places that still name a step of it;
+     theme-aware code uses `acc` and its siblings above. */
+  --color-primary-50: #ffefe6;
+  --color-primary-100: #fbe2d9;
+  --color-primary-500: #f37344;
+  --color-primary-600: #c94c18;
+  --color-primary-700: #b83c00;
 
   /* v3's absolute line heights: v4's are unitless ratios, which a smaller-font child
      (a text-[11px] chip inside text-sm) would inherit as a shorter line */
@@ -39,13 +57,14 @@
   --text-lg--line-height: 1.75rem;
   --text-xl--line-height: 1.75rem;
   --text-2xl--line-height: 2rem;
-  --text-3xl--line-height: 2.25rem;
+  --text-3xl--line-height: 2.375rem;
   --text-4xl--line-height: 2.5rem;
 
-  --shadow-soft: 0 10px 25px -10px rgba(0, 0, 0, 0.15);
-  --shadow-glow:
-    0 0 0 2px rgba(99, 102, 241, 0.15), 0 10px 30px rgba(99, 102, 241, 0.25);
-
+  /* flat surfaces: a shadow only for things that float (menus, dialogs, toasts) */
+  --shadow-soft: none;
+  --shadow-float: 0 16px 40px -16px rgb(var(--c-shadow) / var(--shadow-alpha));
+  --shadow-dialog: 0 30px 80px -30px rgb(var(--c-shadow) / var(--shadow-alpha));
+  --shadow-glow: none;
 }
 
 /* Tailwind v4 defaults borders to currentColor and buttons to cursor: default;
@@ -62,47 +81,76 @@
 /* Design tokens (space-separated RGB so Tailwind can apply alpha). `.dark` swaps them. */
 @layer base {
   :root {
-    --c-canvas: 248 250 252;
-    --c-surface: 255 255 255;
-    --c-surface-2: 249 250 251;
-    --c-fg: 11 19 42;
-    --c-muted: 100 116 139;
-    --c-line: 226 232 240;
-    /* Tailwind 700s rather than the 600s these started as: the status tokens are used
-       at text-xs/sm for real copy (step errors, decode warnings, diff highlights,
-       timing), often on their own `/10` tint — and the 600s only reach ~3.1-4.1:1
-       there (AA-large, not AA-normal). */
-    --c-danger: 185 28 28;
-    --c-success: 21 128 61;
-    --c-warn: 180 83 9;
-    /* BackgroundFX gradient hues — kept separate from the semantic tokens above
-       so re-theming the UI doesn't accidentally wash out the decorative FX. */
-    --c-fx-spot: 99 102 241;
-    --c-fx-ribbon-a: 236 72 153;
-    --c-fx-ribbon-b: 59 130 246;
+    --c-canvas: 248 247 243;
+    --c-surface: 254 253 250;
+    --c-surface-2: 242 240 236;
+    --c-strip: 245 243 239;
+    --c-fg: 31 25 21;
+    --c-muted: 105 98 93;
+    --c-line: 220 217 211;
+    --c-line-2: 190 186 179;
+    --c-acc: 202 75 32;
+    --c-acc-hover: 184 59 7;
+    --c-acc-soft: 255 232 220;
+    --c-on-acc: 254 253 250;
+    --c-inv: 31 25 21;
+    --c-inv-hover: 50 44 40;
+    --c-on-inv: 248 247 243;
+    /* Status colours: `danger`/`warn`/`success` are used at text-xs/sm for real copy
+       (step errors, decode warnings, timing), so each clears 4.5:1 on the surfaces;
+       `danger-ink` on `danger-bg` is the alert pairing. */
+    --c-danger: 186 43 40;
+    --c-danger-ink: 155 31 29;
+    --c-danger-bg: 255 238 234;
+    --c-danger-line: 247 204 198;
+    --c-success: 0 75 30;
+    --c-warn: 142 84 0;
+    --c-add-bg: 220 247 225;
+    --c-add-ink: 0 75 30;
+    --c-del-bg: 255 233 229;
+    --c-del-ink: 137 33 30;
+    --c-shadow: 40 30 22;
+    --shadow-alpha: .3;
+    --c-header: 248 247 243;
     color-scheme: light;
   }
   .dark {
-    --c-canvas: 11 15 25;
-    --c-surface: 19 25 39;
-    --c-surface-2: 27 34 52;
-    --c-fg: 226 232 240;
-    --c-muted: 148 163 184;
-    --c-line: 45 55 76;
-    --c-danger: 248 113 113;
-    --c-success: 74 222 128;
-    --c-warn: 251 191 36;
-    /* brighter/cooler than the light-mode hues so the same gradients read as
-       accents against a dark canvas instead of muddying into it */
-    --c-fx-spot: 129 140 248;
-    --c-fx-ribbon-a: 244 114 182;
-    --c-fx-ribbon-b: 96 165 250;
+    --c-canvas: 17 15 13;
+    --c-surface: 26 22 20;
+    --c-surface-2: 35 32 29;
+    --c-strip: 21 18 16;
+    --c-fg: 234 231 227;
+    --c-muted: 163 157 152;
+    --c-line: 49 45 41;
+    --c-line-2: 76 71 66;
+    --c-acc: 234 123 78;
+    --c-acc-hover: 246 148 109;
+    --c-acc-soft: 61 32 20;
+    --c-on-acc: 17 15 13;
+    --c-inv: 234 231 227;
+    --c-inv-hover: 204 202 198;
+    --c-on-inv: 17 15 13;
+    --c-danger: 234 107 96;
+    --c-danger-ink: 253 162 151;
+    --c-danger-bg: 48 23 21;
+    --c-danger-line: 93 45 41;
+    --c-success: 161 228 174;
+    --c-warn: 237 187 100;
+    --c-add-bg: 18 45 25;
+    --c-add-ink: 161 228 174;
+    --c-del-bg: 59 28 25;
+    --c-del-ink: 255 174 164;
+    --c-shadow: 0 0 0;
+    --shadow-alpha: .6;
+    --c-header: 17 15 13;
     color-scheme: dark;
   }
-  /* The page colour lives on <html> only: a <body> background would paint above
-     negative-z-index layers (BackgroundFX is `fixed -z-10`) and hide them. */
   html { @apply bg-canvas; }
-  html, body { @apply text-fg font-sans transition-colors duration-200; }
+  html, body { @apply text-fg font-sans text-sm antialiased; }
+  a { @apply text-fg; }
+  a:hover { @apply text-acc; }
+  input[type="checkbox"], input[type="radio"] { accent-color: rgb(var(--c-acc)); }
+  select, option, optgroup { @apply bg-surface text-fg; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
@@ -123,13 +171,13 @@
      would outrank `rounded-*` utilities and reshape the element on focus, and
      outlines already follow the element's own radius. `tabindex="-1"` targets
      (skip-link destinations, dialogs focused on open) aren't keyboard stops. */
-  a:focus-visible, button:focus-visible, summary:focus-visible,
+  a:focus-visible, button:focus-visible, summary:focus-visible, select:focus-visible,
   [tabindex]:not([tabindex="-1"]):focus-visible {
-    outline: 2px solid rgb(var(--c-fx-spot));
-    outline-offset: 2px;
+    outline: 2px solid rgb(var(--c-acc));
+    outline-offset: 1px;
   }
 
-  ::selection { background-color: rgb(var(--c-fx-spot) / .25); }
+  ::selection { background-color: rgb(var(--c-acc) / .3); }
 
   /* Preflight's gray-400 placeholder is ~2.5:1 on a light surface; the muted token
      clears 4.5:1 in both themes. */
@@ -138,53 +186,107 @@
 
 @layer components {
   .glass {
-    @apply bg-surface/60 backdrop-blur-md border border-surface/40 shadow-soft;
+    @apply bg-surface border border-line;
   }
   .card {
-    @apply rounded-2xl border bg-surface shadow-soft;
+    @apply rounded-lg border bg-surface;
   }
+  /* the one filled accent button on a view: its main action */
   .cta {
-    @apply px-4 py-2 rounded-xl bg-primary-600 text-white hover:bg-primary-700 transition shadow-glow disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-md border border-acc bg-acc text-on-acc text-[13px] font-medium hover:bg-acc-hover hover:text-on-acc disabled:opacity-40;
+  }
+  /* dark-on-light (light-on-dark) primary, for confirm buttons in dialogs and forms */
+  .btn-inv {
+    @apply inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-md border border-inv bg-inv text-on-inv text-[13px] font-medium hover:bg-inv-hover hover:text-on-inv disabled:opacity-40;
   }
   .btn {
-    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border hover:bg-surface-2 disabled:opacity-50 shadow-soft text-sm;
-    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    @apply inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-surface border text-[13px] font-medium hover:bg-surface-2 hover:text-fg disabled:opacity-40;
+  }
+  /* borderless text button in a toolbar row */
+  .btn-ghost {
+    @apply inline-flex items-center gap-1.5 h-7 px-2 rounded-[5px] text-[12.5px] text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40;
   }
   .icon-btn {
-    /* min-w/min-h (not fixed padding) floor the tap target at ~40px (WCAG 2.5.8)
-       while still growing for a bigger icon, and letting a full-width text menu
-       item (StepMenu) override with its own `w-full`/`justify-start`. */
-    @apply inline-flex items-center justify-center min-w-10 min-h-10 p-2 rounded-xl hover:bg-surface-2 disabled:opacity-40;
-    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    /* min-w/min-h (not fixed padding) floor the tap target while still growing for a
+       bigger icon, and let a full-width text menu item (StepMenu) override with its own
+       `w-full`/`justify-start`. */
+    @apply inline-flex items-center justify-center min-w-8 min-h-8 p-1.5 rounded-md text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40;
   }
   .field {
-    @apply border rounded-xl px-3 py-2 bg-surface text-fg shadow-soft outline-hidden focus:ring-3 focus:ring-primary-500/30;
-    @apply focus-visible:ring-2 focus-visible:ring-primary-500;
+    @apply h-8 border rounded-md px-2.5 bg-surface text-fg text-[13px] outline-hidden focus:border-acc;
   }
+  textarea.field { @apply h-auto py-2; }
   .chip {
-    @apply text-[11px] px-2 py-0.5 rounded-full border bg-surface-2;
+    @apply font-mono text-[10.5px] leading-4 px-1.5 rounded-[4px] border text-muted;
   }
-  /* SponsorBlock (src/app/sponsors): one compact row, its size fixed by the 48px logo box so it never shifts the page */
+  /* a pill that filters or picks (categories, samples); `aria-pressed` marks the chosen one */
+  .pill {
+    @apply inline-flex items-center gap-1.5 h-[26px] px-2.5 rounded-full border text-[12.5px] hover:border-acc;
+  }
+  .pill[aria-pressed="true"] { @apply border-inv bg-inv text-on-inv; }
+  .kbd {
+    @apply font-mono text-[10.5px] px-[5px] py-0.5 border rounded-[4px] bg-surface text-muted;
+  }
+  /* floating panels: menus, popovers */
+  .popover {
+    @apply bg-surface border rounded-lg p-1 shadow-float;
+  }
+  .menu-item {
+    @apply w-full flex items-center justify-between gap-3 text-left px-2.5 py-[7px] rounded-[5px] text-[13px] hover:bg-surface-2 disabled:opacity-40;
+  }
+  /* a segmented control: buttons in a sunk track, the pressed one raised */
+  .segmented {
+    @apply inline-flex p-0.5 border rounded-md bg-surface-2;
+  }
+  .segmented > button {
+    @apply h-[22px] px-2.5 rounded-[4px] text-xs font-medium text-muted;
+  }
+  .segmented > button[aria-pressed="true"], .segmented > button[aria-selected="true"] {
+    @apply bg-surface text-fg shadow-[0_1px_2px_rgb(var(--c-shadow)/.12)];
+  }
+  .eyebrow {
+    @apply text-[11.5px] text-muted;
+  }
+  .page-title {
+    @apply m-0 text-[26px] leading-8 sm:text-[32px] sm:leading-[38px] font-semibold tracking-[-0.025em] text-balance;
+  }
+  .page-lead {
+    @apply m-0 text-[15px] leading-6 text-muted text-pretty;
+  }
+  .section-title {
+    @apply m-0 text-xl leading-7 font-semibold tracking-[-0.015em];
+  }
+  /* a link list: hairline-separated rows of name + one muted line */
+  .link-row {
+    @apply grid gap-0.5 py-[9px] border-t;
+  }
+  .link-row > :first-child { @apply text-[13.5px] font-medium; }
+  .link-row > :last-child:not(:first-child) { @apply text-xs text-muted; }
+  .more-link {
+    @apply text-[13px] font-medium text-acc hover:text-acc-hover;
+  }
+
+  /* Sponsor and house-promo slots (src/app/sponsors). Every variant shares one
+     label row ("Sponsor" or "From String Utility Belt", with a link to /advertise/)
+     and a fixed-size mark, so a slot never shifts the page when it fills in. */
   .sponsor {
-    @apply flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border bg-surface-2 px-3 py-2 text-sm;
-  }
-  .sponsor-link {
-    /* a 16rem basis wraps the label onto its own line before the text gets squeezed */
-    @apply flex items-center gap-3 min-w-0 grow basis-64 hover:underline underline-offset-2;
-    @apply focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500 rounded-lg;
-  }
-  .sponsor-logo {
-    @apply size-12 shrink-0 rounded-lg object-contain bg-white;
-  }
-  /* HousePromo: our own extension's icon on a brand tile in place of a sponsor's logo */
-  .sponsor-mark {
-    @apply grid place-items-center bg-primary-600 text-white;
+    @apply grid gap-2 px-3 pt-2.5 pb-3 border rounded-lg bg-surface;
   }
   .sponsor-label {
-    @apply text-[11px] uppercase tracking-wide text-muted sm:order-last;
+    @apply flex justify-between gap-3 text-[11px] text-muted;
   }
-  .sponsor-label a {
-    @apply underline underline-offset-2;
+  .sponsor-label a { @apply text-muted underline underline-offset-2; }
+  .sponsor-link {
+    @apply flex items-center gap-3 min-w-0;
+  }
+  .sponsor-name { @apply text-[13.5px] font-semibold; }
+  .sponsor-text { @apply text-[12.5px] text-muted text-pretty; }
+  .sponsor-logo {
+    @apply size-12 shrink-0 rounded-lg object-contain bg-white border;
+  }
+  /* our own tool's mark on an accent tile in place of a sponsor's logo */
+  .sponsor-mark {
+    @apply grid place-items-center border-0 bg-acc text-on-acc;
   }
   .muted {
     @apply text-sm text-muted;
@@ -196,46 +298,42 @@
     @apply sr-only;
   }
 
-  /* Scoped styling for markdown rendered by src/lib/markdown.js. There's no
-     @tailwindcss/typography plugin installed, so the classes it emits
-     (`md-h1`, `md-p`, `md-code`, ...) are styled here directly with the
-     semantic tokens, which makes them theme-aware for free. */
-  .md { @apply leading-7 text-fg; }
-  .md .md-h1 { @apply text-2xl font-bold mt-10 mb-4; }
-  .md .md-h2 { @apply text-xl font-bold mt-8 mb-3; }
+  /* Markdown rendered by src/lib/markdown and src/app/pages/guide.ts (`md-h1`, `md-p`,
+     `md-code`, ...), styled here with the semantic tokens so it follows the theme. */
+  .md { @apply text-[15px] leading-[26px] text-fg text-pretty min-w-0; }
+  .md .md-h1 { @apply text-[28px] leading-[34px] font-semibold tracking-[-0.02em] mt-10 mb-4; }
+  .md .md-h2 { @apply text-xl leading-7 font-semibold tracking-[-0.015em] mt-9 mb-3.5; }
   /* a section opened from a link (`/integrations/#cli`) clears the sticky header */
-  .md [id] { scroll-margin-top: 5rem; }
-  .md .md-h3 { @apply text-lg font-semibold mt-6 mb-2; }
-  .md .md-p { @apply mb-4; }
-  .md .md-code { @apply px-1.5 py-0.5 rounded-sm bg-surface-2 border text-[0.9em] font-mono; }
-  .md .md-pre { @apply overflow-x-auto p-3 rounded-lg bg-surface-2 border my-4; }
-  .md .md-pre .md-code-block { @apply font-mono text-sm bg-transparent border-0 p-0; }
-  .md .md-link { @apply text-primary-600 dark:text-primary-100 underline underline-offset-2 hover:no-underline; }
-  .md .md-ul { @apply list-disc pl-6 mb-4 grid gap-1 marker:text-muted; }
-  .md .md-ol { @apply list-decimal pl-6 mb-4 grid gap-1 marker:text-muted; }
+  .md [id] { scroll-margin-top: 5.25rem; }
+  .md .md-h3 { @apply text-base leading-6 font-semibold mt-6 mb-2; }
+  .md .md-p { @apply mb-3.5; }
+  .md strong { @apply font-semibold; }
+  .md .md-code { @apply px-[5px] py-px rounded-[4px] bg-surface-2 text-[0.86em] font-mono; overflow-wrap: anywhere; }
+  .md .md-pre { @apply overflow-x-auto px-3.5 py-2.5 rounded-lg bg-strip border my-3.5; }
+  .md .md-pre .md-code-block { @apply font-mono text-[12.5px] leading-5 bg-transparent border-0 p-0; }
+  .md .md-link { @apply text-inherit underline decoration-acc underline-offset-[3px] hover:text-acc; }
+  .md .md-ul, .md .md-ol { @apply pl-[22px] mb-3.5 grid gap-2; }
+  .md .md-ul { @apply list-['—'] ; }
+  .md .md-ul > li { @apply pl-2; }
+  .md .md-ol { @apply list-decimal; }
+  .md .md-ul > li::marker, .md .md-ol > li::marker { @apply font-mono text-xs text-acc; }
   /* grid items: without min-w-0 a long inline code span pushes the item past the track */
   .md .md-li { @apply min-w-0; }
-  .md .md-table-wrap { @apply overflow-x-auto my-4; }
-  .md .md-table { @apply w-full text-sm border-collapse; }
-  .md .md-table th { @apply text-left font-semibold border-b px-2 py-1; }
-  .md .md-table td { @apply border-t px-2 py-1 align-top; }
+  .md .md-table-wrap { @apply overflow-x-auto my-3.5 border rounded-lg; }
+  .md .md-table { @apply w-full text-[13.5px] leading-[21px] border-collapse; }
+  .md .md-table th { @apply text-left font-medium text-muted px-3 py-2 border-b bg-strip whitespace-nowrap; }
+  .md .md-table td { @apply border-t px-3 py-2 align-top; }
+  .md .md-table tr:first-child td { @apply border-t-0; }
 
   /* Utility guides (src/app/pages/guide.ts): sections sit one level below the
-     guide's own <h2>, and inside a card rather than a full-width article. */
-  .guide .md-h2 { @apply text-lg mt-6 mb-2; }
-  .guide .md-h3 { @apply text-base mt-4 mb-2; }
+     guide's own <h2>. */
+  .guide .md-h2 { @apply text-lg mt-7 mb-2; }
+  .guide .md-h3 { @apply text-[15px] mt-5 mb-2; }
   .guide > :first-child { @apply mt-0; }
   .guide .md-code { @apply wrap-break-word; }
-  .guide .guide-example { @apply my-4 rounded-xl border p-3 grid gap-1; }
+  .guide .guide-example { @apply my-4 rounded-lg border p-3 grid gap-1; }
   .guide .guide-example .md-pre { @apply my-0 whitespace-pre-wrap; overflow-wrap: anywhere; }
-  .guide .guide-example-title { @apply font-medium text-sm; }
-  .guide .guide-example-params { @apply text-xs text-muted; }
-  .guide .guide-example-label { @apply text-xs text-muted mt-1; }
-}
-
-/* fancy background gradient helpers */
-.bg-grid {
-  background-image: linear-gradient(to right, rgb(var(--c-fg) / .04) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgb(var(--c-fg) / .04) 1px, transparent 1px);
-  background-size: 20px 20px;
+  .guide .guide-example-title { @apply font-semibold text-sm; }
+  .guide .guide-example-params { @apply font-mono text-[11.5px] text-muted; }
+  .guide .guide-example-label { @apply text-[11px] text-muted mt-1; }
 }

@@ -8,8 +8,8 @@ A `.env` file holds configuration as `KEY=value` lines, the convention
 popularized by the dotenv libraries for loading environment variables in
 development. It is
 simple to write but awkward to consume from anything other than a shell or
-a dotenv library. This tool parses a real `.env` file — including quoting,
-comments, `export` prefixes, and variable references — into a plain JSON
+a dotenv library. This tool parses a real `.env` file (including quoting,
+comments, `export` prefixes, and variable references) into a plain JSON
 object, so you can inspect, diff, or feed the configuration into tools that
 expect JSON.
 
@@ -23,11 +23,11 @@ expect JSON.
    like `\n`, `\t`, and `\uXXXX` expanded), or backtick-quoted (literal,
    like single quotes). Any of the three quote styles can span multiple
    lines.
-3. If a key repeats, the last assignment wins — matching how a shell
+3. If a key repeats, the last assignment wins, matching how a shell
    processes repeated exports.
 4. With **expand `${VAR}`** on, `$NAME` and `${NAME}` references are
-   substituted with values defined anywhere in the same file — before or
-   after the reference — with `${NAME:-fallback}` supported; an undefined
+   substituted with values defined anywhere in the same file (before or
+   after the reference), with `${NAME:-fallback}` supported; an undefined
    name without a fallback becomes an empty string. The process environment
    is never consulted. Off, references are left as literal text. Either
    way, an escaped `\$` in an unquoted or double-quoted value becomes a
@@ -101,15 +101,15 @@ output:
 
 ## Options
 
-- **coerce numbers/booleans** — off by default (every value is a string);
+- **coerce numbers/booleans**: off by default (every value is a string);
   on, converts unquoted `true`/`false`/`null` and canonical-looking numbers
   to real JSON types. Quoted values are never coerced, since quoting is an
   explicit "keep this as text" signal.
-- **expand `${VAR}`** — off by default (values are left exactly as
+- **expand `${VAR}`**: off by default (values are left exactly as
   written, aside from unescaping `\$`); on, resolves `$NAME` and
   `${NAME}` / `${NAME:-fallback}` references against the other values in
   the same file. Single- and backtick-quoted values are never expanded.
-- **indent** — spaces of JSON indentation, from 0 to 10 (default 2).
+- **indent**: spaces of JSON indentation, from 0 to 10 (default 2).
 
 ## Common uses
 
@@ -117,7 +117,7 @@ output:
   produce, including any `${VAR}` substitutions.
 - Converting environment configuration into JSON for a config-loading
   library, a test fixture, or a deployment manifest.
-- Spotting values that parse differently than you intended — for example
+- Spotting values that parse differently than you intended, for example
   an unquoted value cut short by a ` #` inline comment.
 
 ## Tips and pitfalls
@@ -126,8 +126,8 @@ output:
   throws an error rather than looping forever.
 - A key such as `__proto__` or `constructor` is treated as ordinary data,
   not as a JavaScript prototype property.
-- An unterminated quoted value — a `"` with no matching close before the
-  file ends — throws, naming the line where the value started. So does any
+- An unterminated quoted value (a `"` with no matching close before the
+  file ends) throws, naming the line where the value started. So does any
   non-comment line without an `=`.
 - Keys are copied as-is: an underscore-joined name such as `DB_HOST` stays
   one flat key, not a nested `DB.HOST` object.

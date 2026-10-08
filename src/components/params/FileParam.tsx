@@ -79,7 +79,7 @@ export default function FileParam({ id, spec, value, onChange, error, describedB
 
   return (
     <div
-      className={`flex flex-col gap-2 rounded-xl ${dragging ? 'ring-2 ring-primary-500' : ''}`}
+      className={`flex flex-col gap-1.5 rounded-md ${dragging ? 'outline-2 outline-dashed outline-acc outline-offset-2' : ''}`}
       onDragOver={e => { if (hasFiles(e)) { e.preventDefault(); setDragging(true) } }}
       onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false) }}
       onDrop={e => {
@@ -92,7 +92,7 @@ export default function FileParam({ id, spec, value, onChange, error, describedB
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="btn"
+          className="btn h-[26px] text-[12.5px]"
           aria-label={`Load file for ${spec.label}`}
           onClick={() => inputRef.current?.click()}
         >
@@ -111,7 +111,7 @@ export default function FileParam({ id, spec, value, onChange, error, describedB
             void load(file)
           }}
         />
-        <span role="status" className={`text-xs ${status?.kind === 'error' ? 'text-danger' : 'text-muted'}`}>
+        <span role="status" className={`text-[11.5px] ${status?.kind === 'error' ? 'text-danger-ink' : 'text-muted'}`}>
           {status?.kind === 'loaded' && `${status.name} (${humanSize(status.size)})`}
           {status?.kind === 'loading' && `reading ${status.name}…`}
           {status?.kind === 'error' && status.message}
@@ -119,7 +119,7 @@ export default function FileParam({ id, spec, value, onChange, error, describedB
       </div>
       <textarea
         id={id}
-        className="field font-mono text-xs"
+        className="field min-w-0 resize-y bg-canvas font-mono text-[12.5px] leading-[19px]"
         rows={6}
         placeholder={spec.placeholder ?? 'paste, drop a file here, or load one'}
         spellCheck={false}

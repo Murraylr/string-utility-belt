@@ -1,5 +1,5 @@
 ---
-title: Unix Timestamp Converter — Epoch to Date Online
+title: Unix Timestamp Converter: Epoch to Date Online
 description: Convert Unix, ISO 8601, RFC 2822, SQL and other timestamps to any format or time zone, with auto-detection of the input's format.
 ---
 ## What is a Unix timestamp?
@@ -44,7 +44,7 @@ params: {"to": "iso", "timezone": "America/New_York"}
 output: 2024-01-15T05:30:00.000-05:00
 ```
 
-Set `to` to `relative` for a human phrase like "3 hours ago" or "in 2 days", computed against the moment the pipeline runs — since that reference point changes, this is the one output that varies between runs:
+Set `to` to `relative` for a human phrase like "3 hours ago" or "in 2 days", computed against the moment the pipeline runs. Since that reference point changes, this is the one output that varies between runs:
 
 ```example
 title: relative time compares against right now (varies between runs)
@@ -55,20 +55,20 @@ output-matches: ago$
 
 ## Options
 
-- **convert to** — `all` (default; every format at once, as a JSON object including the detected input format, UTC offset, weekday and more), or one of `iso`, `unix`, `unix-ms`, `rfc2822`, `http`, `sql`, `local`, `relative`.
-- **timezone** — any IANA time zone name; defaults to `UTC`.
-- **one timestamp per line** — on by default, converting each line independently; blank lines are preserved in single-format output, while `all` skips them and returns a JSON array with one object per timestamp. When off, the whole (trimmed) input is treated as one timestamp.
+- **convert to**: `all` (default; every format at once, as a JSON object including the detected input format, UTC offset, weekday and more), or one of `iso`, `unix`, `unix-ms`, `rfc2822`, `http`, `sql`, `local`, `relative`.
+- **timezone**: any IANA time zone name; defaults to `UTC`.
+- **one timestamp per line**: on by default, converting each line independently; blank lines are preserved in single-format output, while `all` skips them and returns a JSON array with one object per timestamp. When off, the whole (trimmed) input is treated as one timestamp.
 
 ## Common uses
 
 - Turning an API's Unix timestamp field into a readable date for a report or ticket.
 - Converting a log timestamp between time zones while investigating an incident.
-- Checking what format a mystery numeric value actually is — the `all` mode's `detected` field names it (`unix-seconds`, `unix-milliseconds`, `unix-microseconds`, `excel-serial`, `dotnet-ticks`, `iso8601`, `sql`, `rfc2822`, `http-date` or `date-string`).
+- Checking what format a mystery numeric value actually is: the `all` mode's `detected` field names it (`unix-seconds`, `unix-milliseconds`, `unix-microseconds`, `excel-serial`, `dotnet-ticks`, `iso8601`, `sql`, `rfc2822`, `http-date` or `date-string`).
 - Generating an `HTTP`-date or `RFC 2822` string for a header or email from a Unix timestamp.
 
 ## Tips and pitfalls
 
-- A number can only be read one way, so a small integer meant as a timestamp near the epoch (say, `500000`) will instead be read as an Excel serial date far in the future, and a 19-digit Unix nanosecond value (as Go or InfluxDB write them) will be read as .NET ticks — that ambiguity is inherent to bare numbers, not a bug.
+- A number can only be read one way, so a small integer meant as a timestamp near the epoch (say, `500000`) will instead be read as an Excel serial date far in the future, and a 19-digit Unix nanosecond value (as Go or InfluxDB write them) will be read as .NET ticks. That ambiguity is inherent to bare numbers, not a bug.
 - HTTP-dates are always rendered in GMT, as HTTP requires (RFC 9110, which replaced RFC 7231), whatever the `timezone` option says; the option can still change which instant a zone-less input means.
 - A date beyond the widest representable instant, or an impossible calendar date like `2024-02-31`, throws a clear error instead of silently producing a wrong result.
 - To apply a custom display pattern instead of a fixed target format, use [date format](/util/date_format/); for the current moment rather than a supplied one, use [current timestamp](/util/timestamp_now/); to turn the gap between two timestamps into a phrase like "2 hours", convert both to `unix`, subtract, and give the difference to [humanize duration](/util/duration_humanize/).

@@ -4,6 +4,7 @@ import { render, screen, within } from '@testing-library/react'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { RECIPE_CATEGORIES } from '@/recipes/types'
 import { RECIPES_TITLE, recipesDescription } from '../seo'
+import { promoPlan } from '@/app/sponsors/promos'
 import RecipesIndexPage from './RecipesIndexPage'
 
 describe('RecipesIndexPage', () => {
@@ -17,6 +18,13 @@ describe('RecipesIndexPage', () => {
       expect(within(section).getByRole('link', { name: new RegExp(r.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).getAttribute('href'))
         .toBe(`/recipes/${r.slug}/`)
     }
+  })
+
+  it('shows the inline house promo after the first category, as the pre-render does', () => {
+    const { container } = render(<RecipesIndexPage />)
+    const promo = container.querySelector('aside[data-promo-slot="inline"]')!
+    expect(promo.getAttribute('data-promo')).toBe(promoPlan({ kind: 'index' }).inline)
+    expect(promo.previousElementSibling).toBe(container.querySelector('section'))
   })
 
   it('sets the title and description the pre-render writes', () => {

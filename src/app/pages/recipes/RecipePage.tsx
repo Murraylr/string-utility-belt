@@ -7,7 +7,7 @@ import { execute } from '@/app/engine/executor'
 import { useRunner } from '@/app/engine/useRunner'
 import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
-import { toPipelineSteps, type Recipe } from '@/recipes/types'
+import { RECIPES_PATH, toPipelineSteps, type Recipe } from '@/recipes/types'
 import type { PipelineStep } from '@/types/utility'
 import {
   firstError, stepTraces, traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace, type SkipTrace,
@@ -21,6 +21,7 @@ import { loadRecipeData, peekRecipeData, type RecipeData } from './recipeData'
 import { followLink, openPipelineInEditor } from './openInEditor'
 import RecipeExtension from './RecipeExtension'
 import PageSponsor from '@/app/sponsors/PageSponsor'
+import PagePromo from '@/app/sponsors/PagePromo'
 
 type Load = { status: 'loading' } | { status: 'missing' } | { status: 'error' } | { status: 'ok'; data: RecipeData }
 
@@ -42,13 +43,13 @@ export default function RecipePage({ slug }: { slug: string }) {
     return () => { cancelled = true }
   }, [slug, load.status])
 
-  if (load.status === 'loading') return <div className="muted" role="status">Loading…</div>
+  if (load.status === 'loading') return <div className="text-sm text-muted" role="status">Loading…</div>
   if (load.status === 'missing') return <UnknownRecipe slug={slug} />
   if (load.status === 'error') {
     return (
-      <div role="alert" className="max-w-3xl mx-auto card p-6 grid gap-3">
-        <p>This recipe could not be loaded. Check your connection, then reload the page.</p>
-        <button type="button" className="btn w-fit" onClick={() => location.reload()}>Reload</button>
+      <div role="alert" className="max-w-[560px] grid gap-3">
+        <p className="m-0 text-[15px] leading-6">This recipe didn't load. Check your connection, then reload the page.</p>
+        <button type="button" className="btn justify-self-start" onClick={() => location.reload()}>Reload</button>
       </div>
     )
   }
@@ -59,10 +60,10 @@ function UnknownRecipe({ slug }: { slug: string }) {
   useDocumentMeta(pageTitle('Unknown recipe'), `There is no ${SITE_NAME} recipe called "${slug}".`)
   useNoindex()
   return (
-    <div className="max-w-3xl mx-auto card p-6 grid gap-3">
-      <h1 className="text-xl font-semibold">Unknown recipe “{slug}”</h1>
-      <p className="muted">There's no recipe at this address. It may have been renamed.</p>
-      <a className="btn w-fit" href="/recipes/">Browse all recipes</a>
+    <div className="max-w-[560px] grid gap-3">
+      <h1 className="m-0 text-[28px] leading-[34px] font-semibold tracking-[-0.02em]">No recipe at this address</h1>
+      <p className="page-lead">It may have been renamed.</p>
+      <a className="btn justify-self-start" href={RECIPES_PATH}>Browse all recipes</a>
     </div>
   )
 }
@@ -211,6 +212,7 @@ function RecipeView({ data }: { data: RecipeData }) {
       skip={skip}
       related={relatedRecipes(recipe, RECIPE_INDEX)}
       sponsor={<PageSponsor page={{ kind: 'recipe', slug: recipe.slug }} />}
+      promo={<PagePromo page={{ kind: 'recipe', slug: recipe.slug }} slot="inline" />}
       running={live && run.running}
       live={(
         <RecipeWidget

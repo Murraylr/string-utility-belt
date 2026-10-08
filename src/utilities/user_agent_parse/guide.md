@@ -1,10 +1,10 @@
 ---
-title: User Agent Parser — Browser, OS and Bot Detector Online
+title: User Agent Parser: Browser, OS and Bot Detector Online
 description: Parse a user-agent string into browser, engine, OS, device and CPU details online, and flag bots, crawlers and command-line clients.
 ---
 ## What is a user-agent string?
 
-Every HTTP request from a browser, app or script carries a `User-Agent` header describing what sent it — something like `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ... Chrome/117.0.0.0 Safari/537.36`. The format is a historical accident (every browser claims to be "Mozilla" for backward compatibility), so reading one by eye is unreliable. This tool parses a user-agent string into structured fields — browser, rendering engine, operating system, device and CPU — and flags whether it looks like a bot, crawler or scripted client rather than a real browser.
+Every HTTP request from a browser, app or script carries a `User-Agent` header describing what sent it, something like `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ... Chrome/117.0.0.0 Safari/537.36`. The format is a historical accident (every browser claims to be "Mozilla" for backward compatibility), so reading one by eye is unreliable. This tool parses a user-agent string into structured fields (browser, rendering engine, operating system, device and CPU) and flags whether it looks like a bot, crawler or scripted client rather than a real browser.
 
 ## How it works
 
@@ -41,7 +41,7 @@ output:
 }
 ```
 
-`device.type` isn't reported by the underlying parser for ordinary desktop browsers, so this tool fills in `"desktop"` itself whenever a real browser and OS were both identified and the string doesn't otherwise look automated — mobile, tablet, smart TV and other device types are left exactly as detected.
+`device.type` isn't reported by the underlying parser for ordinary desktop browsers, so this tool fills in `"desktop"` itself whenever a real browser and OS were both identified and the string doesn't otherwise look automated. Mobile, tablet, smart TV and other device types are left exactly as detected.
 
 Known crawlers and bots are recognized directly, with `browser.type` naming the category:
 
@@ -76,7 +76,7 @@ output:
 }
 ```
 
-Command-line HTTP clients are recognized the same way — `isBot` is `true` for tools like `curl`, `wget`, `python-requests` and headless browsers, not just search engine crawlers, since they represent scripted traffic rather than a person browsing:
+Command-line HTTP clients are recognized the same way. `isBot` is `true` for tools like `curl`, `wget`, `python-requests` and headless browsers, not just search engine crawlers, since they represent scripted traffic rather than a person browsing:
 
 ```example
 title: a command-line client is flagged as a bot too
@@ -109,7 +109,7 @@ output:
 }
 ```
 
-An empty or unrecognized string never throws — every field simply comes back `null` (with `isBot: false`):
+An empty or unrecognized string never throws. Every field simply comes back `null` (with `isBot: false`):
 
 ```example
 title: empty input returns every field as null
@@ -144,14 +144,14 @@ output:
 
 ## Fields returned
 
-- **browser** — `name`, `version`, `major` (the version's leading number), and `type` — `crawler`, `cli`, `fetcher` or `library` for automated clients, `inapp`, `email` or `mediaplayer` for browsers embedded in other apps (the Facebook app's in-app browser reports `inapp`), or `null` for an ordinary browser.
-- **engine** — the rendering engine `name` (`Blink`, `Gecko`, `WebKit`, …) and its `version`.
-- **os** — operating system `name` and `version`.
-- **device** — `type` (`mobile`, `tablet`, `smarttv`, `console`, `wearable`, `embedded`, `xr`, `desktop`, or `null`), plus `vendor` and `model` when the string identifies specific hardware (phones and tablets usually do; desktops don't).
-- **cpu** — `architecture` (`amd64`, `arm64`, …) when the string exposes it.
-- **isBot** — `true` for any recognized crawler, scraper, headless browser, or command-line/HTTP-library client.
+- **browser**: `name`, `version`, `major` (the version's leading number), and `type`: `crawler`, `cli`, `fetcher` or `library` for automated clients, `inapp`, `email` or `mediaplayer` for browsers embedded in other apps (the Facebook app's in-app browser reports `inapp`), or `null` for an ordinary browser.
+- **engine**: the rendering engine `name` (`Blink`, `Gecko`, `WebKit`, …) and its `version`.
+- **os**: operating system `name` and `version`.
+- **device**: `type` (`mobile`, `tablet`, `smarttv`, `console`, `wearable`, `embedded`, `xr`, `desktop`, or `null`), plus `vendor` and `model` when the string identifies specific hardware (phones and tablets usually do; desktops don't).
+- **cpu**: `architecture` (`amd64`, `arm64`, …) when the string exposes it.
+- **isBot**: `true` for any recognized crawler, scraper, headless browser, or command-line/HTTP-library client.
 
-This utility takes no parameters — every result comes from the input string alone.
+This utility takes no parameters. Every result comes from the input string alone.
 
 ## Common uses
 
@@ -162,7 +162,7 @@ This utility takes no parameters — every result comes from the input string al
 
 ## Tips and pitfalls
 
-- A user-agent string is entirely client-supplied and trivially spoofable — treat `isBot` and the parsed browser/OS as a signal for analytics and UX decisions, never as a security control.
+- A user-agent string is entirely client-supplied and trivially spoofable. Treat `isBot` and the parsed browser/OS as a signal for analytics and UX decisions, never as a security control.
 - Chromium-based browsers now send a reduced user-agent string on purpose: minor versions are zeroed (`Chrome/117.0.0.0`), Android reports `Android 10; K` with no device model, and OS versions are frozen. Windows 11 still says `Windows NT 10.0`, so a result of Windows 10 may really be Windows 11. The finer detail moved to User-Agent Client Hints (`Sec-CH-UA-*` request headers), which this tool does not read, so a generic-looking result may reflect the browser rather than a parsing gap.
-- A device name that merely contains the letters "bot" (phones from the Cubot brand, for example) is deliberately not flagged as a crawler — the bot heuristics look for word boundaries and known client signatures, not a bare substring match.
+- A device name that merely contains the letters "bot" (phones from the Cubot brand, for example) is deliberately not flagged as a crawler. The bot heuristics look for word boundaries and known client signatures, not a bare substring match.
 - User-Agent is just another HTTP header: to pull it out of a captured request's raw header block first, use [http headers to json](/util/http_headers_parse/).

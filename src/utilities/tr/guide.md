@@ -1,10 +1,10 @@
 ---
-title: Translate Characters Online — POSIX tr Tool
+title: Translate Characters Online: POSIX tr Tool
 description: Translate, delete or squeeze characters online like the Unix tr command, with a-z ranges and POSIX [:class:] expansion.
 ---
 ## What is the tr command?
 
-`tr` (translate) is a classic Unix tool for character-by-character text transformation: map one set of characters onto another, delete a set outright, or collapse runs of repeated characters down to one. Unlike [find and replace](/util/replace/) or [sed script](/util/sed/), it never matches multi-character patterns — every operation works one character at a time, which makes it the right tool for jobs like case-folding, deleting a class of characters, or squeezing repeated whitespace.
+`tr` (translate) is a classic Unix tool for character-by-character text transformation: map one set of characters onto another, delete a set outright, or collapse runs of repeated characters down to one. Unlike [find and replace](/util/replace/) or [sed script](/util/sed/), it never matches multi-character patterns. Every operation works one character at a time, which makes it the right tool for jobs like case-folding, deleting a class of characters, or squeezing repeated whitespace.
 
 ## How it works
 
@@ -17,7 +17,7 @@ input: hello world
 output: HELLO WORLD
 ```
 
-Ranges like `a-z` and POSIX character classes like `[:upper:]` or `[:digit:]` expand to the full list of characters they represent, so you rarely need to type out every character by hand. The classes contain ASCII characters only — `[:upper:]` is `A`–`Z`, so `É` is not part of it — while a range covers every code point between its ends. Because `[:upper:]` and `[:lower:]` list their letters in the same order, one maps onto the other:
+Ranges like `a-z` and POSIX character classes like `[:upper:]` or `[:digit:]` expand to the full list of characters they represent, so you rarely need to type out every character by hand. The classes contain ASCII characters only (`[:upper:]` is `A`–`Z`, so `É` is not part of it), while a range covers every code point between its ends. Because `[:upper:]` and `[:lower:]` list their letters in the same order, one maps onto the other:
 
 ```example
 title: expand POSIX character classes
@@ -26,7 +26,7 @@ input: Hello World!
 output: hello world!
 ```
 
-If **to** is shorter than **from**, its last character is reused to pad out the rest — so `from: "abcd", to: "xy"` maps `a→x`, `b→y`, `c→y`, `d→y`. If **to** is longer, the extra characters are ignored, and if **to** is empty (with **delete** off) nothing is translated. Turning on **delete** removes every character in **from** outright instead of translating it:
+If **to** is shorter than **from**, its last character is reused to pad out the rest, so `from: "abcd", to: "xy"` maps `a→x`, `b→y`, `c→y`, `d→y`. If **to** is longer, the extra characters are ignored, and if **to** is empty (with **delete** off) nothing is translated. Turning on **delete** removes every character in **from** outright instead of translating it:
 
 ```example
 title: delete every vowel
@@ -55,11 +55,11 @@ output: Uryyb, Jbeyq
 
 ## Options
 
-- **from set** — the characters to match, as literal characters, `a-z`-style ranges, or `[:class:]` names (`alpha`, `alnum`, `digit`, `lower`, `upper`, `space`, `blank`, `punct`, `print`, `graph`, `cntrl`, `xdigit`), all ASCII-only.
-- **to set** — the characters to translate matches into, position by position. When **delete** is on it is not used for translation, only as the squeeze set.
-- **delete "from" characters** — removes every character in **from** from the output instead of translating it. Default off.
-- **squeeze repeats** — collapses consecutive repeats of a character in the squeeze set (**to** if given, otherwise **from**) to one. Default off.
-- **expand a-z ranges and [:classes:]** — when on (the default), `a-z` and `[:class:]` syntax is expanded as described above; when off, `-` and `[`/`]` are treated as ordinary literal characters, so `a-z` means the three characters `a`, `-`, `z` rather than a range.
+- **from set**: the characters to match, as literal characters, `a-z`-style ranges, or `[:class:]` names (`alpha`, `alnum`, `digit`, `lower`, `upper`, `space`, `blank`, `punct`, `print`, `graph`, `cntrl`, `xdigit`), all ASCII-only.
+- **to set**: the characters to translate matches into, position by position. When **delete** is on it is not used for translation, only as the squeeze set.
+- **delete "from" characters**: removes every character in **from** from the output instead of translating it. Default off.
+- **squeeze repeats**: collapses consecutive repeats of a character in the squeeze set (**to** if given, otherwise **from**) to one. Default off.
+- **expand a-z ranges and [:classes:]**: when on (the default), `a-z` and `[:class:]` syntax is expanded as described above; when off, `-` and `[`/`]` are treated as ordinary literal characters, so `a-z` means the three characters `a`, `-`, `z` rather than a range.
 
 ## Common uses
 

@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ToolProvider, useTool } from '@/app/ToolContext'
 import { listEntries } from '@/app/library/storage'
-import StepList from './StepList'
 import BulkToggle from './steps/BulkToggle'
+import StepsSection from './steps/StepsSection'
 
 // Real framer-motion drag physics can't be simulated in jsdom (no real layout).
 // The stub keeps the same prop contract StepList relies on — `values`/`onReorder`
@@ -40,15 +40,14 @@ const step = (id, utilityId = 'trim') => ({ id, utilityId, enabled: true, params
 /** The store's step ids as a nested tree: branches as arrays of lanes, macro and each bodies as {id: [...]}. */
 const idTree = steps => steps.map(s => (s.type === 'branch' ? { [s.id]: s.branches.map(idTree) } : s.type === 'macro' || s.type === 'each' ? { [s.id]: idTree(s.steps) } : s.id))
 
-function Harness({ extra }) {
+function Harness() {
   const { state, canUndo } = useTool()
   return (
     <>
       <div data-testid="can-undo">{String(canUndo)}</div>
       <div data-testid="store">{JSON.stringify(idTree(state.steps))}</div>
       <div data-testid="enabled">{JSON.stringify(flatEnabled(state.steps))}</div>
-      {extra}
-      <StepList steps={state.steps} />
+      <StepsSection />
     </>
   )
 }
@@ -56,15 +55,18 @@ function Harness({ extra }) {
 const flatEnabled = steps => steps.flatMap(s => [s.enabled !== false, ...(s.type === 'branch' ? s.branches.flatMap(flatEnabled) : s.type === 'macro' || s.type === 'each' ? flatEnabled(s.steps) : [])])
 const storeTree = () => JSON.parse(screen.getByTestId('store').textContent)
 
-function renderTool(initialSteps, extra) {
+function renderTool(initialSteps) {
   return render(
     <ToolProvider initialSteps={initialSteps} persist={false}>
-      <Harness extra={extra} />
+      <Harness />
     </ToolProvider>,
   )
 }
 
-const stepOrder = () => screen.getAllByText(/^step \d+$/).map(el => el.closest('[data-step-id]')?.getAttribute('data-step-id'))
+/** The top-level steps' ids in display order (rows nested in a lane or body are left out). */
+const stepOrder = () => [...document.querySelectorAll('[data-testid^="reorder-item-"]')]
+  .filter(el => !el.parentElement.closest('[data-testid^="reorder-item-"]'))
+  .map(el => el.getAttribute('data-testid').slice('reorder-item-'.length))
 
 /**
  * Browsers apply the HTML focus-fixup rule when a node *containing* the focused element
@@ -137,31 +139,6 @@ describe('<StepList /> reordering', () => {
     expect(document.activeElement).toBe(trigger)
   })
 
-  it('keeps focus on a header move button that moved its card', async () => {
-    const user = userEvent.setup()
-    renderTool([step('a'), step('b'), step('c')])
-    emulateBrowserFocusFixup()
-    const down = screen.getByRole('button', { name: 'move step 1 down' })
-    down.focus()
-    await user.keyboard('{Enter}')
-    expect(stepOrder()).toEqual(['b', 'a', 'c'])
-    expect(document.activeElement).toBe(down)
-  })
-
-  it('hands focus to the twin move button when a header move lands on an edge (the pressed one is now disabled)', async () => {
-    const user = userEvent.setup()
-    renderTool([step('a'), step('b')])
-    const down = screen.getByRole('button', { name: 'move step 1 down' })
-    down.focus()
-    await user.keyboard('{Enter}')
-    expect(stepOrder()).toEqual(['b', 'a'])
-    expect(down).toBeDisabled()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'move step 2 up' }))
-    await user.keyboard('{Enter}')
-    expect(stepOrder()).toEqual(['a', 'b'])
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'move step 1 down' }))
-  })
-
   it('moves focus to the next card\'s handle when a focused card is deleted', async () => {
     const user = userEvent.setup()
     renderTool([step('a'), step('b'), step('c')])
@@ -180,7 +157,7 @@ describe('<StepList /> reordering', () => {
     const user = userEvent.setup()
     const macro = { id: 'm', type: 'macro', enabled: true, name: 'mac', steps: [step('x'), step('y')] }
     renderTool([step('a'), macro])
-    screen.getByRole('button', { name: 'unwrap' }).focus()
+    screen.getByRole('button', { name: 'Unwrap' }).focus()
     await user.keyboard('{Enter}')
     expect(stepOrder()).toEqual(['a', 'x', 'y'])
     expect(document.activeElement).toBe(screen.getByRole('button', { name: /reorder step 2/i }))
@@ -236,7 +213,7 @@ describe('<StepList /> animation', () => {
 
 describe('<StepList /> selection mode', () => {
   const selectFirstTwo = async user => {
-    await user.click(screen.getByRole('button', { name: 'select' }))
+    await user.click(screen.getByRole('button', { name: 'Select' }))
     await user.click(screen.getByLabelText('select step 1'))
     await user.click(screen.getByLabelText('select step 2'))
   }
@@ -247,8 +224,8 @@ describe('<StepList /> selection mode', () => {
     renderTool([step('a'), step('b'), step('c')])
     await selectFirstTwo(user)
 
-    expect(screen.queryByText(/must be contiguous/)).toBeNull()
-    await user.click(screen.getByRole('button', { name: 'Group into macro…' }))
+    expect(screen.queryByText(/next to each other/)).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Group into macro' }))
     const name = screen.getByLabelText('name for the new macro')
     expect(name).toHaveFocus()
     await user.clear(name)
@@ -257,15 +234,15 @@ describe('<StepList /> selection mode', () => {
     expect(prompt).not.toHaveBeenCalled()
     expect(await screen.findByLabelText('macro name')).toHaveValue('combo')
     // the macro (steps a+b) collapses to one row, leaving c as the only other step
-    expect(screen.getAllByText(/^step \d+$/)).toHaveLength(2)
-    expect(screen.getByText('step 2').closest('[data-step-id]')).toHaveAttribute('data-step-id', 'c')
+    expect(stepOrder()).toHaveLength(2)
+    expect(stepOrder()[1]).toBe('c')
   })
 
   it('Escape cancels naming without grouping and returns focus to the trigger', async () => {
     const user = userEvent.setup()
     renderTool([step('a'), step('b')])
     await selectFirstTwo(user)
-    const trigger = screen.getByRole('button', { name: 'Group into macro…' })
+    const trigger = screen.getByRole('button', { name: 'Group into macro' })
     await user.click(trigger)
     await user.keyboard('{Escape}')
     expect(screen.queryByLabelText('name for the new macro')).toBeNull()
@@ -278,25 +255,25 @@ describe('<StepList /> selection mode', () => {
     const user = userEvent.setup()
     renderTool([step('a'), step('b'), step('c')])
 
-    await user.click(screen.getByRole('button', { name: 'select' }))
+    await user.click(screen.getByRole('button', { name: 'Select' }))
     await user.click(screen.getByLabelText('select step 1'))
     await user.click(screen.getByLabelText('select step 3'))
 
-    expect(screen.getByText(/must be contiguous/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Group into macro…' })).toBeDisabled()
+    expect(screen.getByText(/next to each other/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Group into macro' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Put in a branch' })).toBeDisabled()
     // saving a copy and deleting don't require contiguity
-    expect(screen.getByRole('button', { name: 'Save as macro…' })).not.toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Delete selected' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Save as macro' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled()
   })
 
   it('saves a deep copy of a (non-contiguous) selection to the library and announces it', async () => {
     const user = userEvent.setup()
     renderTool([step('a', 'trim'), step('b'), step('c', 'reverse')])
-    await user.click(screen.getByRole('button', { name: 'select' }))
+    await user.click(screen.getByRole('button', { name: 'Select' }))
     await user.click(screen.getByLabelText('select step 1'))
     await user.click(screen.getByLabelText('select step 3'))
-    await user.click(screen.getByRole('button', { name: 'Save as macro…' }))
+    await user.click(screen.getByRole('button', { name: 'Save as macro' }))
     await user.clear(screen.getByLabelText('name for the new macro'))
     await user.type(screen.getByLabelText('name for the new macro'), 'kept{Enter}')
 
@@ -316,12 +293,12 @@ describe('<StepList /> selection mode', () => {
     const user = userEvent.setup()
     renderTool([step('a'), step('b'), step('c')])
     await selectFirstTwo(user)
-    await user.click(screen.getByRole('button', { name: 'Delete selected' }))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(stepOrder()).toEqual(['c'])
     expect(screen.getByText('deleted 2 steps').closest('[aria-live]')).not.toBeNull()
     // the pressed button is now disabled (nothing selected): focus stays in the bar
-    expect(screen.getByRole('button', { name: 'Delete selected' })).toBeDisabled()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'done selecting' }))
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Done selecting' }))
   })
 
   it('wraps a contiguous selection into a branch', async () => {
@@ -329,8 +306,8 @@ describe('<StepList /> selection mode', () => {
     renderTool([step('a'), step('b')])
     await selectFirstTwo(user)
     await user.click(screen.getByRole('button', { name: 'Put in a branch' }))
-    expect(await screen.findByText('branch')).toBeTruthy()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'done selecting' }))
+    expect(await screen.findByText('parallel lanes')).toBeTruthy()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Done selecting' }))
     expect(document.querySelector('[data-step-id="a"]').closest('[data-step-id^="branch"]')).not.toBeNull()
   })
 
@@ -345,20 +322,20 @@ describe('<StepList /> selection mode', () => {
     expect(last).toBe('c')
     expect(screen.getByRole('combobox', { name: 'split the input into' })).toHaveValue('lines')
     expect(document.querySelector('[data-step-id="a"]').closest('[data-step-id^="each"]')).not.toBeNull()
-    expect(document.activeElement).toBe(screen.getAllByRole('button', { name: 'done selecting' })[0])
-    await user.click(screen.getByRole('button', { name: 'unwrap' }))
+    expect(document.activeElement).toBe(screen.getAllByRole('button', { name: 'Done selecting' })[0])
+    await user.click(screen.getByRole('button', { name: 'Unwrap' }))
     expect(storeTree()).toEqual(['a', 'b', 'c'])
   })
 
   it('offers no selection mode for an empty sequence', () => {
     renderTool([])
-    expect(screen.queryByRole('button', { name: 'select' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Select' })).toBeNull()
   })
 
   it('gives each nested sequence its own, distinctly named selection toggle', () => {
     const branch = { id: 'br', type: 'branch', enabled: true, branches: [[step('x')], [step('y')]], merge: { mode: 'concat', separator: '\n' } }
     renderTool([branch])
-    expect(screen.getByRole('button', { name: 'select' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Select' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'select steps in lane 1' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'select steps in lane 2' })).toBeTruthy()
   })
@@ -395,29 +372,28 @@ describe('<StepList /> "run on each" bodies', () => {
 
   it('bulk-toggles steps inside an each body', async () => {
     const user = userEvent.setup()
-    renderTool([each([step('x')])], <BulkToggle />)
-    await user.click(screen.getByRole('button', { name: /disable all/i }))
+    renderTool([each([step('x')])])
+    await user.click(screen.getByRole('button', { name: 'Turn all off' }))
     expect(JSON.parse(screen.getByTestId('enabled').textContent)).toEqual([false, false])
   })
 })
 
 describe('<BulkToggle /> through the real store', () => {
-  it('disables and re-enables every step, nested ones included', async () => {
+  it('turns every step off and on again, nested ones included', async () => {
     const user = userEvent.setup()
     const macro = { id: 'm', type: 'macro', enabled: true, name: 'mac', steps: [step('x')] }
-    renderTool([step('a'), macro], <BulkToggle />)
+    renderTool([step('a'), macro])
     expect(JSON.parse(screen.getByTestId('enabled').textContent)).toEqual([true, true, true])
-    await user.click(screen.getByRole('button', { name: 'Disable all' }))
+    await user.click(screen.getByRole('button', { name: 'Turn all off' }))
     expect(JSON.parse(screen.getByTestId('enabled').textContent)).toEqual([false, false, false])
     expect(screen.getByLabelText('toggle step 1')).not.toBeChecked()
-    await user.click(screen.getByRole('button', { name: 'Enable all' }))
+    await user.click(screen.getByRole('button', { name: 'Turn all on' }))
     expect(JSON.parse(screen.getByTestId('enabled').textContent)).toEqual([true, true, true])
   })
 
   it('renders inert (disabled) outside a ToolProvider', () => {
     render(<BulkToggle />)
-    expect(screen.getByRole('button', { name: 'Enable all' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Disable all' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Turn all off' })).toBeDisabled()
   })
 })
 

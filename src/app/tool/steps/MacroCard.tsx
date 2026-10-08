@@ -1,22 +1,26 @@
 /**
- * A macro step's card (§8.8): rename, expand/collapse, unwrap, save to library.
- * Moved out of StepList so it can grow independently.
+ * A macro step's card (§8.8): its name (edited in place), show/hide its steps, unwrap,
+ * save to the library.
  */
 import React, { useEffect, useId, useRef, useState } from 'react'
-import { Layers, Trash2 } from 'lucide-react'
+import { Package } from 'lucide-react'
 import type { MacroStep } from '@/types/utility'
 import { useTool } from '@/app/ToolContext'
-import { cloneWithNewIds } from '@/core/steps'
+import { cloneWithNewIds, countSteps } from '@/core/steps'
 import { saveEntry } from '@/app/library/storage'
 import StepList from '@/app/tool/StepList'
-import AdvancedSection from './AdvancedSection'
-import PreviewBox from './PreviewBox'
+import AdvancedSection, { LINK_BUTTON } from './AdvancedSection'
+import LaneGroup from './LaneGroup'
+import OutputStrip from './OutputStrip'
+import StepFrame from './StepFrame'
 import StepStateChips from './StepStateChips'
-import { stateToneClass } from './status'
+import { CONTAINER_TITLE, useContainerMenu, type ContainerMoves } from './containerMenu'
 
-export interface MacroCardProps {
+export interface MacroCardProps extends ContainerMoves {
   step: MacroStep
   index: number
+  /** Steps in the same sequence; bounds the menu's moves. */
+  total?: number
   onDelete: () => void
   onToggle: (v: boolean) => void
   /** Replaces the default UNWRAP dispatch (StepList uses it to keep keyboard focus in place). */
@@ -38,7 +42,8 @@ function MacroNameField({ name, onCommit }: { name: string; onCommit: (name: str
   }
   return (
     // 120: the longest macro name a share link / import keeps (core/serialize)
-    <input className="field font-medium" aria-label="macro name" value={draft} maxLength={120}
+    <input aria-label="macro name" value={draft} maxLength={120} spellCheck={false}
+      className="h-[26px] w-60 max-w-full min-w-0 -ml-1 px-1 rounded-[5px] border border-transparent bg-transparent font-semibold outline-hidden hover:border-line focus:border-acc"
       onChange={e => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={e => {
@@ -48,15 +53,17 @@ function MacroNameField({ name, onCommit }: { name: string; onCommit: (name: str
   )
 }
 
-export default function MacroCard({ step, index, onDelete, onToggle, onUnwrap }: MacroCardProps) {
+export default function MacroCard({ step, index, total = 1, onDelete, onToggle, onUnwrap, ...moves }: MacroCardProps) {
   const { dispatch, run, showPreviews } = useTool()
+  // a macro is renamed in its own name field, so the menu has no Rename
+  const menu = useContainerMenu(step, moves, { rename: false })
   const [open, setOpen] = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
   const msgTimer = useRef<ReturnType<typeof setTimeout>>()
   const bodyId = useId()
   const result = run.result
-  const err = result?.err[step.id]
   const output = result?.previews[step.id]
+  const count = countSteps(step.steps)
 
   useEffect(() => () => clearTimeout(msgTimer.current), [])
 
@@ -71,36 +78,44 @@ export default function MacroCard({ step, index, onDelete, onToggle, onUnwrap }:
       saveEntry({ kind: 'macro', name: step.name, steps: step.steps.map(cloneWithNewIds) })
       announce(`saved "${step.name}" to library`)
     } catch {
-      announce(`could not save "${step.name}" — browser storage is full or unavailable`)
+      announce(`Could not save "${step.name}". Browser storage is full or unavailable.`)
     }
   }
 
   return (
-    <div className={`card p-4 grid gap-3 ${step.enabled === false ? 'opacity-60' : ''} ${stateToneClass(result?.skipped[step.id], err)}`} data-step-id={step.id}>
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="p-3.5 -m-3.5 inline-flex cursor-pointer touch-manipulation">
-          <input aria-label={`toggle step ${index + 1}`} type="checkbox" checked={step.enabled !== false} onChange={e => onToggle(e.target.checked)} />
-        </label>
-        <Layers size={16} className="text-primary-600" aria-hidden="true" />
-        <MacroNameField name={step.name} onCommit={name => dispatch({ type: 'UPDATE_STEP', id: step.id, patch: { name } })} />
-        <span className="text-sm muted">step {index + 1}</span>
-        <StepStateChips condition={step.condition} onError={step.onError} ms={result?.timings[step.id]} skipped={result?.skipped[step.id]} />
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {/* always rendered (never display:none) so screen readers track it before the first message */}
-          <span role="status" aria-live="polite" className="text-xs muted">{savedMsg}</span>
-          <span className="chip">{step.steps.length} {step.steps.length === 1 ? 'step' : 'steps'}</span>
-          <button type="button" className="btn" onClick={saveToLibrary}>Save to library</button>
-          <button type="button" className="btn" aria-expanded={open} aria-controls={open ? bodyId : undefined}
-            onClick={() => setOpen(o => !o)}>{open ? 'collapse' : 'expand'}</button>
-          <button type="button" className="btn" onClick={onUnwrap ?? (() => dispatch({ type: 'UNWRAP', id: step.id }))}>unwrap</button>
-          <button type="button" className="icon-btn text-danger" aria-label={`delete step ${index + 1}`} onClick={onDelete}><Trash2 size={16} /></button>
+    <StepFrame
+      stepId={step.id} index={index} total={total} enabled={step.enabled !== false}
+      title={
+        <span className={`${CONTAINER_TITLE} text-[14.5px]`}>
+          <Package size={14} className="text-acc shrink-0" aria-hidden="true" />
+          <MacroNameField name={step.name} onCommit={name => dispatch({ type: 'UPDATE_STEP', id: step.id, patch: { name } })} />
+        </span>
+      }
+      sub={`${count} ${count === 1 ? 'step' : 'steps'}`}
+      chips={<StepStateChips condition={step.condition} onError={step.onError} />}
+      ms={result?.timings[step.id]} error={result?.err[step.id]} onError={step.onError} skipped={result?.skipped[step.id]}
+      onToggle={onToggle} onDelete={onDelete} menu={menu}
+      output={showPreviews && output !== undefined && <OutputStrip label="Output" value={output} input={result?.inputs[step.id]} id="macro" />}
+    >
+      {open && (
+        <div className="px-3.5 pb-3">
+          <LaneGroup id={bodyId} title="Steps in this macro">
+            <StepList steps={step.steps} parentId={step.id} />
+          </LaneGroup>
         </div>
-      </div>
+      )}
       <AdvancedSection condition={step.condition} onError={step.onError}
-        onUpdate={patch => dispatch({ type: 'UPDATE_STEP', id: step.id, patch })} />
-      {err && <div role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl p-2">{err}</div>}
-      {open && <div id={bodyId}><StepList steps={step.steps} parentId={step.id} /></div>}
-      {showPreviews && output !== undefined && <PreviewBox label="macro output" value={output} id="macro" />}
-    </div>
+        onUpdate={patch => dispatch({ type: 'UPDATE_STEP', id: step.id, patch })}
+        links={
+          <>
+            <button type="button" className={LINK_BUTTON} aria-expanded={open} aria-controls={open ? bodyId : undefined}
+              onClick={() => setOpen(o => !o)}>{open ? 'Hide steps' : 'Show steps'}</button>
+            <button type="button" className={LINK_BUTTON} onClick={onUnwrap ?? (() => dispatch({ type: 'UNWRAP', id: step.id }))}>Unwrap</button>
+            <button type="button" className={LINK_BUTTON} onClick={saveToLibrary}>Save to library</button>
+            {/* always rendered (never display:none) so screen readers track it before the first message */}
+            <span role="status" aria-live="polite" className="text-xs text-muted empty:sr-only">{savedMsg}</span>
+          </>
+        } />
+    </StepFrame>
   )
 }

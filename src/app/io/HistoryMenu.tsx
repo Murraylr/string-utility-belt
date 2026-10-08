@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { History as HistoryIcon, Trash2, X } from 'lucide-react'
+import { History as HistoryIcon, X } from 'lucide-react'
 import { usePref } from '@/app/prefs'
 import { HISTORY_PREF, clearHistory, deleteHistoryEntry, listHistory, type HistoryEntry } from './history'
 
@@ -73,44 +73,46 @@ export default function HistoryMenu({ onRestore }: HistoryMenuProps) {
       <button
         ref={toggleRef}
         type="button"
-        className="btn"
+        className="btn-ghost"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => setOpen(o => !o)}
       >
-        <HistoryIcon size={16} /> History
+        <HistoryIcon size={14} aria-hidden /> History
       </button>
       {open && (
-        <div id={panelId} className="absolute right-0 z-10 mt-1 w-72 max-w-[calc(100vw-2rem)] max-h-[min(24rem,70vh)] overflow-auto card p-2 grid gap-1" role="region" aria-label="input history">
-          {failed && <div className="text-sm text-danger p-2" role="alert">history is unavailable</div>}
-          {!failed && entries.length === 0 && <div className="muted text-sm p-2">no history yet</div>}
+        <div id={panelId} className="popover absolute right-0 top-8 z-25 w-[300px] max-w-[calc(100vw-2rem)] max-h-[min(360px,70vh)] overflow-auto" role="region" aria-label="Input history">
+          {failed && <div className="p-2.5 text-[12.5px] text-danger" role="alert">History isn&apos;t available in this browser.</div>}
+          {!failed && entries.length === 0 && (
+            <div className="p-2.5 text-[12.5px] text-muted">No history yet. Inputs show up here a couple of seconds after you stop typing.</div>
+          )}
           {entries.map(e => {
             const label = preview(e.text)
             return (
-              <div key={e.id} className="flex items-center gap-1">
+              <div key={e.id} className="flex items-center gap-0.5">
                 <button
                   type="button"
-                  className="btn flex-1 justify-start truncate"
+                  className="flex-1 min-w-0 text-left px-2.5 py-[7px] rounded-[5px] font-mono text-xs truncate hover:bg-surface-2"
                   title={tooltip(e.text)}
                   aria-label={`restore: ${label}`}
                   onClick={() => { onRestore(e.text); close(true) }}
                 >
                   {label}
                 </button>
-                <button type="button" className="icon-btn" aria-label={`delete: ${label}`} onClick={() => remove(e.id)}>
-                  <X size={14} />
+                <button type="button" className="icon-btn min-w-[26px] min-h-[26px] p-1" aria-label={`delete: ${label}`} onClick={() => remove(e.id)}>
+                  <X size={13} aria-hidden />
                 </button>
               </div>
             )
           })}
-          <div className="flex items-center justify-between gap-2 mt-1">
-            <label className="flex items-center gap-1 text-xs muted">
+          <div className="flex items-center justify-between gap-2 px-2.5 pt-2 pb-1.5 mt-1 border-t">
+            <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer">
               <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-              remember inputs
+              Remember inputs
             </label>
             {entries.length > 0 && (
-              <button type="button" className="btn" onClick={removeAll}>
-                <Trash2 size={14} /> clear all
+              <button type="button" className="h-6 px-2 rounded-[5px] text-xs text-muted hover:bg-surface-2 hover:text-danger" onClick={removeAll}>
+                Clear all
               </button>
             )}
           </div>

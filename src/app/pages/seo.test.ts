@@ -6,8 +6,8 @@ import {
 
 describe('pageTitle', () => {
   it('adds the site name when the whole title still fits a search result', () => {
-    expect(pageTitle('Blog')).toBe('Blog — String Utility Belt')
-    expect(pageTitle('Trim Whitespace Online — Strip Spaces')).toBe('Trim Whitespace Online — Strip Spaces — String Utility Belt')
+    expect(pageTitle('Blog')).toBe('Blog | String Utility Belt')
+    expect(pageTitle('Trim Whitespace Online: Strip Spaces')).toBe('Trim Whitespace Online: Strip Spaces | String Utility Belt')
   })
 
   it('keeps a long title whole rather than letting the site name push its words out of view', () => {

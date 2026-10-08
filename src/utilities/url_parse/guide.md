@@ -1,10 +1,10 @@
 ---
-title: URL Parser Online — Split a URL into JSON Parts
-description: Break a URL into JSON parts online — protocol, host, port, path segments, query params and hash — resolving relative URLs against a base.
+title: URL Parser Online: Split a URL into JSON Parts
+description: Break a URL into JSON parts online: protocol, host, port, path segments, query params and hash, resolving relative URLs against a base.
 ---
 ## What does this tool do?
 
-Every URL is built from smaller pieces: a scheme, an optional authority (userinfo, host, port), a path, a query string and a fragment. Reading those pieces out by hand with string slicing is error-prone once usernames, IPv6 hosts or percent-encoding get involved. This tool hands back every piece as a JSON object using the same field names as the browser's own `URL` interface, plus a few conveniences — a `pathSegments` array and a `searchParams` object that already folds repeated keys into arrays. Its counterpart is [url build](/util/url_build/), which does the reverse.
+Every URL is built from smaller pieces: a scheme, an optional authority (userinfo, host, port), a path, a query string and a fragment. Reading those pieces out by hand with string slicing is error-prone once usernames, IPv6 hosts or percent-encoding get involved. This tool hands back every piece as a JSON object using the same field names as the browser's own `URL` interface, plus a few conveniences: a `pathSegments` array and a `searchParams` object that already folds repeated keys into arrays. Its counterpart is [url build](/util/url_build/), which does the reverse.
 
 ## How it works
 
@@ -38,11 +38,11 @@ output:
 }
 ```
 
-`pathSegments` splits `pathname` on `/`, dropping empty segments, and `searchParams` turns `?a=1&a=2` into `{"a": ["1", "2"]}` — a key that appears once stays a plain string, a key that repeats becomes an array. A query parameter with no `=` at all (`?flag`) becomes an empty string, not `undefined`.
+`pathSegments` splits `pathname` on `/`, dropping empty segments, and `searchParams` turns `?a=1&a=2` into `{"a": ["1", "2"]}`. A key that appears once stays a plain string, a key that repeats becomes an array. A query parameter with no `=` at all (`?flag`) becomes an empty string, not `undefined`.
 
 ### Decoding
 
-By default, path segments and query keys and values are percent-decoded (**decode percent-encoding**), with `+` in the query read as a space. Turn it off to see the still-escaped text instead — useful when you want to see exactly how a segment or value was encoded:
+By default, path segments and query keys and values are percent-decoded (**decode percent-encoding**), with `+` in the query read as a space. Turn it off to see the still-escaped text instead. That is useful when you want to see exactly how a segment or value was encoded:
 
 ```example
 title: percent-encoding left as-is when decoding is off
@@ -104,14 +104,14 @@ output:
 }
 ```
 
-`isAbsolute` reports whether the *input itself* was a complete URL, regardless of whether a base was needed to resolve it — here it is `false` because `../images/logo.png?v=2` only became absolute once combined with the base.
+`isAbsolute` reports whether the *input itself* was a complete URL, regardless of whether a base was needed to resolve it. Here it is `false` because `../images/logo.png?v=2` only became absolute once combined with the base.
 
 Without a base, a relative reference is still split by hand into path, query and hash, so `pathSegments` and `searchParams` remain usable even with no host to anchor to.
 
 ## Options
 
-- **base url** — resolves a relative input against this URL, exactly like an HTML `<base>` tag. Left empty, a relative input is parsed on its own.
-- **decode percent-encoding** — on by default; decodes `pathSegments` and `searchParams` keys and values. `pathname`, `search` and `href` always stay percent-encoded, as the URL parser serializes them (so a raw space or accented letter in the input shows up there as `%XX` escapes); for a relative input with no base they are simply the input text.
+- **base url**: resolves a relative input against this URL, exactly like an HTML `<base>` tag. Left empty, a relative input is parsed on its own.
+- **decode percent-encoding**: on by default; decodes `pathSegments` and `searchParams` keys and values. `pathname`, `search` and `href` always stay percent-encoded, as the URL parser serializes them (so a raw space or accented letter in the input shows up there as `%XX` escapes); for a relative input with no base they are simply the input text.
 
 ## Common uses
 
@@ -122,7 +122,7 @@ Without a base, a relative reference is still split by hand into path, query and
 
 ## Tips and pitfalls
 
-- `origin` is reported as an empty string, not the literal text `"null"`, for schemes with no real origin such as `mailto:`, `file:` or `data:` — a host that happens to be named `null` still gets a real origin.
+- `origin` is reported as an empty string, not the literal text `"null"`, for schemes with no real origin such as `mailto:`, `file:` or `data:`. A host that happens to be named `null` still gets a real origin.
 - A single broken percent-escape (`%ZZ`) does not fail the whole parse; that piece is returned verbatim instead of throwing.
-- `//example.com/a` (a network-path reference, no scheme) is recognized as having a real authority — `example.com` becomes the host, not the first path segment — while `///a/b` (an empty authority) is treated as a path.
+- `//example.com/a` (a network-path reference, no scheme) is recognized as having a real authority (`example.com` becomes the host, not the first path segment), while `///a/b` (an empty authority) is treated as a path.
 - An absolute URL that fails to parse (`http://`, or a host containing a space) throws `invalid URL`; a relative reference with an unusable base does too.

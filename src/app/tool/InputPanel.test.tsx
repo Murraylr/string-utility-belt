@@ -36,7 +36,7 @@ const textarea = () => screen.getByPlaceholderText(/type or paste/i) as HTMLText
 describe('InputPanel — text editing basics', () => {
   it('keeps the textarea id/placeholder App.test.jsx relies on', () => {
     render(<Harness />)
-    const textarea = screen.getByPlaceholderText(/type or paste your text here…/i)
+    const textarea = screen.getByPlaceholderText(/type or paste text here, or drop a file/i)
     expect(textarea.id).toBe('pipeline-input')
   })
 
@@ -133,7 +133,7 @@ describe('InputPanel — clipboard paste button', () => {
       configurable: true,
     })
     render(<Harness />)
-    fireEvent.click(screen.getByRole('button', { name: 'paste' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
     await waitFor(() => expect(screen.getByPlaceholderText(/type or paste/i)).toHaveValue('clip text'))
   })
 
@@ -143,8 +143,8 @@ describe('InputPanel — clipboard paste button', () => {
       configurable: true,
     })
     render(<Harness />)
-    fireEvent.click(screen.getByRole('button', { name: 'paste' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(/denied|permission/i)
+    fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/denied/i)
   })
 })
 
@@ -182,7 +182,7 @@ describe('InputPanel — review regressions', () => {
     vi.spyOn(fileInput, 'readFileAsInput').mockRejectedValue(new Error('NotReadableError'))
     render(<Harness />)
     fireEvent.drop(textarea().parentElement as HTMLElement, { dataTransfer: { files: [new File(['x'], 'x.txt')] } })
-    expect(await screen.findByRole('alert')).toHaveTextContent(/could not read x\.txt/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/couldn't read x\.txt/i)
   })
 
   it('applies the most recently dropped file even when an earlier read finishes last', async () => {
@@ -208,7 +208,7 @@ describe('InputPanel — review regressions', () => {
     await screen.findByText('first.bin')
     fireEvent.click(screen.getByRole('button', { name: 'probe: external bytes' }))
     expect(screen.queryByText('first.bin')).toBeNull()
-    expect(screen.getByText('binary input')).toBeTruthy()
+    expect(screen.getByText('Binary input')).toBeTruthy()
   })
 
   it('accepts a pasted file while the binary panel (no textarea) has focus', async () => {
@@ -227,10 +227,13 @@ describe('InputPanel — review regressions', () => {
     })
     render(<Harness />)
     fireEvent.click(screen.getByRole('button', { name: /fetch url/i }))
-    fireEvent.change(screen.getByLabelText('URL'), { target: { value: 'https://example.com/img/logo.png?v=2' } })
+    fireEvent.change(screen.getByLabelText('URL to fetch'), { target: { value: 'https://example.com/img/logo.png?v=2' } })
     fireEvent.click(screen.getByRole('button', { name: /^fetch$/i }))
     const name = await screen.findByText('logo.png')
     expect((name.parentElement as HTMLElement).textContent).toContain('image/png')
+    // binary input has no textarea, so focus goes back to the button
+    expect(screen.queryByLabelText('URL to fetch')).toBeNull()
+    expect(screen.getByRole('button', { name: /fetch url/i })).toHaveFocus()
   })
 
   it('says the clipboard is unavailable (not "denied") when the Clipboard API is missing', async () => {
@@ -238,8 +241,8 @@ describe('InputPanel — review regressions', () => {
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true })
     try {
       render(<Harness />)
-      fireEvent.click(screen.getByRole('button', { name: 'paste' }))
-      expect(await screen.findByRole('alert')).toHaveTextContent(/not available/i)
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/isn't available/i)
     } finally {
       if (original) Object.defineProperty(navigator, 'clipboard', original)
       else delete (navigator as any).clipboard
@@ -274,7 +277,7 @@ describe('InputPanel — review regressions', () => {
       render(<Harness />)
       fireEvent.change(textarea(), { target: { value: 'aaa\nbbb\nccc', selectionStart: 11, selectionEnd: 11 } })
       expect(screen.getByText('Ln 3, Col 4')).toBeTruthy()
-      fireEvent.click(screen.getByRole('button', { name: 'paste' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Paste' }))
       await waitFor(() => expect(textarea()).toHaveValue('x'))
       expect(screen.getByText('Ln 1, Col 2')).toBeTruthy()
     } finally {
@@ -309,25 +312,83 @@ describe('InputPanel — paste and dialog edge cases', () => {
     await waitFor(() => expect(textarea()).toHaveValue('file body'))
   })
 
-  it('renders the fetch dialog outside the panel, so an ancestor with backdrop-filter cannot trap its fixed overlay', () => {
-    render(<Harness />)
-    fireEvent.click(screen.getByRole('button', { name: /fetch url/i }))
-    const dialog = screen.getByRole('dialog')
-    expect((textarea().parentElement as HTMLElement).contains(dialog)).toBe(false)
-    expect(document.body.contains(dialog)).toBe(true)
-  })
-
-  it('ignores a file pasted or dropped inside the fetch dialog', async () => {
+  it('ignores a file pasted into the URL field', async () => {
     const read = vi.spyOn(fileInput, 'readFileAsInput')
     render(<Harness />)
     fireEvent.click(screen.getByRole('button', { name: /fetch url/i }))
-    const url = screen.getByLabelText('URL')
     const file = new File(['sneaky'], 's.txt', { type: 'text/plain' })
-    fireEvent.paste(url, { clipboardData: clipboard([file], '') })
-    fireEvent.drop(url, { dataTransfer: { files: [file], types: ['Files'] } })
+    fireEvent.paste(screen.getByLabelText('URL to fetch'), { clipboardData: clipboard([file], '') })
     await new Promise(r => setTimeout(r, 20))
     expect(read).not.toHaveBeenCalled()
     expect(textarea()).toHaveValue('')
+  })
+})
+
+describe('InputPanel — fetch URL row', () => {
+  const button = () => screen.getByRole('button', { name: /fetch url/i })
+  const url = () => screen.getByLabelText('URL to fetch')
+
+  it('toggles an inline row under the header and focuses its field', () => {
+    render(<Harness />)
+    expect(button()).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(button())
+    expect(button()).toHaveAttribute('aria-expanded', 'true')
+    expect(url()).toHaveFocus()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    fireEvent.click(button())
+    expect(screen.queryByLabelText('URL to fetch')).toBeNull()
+    expect(button()).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('loads fetched text, closes the row and focuses the textarea', async () => {
+    vi.spyOn(fetchInput, 'fetchAsInput').mockResolvedValue({ value: 'hello', contentType: 'text/plain', finalUrl: 'https://example.com/a.txt' })
+    render(<Harness />)
+    fireEvent.click(button())
+    fireEvent.change(url(), { target: { value: 'https://example.com/a.txt' } })
+    fireEvent.click(screen.getByRole('button', { name: /^fetch$/i }))
+    await waitFor(() => expect(textarea()).toHaveValue('hello'))
+    expect(screen.queryByLabelText('URL to fetch')).toBeNull()
+    expect(textarea()).toHaveFocus()
+    // a successful fetch starts the next one from an empty field
+    fireEvent.click(button())
+    expect(url()).toHaveValue('')
+  })
+
+  it("shows a failed fetch in the panel's alert strip and clears it when the row closes", async () => {
+    vi.spyOn(fetchInput, 'fetchAsInput').mockRejectedValue(new Error('that host is blocked'))
+    render(<Harness />)
+    fireEvent.click(button())
+    fireEvent.change(url(), { target: { value: 'https://example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /^fetch$/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('that host is blocked')
+    fireEvent.keyDown(url(), { key: 'Escape' })
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(button()).toHaveFocus()
+  })
+
+  it('keeps the URL when the row is closed without fetching', () => {
+    render(<Harness />)
+    fireEvent.click(button())
+    fireEvent.change(url(), { target: { value: 'https://example.com/keep' } })
+    fireEvent.keyDown(url(), { key: 'Escape' })
+    fireEvent.click(button())
+    expect(url()).toHaveValue('https://example.com/keep')
+  })
+
+  it('Cancel aborts the fetch in flight, closes the row and returns focus to the button', () => {
+    let signal: AbortSignal | undefined
+    vi.spyOn(fetchInput, 'fetchAsInput').mockImplementation((_u, opts) => {
+      signal = opts?.signal
+      return new Promise(() => {})
+    })
+    render(<Harness />)
+    fireEvent.click(button())
+    fireEvent.change(url(), { target: { value: 'https://example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /^fetch$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    expect(signal?.aborted).toBe(true)
+    expect(screen.queryByLabelText('URL to fetch')).toBeNull()
+    expect(button()).toHaveFocus()
   })
 })
 
@@ -374,9 +435,9 @@ describe('InputPanel — history saving', () => {
 describe('InputPanel — auto-run on paste preference', () => {
   beforeEach(() => localStorage.setItem('sub:pref:liveRun', 'false'))
 
-  it('offers an "auto-run on paste" switch in manual mode that turns the behaviour off', async () => {
+  it('offers a "run on paste" switch in manual mode that turns the behaviour off', async () => {
     render(<Harness />)
-    const toggle = screen.getByRole('checkbox', { name: /auto-run on paste/i })
+    const toggle = screen.getByRole('checkbox', { name: /run on paste/i })
     expect(toggle).toBeChecked()
     fireEvent.click(toggle)
     expect(JSON.parse(localStorage.getItem('sub:pref:autoRunOnPaste') as string)).toBe(false)

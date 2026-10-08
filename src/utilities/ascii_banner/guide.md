@@ -1,19 +1,19 @@
 ---
-title: ASCII Banner Generator — Big Text Art Online
+title: ASCII Banner Generator: Big Text Art Online
 description: Turn text into large ASCII art banners online, like the classic figlet tool. Choose a block, banner, small, or slant font and adjust letter spacing.
 ---
 ## What is an ASCII banner?
 
-An ASCII banner renders ordinary text as large letters built out of characters, the way the classic Unix `figlet` command does. It is useful for splash screens in a terminal app, eye-catching headers in a README or log file, or just a novelty way to print a name or message. This tool draws every printable ASCII character — letters, digits and punctuation — from a built-in 5×7 pixel bitmap font — there is no external font file or figlet dependency involved.
+An ASCII banner renders ordinary text as large letters built out of characters, the way the classic Unix `figlet` command does. It is useful for splash screens in a terminal app, eye-catching headers in a README or log file, or just a novelty way to print a name or message. This tool draws every printable ASCII character (letters, digits and punctuation) from a built-in 5×7 pixel bitmap font. There is no external font file or figlet dependency involved.
 
 ## How it works
 
 Each character is looked up in the bitmap font, which defines it as 7 rows of 5 cells, and rendered using one of four styles:
 
-- **block** — each pixel becomes a 2-column-wide solid block character, giving a bold, chunky look.
-- **banner** — each pixel becomes a single `#` character, closer to a classic typewriter-art banner.
-- **small** — two bitmap rows are squeezed into a single line of text using half-block characters (`▀`, `▄`, `█`), so the whole glyph is about half as tall.
-- **slant** — the same shape as `block`, with each row shifted one column further right than the row below it, giving an italic lean.
+- **block**: each pixel becomes a 2-column-wide solid block character, giving a bold, chunky look.
+- **banner**: each pixel becomes a single `#` character, closer to a classic typewriter-art banner.
+- **small**: two bitmap rows are squeezed into a single line of text using half-block characters (`▀`, `▄`, `█`), so the whole glyph is about half as tall.
+- **slant**: the same shape as `block`, with each row shifted one column further right than the row below it, giving an italic lean.
 
 Characters are looked up case-insensitively, so lowercase and uppercase input render identically. A character the font has no glyph for (anything outside printable ASCII, including accented letters) falls back to a hollow rectangular "tofu" box rather than being dropped silently. Tabs render as spaces.
 
@@ -68,8 +68,8 @@ output:
 
 ## Options
 
-- **font** (`font`, default `block`) — one of `block`, `banner`, `small`, or `slant`, as described above.
-- **letter spacing** (`spacing`, default `1`) — the number of extra blank columns inserted between letters, from 0 to 64. A stray very large number is rejected rather than allocated, since the pipeline re-renders on every keystroke.
+- **font** (`font`, default `block`): one of `block`, `banner`, `small`, or `slant`, as described above.
+- **letter spacing** (`spacing`, default `1`): the number of extra blank columns inserted between letters, from 0 to 64. A stray very large number is rejected rather than allocated, since the pipeline re-renders on every keystroke.
 
 Multi-line input is rendered as one banner per line, stacked directly on top of each other; a blank input line stays a single blank line, so an empty line between words separates their banners.
 
@@ -82,6 +82,6 @@ Multi-line input is rendered as one banner per line, stacked directly on top of 
 ## Tips and pitfalls
 
 - Only printable ASCII characters render as proper glyphs; anything else, including accented letters, CJK text and emoji, renders as a hollow placeholder box (one per code point).
-- Longer input produces proportionally wider output — a banner is meant for short words or a handful of characters, not paragraphs.
+- Longer input produces proportionally wider output. A banner is meant for short words or a handful of characters, not paragraphs.
 - Combine with [box text](/util/box_text/) to frame a banner in a border.
 - If you need reversible or readable-at-a-glance text transforms rather than large art, [alternating case](/util/alternating_case/) or [swap case](/util/swap_case/) are lighter-weight options.

@@ -4,7 +4,7 @@ description: Pull the text before, after, or between delimiters online, matching
 ---
 ## What does "substring before / after" do?
 
-This tool cuts out the part of a string on one side of a delimiter — or between two delimiters — without writing a regular expression. Give it a marker like `@` or `:` and it hands back everything before it, everything after it, or (with two markers) everything between them. It is the everyday alternative to reaching for a regex when the pattern you actually want is "the part after the first colon" or "whatever is inside the quotes."
+This tool cuts out the part of a string on one side of a delimiter (or between two delimiters) without writing a regular expression. Give it a marker like `@` or `:` and it hands back everything before it, everything after it, or (with two markers) everything between them. It is the everyday alternative to reaching for a regex when the pattern you actually want is "the part after the first colon" or "whatever is inside the quotes."
 
 ## How it works
 
@@ -49,7 +49,7 @@ input: a.b.c
 output: c
 ```
 
-When the delimiter is not found at all, **if not found** decides what happens: return the whole input unchanged (`whole`, the default), return an empty string (`empty`), or throw an error (`error`) — useful when a missing delimiter should stop a pipeline rather than pass bad data through silently.
+When the delimiter is not found at all, **if not found** decides what happens: return the whole input unchanged (`whole`, the default), return an empty string (`empty`), or throw an error (`error`). That last one is useful when a missing delimiter should stop a pipeline rather than pass bad data through silently.
 
 ```example
 title: a missing delimiter returns nothing when set to "empty"
@@ -60,12 +60,12 @@ output:
 
 ## Options
 
-- **delimiter** — the marker to cut on, matched literally (not as a regex). Supports the `\n`, `\r`, `\t` and `\\` escapes for characters that are awkward to type, as does **end delimiter**. Required: an empty delimiter is an error.
-- **mode** — `before`, `after`, or `between`. Defaults to `before`.
-- **end delimiter** — the closing marker in `between` mode. Leaving it blank reuses **delimiter** as the end marker too. Ignored outside `between` mode.
-- **occurrence** — `first` or `last`. In `between` mode, `last` pairs the delimiter and end delimiter nearest the end of the text, rather than the first pair found from the start.
-- **per line** — when on, the cut is applied independently to each line instead of to the whole input as one block. Default off.
-- **if not found** — `whole` (return the input as-is), `empty` (return nothing), or `error` (throw, naming the line number when **per line** is on).
+- **delimiter**: the marker to cut on, matched literally (not as a regex). Supports the `\n`, `\r`, `\t` and `\\` escapes for characters that are awkward to type, as does **end delimiter**. Required: an empty delimiter is an error.
+- **mode**: `before`, `after`, or `between`. Defaults to `before`.
+- **end delimiter**: the closing marker in `between` mode. Leaving it blank reuses **delimiter** as the end marker too. Ignored outside `between` mode.
+- **occurrence**: `first` or `last`. In `between` mode, `last` pairs the delimiter and end delimiter nearest the end of the text, rather than the first pair found from the start.
+- **per line**: when on, the cut is applied independently to each line instead of to the whole input as one block. Default off.
+- **if not found**: `whole` (return the input as-is), `empty` (return nothing), or `error` (throw, naming the line number when **per line** is on).
 
 ## Common uses
 
@@ -77,7 +77,7 @@ output:
 ## Tips and pitfalls
 
 - "last occurrence" in `between` mode pairs delimiters working backward from the end, so with a repeated delimiter it finds the *last* complete pair, not the first-to-last span across the whole string.
-- Two delimiters right next to each other (an empty match, like `""`) return an empty string rather than an error — worth checking for if your data might have empty quoted fields.
-- If you need pattern matching rather than a literal delimiter — for example, "the part after the first digit" — use [find and replace](/util/replace/) with a regular expression that deletes the unwanted part (such as `^\D*\d` replaced with nothing), or a capture group in [sed script](/util/sed/).
+- Two delimiters right next to each other (an empty match, like `""`) return an empty string rather than an error. That is worth checking for if your data might have empty quoted fields.
+- If you need pattern matching rather than a literal delimiter (for example, "the part after the first digit"), use [find and replace](/util/replace/) with a regular expression that deletes the unwanted part (such as `^\D*\d` replaced with nothing), or a capture group in [sed script](/util/sed/).
 - To cut by a fixed character position instead of a delimiter, use [string slice](/util/slice/).
 - To split into many pieces on a delimiter rather than extracting one span, use [split & join](/util/split_join/).

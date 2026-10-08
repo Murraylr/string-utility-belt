@@ -6,6 +6,10 @@ same engine shipped as a CLI, HTTP API, MCP server, browser extension and VS Cod
 ## Stack
 
 - **Frontend:** React 18, TypeScript, Tailwind CSS (design tokens as CSS vars, `.dark` class), Framer Motion, CodeMirror (lazy)
+- **Design system:** tokens and component classes in `src/index.css` (`canvas`/`surface`/`surface-2`/`strip`, `line`/`line-2`,
+  `fg`/`muted`, `acc*`, `inv*`, `danger*`, `add-*`/`del-*`; `.btn`, `.btn-ghost`, `.cta`, `.btn-inv`, `.field`, `.pill`,
+  `.segmented`, `.popover`, `.menu-item`, `.page-title`, `.link-row`, `.md`). Flat hairline surfaces, one accent; a
+  shadow only on things that float. Instrument Sans + JetBrains Mono (Google Fonts, disclosed in the privacy policy)
 - **Build:** Vite 7 with `@vitejs/plugin-react`; custom plugins in `scripts/` (utility manifest, PWA service worker)
 - **Deploy:** Cloudflare Workers via Wrangler — static assets + the `/api/*` Worker. Released by the Release workflow
   (see "Releases" below); `npm run deploy` is the manual fallback
@@ -151,7 +155,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   component itself — keep its render free of browser APIs (effects are fine).
 - No ad network: sponsorship is sold directly (`/advertise/`) and must render as part of the page — no
   third-party script, pixel or cookie (the CSP blocks them, and people paste tokens and secrets into this site).
-  Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server.
+  Content pages only; never in the pipeline editor, an embed, the extensions, the CLI or the MCP server. The pipeline
+  editor shows only our own tools (`ToolPromo`, house-only by design: no sponsor's content sits beside pasted secrets).
 - Sponsors (`src/app/sponsors/`): bookings in `sponsorships.ts` (scope `site` or a topic from `topics.ts`, inclusive
   UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
   link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
@@ -167,6 +172,12 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
   browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
   never shift; clicks are `integration_click`, `source: 'promo'`.
+- Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
+  `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
+  slot stays the page's one sponsor, as `/advertise/` promises. `promoPlan(page)` gives each slot a different
+  browser-independent tool (VS Code, MCP, CLI), never the one the sponsor slot may show, so the pre-render matches
+  the app; a slot the plan leaves empty renders nothing. Hidden below `sm`; clicks are `integration_click` with
+  `source: 'promo_<slot>'`. Never on `/advertise/` itself.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts

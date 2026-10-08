@@ -58,7 +58,7 @@ function search(text: string): void {
 // test instead gets a fresh DOM and a fresh chrome mock, then re-runs `init()`.
 type ChangeListener = (changes: Record<string, unknown>, area: string) => void
 
-const favoriteNames = () => [...$('favorites').querySelectorAll('li')].map(li => li.querySelector('.grow')!.textContent)
+const favoriteNames = () => [...$('favorites').querySelectorAll('li')].map(li => li.querySelector('.name')!.textContent)
 const pipelineRows = () => [...$('pipelines').querySelectorAll('li')]
 const button = (row: Element, action: string) => row.querySelector<HTMLButtonElement>(`button[data-action="${action}"]`)!
 
@@ -134,7 +134,7 @@ describe('options', () => {
     $<HTMLInputElement>('base-url').value = ' https://custom.example/app/?x=1 '
     $('save').click()
 
-    await vi.waitFor(() => expect($('status').textContent).toBe('Saved.'))
+    await vi.waitFor(() => expect($('status').textContent).toBe('Saved. The menu is updated.'))
     expect(sync.store.menuUtilities).toEqual(['trim', 'base64_encode'])
     expect(sync.store.baseUrl).toBe('https://custom.example/app')
     expect($<HTMLInputElement>('base-url').value).toBe('https://custom.example/app')
@@ -143,7 +143,7 @@ describe('options', () => {
   it('saves an empty selection as empty', async () => {
     toggle('trim', false)
     $('save').click()
-    await vi.waitFor(() => expect($('status').textContent).toBe('Saved.'))
+    await vi.waitFor(() => expect($('status').textContent).toBe('Saved. The menu is updated.'))
     expect(sync.store.menuUtilities).toEqual([])
   })
 
@@ -156,6 +156,12 @@ describe('options', () => {
     expect(document.activeElement).toBe(input)
     expect($('status').textContent).toMatch(/https?:\/\//)
     expect(sync.set).not.toHaveBeenCalled()
+    expect($('status').classList.contains('error')).toBe(true)
+
+    input.value = 'https://example.org'
+    input.dispatchEvent(new Event('input'))
+    expect(input.hasAttribute('aria-invalid')).toBe(false)
+    expect($('status').classList.contains('error')).toBe(false)
   })
 
   it('reports a failed save instead of claiming success', async () => {
@@ -167,7 +173,7 @@ describe('options', () => {
   it('resets to the default utilities and base URL', async () => {
     $('reset').click()
 
-    await vi.waitFor(() => expect($('status').textContent).toBe('Reset to defaults.'))
+    await vi.waitFor(() => expect($('status').textContent).toBe('Back to the defaults.'))
     for (const id of DEFAULT_MENU_UTILITIES) expect(checkbox(id)?.checked).toBe(true)
     expect(checkbox('trim')?.checked).toBe(true)
     expect(sync.store.menuUtilities).toEqual([...DEFAULT_MENU_UTILITIES])
@@ -175,6 +181,12 @@ describe('options', () => {
   })
 
   describe('favourites', () => {
+    it('numbers each favourite and shows its category', () => {
+      const [row] = $('favorites').querySelectorAll('li')
+      expect(row.querySelector('.num')!.textContent).toBe('1')
+      expect(row.querySelector('.meta')!.textContent).toBe('String Ops')
+    })
+
     it('lists the favourites in menu order; checking a utility appends it, unchecking removes it', () => {
       expect(favoriteNames()).toEqual(['trim'])
       toggle('base64_encode', true)
@@ -200,7 +212,7 @@ describe('options', () => {
       expect(checkbox('trim')?.checked).toBe(false)
 
       $('save').click()
-      await vi.waitFor(() => expect($('status').textContent).toBe('Saved.'))
+      await vi.waitFor(() => expect($('status').textContent).toBe('Saved. The menu is updated.'))
       expect(sync.store.menuUtilities).toEqual(['base64_encode'])
     })
 
@@ -248,15 +260,33 @@ describe('options', () => {
       expect((local.store.pipelines as Array<{ id: string }>).map(p => p.id)).toEqual(['p2', 'p1'])
     })
 
-    it('deletes after confirmation only', async () => {
-      const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
-      button(pipelineRows()[0], 'remove').click()
-      expect(local.set).not.toHaveBeenCalled()
+    it('deletes only on a second click of the same button, which reverts after a while', async () => {
+      vi.useFakeTimers()
+      try {
+        const first = button(pipelineRows()[0], 'remove')
+        first.click()
+        expect(local.set).not.toHaveBeenCalled()
+        expect(first.textContent).toBe('Confirm delete')
+        expect(first.getAttribute('aria-label')).toBe('Confirm delete “First”')
+        expect($('pipeline-status').textContent).toBe('Delete “First”? Select Confirm delete to go ahead.')
 
-      button(pipelineRows()[0], 'remove').click()
-      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Deleted "First".'))
+        vi.advanceTimersByTime(5000)
+        expect(first.textContent).toBe('Delete')
+        expect(first.getAttribute('aria-label')).toBe('Delete “First”')
+
+        first.click()
+        button(pipelineRows()[1], 'remove').click() // a different row asks again instead of deleting
+        expect(first.textContent).toBe('Delete')
+        expect(local.set).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
+      }
+
+      const first = button(pipelineRows()[0], 'remove')
+      first.click()
+      first.click()
+      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Deleted “First”.'))
       expect((local.store.pipelines as Array<{ id: string }>).map(p => p.id)).toEqual(['p2'])
-      expect(confirm).toHaveBeenCalledWith('Delete the pipeline "First"?')
     })
 
     it('renames, refusing an empty name or one another pipeline has', async () => {
@@ -267,13 +297,22 @@ describe('options', () => {
         return input
       }
       expect(rename('second').value).toBe('First')
-      expect($('pipeline-status').textContent).toMatch(/already named/)
+      expect($('pipeline-status').textContent).toBe('There’s already a pipeline called “second”.')
       expect(rename('  ').value).toBe('First')
       expect(local.set).not.toHaveBeenCalled()
 
       rename(' Renamed  one ')
-      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Renamed to "Renamed one".'))
+      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Renamed to “Renamed one”.'))
       expect((local.store.pipelines as Array<{ name: string }>)[0].name).toBe('Renamed one')
+    })
+
+    it('puts the saved name back on Escape', () => {
+      const input = pipelineRows()[0].querySelector<HTMLInputElement>('.pipeline-name')!
+      input.focus()
+      input.value = 'Half typed'
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      expect(input.value).toBe('First')
+      expect(document.activeElement).not.toBe(input)
     })
 
     it('adds a pipeline from a share link', async () => {
@@ -282,7 +321,7 @@ describe('options', () => {
       $<HTMLInputElement>('import-link').value = link
       $('import').click()
 
-      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Added "Shared".'))
+      await vi.waitFor(() => expect($('pipeline-status').textContent).toBe('Added “Shared”.'))
       expect(pipelineRows()).toHaveLength(3)
       expect($<HTMLInputElement>('import-link').value).toBe('')
     })

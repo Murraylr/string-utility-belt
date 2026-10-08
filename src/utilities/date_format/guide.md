@@ -1,10 +1,10 @@
 ---
-title: Date Format Converter — Reformat Dates & Timestamps Online
+title: Date Format Converter: Reformat Dates & Timestamps Online
 description: Reformat any date or timestamp with token or strftime patterns, convert time zones, and localize month and weekday names, right in your browser.
 ---
 ## What does date format do?
 
-This tool takes a date or timestamp in almost any common shape — a Unix timestamp, an ISO 8601 string, a SQL-style datetime, an RFC 2822 date, even a loosely formatted string like "January 15, 2024" — and rewrites it using a format pattern you choose, in the time zone and locale you choose. It is the same job as JavaScript's `Intl.DateTimeFormat`, Moment/Day.js format tokens or C's `strftime`, unified behind one input box.
+This tool takes a date or timestamp in almost any common shape and rewrites it using a format pattern you choose, in the time zone and locale you choose. That covers a Unix timestamp, an ISO 8601 string, a SQL-style datetime, an RFC 2822 date, even a loosely formatted string like "January 15, 2024". It is the same job as JavaScript's `Intl.DateTimeFormat`, Moment/Day.js format tokens or C's `strftime`, unified behind one input box.
 
 ## How it works
 
@@ -16,7 +16,7 @@ input: 2024-03-15T09:30:00Z
 output: 2024-03-15 09:30:00
 ```
 
-The tool recognizes two pattern styles automatically. Token patterns use letter codes such as `YYYY` (4-digit year), `MM` (2-digit month), `DD` (2-digit day), `HH:mm:ss` (24-hour time) or `dddd` (full weekday name) — the vocabulary Moment.js and Day.js use. As soon as a pattern contains a real `%` directive, it is treated as a `strftime` pattern instead, using codes like `%Y-%m-%d` or `%A, %B %d, %Y`:
+The tool recognizes two pattern styles automatically. Token patterns use letter codes such as `YYYY` (4-digit year), `MM` (2-digit month), `DD` (2-digit day), `HH:mm:ss` (24-hour time) or `dddd` (full weekday name). This is the vocabulary Moment.js and Day.js use. As soon as a pattern contains a real `%` directive, it is treated as a `strftime` pattern instead, using codes like `%Y-%m-%d` or `%A, %B %d, %Y`:
 
 ```example
 title: strftime pattern with localized names
@@ -34,7 +34,7 @@ params: {"format": "[Today is] dddd"}
 output: Today is Monday
 ```
 
-Setting `timezone` to any IANA zone name (`America/New_York`, `Asia/Tokyo`, `Europe/Paris`, …) converts the instant into that zone's wall-clock time before formatting, with the standard or daylight-saving offset in force at that instant. The `z` token prints the short zone name the locale provides — `EST` for New York in `en-US`, but `GMT+9` for Tokyo, which has no English abbreviation in the locale data:
+Setting `timezone` to any IANA zone name (`America/New_York`, `Asia/Tokyo`, `Europe/Paris`, …) converts the instant into that zone's wall-clock time before formatting, with the standard or daylight-saving offset in force at that instant. The `z` token prints the short zone name the locale provides: `EST` for New York in `en-US`, but `GMT+9` for Tokyo, which has no English abbreviation in the locale data:
 
 ```example
 title: convert to a named time zone
@@ -43,7 +43,7 @@ params: {"format": "YYYY-MM-DD HH:mm z", "timezone": "America/New_York"}
 output: 2024-01-15 05:30 EST
 ```
 
-An ISO-style or free-form timestamp that carries no time zone of its own — a bare `2024-01-15 10:30:00`, for instance — is read as wall-clock time *in the zone you asked for*, not in UTC and not in your computer's local zone. (RFC 2822 and `asctime`-style dates without a zone are the exception: they are read as GMT.) That matters when you convert it back to a Unix timestamp:
+An ISO-style or free-form timestamp that carries no time zone of its own (a bare `2024-01-15 10:30:00`, for instance) is read as wall-clock time *in the zone you asked for*, not in UTC and not in your computer's local zone. (RFC 2822 and `asctime`-style dates without a zone are the exception: they are read as GMT.) That matters when you convert it back to a Unix timestamp:
 
 ```example
 title: a naive timestamp is read in the target zone, not UTC
@@ -54,10 +54,10 @@ output: 1705282200
 
 ## Options
 
-- **format** — the pattern to render, as a token pattern (`YYYY-MM-DD HH:mm:ss`, the default) or a `strftime` pattern (`%Y-%m-%d`). An empty value falls back to the default.
-- **timezone** — any IANA time zone name; defaults to `UTC`. Controls what wall-clock time the output shows, and how a zone-less ISO-style or free-form input is interpreted.
-- **locale** — a BCP 47 locale tag (`en-US`, `fr-FR`, `ja-JP`, …) used for month names, weekday names and the localized `%c`/`%x`/`%X` strftime codes. Defaults to `en-US`.
-- **one date per line** — on by default, so a multi-line input is formatted line by line (blank lines pass through unchanged). Turn it off to treat the entire input as a single value.
+- **format**: the pattern to render, as a token pattern (`YYYY-MM-DD HH:mm:ss`, the default) or a `strftime` pattern (`%Y-%m-%d`). An empty value falls back to the default.
+- **timezone**: any IANA time zone name; defaults to `UTC`. Controls what wall-clock time the output shows, and how a zone-less ISO-style or free-form input is interpreted.
+- **locale**: a BCP 47 locale tag (`en-US`, `fr-FR`, `ja-JP`, …) used for month names, weekday names and the localized `%c`/`%x`/`%X` strftime codes. Defaults to `en-US`.
+- **one date per line**: on by default, so a multi-line input is formatted line by line (blank lines pass through unchanged). Turn it off to treat the entire input as a single value.
 
 Common token codes include `YYYY`/`YY` (year), `MM`/`M` (month number), `MMMM`/`MMM` (month name), `DD`/`D` (day), `dddd`/`ddd` (weekday name), `HH`/`H` (24-hour), `hh`/`h` (12-hour), `mm`/`ss` (minute/second), `A`/`a` (AM/PM), `Z`/`ZZ` (UTC offset), `z`/`zz` (zone abbreviation), and `X`/`x` (Unix seconds/milliseconds). The strftime equivalents cover the same ground with `%Y %m %d %A %H %I %M %S %p %z %Z %s`, plus flags like `%-d` (no leading zero) and `%_d` (space-padded).
 

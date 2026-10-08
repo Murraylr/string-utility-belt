@@ -6,9 +6,11 @@ const REVEAL_STEP = 64 * 1024
 
 export interface HexViewProps {
   bytes: Uint8Array
+  /** CSS max-height of the scrolling dump. */
+  maxHeight?: string
 }
 
-function HexView({ bytes }: HexViewProps) {
+function HexView({ bytes, maxHeight = '20rem' }: HexViewProps) {
   // "show more" belongs to the value it was clicked for: a new output starts back at the cap
   const [reveal, setReveal] = useState({ bytes, extra: 0 })
   const extra = reveal.bytes === bytes ? reveal.extra : 0
@@ -16,8 +18,8 @@ function HexView({ bytes }: HexViewProps) {
   const rows = useMemo(() => hexDumpRows(bytes, 0, shown), [bytes, shown])
 
   return (
-    <div className="grid gap-2">
-      <div className="border rounded-2xl p-3 bg-surface overflow-auto max-h-80 mono text-xs" role="table" aria-label="hex view" tabIndex={0}>
+    <div>
+      <div className="px-4 py-3 overflow-auto font-mono text-xs leading-[19px]" style={{ maxHeight }} role="table" aria-label="hex view" tabIndex={0}>
         {rows.map(r => (
           <div key={r.offset} role="row" className="whitespace-pre">
             <span role="cell" className="text-muted">{formatOffset(r.offset)}  </span>
@@ -27,8 +29,8 @@ function HexView({ bytes }: HexViewProps) {
         ))}
       </div>
       {shown < bytes.length && (
-        <button type="button" className="btn justify-self-start" onClick={() => setReveal({ bytes, extra: extra + REVEAL_STEP })}>
-          show more ({(bytes.length - shown).toLocaleString()} bytes left)
+        <button type="button" className="btn h-7 text-[12.5px] mx-4 mb-3" onClick={() => setReveal({ bytes, extra: extra + REVEAL_STEP })}>
+          Show more ({(bytes.length - shown).toLocaleString()} bytes left)
         </button>
       )}
     </div>

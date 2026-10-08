@@ -12,7 +12,7 @@ test.describe('library', () => {
     const name = 'e2e library test pipeline'
 
     // Save under a name, with the input, via the library dialog.
-    await page.getByRole('button', { name: 'library', exact: true }).click()
+    await page.getByRole('button', { name: 'Library', exact: true }).click()
     const libraryDialog = page.getByRole('dialog', { name: 'Library' })
     await expect(libraryDialog).toBeVisible()
     await libraryDialog.getByLabel('pipeline name to save').fill(name)
@@ -32,11 +32,11 @@ test.describe('library', () => {
     // independent of how the option's visible text/chip concatenate into an a11y name.
     await palette.locator('#cmdk-c-clear').click()
     await expect(palette).toBeHidden()
-    await expect(page.getByRole('button', { name: 'Add a utility' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^add step$/i })).toBeVisible()
     await expect(page.locator('[data-step-id]')).toHaveCount(0)
 
     // Load it back from the library.
-    await page.getByRole('button', { name: 'library', exact: true }).click()
+    await page.getByRole('button', { name: 'Library', exact: true }).click()
     const reopened = page.getByRole('dialog', { name: 'Library' })
     const entry = reopened.locator('ul[aria-label="pipeline list"] li', { hasText: name })
     await expect(entry).toBeVisible()
@@ -52,7 +52,7 @@ test.describe('library', () => {
 test.describe('presets', () => {
   test('"Try it" loads a preset\'s steps and sample input, and produces the expected output', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('button', { name: 'presets', exact: true }).click()
+    await page.getByRole('button', { name: 'Presets', exact: true }).click()
     const gallery = page.getByRole('dialog', { name: 'Preset gallery' })
     await expect(gallery).toBeVisible()
 

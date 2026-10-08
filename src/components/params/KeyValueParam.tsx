@@ -21,7 +21,7 @@ function Cell({ label, placeholder, value, onChange, focusKey }: {
   return (
     <textarea
       data-kv={focusKey}
-      className="field min-w-0 flex-1 resize-none"
+      className="field min-w-0 flex-1 resize-none py-1 font-mono text-[12.5px]"
       rows={Math.min(6, value.split('\n').length)}
       spellCheck={false}
       aria-label={label}
@@ -75,12 +75,12 @@ export default function KeyValueParam({ id, spec, value, onChange, describedBy, 
 
   return (
     <fieldset ref={rootRef} id={id} className="flex flex-col gap-2" aria-describedby={describedBy}>
-      <legend className="text-muted mb-1">{spec.label}</legend>
+      <legend className="mb-1 text-[11.5px] text-muted">{spec.label}</legend>
       {legacy !== null ? (
-        <div className="flex flex-col gap-2 rounded-xl border bg-surface-2 p-2 text-xs">
+        <div className="flex flex-col gap-2 rounded-md border bg-surface-2 p-2.5 text-xs">
           <p className="text-muted">legacy value, stored as free text:</p>
           <pre className="mono max-h-40 overflow-auto whitespace-pre-wrap wrap-anywhere">{legacy}</pre>
-          <button type="button" className="btn self-start" onClick={() => onChange(parseLegacyKeyValue(legacy, { regexKeys }))}>
+          <button type="button" className="btn h-[26px] text-[12.5px] self-start" onClick={() => onChange(parseLegacyKeyValue(legacy, { regexKeys }))}>
             convert to pairs
           </button>
         </div>
@@ -90,12 +90,12 @@ export default function KeyValueParam({ id, spec, value, onChange, describedBy, 
             <div key={i} className="flex items-start gap-1">
               <Cell label={`${keyLabel} ${i + 1}`} placeholder={keyLabel} value={k} onChange={next => setPair(i, [next, v])} focusKey={`key-${i}`} />
               <Cell label={`${valueLabel} ${i + 1}`} placeholder={valueLabel} value={v} onChange={next => setPair(i, [k, next])} />
-              <button type="button" className="icon-btn" data-kv={`up-${i}`} aria-label={`move row ${i + 1} up`} onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
-              <button type="button" className="icon-btn" data-kv={`down-${i}`} aria-label={`move row ${i + 1} down`} onClick={() => move(i, 1)} disabled={i === pairs.length - 1}>↓</button>
-              <button type="button" className="icon-btn text-danger" data-kv={`remove-${i}`} aria-label={`remove row ${i + 1}`} onClick={() => remove(i)}>×</button>
+              <button type="button" className="icon-btn min-w-7 min-h-7" data-kv={`up-${i}`} aria-label={`move row ${i + 1} up`} onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+              <button type="button" className="icon-btn min-w-7 min-h-7" data-kv={`down-${i}`} aria-label={`move row ${i + 1} down`} onClick={() => move(i, 1)} disabled={i === pairs.length - 1}>↓</button>
+              <button type="button" className="icon-btn min-w-7 min-h-7 hover:text-danger" data-kv={`remove-${i}`} aria-label={`remove row ${i + 1}`} onClick={() => remove(i)}>×</button>
             </div>
           ))}
-          <button type="button" className="btn self-start" data-kv="add" onClick={add}>add row</button>
+          <button type="button" className="btn h-[26px] text-[12.5px] self-start" data-kv="add" onClick={add}>Add row</button>
         </>
       )}
     </fieldset>

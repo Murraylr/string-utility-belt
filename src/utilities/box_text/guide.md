@@ -1,5 +1,5 @@
 ---
-title: ASCII Box Text Generator — Draw Borders Around Text
+title: ASCII Box Text Generator: Draw Borders Around Text
 description: Draw a border around text online in single, double, round, bold, ascii, or dashed box-drawing characters, with padding, alignment, a title, and word wrapping.
 ---
 ## What is a text box?
@@ -8,7 +8,7 @@ A text box wraps a border of characters around a block of text, the way a commen
 
 ## How it works
 
-Every line of input is measured in display columns — wide CJK characters and most pictographic emoji count as two columns, combining marks and zero-width characters as zero — so the border lines up even with mixed-width text. The box is built from four pieces: the top border (with an optional title), the padded and aligned content lines, blank padding lines when vertical padding is requested, and the bottom border.
+Every line of input is measured in display columns (wide CJK characters and most pictographic emoji count as two columns, combining marks and zero-width characters as zero), so the border lines up even with mixed-width text. The box is built from four pieces: the top border (with an optional title), the padded and aligned content lines, blank padding lines when vertical padding is requested, and the bottom border.
 
 ```example
 title: default single-line border
@@ -31,7 +31,7 @@ output: ╔═ Note ═╗
 
 ### Fixed width and wrapping
 
-When `width` is left at `0` (the default), the box fits itself to the widest line of content, or widens further so the whole title fits. Setting a fixed `width` instead wraps long lines at word boundaries — breaking a single over-long word only if it has no choice — and aligns every line inside that width:
+When `width` is left at `0` (the default), the box fits itself to the widest line of content, or widens further so the whole title fits. Setting a fixed `width` instead wraps long lines at word boundaries (breaking a single over-long word only if it has no choice) and aligns every line inside that width:
 
 ```example
 title: fixed width centers text inside it
@@ -61,11 +61,11 @@ output:
 
 ## Options
 
-- **style** (`style`, default `single`) — the border character set: `single`, `double`, `round`, `bold`, `ascii` (plain `+`, `-`, `|`), or `dashed`.
-- **padding** (`padding`, default `1`, 0–500) — the number of space columns between each side border and the text. Values above 1 also add `padding − 1` blank lines above and below the text, so the default box has no blank rows.
-- **align** (`align`, default `left`) — how each line is positioned inside the box: `left`, `center`, or `right`.
-- **title** (`title`, default none) — text drawn into the top border. Line breaks inside it are flattened to spaces so they cannot tear the border apart, and with a fixed `width` it is truncated if there is not room for all of it.
-- **width** (`width`, default `0`, meaning fit to content, up to 10,000) — a fixed total box width. Text is word-wrapped to fit inside it; if the width is too small even for the border and padding, the tool reports an error instead of drawing a broken box.
+- **style** (`style`, default `single`): the border character set: `single`, `double`, `round`, `bold`, `ascii` (plain `+`, `-`, `|`), or `dashed`.
+- **padding** (`padding`, default `1`, 0–500): the number of space columns between each side border and the text. Values above 1 also add `padding − 1` blank lines above and below the text, so the default box has no blank rows.
+- **align** (`align`, default `left`): how each line is positioned inside the box: `left`, `center`, or `right`.
+- **title** (`title`, default none): text drawn into the top border. Line breaks inside it are flattened to spaces so they cannot tear the border apart, and with a fixed `width` it is truncated if there is not room for all of it.
+- **width** (`width`, default `0`, meaning fit to content, up to 10,000): a fixed total box width. Text is word-wrapped to fit inside it; if the width is too small even for the border and padding, the tool reports an error instead of drawing a broken box.
 
 ## Common uses
 

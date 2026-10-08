@@ -1,6 +1,6 @@
 ---
-title: URL Builder Online — Assemble a URL from Parts
-description: Build a URL string from JSON parts — protocol, host, path, query params and hash — online, with optional percent-encoding of each piece.
+title: URL Builder Online: Assemble a URL from Parts
+description: Build a URL string from JSON parts (protocol, host, path, query params and hash) online, with optional percent-encoding of each piece.
 ---
 ## What does this tool do?
 
@@ -8,7 +8,7 @@ Instead of hand-concatenating a protocol, host, path and query string (and getti
 
 ## How it works
 
-The input is a JSON object (or the equivalent JSON text) with any of a documented set of keys — `protocol`, `host`, `hostname`, `port`, `pathname`, `pathSegments`, `search`, `searchParams`, `hash`, `username`, `password`, `origin`. Only the keys you provide are used:
+The input is a JSON object (or the equivalent JSON text) with any of a documented set of keys: `protocol`, `host`, `hostname`, `port`, `pathname`, `pathSegments`, `search`, `searchParams`, `hash`, `username`, `password`, `origin`. Only the keys you provide are used:
 
 ```example
 title: assemble from protocol, host, path and query params
@@ -16,7 +16,7 @@ input: {"protocol": "https", "host": "example.com", "pathname": "/a/b", "searchP
 output: https://example.com/a/b?x=1
 ```
 
-`protocol` does not need its trailing colon — `https` and `https:` are equivalent. If `host` is missing but `hostname` (and optionally `port`) is present, they are combined into a host automatically. `pathname` (already escaped, as `url parse` would return it) takes priority over `pathSegments` (unescaped path pieces to be joined and encoded individually) when both are given.
+`protocol` does not need its trailing colon: `https` and `https:` are equivalent. If `host` is missing but `hostname` (and optionally `port`) is present, they are combined into a host automatically. `pathname` (already escaped, as `url parse` would return it) takes priority over `pathSegments` (unescaped path pieces to be joined and encoded individually) when both are given.
 
 ### Percent-encoding parts
 
@@ -40,7 +40,7 @@ output: https://example.com/a b?q=x y
 
 ### Query values and arrays
 
-`searchParams` is an object whose values may be a single scalar or an array — an array repeats the key once per item, which is how [url parse](/util/url_parse/) represents a repeated query parameter. If `searchParams` is absent or empty but `search` is present, that raw string is used as the query verbatim.
+`searchParams` is an object whose values may be a single scalar or an array. An array repeats the key once per item, which is how [url parse](/util/url_parse/) represents a repeated query parameter. If `searchParams` is absent or empty but `search` is present, that raw string is used as the query verbatim.
 
 ### URLs without a host
 
@@ -56,19 +56,19 @@ Schemes such as `mailto:` have no `//` authority at all, so supplying only `prot
 
 ## Options
 
-- **percent-encode parts** — on by default. Applies to `pathSegments` and to `searchParams` keys and values; `pathname` and `search` are assumed to already be correctly escaped.
+- **percent-encode parts**: on by default. Applies to `pathSegments` and to `searchParams` keys and values; `pathname` and `search` are assumed to already be correctly escaped.
 
 ## Common uses
 
-- Editing one field of a URL — swap the host, add a query parameter, change the path — after breaking it apart with [url parse](/util/url_parse/).
+- Editing one field of a URL (swap the host, add a query parameter, change the path) after breaking it apart with [url parse](/util/url_parse/).
 - Programmatically constructing API endpoints or redirect URLs from structured data.
 - Converting a JSON representation of a form's target URL back into a link.
 - Combining with [json to query string](/util/json_to_query_string/) when you need more control over array or nesting format than the built-in `searchParams` handling gives you.
 
 ## Tips and pitfalls
 
-- If none of the recognized keys are present but `href` is, the tool falls back to returning `href` verbatim — a convenient passthrough for JSON that only carries the whole URL.
+- If none of the recognized keys are present but `href` is, the tool falls back to returning `href` verbatim, a convenient passthrough for JSON that only carries the whole URL.
 - Passing an array, or a value that is not a JSON object, is an error: this tool always expects a single object describing one URL's parts.
-- With encoding on and a protocol given, the assembled URL is also normalized by the WHATWG URL parser (lowercased scheme and host, internationalized hostnames converted to punycode, default ports dropped, and so on). A trip through [url parse](/util/url_parse/) and back therefore returns the normalized form, not always the identical string — for example `?q=a+b` comes back as `?q=a%20b`, and a bare `?flag` as `?flag=`.
-- When several keys describe the same part, one wins: `host` over `hostname`/`port`, `pathname` over `pathSegments`, and a non-empty `searchParams` over `search`. Since url parse outputs all of them, edit `host`, `pathname` or `searchParams` (or delete the winning key) — changing only `hostname` or `search` has no effect.
+- With encoding on and a protocol given, the assembled URL is also normalized by the WHATWG URL parser (lowercased scheme and host, internationalized hostnames converted to punycode, default ports dropped, and so on). A trip through [url parse](/util/url_parse/) and back therefore returns the normalized form, not always the identical string. For example, `?q=a+b` comes back as `?q=a%20b`, and a bare `?flag` as `?flag=`.
+- When several keys describe the same part, one wins: `host` over `hostname`/`port`, `pathname` over `pathSegments`, and a non-empty `searchParams` over `search`. Since url parse outputs all of them, edit `host`, `pathname` or `searchParams` (or delete the winning key). Changing only `hostname` or `search` has no effect.
 - An empty input, or an object with no recognized keys and no `href`, produces an empty string rather than an error.

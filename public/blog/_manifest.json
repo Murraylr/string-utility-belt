@@ -3,12 +3,25 @@
     "slug": "base64-encode-decode-online",
     "title": "How to Encode and Decode Base64 (JavaScript, Python, CLI)",
     "description": "Encode and decode Base64 correctly in JavaScript, Node.js, Python, and the command line, with UTF-8 handling, Base64url, and common error fixes.",
-    "date": "2025-09-18"
+    "date": "2025-09-18",
+    "tags": [
+      "base64",
+      "encoding",
+      "javascript",
+      "python",
+      "cli"
+    ]
   },
   {
     "slug": "md5-insecure-but-useful",
     "title": "Why MD5 Is Insecure (But Still Useful for Developers)",
     "description": "MD5 is broken for collisions but still fine for checksums and cache keys. Learn what it's safe for, what it isn't, and which hash to use instead.",
-    "date": "2025-09-18"
+    "date": "2025-09-18",
+    "tags": [
+      "md5",
+      "hashing",
+      "security",
+      "checksums"
+    ]
   }
 ]

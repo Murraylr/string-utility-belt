@@ -34,6 +34,8 @@ const SELF_LABELED = new Set<string>(['multiselect', 'keyvalue'])
 /** Kinds that need the full row width. */
 const WIDE = new Set<string>(['code', 'textarea', 'keyvalue', 'file'])
 
+const LABEL = 'text-[11.5px] text-muted'
+
 const finite = (v: unknown): number | null => {
   if (v === '' || v === null || v === undefined || typeof v === 'boolean') return null
   const n = typeof v === 'number' ? v : Number(v)
@@ -81,7 +83,7 @@ export default function ParamsEditor({ spec, params, onChange, idPrefix, sampleI
   for (const [k, cfg] of entries) values[k] = displayValue(cfg, current[k])
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="flex flex-wrap items-end gap-x-3.5 gap-y-2.5">
       {entries.map(([key, cfg]) => {
         const id = `${prefix}-${key}`
         const value = values[key]
@@ -159,21 +161,31 @@ export default function ParamsEditor({ spec, params, onChange, idPrefix, sampleI
             control = null
         }
 
+        const width = WIDE.has(cfg.kind) ? 'basis-full' : cfg.kind === 'boolean' ? '' : 'flex-1 min-w-[110px] max-w-[240px]'
         return (
-          <div key={key} className={`flex min-w-0 flex-col gap-1 text-sm ${WIDE.has(cfg.kind) ? 'md:col-span-2' : ''}`}>
-            {!SELF_LABELED.has(cfg.kind) && (
-              <label
-                htmlFor={id}
-                className="text-muted"
-                // CodeMirror's editable surface is a contenteditable, which a <label> cannot focus
-                onClick={cfg.kind === 'code' ? () => document.getElementById(id)?.focus() : undefined}
-              >
-                {cfg.label}
-              </label>
+          <div key={key} className={`flex min-w-0 flex-col gap-1 ${width}`}>
+            {cfg.kind === 'boolean' ? (
+              <div className="flex items-center gap-[7px] h-[30px] text-[12.5px]">
+                {control}
+                <label htmlFor={id} className="cursor-pointer">{cfg.label}</label>
+              </div>
+            ) : (
+              <>
+                {!SELF_LABELED.has(cfg.kind) && (
+                  <label
+                    htmlFor={id}
+                    className={LABEL}
+                    // CodeMirror's editable surface is a contenteditable, which a <label> cannot focus
+                    onClick={cfg.kind === 'code' ? () => document.getElementById(id)?.focus() : undefined}
+                  >
+                    {cfg.label}
+                  </label>
+                )}
+                {control}
+              </>
             )}
-            {control}
-            {helpId && <p id={helpId} className="text-xs text-muted">{cfg.description}</p>}
-            {error && <p id={errorId} role="alert" className="text-xs text-danger">{error}</p>}
+            {helpId && <p id={helpId} className="m-0 text-[11.5px] text-muted text-pretty">{cfg.description}</p>}
+            {error && <p id={errorId} role="alert" className="m-0 text-[11.5px] text-danger-ink">{error}</p>}
           </div>
         )
       })}

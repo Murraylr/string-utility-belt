@@ -1,12 +1,12 @@
 ---
-title: CSV Header Case Converter — snake_case & camelCase
+title: CSV Header Case Converter: snake_case & camelCase
 description: Rewrite CSV header rows to snake_case, camelCase, kebab-case, PascalCase, or Title Case online, with automatic de-duplication.
 ---
 ## What does normalizing CSV headers do?
 
 Spreadsheet exports usually have human-readable headers like `First Name` or
-`E-Mail`, but code that consumes the CSV — a database import, a JSON schema,
-an API client — almost always wants a consistent identifier style instead:
+`E-Mail`, but code that consumes the CSV (a database import, a JSON schema,
+an API client) almost always wants a consistent identifier style instead:
 `first_name`, `firstName`, and so on. This tool rewrites only the header row
 to the case style you choose; data values are left untouched (rows are
 re-written with quotes only where a field needs them).
@@ -20,8 +20,8 @@ re-written with quotes only where a field needs them).
 2. The words are rejoined in the chosen **style**.
 3. If **de-duplicate names** is on (the default), a repeated result gets a
    numeric suffix so no two columns end up with the same name.
-4. A header cell that has no letters or digits at all — blank, or symbols
-   only — falls back to `column_<n>` before styling, so every column still
+4. A header cell that has no letters or digits at all (blank, or symbols
+   only) falls back to `column_<n>` before styling, so every column still
    gets a usable name. (`lower` and `upper` keep symbols, so for them only a
    blank cell falls back.)
 
@@ -50,7 +50,7 @@ userId,userId2
 ```
 
 Turning de-duplication off keeps the styled names even when that means two
-columns share a name — useful when you plan to rename them by hand
+columns share a name. That is useful when you plan to rename them by hand
 afterwards:
 
 ```example
@@ -79,7 +79,7 @@ a,column_2,c
 
 Blank lines between rows are dropped from a table with two or more columns,
 where they cannot be a record. In a one-column table a blank line is a
-record whose value is empty, so it is kept and written as `""` — the form
+record whose value is empty, so it is kept and written as `""`, the form
 that readers which skip blank lines, such as
 [csv to json](/util/csv_to_json/), still count as a row:
 
@@ -99,14 +99,14 @@ b@example.com
 
 ## Options
 
-- **style** — `snake` (default, `first_name`), `camel` (`firstName`),
+- **style**: `snake` (default, `first_name`), `camel` (`firstName`),
   `pascal` (`FirstName`), `kebab` (`first-name`), `title` (`First Name`),
   `lower` (lower-cased, spacing untouched), or `upper` (upper-cased, spacing
   untouched). Note that `lower` and `upper` do not re-split words the way
-  the other styles do — they only change letter case.
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+  the other styles do; they only change letter case.
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly.
-- **de-duplicate names** — on by default, appending `_2`, `2`, `-2`, or a
+- **de-duplicate names**: on by default, appending `_2`, `2`, `-2`, or a
   space and `2` (matching the style) to any header that would otherwise
   repeat.
 
@@ -124,7 +124,7 @@ b@example.com
 
 - Non-ASCII letters are preserved and cased correctly (`Prénom` → `prénom`),
   but only Unicode letters and digits count as "word" characters. Anything
-  else is a separator — including the combining accent marks of decomposed
+  else is a separator, including the combining accent marks of decomposed
   (NFD) text, so a decomposed `Prénom` becomes `pre_nom` in `snake` style.
 - `lower` and `upper` are the two styles that do not merge multi-word
   headers into one token; use `snake` or `camel` if you also want the

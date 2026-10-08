@@ -130,9 +130,14 @@ service worker has none), `main`, or `eval` (see `isEdgeSafe` in
   `local`, pipelines re-validated on read) and base URL validation.
 - `src/lib/paramControls.ts` — string/number/boolean/select param inputs for
   the popup; any other param kind runs with its default.
+- `src/lib/icons.ts` — the inline line icons the options page draws from script.
+- `src/ui.css` — the design tokens (light and dark follow the system) and
+  controls both pages share. Nothing is loaded remotely: the fonts are local
+  stacks that use Instrument Sans and JetBrains Mono when they are installed.
 - `src/popup.ts` / `popup.html` — toolbar popup: pick a utility (favourites
-  and saved pipelines first), run it on a text box, copy the output, or jump
-  to the full app.
+  and saved pipelines first; a pipeline shows its steps), run it on a text
+  box, copy the output, or jump to the full app or the options page. A failed
+  menu run shows as a dismissable banner.
 - `src/options.ts` / `options.html` — favourites (ordered list plus a
   searchable checklist), the app's base URL, reset to defaults, and saved
   pipelines (rename, reorder, open in the app, delete, add from a share link).
@@ -143,7 +148,7 @@ service worker has none), `main`, or `eval` (see `isEdgeSafe` in
 
 ## Options
 
-- **App base URL** — where "Open selection in String Utility Belt" opens
+- **Website address** — where "Open selection in String Utility Belt" opens
   (`${baseUrl}/?text=<selection>`, read by the app's share-target handler);
   defaults to `https://stringutilitybelt.com`. Must be an absolute http(s)
   URL; any query or hash is dropped.
@@ -153,7 +158,8 @@ service worker has none), `main`, or `eval` (see `isEdgeSafe` in
   `case`, `trim`, `unescape_html`, `sha3`. Favourites and the base URL are
   saved with **Save**; with none, only saved pipelines and "Open selection…"
   are on the menu.
-- **Saved pipelines** — changes apply immediately; the list follows pipelines
+- **Saved pipelines** — changes apply immediately (deleting takes a second
+  click on "Confirm delete"; Escape undoes a rename being typed); the list follows pipelines
   saved from the web app while the page is open. "Open in app" opens the
   pipeline as a share link (`#/p/…`) at the base URL, for editing; save it
   back under the same name to update it.

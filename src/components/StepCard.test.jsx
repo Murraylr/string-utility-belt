@@ -23,14 +23,22 @@ const baseProps = {
 }
 
 describe('StepCard', () => {
-  it('renders step index text', () => {
-    render(<StepCard index={0} step={{ enabled: true, utilityId: 'trim', params: {} }} total={1} onMoveUp={() => {}} onMoveDown={() => {}} onDelete={() => {}} onToggle={() => {}} onChangeParams={() => {}} onChangeUtil={() => {}} />)
-    expect(screen.getByText('step 1')).toBeTruthy()
+  it('names the step by its utility, with its category and signature', () => {
+    render(<StepCard {...baseProps} />)
+    expect(screen.getByRole('button', { name: 'trim, change utility' })).toBeTruthy()
+    expect(screen.getByText('String Ops')).toBeTruthy()
+    expect(screen.getByText('text → text')).toBeTruthy()
+  })
+
+  it('shows a renamed step by its label, keeping the utility in the sub line', () => {
+    render(<StepCard {...baseProps} step={{ ...baseProps.step, label: 'tidy' }} />)
+    expect(screen.getByRole('button', { name: 'tidy, change utility' })).toBeTruthy()
+    expect(screen.getByText('trim · String Ops')).toBeTruthy()
   })
 
   it('links to the utility docs page by its crawlable path', () => {
     render(<StepCard {...baseProps} />)
-    expect(screen.getByRole('link', { name: /docs$/ })).toHaveAttribute('href', '/util/trim/')
+    expect(screen.getByRole('link', { name: 'trim docs' })).toHaveAttribute('href', '/util/trim/')
   })
 
   it('shows no docs link for an unknown utility', () => {
@@ -47,18 +55,27 @@ describe('StepCard', () => {
   it('shows a chip summarising a non-default condition and error policy', () => {
     const step = { ...baseProps.step, condition: { kind: 'regex', pattern: 'foo', flags: 'i' }, onError: 'stop' }
     render(<StepCard {...baseProps} step={step} />)
-    expect(screen.getByText('if matches /foo/i')).toBeTruthy()
-    expect(screen.getByText('on error: stop')).toBeTruthy()
+    expect(screen.getByText('if /foo/i')).toBeTruthy()
+    expect(screen.getByText('stops on error')).toBeTruthy()
   })
 
-  it('gives the utility select an accessible name', () => {
-    render(<StepCard {...baseProps} />)
-    expect(screen.getByLabelText('utility')).toHaveValue('trim')
+  it('changes the utility from a picker opened on the step name', async () => {
+    const user = userEvent.setup()
+    const onChangeUtil = vi.fn()
+    render(<StepCard {...baseProps} onChangeUtil={onChangeUtil} />)
+    const name = screen.getByRole('button', { name: 'trim, change utility' })
+    await user.click(name)
+    expect(name).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Pick a new utility for step 1')).toBeTruthy()
+    await user.type(screen.getByRole('combobox', { name: 'Search utilities' }), 'reverse{Enter}')
+    expect(onChangeUtil).toHaveBeenCalledWith('reverse')
+    expect(screen.queryByRole('combobox', { name: 'Search utilities' })).toBeNull()
+    expect(name).toHaveFocus()
   })
 
   it('highlights the card of a step that errored, with the message inline', () => {
     const { container } = render(<StepCard {...baseProps} error="bad input" />)
-    expect(screen.getByRole('alert').textContent).toBe('bad input')
+    expect(screen.getByRole('alert').textContent).toBe('bad input Passed its input on unchanged.')
     expect(container.querySelector('[data-step-id]').className).toMatch(/border-danger/)
   })
 
@@ -66,7 +83,7 @@ describe('StepCard', () => {
     const user = userEvent.setup()
     render(<StepCard {...baseProps} input="same" preview="same" />)
     expect(screen.getByRole('button', { name: 'copy' })).toBeTruthy()
-    const toggle = screen.getByRole('button', { name: 'toggle diff view' })
+    const toggle = screen.getByRole('button', { name: 'Diff' })
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
     await user.click(toggle)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
@@ -75,12 +92,13 @@ describe('StepCard', () => {
 
   it('describeCondition summarises every kind, including negation', () => {
     expect(describeCondition(undefined)).toBeNull()
-    expect(describeCondition({ kind: 'nonEmpty' })).toBe('if non-empty')
-    expect(describeCondition({ kind: 'nonEmpty', negate: true })).toBe('if not non-empty')
-    expect(describeCondition({ kind: 'type', type: 'json' })).toBe('if type is json')
-    expect(describeCondition({ kind: 'regex', pattern: 'a+', flags: 'i', negate: true })).toBe('if not matches /a+/i')
+    expect(describeCondition({ kind: 'nonEmpty' })).toBe('if not empty')
+    expect(describeCondition({ kind: 'nonEmpty', negate: true })).toBe('if empty')
+    expect(describeCondition({ kind: 'type', type: 'json' })).toBe('if json')
+    expect(describeCondition({ kind: 'type', type: 'string', negate: true })).toBe('unless text')
+    expect(describeCondition({ kind: 'regex', pattern: 'a+', flags: 'i', negate: true })).toBe('unless /a+/i')
     expect(describeCondition({ kind: 'always' })).toBeNull()
-    expect(describeCondition({ kind: 'always', negate: true })).toMatch(/never runs/)
+    expect(describeCondition({ kind: 'always', negate: true })).toBe('never runs')
   })
 
   it('colors the timing chip warn above 100ms', () => {
@@ -90,11 +108,14 @@ describe('StepCard', () => {
     expect(screen.getByText('150 ms').className).toMatch(/text-warn/)
   })
 
-  it('labels a halted or condition-skipped step', () => {
+  it('says why the last run did not execute a step, or that it is off', () => {
     const { rerender } = render(<StepCard {...baseProps} skipped="halted" />)
-    expect(screen.getByText('not run: pipeline stopped')).toBeTruthy()
+    expect(screen.getByText('Not run: the pipeline stopped at an earlier step.')).toBeTruthy()
     rerender(<StepCard {...baseProps} skipped="condition" />)
-    expect(screen.getByText('skipped: condition')).toBeTruthy()
+    expect(screen.getByText('Skipped: the run condition wasn’t met, so the input passed through.')).toBeTruthy()
+    rerender(<StepCard {...baseProps} step={{ ...baseProps.step, enabled: false }} />)
+    expect(screen.getByText('Off. Its input passes through unchanged.')).toBeTruthy()
+    expect(screen.getByRole('switch', { name: 'toggle step 1' })).not.toBeChecked()
   })
 
   it('expands the advanced section and edits condition/error policy, round-tripping to the UI', async () => {
@@ -113,13 +134,13 @@ describe('StepCard', () => {
       return <StepCard {...baseProps} step={step} onUpdateStep={update} />
     }
     render(<Harness />)
-    await user.click(screen.getByRole('button', { name: 'advanced' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced' }))
     await user.selectOptions(screen.getByLabelText('run condition'), 'nonEmpty')
     expect(onUpdateStep).toHaveBeenCalledWith({ condition: { kind: 'nonEmpty', negate: false } })
     await user.selectOptions(screen.getByLabelText('on error'), 'stop')
     expect(onUpdateStep).toHaveBeenCalledWith({ onError: 'stop' })
-    expect(screen.getByText('if non-empty')).toBeTruthy()
-    expect(screen.getByText('on error: stop')).toBeTruthy()
+    expect(screen.getByText('if not empty')).toBeTruthy()
+    expect(screen.getByText('stops on error')).toBeTruthy()
 
     // back to defaults clears both fields from the step (chips disappear)
     await user.selectOptions(screen.getByLabelText('run condition'), 'always')
@@ -138,7 +159,7 @@ describe('StepCard', () => {
       return <StepCard {...baseProps} step={step} onUpdateStep={update} />
     }
     render(<Harness />)
-    await user.click(screen.getByRole('button', { name: 'advanced' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced' }))
     await user.selectOptions(screen.getByLabelText('run condition'), 'regex')
     await user.type(screen.getByLabelText('regex pattern'), '(')
     expect(screen.getByRole('alert')).toBeTruthy()
@@ -197,17 +218,17 @@ describe('StepCard', () => {
       )
     }
     render(<ToolProvider initialSteps={[{ id: 's1', enabled: true, utilityId: 'trim', params: {} }]} persist={false}><Harness /></ToolProvider>)
-    expect(screen.getAllByText(/^step \d+$/)).toHaveLength(1)
+    expect(document.querySelectorAll('[data-step-id]')).toHaveLength(1)
     await user.click(screen.getByRole('button', { name: /step 1 menu/i }))
     await user.click(screen.getByRole('menuitem', { name: 'Duplicate' }))
-    expect(screen.getAllByText(/^step \d+$/)).toHaveLength(2)
+    expect(document.querySelectorAll('[data-step-id]')).toHaveLength(2)
   })
 
   it('toggles a diff view of the step input vs. its preview', async () => {
     const user = userEvent.setup()
     // JS string expressions: a JSX attribute string would keep "\n" as two literal characters
     render(<StepCard {...baseProps} input={'a\nb\nc'} preview={'a\nx\nc'} />)
-    await user.click(screen.getByRole('button', { name: 'toggle diff view' }))
+    await user.click(screen.getByRole('button', { name: 'Diff' }))
     const group = await screen.findByRole('group', { name: 'step diff' })
     expect(group.textContent).toContain('- b')
     expect(group.textContent).toContain('+ x')

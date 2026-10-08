@@ -1,11 +1,11 @@
 ---
-title: Uniq Count Online — Count Duplicate Lines (uniq -c)
+title: Uniq Count Online: Count Duplicate Lines (uniq -c)
 description: Count how many times each line appears in your text, sorted by frequency or alphabetically, as tab-separated text or JSON, like uniq -c.
 ---
 ## What does counting duplicate lines do?
 
-This tool tallies how many times each distinct line occurs in a block of text and reports the counts —
-the same job as the Unix pipeline `sort | uniq -c | sort -rn`, without needing a terminal (unlike a bare
+This tool tallies how many times each distinct line occurs in a block of text and reports the counts.
+It does the same job as the Unix pipeline `sort | uniq -c | sort -rn`, without needing a terminal (unlike a bare
 `uniq -c`, it counts repeats anywhere in the input, not just adjacent ones). It is
 useful for turning a raw log file, a column of exported values, or a list of survey answers into a
 frequency table: which values show up most, which are one-offs, and how many distinct values there are in
@@ -66,7 +66,7 @@ output:
 }
 ```
 
-Sorting alphabetically (`sort: "alpha"`) uses dictionary order, not raw character-code order — so a
+Sorting alphabetically (`sort: "alpha"`) uses dictionary order, not raw character-code order, so a
 lowercase word sorts next to its capitalized counterpart instead of every capitalized line being grouped
 first. This example also swaps in a readable `" | "` separator instead of the default tab:
 
@@ -98,23 +98,23 @@ output: 2 | a
 
 ## Options
 
-- **sort** — `count-desc` (default, most frequent first), `count-asc` (least frequent first), `alpha`
+- **sort**: `count-desc` (default, most frequent first), `count-asc` (least frequent first), `alpha`
   (dictionary order, comparing lowercased lines when **ignore case** is on), or `original`
   (first-appearance order). Lines with equal counts keep the order they first appeared in.
-- **separator** — the text placed between the count and the line, `\t` (a tab) by default. It accepts
+- **separator**: the text placed between the count and the line, `\t` (a tab) by default. It accepts
   the typed escapes `\t`, `\n`, `\r`, `\0` and `\\`, or any literal text such as `" | "`.
-- **ignore case** — off by default. When on, lines that differ only by case are counted together and
+- **ignore case**: off by default. When on, lines that differ only by case are counted together and
   sorted together (using the case of whichever version appeared first).
-- **trim lines** — off by default. When on, leading and trailing whitespace is removed from each line
+- **trim lines**: off by default. When on, leading and trailing whitespace is removed from each line
   before counting, so `"  a  "` and `"a"` are the same entry.
-- **only duplicates** — off by default. When on, lines that occur exactly once are left out of the result
+- **only duplicates**: off by default. When on, lines that occur exactly once are left out of the result
   entirely, so only repeated lines are shown.
-- **format** — `count-line` (default, `count` then the line), `line-count` (the line then the count), or
+- **format**: `count-line` (default, `count` then the line), `line-count` (the line then the count), or
   `json` (an object with `totalLines`, `uniqueLines`, and an `entries` array of `{ line, count }`).
 
 ## Common uses
 
-- Finding the most common values in a column of exported data — status codes, referrers, error messages —
+- Finding the most common values in a column of exported data (status codes, referrers, error messages)
   without opening a spreadsheet.
 - Spotting duplicate rows in a list before deduplicating it with [remove duplicate lines](/util/line_dedupe/).
 - Building a quick word- or value-frequency report from log files or survey exports; for counting words
@@ -124,12 +124,12 @@ output: 2 | a
 
 ## Tips and pitfalls
 
-- A trailing newline at the end of the input does not create a phantom empty line — the tool ignores the
+- A trailing newline at the end of the input does not create a phantom empty line. The tool ignores the
   final line break the same way most text editors do.
 - Counting is exact per line, including whitespace, unless you turn on **trim lines**: `"a"` and `"a "`
   are different entries by default.
 - The alphabetical sort uses the JavaScript engine's locale-aware string comparison (`localeCompare`, as
-  [line sort](/util/line_sort/)'s alphabetical mode does), so it is not simply sorting by character code —
+  [line sort](/util/line_sort/)'s alphabetical mode does), so it is not simply sorting by character code:
   accented letters and mixed case sort roughly the way a dictionary would. Because it follows the browser's
   default locale, the exact order of accented or non-Latin lines can differ slightly between machines.
 - `json` output is the easiest format to feed into another tool or script; the text formats are meant for

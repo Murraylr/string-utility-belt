@@ -36,7 +36,7 @@ test.describe('command palette', () => {
   test('"?" opens keyboard shortcuts help; Escape closes it', async ({ page }) => {
     await page.goto('/')
     // move focus off any text field first: '?' is ignored while typing
-    await page.locator('h1', { hasText: 'String Utility Belt' }).click()
+    await page.getByText('Paste some text, add steps').click()
 
     await page.keyboard.press('?')
     const help = page.getByRole('dialog', { name: 'Keyboard shortcuts' })

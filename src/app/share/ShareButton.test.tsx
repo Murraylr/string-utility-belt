@@ -10,7 +10,7 @@ describe('ShareButton', () => {
   it('opens the dialog on click, and Escape closes it and returns focus to the button', async () => {
     const user = userEvent.setup()
     renderButton()
-    const button = screen.getByRole('button', { name: 'share' })
+    const button = screen.getByRole('button', { name: 'Share' })
     expect(button).toHaveAttribute('aria-haspopup', 'dialog')
     expect(screen.queryByRole('dialog')).toBeNull()
 
@@ -35,6 +35,6 @@ describe('ShareButton', () => {
     await screen.findByRole('dialog', { name: 'Share pipeline' })
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'share' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Share' }))
   })
 })

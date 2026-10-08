@@ -9,10 +9,11 @@ export function renderParamControls(container: HTMLElement, meta: UtilityMeta): 
   for (const [key, spec] of Object.entries(meta.params)) {
     if (!SUPPORTED.has(spec.kind)) continue
 
+    // Each control sits inside its own label (which also names it with `for`):
+    // a checkbox before its text, any other control under a small caption.
     const label = document.createElement('label')
     label.htmlFor = `param-${key}`
-    label.textContent = spec.label ?? key
-    container.appendChild(label)
+    const text = spec.label ?? key
 
     let control: HTMLInputElement | HTMLSelectElement
     if (spec.kind === 'select') {
@@ -33,6 +34,7 @@ export function renderParamControls(container: HTMLElement, meta: UtilityMeta): 
     } else {
       const input = document.createElement('input')
       input.type = spec.kind === 'number' ? 'number' : 'text'
+      input.spellcheck = false
       if (spec.kind === 'number') {
         if (spec.min !== undefined) input.min = String(spec.min)
         if (spec.max !== undefined) input.max = String(spec.max)
@@ -44,7 +46,18 @@ export function renderParamControls(container: HTMLElement, meta: UtilityMeta): 
     }
     control.id = `param-${key}`
     control.dataset.paramKey = key
-    container.appendChild(control)
+
+    if (spec.kind === 'boolean') {
+      label.className = 'param-bool'
+      label.append(control, text)
+    } else {
+      label.className = 'param'
+      control.className = spec.kind === 'select' ? 'select' : 'field'
+      const caption = document.createElement('span')
+      caption.textContent = text
+      label.append(caption, control)
+    }
+    container.appendChild(label)
   }
 }
 

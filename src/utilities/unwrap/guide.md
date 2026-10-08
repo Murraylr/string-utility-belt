@@ -1,10 +1,10 @@
 ---
-title: Unwrap Text Online — Join Wrapped Lines Into Paragraphs
+title: Unwrap Text Online: Join Wrapped Lines Into Paragraphs
 description: Join soft-wrapped lines back into paragraphs online. Keeps blank-line breaks, list items, and indented code blocks intact while reflowing prose.
 ---
 ## What does unwrapping text do?
 
-Text that was hard-wrapped to a fixed column width — an email, a plain-text file, output copied from a terminal — breaks each paragraph into several separate lines even though it is meant to be read as one continuous block. Unwrapping reverses that: it joins those lines back into single-line paragraphs, while still respecting blank lines as intentional paragraph breaks. It is the natural undo for [word wrap](/util/word_wrap/), with a similar effect to running the Unix `fmt` command with a very large width.
+Text that was hard-wrapped to a fixed column width (an email, a plain-text file, output copied from a terminal) breaks each paragraph into several separate lines even though it is meant to be read as one continuous block. Unwrapping reverses that: it joins those lines back into single-line paragraphs, while still respecting blank lines as intentional paragraph breaks. It is the natural undo for [word wrap](/util/word_wrap/), with a similar effect to running the Unix `fmt` command with a very large width.
 
 ## How it works
 
@@ -32,7 +32,7 @@ output: Notes:
 - second point
 ```
 
-A wrapped continuation of a list item — a line that is not itself a new bullet — is joined onto that bullet rather than starting a new paragraph, which is why "continued" above ends up appended to "first point" instead of becoming its own line.
+A wrapped continuation of a list item (a line that is not itself a new bullet) is joined onto that bullet rather than starting a new paragraph, which is why "continued" above ends up appended to "first point" instead of becoming its own line.
 
 ### Custom separator
 
@@ -81,9 +81,9 @@ output:
 
 ## Options
 
-- **join with** (`separator`, default a single space) — the text inserted between two lines being joined. It is used literally; a value like `$&` is just two characters, not a special replacement token. It may not contain a line break.
-- **keep list items** (`preserveLists`, default `true`) — recognizes bullet (`-`, `*`, `+`, `•`, and the `●`, `○`, `■` and similar glyphs that text copied from a PDF carries), numbered (`1.`, `1)`), lettered (`a.`, `a)`) and parenthesised (`(a)`, `(12)`, `(iv)`) list markers, plus blockquote arrows, and keeps each list item on its own line, joining only its wrapped continuations.
-- **keep indented blocks** (`preserveIndented`, default `true`) — leaves a line indented four or more columns (or by any tab) exactly as it is, instead of joining it into the surrounding paragraph.
+- **join with** (`separator`, default a single space): the text inserted between two lines being joined. It is used literally; a value like `$&` is just two characters, not a special replacement token. It may not contain a line break.
+- **keep list items** (`preserveLists`, default `true`): recognizes bullet (`-`, `*`, `+`, `•`, and the `●`, `○`, `■` and similar glyphs that text copied from a PDF carries), numbered (`1.`, `1)`), lettered (`a.`, `a)`) and parenthesised (`(a)`, `(12)`, `(iv)`) list markers, plus blockquote arrows, and keeps each list item on its own line, joining only its wrapped continuations.
+- **keep indented blocks** (`preserveIndented`, default `true`): leaves a line indented four or more columns (or by any tab) exactly as it is, instead of joining it into the surrounding paragraph.
 
 ## Common uses
 

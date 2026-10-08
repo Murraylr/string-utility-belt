@@ -58,7 +58,7 @@ describe('SharedPipeline', () => {
     const payload = encodeShare({ v: 2, steps: [step('shared', 'upper')] })
     render(<SharedPipeline payload={payload} />)
 
-    await waitFor(() => expect(screen.getByText(/your previous pipeline was saved to your library/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Your previous pipeline was saved to your library/)).toBeInTheDocument())
     expect(listEntries('pipeline')).toHaveLength(1)
     expect(listEntries('pipeline')[0].name).toMatch(/^Autosave — /)
   })
@@ -117,7 +117,7 @@ describe('SharedPipeline', () => {
     saveState({ steps: [step('prev1')], showPreviews: true })
     const payload = encodeShare({ v: 2, steps: [step('shared', 'upper')] })
     render(<React.StrictMode><SharedPipeline payload={payload} /></React.StrictMode>)
-    expect(await screen.findByText(/your previous pipeline was saved to your library/)).toBeInTheDocument()
+    expect(await screen.findByText(/Your previous pipeline was saved to your library/)).toBeInTheDocument()
     expect(listEntries('pipeline')).toHaveLength(1)
   })
 

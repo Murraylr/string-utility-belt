@@ -17,6 +17,8 @@ async function loadDiffLines() {
 export interface DiffViewProps {
   before: string
   after: string
+  /** CSS max-height of the scrolling diff. */
+  maxHeight?: string
 }
 
 interface Computed {
@@ -26,8 +28,10 @@ interface Computed {
   changes: Change[] | null
 }
 
-/** Line diff of input -> output, shown only in side-by-side layout. `diff` is loaded lazily. */
-export default function DiffView({ before, after }: DiffViewProps) {
+const NOTE_CLASS = 'px-4 py-3 min-h-[280px] text-[12.5px] text-muted'
+
+/** Line diff of input -> output, one row per line marked +/-. `diff` is loaded lazily. */
+export default function DiffView({ before, after, maxHeight = '20rem' }: DiffViewProps) {
   const tooLarge = before.length + after.length > MAX_DIFF_CHARS
   const [computed, setComputed] = useState<Computed | null>(null)
   const hasDiff = useRef(false)
@@ -54,11 +58,11 @@ export default function DiffView({ before, after }: DiffViewProps) {
   }, [before, after, tooLarge])
 
   if (tooLarge) {
-    return <div className="muted text-sm" role="status">input and output are too large to diff (over {MAX_DIFF_CHARS.toLocaleString()} characters)</div>
+    return <div className={NOTE_CLASS} role="status">The input and output are too large to diff (over {MAX_DIFF_CHARS.toLocaleString()} characters).</div>
   }
-  if (computed === null) return <div className="muted text-sm" role="status">computing diff…</div>
+  if (computed === null) return <div className={NOTE_CLASS} role="status">Computing diff…</div>
   if (computed.changes === null) {
-    return <div className="muted text-sm" role="status">these texts took too long to diff</div>
+    return <div className={NOTE_CLASS} role="status">These texts took too long to diff.</div>
   }
 
   // while an edit is being re-diffed, the previous diff stays up (marked busy) instead of flashing
@@ -69,17 +73,19 @@ export default function DiffView({ before, after }: DiffViewProps) {
       aria-label="input to output diff"
       aria-busy={stale}
       tabIndex={0}
-      className={`border rounded-2xl p-3 bg-surface mono text-xs overflow-auto max-h-80 ${stale ? 'opacity-70' : ''}`}
+      className={`py-2 min-h-[280px] overflow-auto font-mono text-[12.5px] leading-5 ${stale ? 'opacity-70' : ''}`}
+      style={{ maxHeight }}
     >
-      {computed.changes.map((c, i) => {
+      {computed.changes.flatMap((c, i) => {
         const lines = c.value.split('\n').filter((line, idx, arr) => !(idx === arr.length - 1 && line === ''))
-        const prefix = c.added ? '+ ' : c.removed ? '- ' : '  '
-        const tone = c.added ? 'text-success bg-success/10' : c.removed ? 'text-danger bg-danger/10' : ''
-        return (
-          <pre key={i} className={`whitespace-pre-wrap wrap-anywhere m-0 ${tone}`}>
-            {lines.map(l => `${prefix}${l}`).join('\n')}
-          </pre>
-        )
+        const sign = c.added ? '+' : c.removed ? '-' : ''
+        const tone = c.added ? 'bg-add-bg text-add-ink' : c.removed ? 'bg-del-bg text-del-ink' : ''
+        return lines.map((line, j) => (
+          <div key={`${i}:${j}`} className={`flex gap-2.5 px-3.5 ${tone}`}>
+            <span className="w-2.5 shrink-0 select-none">{sign}</span>
+            <span className="whitespace-pre-wrap wrap-anywhere min-w-0">{line}</span>
+          </div>
+        ))
       })}
     </div>
   )

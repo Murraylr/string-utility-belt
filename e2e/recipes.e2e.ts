@@ -56,7 +56,7 @@ test.describe('recipe pages', () => {
 
   test('an unknown recipe is not found and kept out of search indexes', async ({ page }) => {
     await page.goto('/recipes/no-such-recipe/')
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Unknown recipe')
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('No recipe at this address')
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
   })
 })

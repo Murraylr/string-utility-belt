@@ -14,7 +14,7 @@ test.describe('share', () => {
     await setInput(page, 'hello')
     await expect(result(page)).toHaveText('olleh')
 
-    await page.getByRole('button', { name: 'share', exact: true }).click()
+    await page.getByRole('button', { name: 'Share', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Share pipeline' })
     await expect(dialog).toBeVisible()
     // include the input, so the copied link reproduces the exact same result elsewhere
@@ -23,7 +23,7 @@ test.describe('share', () => {
     const shareUrl = await dialog.locator('#share-url').inputValue()
     expect(shareUrl).toContain('#/p/')
 
-    const copyBtn = dialog.getByRole('button', { name: /^copy link$/ })
+    const copyBtn = dialog.getByRole('button', { name: /^Copy link$/ })
     await copyBtn.click()
     // the button's "copied" label is only shown for ~1.5s before reverting (see
     // ShareDialog.tsx's `announce`); poll the clipboard itself instead of that label,

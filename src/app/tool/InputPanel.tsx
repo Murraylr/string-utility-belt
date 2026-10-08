@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Clipboard, FileUp, Link as LinkIcon } from 'lucide-react'
-import { asText, isBytes } from '@/core/coerce'
+import { Clipboard, FileUp, Globe } from 'lucide-react'
+import { asText, isBytes, valueType } from '@/core/coerce'
 import type { Value } from '@/types/utility'
 import { useTool } from '@/app/ToolContext'
 import { usePref } from '@/app/prefs'
 import { trackInput } from '@/app/analytics/analytics'
 import { decodeUtf8Lossy } from '@/app/io/bytes'
-import FetchUrlDialog, { type FetchedMeta } from '@/app/io/FetchUrlDialog'
+import FetchUrlForm, { type FetchedMeta } from '@/app/io/FetchUrlForm'
 import { readFileAsInput, type FileInputMeta } from '@/app/io/fileInput'
 import { formatOffset, hexDumpRows } from '@/app/io/hex'
 import { HISTORY_PREF, saveHistory } from '@/app/io/history'
@@ -16,6 +16,7 @@ import StatsBar from '@/app/io/StatsBar'
 import { scrollTextareaTo } from '@/app/io/textareaScroll'
 
 const BINARY_PREVIEW_BYTES = 256
+const TYPE_LABEL = { string: 'text', json: 'json', bytes: 'bytes' } as const
 const HISTORY_DEBOUNCE_MS = 2000
 
 /** History is best-effort: a failed save must never surface as an unhandled rejection. */
@@ -38,12 +39,6 @@ function pastedFile(dt: DataTransfer | null): File | null {
   const isJustTheName = text === '' || text === file.name || text.endsWith(`/${file.name}`) || text.endsWith(`\\${file.name}`)
   return isJustTheName ? file : null
 }
-
-/**
- * React bubbles events through portals, so a paste/drop in the (portalled) fetch dialog would
- * otherwise reach the panel's handlers; only events from the panel's own DOM count.
- */
-const fromPanel = (e: React.SyntheticEvent) => e.currentTarget.contains(e.target as Node)
 
 function nameFromUrl(url: string): string {
   try {
@@ -68,12 +63,17 @@ export default function InputPanel() {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fetchOpen, setFetchOpen] = useState(false)
+  // kept here, not in the form, so a closed and reopened row still holds the last URL tried
+  const [fetchUrl, setFetchUrl] = useState('')
   const [caret, setCaret] = useState(0)
   const [goToLine, setGoToLine] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const goToLineRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fetchButtonRef = useRef<HTMLButtonElement>(null)
+  const fetchError = useRef<string | null>(null)
+  const focusAfterFetch = useRef<'input' | 'button' | null>(null)
   const textPasteFlag = useRef(false)
   const readSeq = useRef(0)
   const lastResult = useRef(run.result)
@@ -114,7 +114,7 @@ export default function InputPanel() {
       trackInput(via, result.value)
       return true
     } catch {
-      if (seq === readSeq.current) setError(`could not read ${file.name || 'that file'}`)
+      if (seq === readSeq.current) setError(`Couldn't read ${file.name || 'that file'}.`)
       return false
     }
   }, [setInput])
@@ -127,14 +127,13 @@ export default function InputPanel() {
 
   const onDrop = (e: React.DragEvent) => {
     setDragOver(false)
-    if (!fromPanel(e)) return
     const file = e.dataTransfer?.files?.[0]
     if (!file) return // plain text drops: let the textarea insert the text natively
     e.preventDefault()
     applyFile(file, 'drop')
   }
   const onDragOver = (e: React.DragEvent) => {
-    if (!fromPanel(e) || !hasFiles(e.dataTransfer)) return
+    if (!hasFiles(e.dataTransfer)) return
     e.preventDefault()
     e.dataTransfer.dropEffect = 'copy'
     if (!dragOver) setDragOver(true)
@@ -146,7 +145,6 @@ export default function InputPanel() {
 
   // Files pasted anywhere in the panel (the textarea, or the binary view's buttons).
   const onPanelPaste = (e: React.ClipboardEvent) => {
-    if (!fromPanel(e)) return
     const file = pastedFile(e.clipboardData)
     if (!file) return
     e.preventDefault()
@@ -173,7 +171,7 @@ export default function InputPanel() {
 
   const pasteFromClipboard = async () => {
     if (!navigator.clipboard?.readText) {
-      setError('the clipboard is not available here — paste with Ctrl+V instead')
+      setError('The clipboard isn\'t available here. Paste with Ctrl+V instead.')
       return
     }
     try {
@@ -185,8 +183,8 @@ export default function InputPanel() {
       runIfManual()
     } catch (err) {
       setError((err as Error)?.name === 'NotAllowedError'
-        ? 'clipboard permission was denied'
-        : `could not read the clipboard: ${(err as Error)?.message || 'unknown error'}`)
+        ? 'The browser blocked clipboard access. Paste with Ctrl+V instead.'
+        : `Couldn't read the clipboard: ${(err as Error)?.message || 'unknown error'}`)
     }
   }
 
@@ -224,7 +222,7 @@ export default function InputPanel() {
     if (!isBytes(input)) return
     const decoded = decodeUtf8Lossy(input)
     setWarning(decoded.includes('�')
-      ? { value: decoded, data: 'decoded as UTF-8 — invalid bytes were replaced with the � replacement character' }
+      ? { value: decoded, data: 'Decoded as UTF-8. Invalid bytes became the � replacement character.' }
       : null)
     setInput(decoded)
   }
@@ -243,6 +241,32 @@ export default function InputPanel() {
     trackInput('history', restored)
   }
 
+  /** Closes the fetch row; a fetch error it showed goes with it. */
+  const closeFetch = (focus: 'input' | 'button' | null) => {
+    focusAfterFetch.current = focus
+    setFetchOpen(false)
+    const shown = fetchError.current
+    fetchError.current = null
+    if (shown !== null) setError(e => (e === shown ? null : e))
+  }
+  // after the commit that removed the row, when a fetched text input's textarea exists
+  useEffect(() => {
+    if (fetchOpen) return
+    const target = focusAfterFetch.current
+    focusAfterFetch.current = null
+    // binary input has no textarea; the button is the next best place
+    if (target === 'input') (textareaRef.current ?? fetchButtonRef.current)?.focus()
+    else if (target === 'button') fetchButtonRef.current?.focus()
+  }, [fetchOpen])
+  const toggleFetch = () => {
+    if (fetchOpen) closeFetch(null) // the click already focused the button
+    else setFetchOpen(true)
+  }
+  const onFetchError = (message: string | null) => {
+    fetchError.current = message
+    setError(message)
+  }
+
   const onFetched = (value: Value, meta: FetchedMeta) => {
     setInput(value)
     setError(null)
@@ -250,80 +274,96 @@ export default function InputPanel() {
     setSource(isBytes(value)
       ? { value, data: { name: nameFromUrl(meta.url), size: value.length, mime: meta.contentType ?? '' } }
       : null)
+    setFetchUrl('')
+    closeFetch('input')
   }
 
   return (
     <div
-      className={`grid gap-2 rounded-2xl transition ${dragOver ? 'ring-2 ring-primary-500' : ''}`}
+      className={`border rounded-lg bg-surface outline-offset-2 focus-within:border-line-2 ${dragOver ? 'outline-2 outline-acc' : ''}`}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onPaste={onPanelPaste}
     >
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        {binary ? <span className="muted">input</span> : <label className="muted" htmlFor="pipeline-input">input</label>}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button type="button" className="btn" onClick={() => fileInputRef.current?.click()}><FileUp size={16} /> open file</button>
-          <button type="button" className="btn" onClick={() => setFetchOpen(true)}><LinkIcon size={16} /> fetch URL</button>
-          {!binary && (
-            <button type="button" className="btn" onClick={pasteFromClipboard}><Clipboard size={16} /> paste</button>
-          )}
-          <HistoryMenu onRestore={restoreFromHistory} />
-        </div>
+      <div className="flex flex-wrap items-center gap-1 pl-3.5 pr-1.5 min-h-10 border-b">
+        {binary
+          ? <span className="text-[13px] font-semibold">Input</span>
+          : <label className="text-[13px] font-semibold" htmlFor="pipeline-input">Input</label>}
+        <span className="font-mono text-[11px] text-muted pl-1">{TYPE_LABEL[valueType(input)]}</span>
+        <div className="flex-1" />
+        <button type="button" className="btn-ghost" onClick={() => fileInputRef.current?.click()}><FileUp size={14} aria-hidden /> Open file</button>
+        <button ref={fetchButtonRef} type="button" className="btn-ghost" aria-expanded={fetchOpen} onClick={toggleFetch}><Globe size={14} aria-hidden /> Fetch URL</button>
+        {!binary && (
+          <button type="button" className="btn-ghost" onClick={pasteFromClipboard}><Clipboard size={14} aria-hidden /> Paste</button>
+        )}
+        <HistoryMenu onRestore={restoreFromHistory} />
       </div>
       <input ref={fileInputRef} type="file" hidden onChange={onFileChosen} aria-label="choose a file to use as input" />
+      {fetchOpen && (
+        <FetchUrlForm
+          url={fetchUrl}
+          onUrlChange={setFetchUrl}
+          onFetched={onFetched}
+          onError={onFetchError}
+          onCancel={() => closeFetch('button')}
+        />
+      )}
 
-      {error && <div role="alert" className="text-sm text-danger">{error}</div>}
-      {decodeWarning && <div role="status" className="text-sm text-warn">{decodeWarning}</div>}
+      {error && <div role="alert" className="px-3.5 py-2 text-[12.5px] text-danger-ink bg-danger-bg border-b border-danger-line">{error}</div>}
+      {decodeWarning && <div role="status" className="px-3.5 py-2 text-[12.5px] text-warn border-b">{decodeWarning}</div>}
 
       {binary ? (
-        <div className="border rounded-2xl p-3 min-h-[160px] bg-surface grid gap-2">
-          <div className="text-sm">
-            <span className="font-medium">{fileMeta?.name ?? 'binary input'}</span>{' '}
-            <span className="muted">
-              · {input.length.toLocaleString()} bytes{fileMeta?.mime ? ` · ${fileMeta.mime}` : ''}
+        <div className="grid gap-2.5 px-4 py-3">
+          <div className="text-[13px]">
+            <span className="font-medium">{fileMeta?.name ?? 'Binary input'}</span>{' '}
+            <span className="text-muted">
+              {input.length.toLocaleString()} bytes{fileMeta?.mime ? ` · ${fileMeta.mime}` : ''}
             </span>
           </div>
-          <div className="mono text-xs overflow-auto" role="group" aria-label="hex preview, first 256 bytes">
+          <div className="max-h-[200px] overflow-auto font-mono text-xs leading-[19px] text-muted" role="group" aria-label="hex preview, first 256 bytes">
             {hexDumpRows(input, 0, Math.min(BINARY_PREVIEW_BYTES, input.length)).map(r => (
               <div key={r.offset} className="whitespace-pre">
-                <span className="text-muted">{formatOffset(r.offset)}</span>{'  '}
-                <span>{r.hex.padEnd(16 * 3 - 1, ' ')}</span>{'  '}
-                <span className="text-muted">{r.ascii}</span>
+                <span>{formatOffset(r.offset)}</span>{'  '}
+                <span className="text-fg">{r.hex.padEnd(16 * 3 - 1, ' ')}</span>{'  '}
+                <span>{r.ascii}</span>
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
-            <button type="button" className="btn" onClick={treatAsText}>treat as text</button>
-            <button type="button" className="btn" onClick={clear}>clear</button>
+          <div className="flex gap-1.5">
+            <button type="button" className="btn h-7 px-2.5 text-[12.5px]" onClick={treatAsText}>Treat as text</button>
+            <button type="button" className="btn h-7 px-2.5 text-[12.5px]" onClick={clear}>Clear</button>
           </div>
         </div>
       ) : (
-        <>
-          <textarea
-            id="pipeline-input"
-            ref={textareaRef}
-            className="border rounded-2xl p-3 min-h-[160px] focus:ring-3 focus:ring-[#3b82f680] outline-hidden mono bg-surface text-fg shadow-soft"
-            placeholder="type or paste your text here…"
-            value={text}
-            onChange={onChange}
-            onPaste={onTextPaste}
-            onSelect={trackCaret}
-            onKeyUp={trackCaret}
-            onClick={trackCaret}
-            onKeyDown={onKeyDown}
-          />
-          <div className="flex items-center gap-3 text-xs flex-wrap">
-            <span className="muted">Ln {lineCol.line}, Col {lineCol.col}</span>
+        <textarea
+          id="pipeline-input"
+          ref={textareaRef}
+          className="block w-full min-h-[150px] resize-y border-0 outline-hidden px-4 py-3.5 bg-surface text-fg font-mono text-[13.5px] leading-[22px]"
+          placeholder="Type or paste text here, or drop a file on this box"
+          spellCheck={false}
+          value={text}
+          onChange={onChange}
+          onPaste={onTextPaste}
+          onSelect={trackCaret}
+          onKeyUp={trackCaret}
+          onClick={trackCaret}
+          onKeyDown={onKeyDown}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 px-3.5 py-1 min-h-[30px] border-t bg-canvas rounded-b-lg font-mono text-[11px] text-muted">
+        {!binary && (
+          <>
+            <span>Ln {lineCol.line}, Col {lineCol.col}</span>
             {goToOpen ? (
-              <label className="flex items-center gap-1">
-                go to line
+              <label className="flex items-center gap-1.5">
+                Go to line
                 <input
                   ref={goToLineRef}
                   type="number"
                   min={1}
                   max={totalLines(text)}
-                  className="field w-20 py-0.5"
+                  className="w-16 h-[22px] px-1.5 border rounded-[4px] bg-surface text-fg font-mono text-[11px] outline-hidden focus:border-acc"
                   value={goToLine ?? ''}
                   onChange={e => setGoToLine(e.target.value)}
                   onKeyDown={onGoToLineKeyDown}
@@ -331,19 +371,18 @@ export default function InputPanel() {
                 />
               </label>
             ) : (
-              <span className="muted">Ctrl+G: go to line</span>
+              <span>Ctrl+G go to line</span>
             )}
             {!liveRun && (
-              <label className="flex items-center gap-1 muted ml-auto">
+              <label className="flex items-center gap-1.5 font-sans text-xs cursor-pointer">
                 <input type="checkbox" checked={autoRunOnPaste} onChange={e => setAutoRunOnPaste(e.target.checked)} />
-                auto-run on paste
+                Run on paste
               </label>
             )}
-          </div>
-        </>
-      )}
-      <StatsBar value={input} compact />
-      <FetchUrlDialog open={fetchOpen} onClose={() => setFetchOpen(false)} onFetched={onFetched} />
+          </>
+        )}
+        <StatsBar value={input} className="ml-auto" />
+      </div>
     </div>
   )
 }

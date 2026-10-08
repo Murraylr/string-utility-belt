@@ -1,6 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ToolProvider } from '@/app/ToolContext'
+import { ToolProvider, useTool } from '@/app/ToolContext'
 import * as downloadModule from '@/app/io/download'
 import OutputPanel from './OutputPanel'
 
@@ -13,6 +13,11 @@ vi.mock('@codemirror/lang-html', () => ({ html: () => null }))
 vi.mock('@codemirror/lang-sql', () => ({ sql: () => null }))
 vi.mock('@codemirror/lang-yaml', () => ({ yaml: () => null }))
 vi.mock('@codemirror/lang-markdown', () => ({ markdown: () => null }))
+
+function InputProbe() {
+  const { input } = useTool()
+  return <div data-testid="input-probe">{String(input)}</div>
+}
 
 function Harness({ initialInput = 'hello' }: { initialInput?: string }) {
   return (
@@ -40,33 +45,56 @@ describe('OutputPanel', () => {
 
   it('offers copy and copy-as via CopyAsMenu', () => {
     render(<Harness />)
-    expect(screen.getByRole('button', { name: 'copy' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'copy as…' })).toBeTruthy()
   })
 
   it('does not make the whole result an aria-live region (it would re-read megabytes on every keystroke)', async () => {
     render(<Harness initialInput="hello" />)
-    const region = await screen.findByRole('region', { name: 'result' })
+    const region = await screen.findByRole('region', { name: 'Result' })
     expect(region.closest('[aria-live], [role="status"], [role="alert"]')).toBeNull()
     expect(region.querySelector('[aria-live], [role="status"], [role="alert"]')).toBeNull()
   })
 
   it('names the result region for assistive tech', async () => {
     render(<Harness initialInput="hello" />)
-    expect(await screen.findByRole('region', { name: 'result' })).toHaveTextContent('hello')
+    expect(await screen.findByRole('region', { name: 'Result' })).toHaveTextContent('hello')
   })
 
   it('flags a result computed from only a prefix of a large input, so copy/download are not mistaken for the full result', async () => {
     localStorage.setItem('sub:pref:previewLimit', 'true')
     render(<Harness initialInput={'a'.repeat(1_000_001)} />)
-    expect(await screen.findByText(/partial result/i)).toBeTruthy()
+    expect(await screen.findByText(/first 64 KB only/i)).toBeTruthy()
   })
 
   it('does not flag an ordinary result as partial', async () => {
     render(<Harness initialInput="hello" />)
-    await screen.findByRole('region', { name: 'result' })
+    await screen.findByRole('region', { name: 'Result' })
     await new Promise(r => setTimeout(r, 50))
-    expect(screen.queryByText(/partial result/i)).toBeNull()
+    expect(screen.queryByText(/first 64 KB only/i)).toBeNull()
+  })
+
+  it('reports failed steps rather than a timing', async () => {
+    render(
+      <ToolProvider initialSteps={[{ id: 's1', utilityId: 'json_minify', params: {}, enabled: true } as never]} initialInput="not json" persist={false}>
+        <OutputPanel />
+      </ToolProvider>,
+    )
+    expect(await screen.findByText('1 step failed')).toBeTruthy()
+    expect(screen.queryByText(/ ms$/)).toBeNull()
+  })
+
+  it('replaces the input with the output on "Use as input"', async () => {
+    render(
+      <ToolProvider initialSteps={[{ id: 's1', utilityId: 'case', params: { mode: 'upper' }, enabled: true } as never]} initialInput="abc" persist={false}>
+        <OutputPanel />
+        <InputProbe />
+      </ToolProvider>,
+    )
+    const use = screen.getByRole('button', { name: 'Use as input' })
+    await waitFor(() => expect(use).toBeEnabled())
+    fireEvent.click(use)
+    await waitFor(() => expect(screen.getByTestId('input-probe').textContent).toBe('ABC'))
   })
 
   it('downloads a bytes result as raw bytes with a sniffed extension', () => {

@@ -3,7 +3,9 @@ import { parseFrontmatter } from '@/lib/markdown'
 import { useT } from '@/app/i18n/useT'
 import { renderMarkdownDocument } from '@/app/pages/guide'
 import { pageTitle } from '@/app/pages/seo'
+import PagePromo from '@/app/sponsors/PagePromo'
 import PageSponsor from '@/app/sponsors/PageSponsor'
+import { fetchPosts, parseTags, type PostMeta } from './blogManifest'
 
 type BlogPostProps = { slug: string }
 type Frontmatter = Record<string, string>
@@ -16,6 +18,9 @@ function dropRepeatedTitle(body: string, title: string | undefined): string {
   const first = /^\s*#[ \t]+(.+?)[ \t]*(?:\r?\n|$)/.exec(body)
   return title && first && first[1] === title ? body.slice(first[0].length) : body
 }
+
+/** How many other posts the footer lists. */
+const MORE_POSTS = 3
 
 // exact match only: `md-code-block` (fenced blocks; already scrollable via its `.md-pre`
 // ancestor) must not pick this up — only bare inline `` `code` `` spans. Unlike a fenced
@@ -30,6 +35,13 @@ export default function BlogPost({ slug }: BlogPostProps) {
   // is never shown while the next one loads
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const post = loaded?.slug === slug ? loaded : null
+  const [allPosts, setAllPosts] = useState<PostMeta[]>([])
+
+  useEffect(() => {
+    let active = true
+    fetchPosts().then(list => { if (active) setAllPosts(list) })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -58,25 +70,59 @@ export default function BlogPost({ slug }: BlogPostProps) {
   }, [slug])
 
   const meta = post?.status === 'ok' ? post.meta : null
-  // w-full + min-w-0: `max-w-3xl mx-auto` alone leaves this grid item's width "auto",
+  const tags = parseTags(meta?.tags)
+  const others = allPosts.filter(p => p.slug !== slug).slice(0, MORE_POSTS)
+  const date = (iso: string) => <time dateTime={iso}>{formatDate(iso, { dateStyle: 'long' })}</time>
+  // w-full + min-w-0: `max-w-[720px] mx-auto` alone leaves this grid item's width "auto",
   // which — with a non-wrapping code block inside (.md-pre already scrolls itself) —
   // grid sizes via shrink-to-fit up to the block's min-content width, blowing the article
   // (and the page) wider than the viewport instead of clipping to the grid track
   return (
-    <article className="md w-full max-w-3xl mx-auto card p-6 min-w-0" aria-busy={post ? undefined : true}>
+    <article className="w-full max-w-[720px] mx-auto grid gap-7 min-w-0" aria-busy={post ? undefined : true}>
       {!post && <p className="muted" role="status">{t('common.loading')}</p>}
-      {post?.status === 'missing' && <p className="text-danger" role="alert">{t('blog.notFound')}</p>}
+      {post?.status === 'missing' && (
+        <div className="grid gap-3">
+          <p className="text-[15px] text-danger-ink" role="alert">{t('blog.notFound')}</p>
+          <a className="more-link justify-self-start" href="/blog/">All posts <span aria-hidden="true">→</span></a>
+        </div>
+      )}
       {meta && (
-        <header className="mb-4">
-          {meta.title && <h1 className="mt-0! text-2xl font-semibold">{meta.title}</h1>}
-          {meta.date && <p className="muted"><time dateTime={meta.date}>{formatDate(meta.date, { dateStyle: 'long' })}</time></p>}
-          {meta.updated && meta.updated !== meta.date && (
-            <p className="muted text-sm">Updated <time dateTime={meta.updated}>{formatDate(meta.updated, { dateStyle: 'long' })}</time></p>
+        <header className="grid gap-3 pb-6 border-b">
+          <nav aria-label="Breadcrumb" className="text-[12.5px]">
+            <a href="/blog/" className="text-muted hover:text-fg">{t('blog.title')}</a>
+          </nav>
+          {meta.title && <h1 className="m-0 text-[28px] leading-[34px] sm:text-[34px] sm:leading-10 font-semibold tracking-[-0.025em] text-balance">{meta.title}</h1>}
+          {meta.description && <p className="m-0 text-base leading-[26px] text-muted text-pretty">{meta.description}</p>}
+          {(meta.date || tags.length > 0) && (
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 font-mono text-[11.5px] text-muted">
+              {meta.date && (
+                <span>
+                  {date(meta.date)}
+                  {meta.updated && meta.updated !== meta.date && <> · updated {date(meta.updated)}</>}
+                </span>
+              )}
+              {tags.length > 0 && (
+                <span className="flex flex-wrap gap-1.5">{tags.map(tag => <span key={tag} className="chip">{tag}</span>)}</span>
+              )}
+            </div>
           )}
-          <PageSponsor page={{ kind: 'blog', slug }} className="mt-3" />
+          <PageSponsor page={{ kind: 'blog', slug }} className="mt-2" />
         </header>
       )}
-      {post?.status === 'ok' && <div dangerouslySetInnerHTML={{ __html: post.html }} />}
+      {post?.status === 'ok' && (
+        <>
+          <div className="md [&>:first-child]:mt-0" dangerouslySetInnerHTML={{ __html: post.html }} />
+          <PagePromo page={{ kind: 'blog', slug }} slot="inline" />
+          {others.length > 0 && (
+            <footer className="grid gap-1 pt-6 border-t">
+              <h2 className="m-0 text-xs font-normal text-muted">Also on the blog</h2>
+              {others.map(p => (
+                <a key={p.slug} href={`/blog/${p.slug}/`} className="text-base leading-6 font-semibold hover:text-acc">{p.title}</a>
+              ))}
+            </footer>
+          )}
+        </>
+      )}
     </article>
   )
 }

@@ -1,10 +1,10 @@
 ---
-title: MessagePack Decoder — Decode MsgPack to JSON Online
+title: MessagePack Decoder: Decode MsgPack to JSON Online
 description: Decode MessagePack binary to JSON online. See maps, arrays, integers, floats, binary and extension types turned into readable JSON.
 ---
 ## What is MessagePack decoding?
 
-MessagePack packs JSON-shaped data — maps, arrays, strings, numbers, booleans and null — into compact binary instead of text. It shows up in Redis payloads, RPC protocols, game networking, and any inter-service message where JSON's text overhead matters. This tool reads MessagePack bytes and reconstructs the JSON value they represent, so you can inspect a captured payload or debug an encoder without writing decoder code. [msgpack encode](/util/msgpack_encode/) does the reverse.
+MessagePack packs JSON-shaped data (maps, arrays, strings, numbers, booleans and null) into compact binary instead of text. It shows up in Redis payloads, RPC protocols, game networking, and any inter-service message where JSON's text overhead matters. This tool reads MessagePack bytes and reconstructs the JSON value they represent, so you can inspect a captured payload or debug an encoder without writing decoder code. [msgpack encode](/util/msgpack_encode/) does the reverse.
 
 ## How it works
 
@@ -46,7 +46,7 @@ input-encoding: hex
 output: 18446744073709551615
 ```
 
-MessagePack's extension types carry an application-defined type number and a payload. This tool does not interpret any of them — not even the spec's own timestamp type (`-1`) — so they surface as `{ "type": N, "data": "hex" }` rather than being guessed at:
+MessagePack's extension types carry an application-defined type number and a payload. This tool does not interpret any of them, not even the spec's own timestamp type (`-1`), so they surface as `{ "type": N, "data": "hex" }` rather than being guessed at:
 
 ```example
 title: an extension type surfaces as { type, data }
@@ -60,7 +60,7 @@ output: {
 
 ## Reading errors
 
-Truncated input (fewer bytes than a value's header promises), the reserved `0xc1` byte, or a string whose bytes are not valid UTF-8 all produce a specific error rather than returning corrupted or partial data. The tool decodes exactly one top-level value, so bytes left over after it — including a stream of several concatenated values — are reported as trailing data. Empty input decodes to empty output rather than an error.
+Truncated input (fewer bytes than a value's header promises), the reserved `0xc1` byte, or a string whose bytes are not valid UTF-8 all produce a specific error rather than returning corrupted or partial data. The tool decodes exactly one top-level value, so bytes left over after it (including a stream of several concatenated values) are reported as trailing data. Empty input decodes to empty output rather than an error.
 
 ## Common uses
 

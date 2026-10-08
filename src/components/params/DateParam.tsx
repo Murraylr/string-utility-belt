@@ -20,7 +20,7 @@ export default function DateParam({ id, spec, value, onChange, error, describedB
     <input
       id={id}
       type={spec.withTime ? 'datetime-local' : 'date'}
-      className="field"
+      className="field h-[30px] min-w-0"
       value={toInputValue(value, !!spec.withTime)}
       aria-invalid={invalid(error)}
       aria-describedby={describedBy}

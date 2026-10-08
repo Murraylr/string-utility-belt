@@ -56,7 +56,7 @@ async function inject<Args extends unknown[], Result>(
 }
 
 function setBadge(text: string, title: string): void {
-  chrome.action?.setBadgeBackgroundColor?.({ color: '#dc2626' })
+  chrome.action?.setBadgeBackgroundColor?.({ color: '#ba2b28' }) // the design's --danger
   chrome.action?.setBadgeText?.({ text })
   chrome.action?.setTitle?.({ title })
 }

@@ -1,5 +1,5 @@
 ---
-title: Unicode Code Point Inspector — Analyze Characters Online
+title: Unicode Code Point Inspector: Analyze Characters Online
 description: Break text into code points and inspect each one's U+ value, UTF-8/UTF-16 bytes, general category, script, block, and combining or emoji flags.
 ---
 ## What does a code point inspector do?
@@ -8,7 +8,7 @@ Text that looks simple can hide a lot: an accented letter might be one composed 
 
 ## How it works
 
-Give it text, and it walks the string one code point at a time — never splitting a surrogate pair in two — and inspects each one.
+Give it text, and it walks the string one code point at a time (never splitting a surrogate pair in two) and inspects each one.
 
 ```example
 title: letters, an accent and an emoji
@@ -21,11 +21,11 @@ output:
 2  😀    U+1F600     128512  F0 9F 98 80  D83D DE00  So  Other Symbol      Common  Emoticons           emoji
 ```
 
-Note how `😀` needs four UTF-8 bytes and two UTF-16 code units (`D83D DE00`, a surrogate pair) even though it is a single code point and a single row here — this tool always counts and indexes by code point, so an emoji or other astral character is never split across two rows.
+Note how `😀` needs four UTF-8 bytes and two UTF-16 code units (`D83D DE00`, a surrogate pair) even though it is a single code point and a single row here. This tool always counts and indexes by code point, so an emoji or other astral character is never split across two rows.
 
 ### Table or JSON output
 
-The default **table** format lines everything up in columns for quick reading. Switch **format** to `json` for a structured report — the same fields, plus `total` (how many code points the input has) and `shown`/`truncated` for when a limit is applied.
+The default **table** format lines everything up in columns for quick reading. Switch **format** to `json` for a structured report: the same fields, plus `total` (how many code points the input has) and `shown`/`truncated` for when a limit is applied.
 
 ```example
 title: json output for a short string
@@ -132,8 +132,8 @@ output:
 
 ## Options
 
-- **limit** — how many code points to inspect, from the start of the input. Defaults to 200; `0` means no limit (inspect everything). The largest explicit limit is 100,000.
-- **format** — `table` (default, aligned columns for reading) or `json` (structured data for further processing).
+- **limit**: how many code points to inspect, from the start of the input. Defaults to 200; `0` means no limit (inspect everything). The largest explicit limit is 100,000.
+- **format**: `table` (default, aligned columns for reading) or `json` (structured data for further processing).
 
 ## Common uses
 
@@ -144,7 +144,7 @@ output:
 
 ## Tips and pitfalls
 
-- Category and script come from the JavaScript engine's own Unicode data (via regular expression Unicode property escapes), so they reflect the Unicode version your browser or runtime ships. Block names have no such source in JavaScript and come from a built-in range table that does not list every block, so a character from a block missing from it — for example Glagolitic Supplement — is shown with block `Unassigned` even though it is a real, assigned character.
+- Category and script come from the JavaScript engine's own Unicode data (via regular expression Unicode property escapes), so they reflect the Unicode version your browser or runtime ships. Block names have no such source in JavaScript and come from a built-in range table that does not list every block, so a character from a block missing from it (for example Glagolitic Supplement) is shown with block `Unassigned` even though it is a real, assigned character.
 - A combining mark (`isCombining: true`) is shown with a dotted-circle placeholder (`◌`) in table view so it renders visibly instead of attaching to the character before it. That is how you spot an `é` typed as `e` plus U+0301 COMBINING ACUTE ACCENT: it looks identical to precomposed `é` (U+00E9) but shows up here as two rows.
-- Lone (unpaired) surrogates — malformed data, not real characters — are still reported rather than causing an error, categorized as `Cs` (Surrogate), so this tool is safe to run on broken or adversarial input.
+- Lone (unpaired) surrogates (malformed data, not real characters) are still reported rather than causing an error, categorized as `Cs` (Surrogate), so this tool is safe to run on broken or adversarial input.
 - If what you actually want is to strip the invisible or zero-width characters this tool surfaces, rather than just see them, use [remove invisible characters](/util/remove_invisible/).

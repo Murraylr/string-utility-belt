@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { Share2 } from 'lucide-react'
 import { decodeShare } from '@/core/serialize'
 import type { PipelineDoc } from '@/types/utility'
 import { ToolProvider, useTool, handOffInput } from '@/app/ToolContext'
@@ -36,7 +37,7 @@ function OpenInEditorButton() {
     if (typeof input === 'string' && input) handOffInput(input)
     replaceHash('#/')
   }
-  return <button className="btn" onClick={open}>Open in editor</button>
+  return <button type="button" className="btn-inv h-7 px-2.5 text-[12.5px]" onClick={open}>Open in editor</button>
 }
 
 /** A pipeline opened from a share link (`#/p/<payload>`). */
@@ -72,7 +73,7 @@ export default function SharedPipeline({ payload }: { payload: string }) {
   if (decoded.error) {
     return (
       <ToolProvider>
-        <ToolPage banner={<div role="alert" className="card p-4 text-danger">{decoded.error}</div>} />
+        <ToolPage banner={<div role="alert" className="px-3.5 py-2.5 border border-danger-line rounded-lg bg-danger-bg text-[13px] text-danger-ink">{decoded.error}</div>} />
       </ToolProvider>
     )
   }
@@ -80,23 +81,23 @@ export default function SharedPipeline({ payload }: { payload: string }) {
   return (
     <ToolProvider key={payload} untrusted initialSteps={doc.steps} initialName={doc.name} initialInput={doc.input ?? ''}>
       <ToolPage banner={
-        <div className="card p-3 text-sm grid gap-2">
+        <div className="grid gap-1.5 px-3.5 py-2.5 border rounded-lg bg-surface text-[13px]">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>Opened a shared pipeline{doc.name ? `: ${doc.name}` : ''}.</div>
+            <div className="min-w-0"><Share2 size={14} className="inline -mt-0.5 mr-1.5 text-acc" aria-hidden />Opened a shared pipeline{doc.name ? `: ${doc.name}` : ''}.</div>
             <OpenInEditorButton />
           </div>
-          <div role="status" aria-live="polite">
-            {autosaveStatus === 'saved' && <span className="muted">your previous pipeline was saved to your library</span>}
+          <div role="status" aria-live="polite" className="text-[12.5px] text-muted">
+            {autosaveStatus === 'saved' && 'Your previous pipeline was saved to your library.'}
           </div>
           {autosaveStatus === 'failed' && (
-            <div role="alert" className="text-warn">
+            <div role="alert" className="text-[12.5px] text-warn">
               Could not save your previous pipeline to your library (browser storage is full or disabled). It stays
               your working pipeline until you edit this one or open it in the editor.
             </div>
           )}
           {!!decoded.quarantined?.length && (
-            <div role="alert" className="text-warn">
-              This pipeline contains custom code. Those steps are disabled — review the code before enabling them.
+            <div role="alert" className="text-[12.5px] text-warn">
+              This pipeline contains custom code. Those steps are off until you review the code and turn them on.
             </div>
           )}
         </div>

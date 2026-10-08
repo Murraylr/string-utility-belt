@@ -27,7 +27,7 @@ export default function PromoBlock({ id, onFollow, className }: {
       rel={promo.link.external ? 'noopener' : undefined}
       newTab={promo.link.external}
       onFollow={onFollow}
-      className={className ? `hidden sm:flex ${className}` : 'hidden sm:flex'}
+      className={className ? `hidden sm:grid ${className}` : 'hidden sm:grid'}
       data={{ 'data-promo': id }}
     />
   )

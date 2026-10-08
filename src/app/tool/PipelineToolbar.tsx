@@ -1,52 +1,50 @@
-import React, { useMemo } from 'react'
-import { GitFork, Plus, Redo2, Repeat, Undo2 } from 'lucide-react'
-import Select from '@/components/Select'
-import { defaultParams } from '@/core/params'
-import { registry } from '@/app/registry'
-import { utilityOptionGroups } from '@/app/utilityOptions'
+import React from 'react'
+import { Redo2, Undo2 } from 'lucide-react'
+import { countSteps, walkSteps } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
-import { trackUtilityAdd } from '@/app/analytics/analytics'
+import { useSelection } from './steps/selection'
+import { SelectToggle } from './steps/SelectionBar'
 
 export interface PipelineToolbarProps {
-  onTogglePicker: () => void
-  /** Whether the utility picker is showing; exposed as the toggle's `aria-expanded`. */
-  pickerOpen?: boolean
-  /** Feature slots rendered after the built-in controls. */
+  /** Feature slots after the undo/redo group (magic, turn all on/off). */
   children?: React.ReactNode
+  /** Controls after the previews toggle (the engine's 64 KB limit, live/manual, Run). */
+  trailing?: React.ReactNode
 }
 
-export default function PipelineToolbar({ onTogglePicker, pickerOpen, children }: PipelineToolbarProps) {
-  const { dispatch, showPreviews, setShowPreviews, canUndo, canRedo } = useTool()
-  const options = useMemo(() => [{ label: '— select —', value: '' }, ...utilityOptionGroups()], [])
+const ICON = 'size-7 grid place-items-center rounded-[5px] text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent'
+
+/**
+ * The row above the step list: the step count, selection mode for the top-level
+ * pipeline, undo/redo, feature slots, and the previews toggle. Reads the selection
+ * provider `StepsSection` mounts around it and the list.
+ */
+export default function PipelineToolbar({ children, trailing }: PipelineToolbarProps) {
+  const { state, dispatch, showPreviews, setShowPreviews, canUndo, canRedo } = useTool()
+  const sel = useSelection()
+  const total = countSteps(state.steps)
+  let on = 0
+  walkSteps(state.steps, s => { if (s.enabled !== false) on++ })
 
   return (
-    <section className="flex flex-wrap items-center gap-3" aria-label="pipeline toolbar">
-      <button type="button" className="cta" aria-expanded={pickerOpen} onClick={onTogglePicker}>
-        <span className="inline-flex items-center gap-2"><Plus size={16} /> Add utility</span>
+    <div className="flex flex-wrap items-center gap-1 pb-3.5" role="group" aria-label="steps toolbar">
+      <h2 className="m-0 text-[13px] font-semibold">Steps</h2>
+      {total > 0 && <span className="font-mono text-[11px] text-muted px-1.5">{total} · {on} on</span>}
+      <div className="flex-1" />
+      {(total > 0 || sel?.active) && <SelectToggle />}
+      <button type="button" className={ICON} aria-label="Undo" title="Undo (Ctrl+Z)" disabled={!canUndo} onClick={() => dispatch({ type: 'UNDO' })}>
+        <Undo2 size={15} aria-hidden="true" />
       </button>
-      <span className="muted" aria-hidden="true">or quick add</span>
-      <Select value="" aria-label="quick add a utility" onChange={id => {
-        if (!id) return
-        dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)) })
-        trackUtilityAdd(id, 'quick_add')
-      }}
-        options={options as any} className="max-w-sm" />
-      <button type="button" className="btn" onClick={() => dispatch({ type: 'ADD_BRANCH' })} title="fork the pipeline into parallel lanes">
-        <GitFork size={16} /> branch
+      <button type="button" className={ICON} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled={!canRedo} onClick={() => dispatch({ type: 'REDO' })}>
+        <Redo2 size={15} aria-hidden="true" />
       </button>
-      <button type="button" className="btn" onClick={() => dispatch({ type: 'ADD_EACH' })}
-        title="run steps on each line, list item or JSON value on its own">
-        <Repeat size={16} /> each
-      </button>
-      <div className="flex items-center gap-1">
-        <button type="button" className="icon-btn" aria-label="undo" title="undo (Ctrl+Z)" disabled={!canUndo} onClick={() => dispatch({ type: 'UNDO' })}><Undo2 size={16} /></button>
-        <button type="button" className="icon-btn" aria-label="redo" title="redo (Ctrl+Shift+Z)" disabled={!canRedo} onClick={() => dispatch({ type: 'REDO' })}><Redo2 size={16} /></button>
-      </div>
+      <span aria-hidden="true" className="w-px h-4 mx-1 bg-line" />
       {children}
-      <label className="ml-auto text-sm flex items-center gap-2">
+      <label className="btn-ghost cursor-pointer">
         <input type="checkbox" checked={showPreviews} onChange={e => setShowPreviews(e.target.checked)} />
-        show intermediate previews
+        Previews
       </label>
-    </section>
+      {trailing}
+    </div>
   )
 }

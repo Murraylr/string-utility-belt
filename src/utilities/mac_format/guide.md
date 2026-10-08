@@ -1,14 +1,14 @@
 ---
-title: MAC Address Formatter — Colon, Dash and Cisco Style
+title: MAC Address Formatter: Colon, Dash and Cisco Style
 description: Reformat a MAC address as colon, dash, dot, bare or Cisco style, and check its OUI, multicast and locally-administered bits online.
 ---
 ## What is a MAC address?
 
-A MAC (Media Access Control) address identifies a network interface — a NIC, a Wi-Fi radio, a virtual adapter — as 48 bits (EUI-48), or occasionally 64 (EUI-64), usually written as hex digit pairs separated by colons or dashes. Different tools and vendors write the same address differently: `00:1a:2b:3c:4d:5e`, `00-1A-2B-3C-4D-5E`, or Cisco's `001a.2b3c.4d5e`. This tool reformats between those styles and can break an address down into its OUI, its administrative bits, and whether it's a broadcast address.
+A MAC (Media Access Control) address identifies a network interface (a NIC, a Wi-Fi radio, a virtual adapter) as 48 bits (EUI-48), or occasionally 64 (EUI-64), usually written as hex digit pairs separated by colons or dashes. Different tools and vendors write the same address differently: `00:1a:2b:3c:4d:5e`, `00-1A-2B-3C-4D-5E`, or Cisco's `001a.2b3c.4d5e`. This tool reformats between those styles and can break an address down into its OUI, its administrative bits, and whether it's a broadcast address.
 
 ## How it works
 
-Paste a MAC address in any common separator style — colon, dash, dot, space, underscore, a bare run of hex digits, or `0x`-prefixed — and pick the output `style`:
+Paste a MAC address in any common separator style (colon, dash, dot, space, underscore, a bare run of hex digits, or `0x`-prefixed) and pick the output `style`:
 
 ```example
 title: reformat as dash-separated, upper case
@@ -88,21 +88,21 @@ output:
 
 ## Options
 
-- **style** — `colon` (default), `dash`, `dot`, `bare` (no separator), or `cisco` (four hex digits per group, dot-separated).
-- **case** — `lower` (default) or `upper`.
-- **per line** — on by default, formatting each line independently.
-- **validate** — on by default; an unparsable line throws a clear error. Turn it off to pass invalid lines through unchanged instead.
-- **show details** — returns the OUI/bit breakdown object described above instead of a reformatted string. Multiple input lines become an array of these objects.
+- **style**: `colon` (default), `dash`, `dot`, `bare` (no separator), or `cisco` (four hex digits per group, dot-separated).
+- **case**: `lower` (default) or `upper`.
+- **per line**: on by default, formatting each line independently.
+- **validate**: on by default; an unparsable line throws a clear error. Turn it off to pass invalid lines through unchanged instead.
+- **show details**: returns the OUI/bit breakdown object described above instead of a reformatted string. Multiple input lines become an array of these objects.
 
 ## Common uses
 
 - Normalizing MAC addresses from different log sources (some colon-separated, some Cisco-style) into one consistent format.
-- Checking whether an address is locally administered — a strong signal it's a virtual NIC, container interface, or a privacy-randomized address rather than genuine factory hardware.
-- Pulling out a device's OUI (the first three bytes) to look up its manufacturer in the IEEE registry — meaningful only when the locally-administered bit is 0.
+- Checking whether an address is locally administered. That is a strong signal it's a virtual NIC, container interface, or a privacy-randomized address rather than genuine factory hardware.
+- Pulling out a device's OUI (the first three bytes) to look up its manufacturer in the IEEE registry. This is meaningful only when the locally-administered bit is 0.
 - Validating a batch of MAC addresses and flagging the malformed ones.
 
 ## Tips and pitfalls
 
 - An address must be exactly 12 hex digits (EUI-48) or 16 (EUI-64) once separators are stripped; anything else throws when `validate` is on, naming the offending line.
-- `33:33:` is the prefix IPv6 uses for multicast addresses mapped onto Ethernet — such an address has both the multicast and locally-administered bits set, which is expected, not a sign of a malformed address.
+- `33:33:` is the prefix IPv6 uses for multicast addresses mapped onto Ethernet. Such an address has both the multicast and locally-administered bits set, which is expected, not a sign of a malformed address.
 - With `validate` off, a line that isn't a recognizable MAC address passes through unchanged (or, in `info` mode, comes back as `{ valid: false }`) instead of stopping the whole batch.

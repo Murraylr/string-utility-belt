@@ -1,5 +1,5 @@
 ---
-title: Vigenère Cipher Decoder Online — Keyword Cipher
+title: Vigenère Cipher Decoder Online: Keyword Cipher
 description: Decrypt Vigenère ciphertext back to plaintext with the keyword it was encrypted under, matching the original options.
 ---
 ## What does this tool decrypt?
@@ -45,9 +45,9 @@ output:
 
 ## Options
 
-- **key** — must be the same keyword used to encrypt, case-insensitively (`LEMON` and `lemon` decrypt identically). Only its `a`–`z` letters count; other characters in the key are ignored. A key with no letters is rejected.
-- **preserve case** — on (default), each decrypted letter keeps the case it has in the ciphertext. Off uppercases every decrypted letter. It only affects letter case, never which letters come out, so it does not need to match the encoder's setting.
-- **skip non-letters** — must match the encoder's setting exactly. On (default), spaces and punctuation don't consume a key position; off means they did, and decoding must walk the key the same way to stay aligned.
+- **key**: must be the same keyword used to encrypt, case-insensitively (`LEMON` and `lemon` decrypt identically). Only its `a`–`z` letters count; other characters in the key are ignored. A key with no letters is rejected.
+- **preserve case**: on (default), each decrypted letter keeps the case it has in the ciphertext. Off uppercases every decrypted letter. It only affects letter case, never which letters come out, so it does not need to match the encoder's setting.
+- **skip non-letters**: must match the encoder's setting exactly. On (default), spaces and punctuation don't consume a key position; off means they did, and decoding must walk the key the same way to stay aligned.
 
 ## Common uses
 
@@ -57,6 +57,6 @@ output:
 
 ## Tips and pitfalls
 
-- A wrong key doesn't produce an error — it produces different, unreadable gibberish, since any key with at least one letter is accepted. There's no built-in way to tell "wrong key" apart from "correctly decrypted nonsense" other than reading the result.
-- If `skipNonLetters` doesn't match what was used to encrypt, decoding still runs but the key falls out of alignment at the first space, digit, or punctuation mark, garbling the letters after it — this is not a setting you can guess independently of the ciphertext's origin. (`preserveCase` only changes the output's letter case.)
+- A wrong key doesn't produce an error. It produces different, unreadable gibberish, since any key with at least one letter is accepted. There's no built-in way to tell "wrong key" apart from "correctly decrypted nonsense" other than reading the result.
+- If `skipNonLetters` doesn't match what was used to encrypt, decoding still runs but the key falls out of alignment at the first space, digit, or punctuation mark, garbling the letters after it. This is not a setting you can guess independently of the ciphertext's origin. (`preserveCase` only changes the output's letter case.)
 - Like the encoder, this only shifts ASCII letters `a`–`z`/`A`–`Z`; accented letters and other scripts pass through unchanged. They never use a key letter themselves, but with skip non-letters off they still advance the key position like any other non-letter.

@@ -1,5 +1,5 @@
 ---
-title: Random Case Generator — Randomize Text Capitalization
+title: Random Case Generator: Randomize Text Capitalization
 description: Randomly capitalize letters online at any probability, from a light sprinkle of caps to full chaos. Use a seed for reproducible, shareable output.
 ---
 ## What is random case?
@@ -35,7 +35,7 @@ output: hello world
 
 ### Reproducible output with a seed
 
-Leaving **seed** at `0` (the default) seeds the generator from the platform's cryptographic random source on every run, so the result will almost always differ, even for identical input and probability. Setting a non-zero seed switches to a deterministic pseudo-random sequence, so the same input, probability, and seed always produce the exact same output — useful for sharing a specific "random" result or writing a repeatable example:
+Leaving **seed** at `0` (the default) seeds the generator from the platform's cryptographic random source on every run, so the result will almost always differ, even for identical input and probability. Setting a non-zero seed switches to a deterministic pseudo-random sequence, so the same input, probability, and seed always produce the exact same output. That is useful for sharing a specific "random" result or writing a repeatable example:
 
 ```example
 title: a non-zero seed is fully reproducible
@@ -54,8 +54,8 @@ output:
 
 ## Options
 
-- **uppercase probability** (`probability`, default `0.5`, range 0–1) — the chance, per letter, that it becomes uppercase. `0.5` is an even coin flip; values closer to `0` or `1` skew the result toward mostly-lowercase or mostly-uppercase.
-- **seed** (`seed`, default `0`) — `0` means unpredictable, freshly randomized output on every run. Any other whole number reproduces the exact same letter-by-letter result for the same input and probability (a fractional seed is truncated first, so `1.7` behaves like `1`).
+- **uppercase probability** (`probability`, default `0.5`, range 0–1): the chance, per letter, that it becomes uppercase. `0.5` is an even coin flip; values closer to `0` or `1` skew the result toward mostly-lowercase or mostly-uppercase.
+- **seed** (`seed`, default `0`): `0` means unpredictable, freshly randomized output on every run. Any other whole number reproduces the exact same letter-by-letter result for the same input and probability (a fractional seed is truncated first, so `1.7` behaves like `1`).
 
 ## Common uses
 
@@ -65,7 +65,7 @@ output:
 
 ## Tips and pitfalls
 
-- Because the choice is made independently per letter, the same letter can appear both upper and lower case in different places in the same output — this is not alternating case, and runs of the same case do happen by chance.
+- Because the choice is made independently per letter, the same letter can appear both upper and lower case in different places in the same output. This is not alternating case, and runs of the same case do happen by chance.
 - A cleared or blank probability field falls back to the default of `0.5` rather than being treated as `0`.
 - For a strict letter-by-letter alternation instead of randomness, use [alternating case](/util/alternating_case/); to invert every letter's existing case exactly once, use [swap case](/util/swap_case/).
 - The random draw only ever touches letters (as recognized by Unicode, not just ASCII), so accented letters and cased scripts such as Greek and Cyrillic are randomized too, while numbers and symbols are always left alone. Letters from caseless scripts such as Chinese still consume a draw but come out unchanged.

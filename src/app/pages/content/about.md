@@ -5,11 +5,11 @@ description: String Utility Belt is a free collection of text and string tools t
 
 # About String Utility Belt
 
-String Utility Belt is a free collection of online text and string tools — Base64 and URL encoding, hashes and checksums, JSON, YAML, CSV and XML conversion, case changes, line sorting, regular expressions, generators and much more. You can use each tool on its own page, or chain several into a pipeline and watch every step's output update as you type.
+String Utility Belt is a free collection of online text and string tools: Base64 and URL encoding, hashes and checksums, JSON, YAML, CSV and XML conversion, case changes, line sorting, regular expressions, generators and much more. You can use each tool on its own page, or chain several into a pipeline and watch every step's output update as you type.
 
 ## Why it exists
 
-Most online converters do one thing per page, and many send your text to a server to do it. Real tasks usually take several steps — decode a JWT, pretty-print the JSON inside it, pull out one field — and the text is often something you would rather not upload. String Utility Belt was built around three ideas:
+Most online converters do one thing per page, and many send your text to a server to do it. Real tasks usually take several steps (decode a JWT, pretty-print the JSON inside it, pull out one field), and the text is often something you would rather not upload. String Utility Belt was built around three ideas:
 
 - **Your data stays with you.** Every transformation runs in your browser, on your device. Your input is never uploaded to be processed; the [privacy policy](/privacy/) lists the two optional features that do contact our server.
 - **Steps chain together.** Build a pipeline from any number of steps, see a preview after each one, reorder or disable steps, and share the whole pipeline as a link.
@@ -32,11 +32,11 @@ The same utilities run in your editor, your terminal and your AI assistant: a [V
 
 ## Accurate by design
 
-Every worked example on this site — on each utility's page and in its guide — is run automatically as a test against the real code, so the output you see is what the tool actually produces.
+Every worked example on this site, on each utility's page and in its guide, is run automatically as a test against the real code, so the output you see is what the tool actually produces.
 
 ## How the site is funded
 
-String Utility Belt is free to use and has no paid tier. It accepts sponsorship on its own terms: a sponsor's message is clearly labelled and sits beside a page's content: never inside the tool, never in the extensions, the command-line tool or the MCP server, and never with a tracking script. Sponsors never see what you type, and never change how the tools work or what they do with your data. See [advertising](/advertise/) to sponsor the site.
+String Utility Belt is free to use and has no paid tier. It accepts sponsorship on its own terms: a sponsor's message is clearly labelled and sits beside a page's content. It never appears inside the tool, the extensions, the command-line tool or the MCP server, and it never comes with a tracking script. Sponsors never see what you type, and never change how the tools work or what they do with your data. See [advertising](/advertise/) to sponsor the site.
 
 ## Get in touch
 

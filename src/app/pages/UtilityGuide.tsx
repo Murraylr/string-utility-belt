@@ -22,18 +22,18 @@ export default function UtilityGuide({ name, state, onOpen }: { name: string; st
   }
 
   return (
-    <details className="card group" aria-busy={state.status === 'loading' ? true : undefined}
+    <details className="group border rounded-[10px] bg-surface min-w-0" aria-busy={state.status === 'loading' ? true : undefined}
       onToggle={e => { if (e.currentTarget.open) onOpen?.() }}>
-      <summary className="p-6 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden rounded-2xl focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary-500">
+      <summary className="px-4 py-3.5 flex items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden rounded-[10px] hover:bg-surface-2 group-open:rounded-b-none group-open:border-b focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-acc">
         <span className="grid gap-0.5 flex-1 min-w-0">
-          <h2 className="text-lg font-medium">{guideHeading(name)}</h2>
-          <span className="muted">Detailed guide with worked examples</span>
+          <h2 className="text-[15px] leading-[22px] font-semibold">{guideHeading(name)}</h2>
+          <span className="text-[12.5px] text-muted">Detailed guide with worked examples</span>
         </span>
-        <ChevronDown aria-hidden className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" />
+        <ChevronDown aria-hidden size={16} className="shrink-0 text-muted transition-transform group-open:rotate-180" />
       </summary>
-      <div className="px-6 pb-6 min-w-0">
+      <div className="px-4 sm:px-6 pt-5 pb-6 min-w-0">
         {state.status === 'loading'
-          ? <p className="muted" role="status">Loading guide…</p>
+          ? <p className="text-muted" role="status">Loading guide…</p>
           // trusted: parseGuide/renderGuideHtml escape every character of the source
           : <div className="md guide" onClick={onClick} dangerouslySetInnerHTML={{ __html: state.html }} />}
       </div>

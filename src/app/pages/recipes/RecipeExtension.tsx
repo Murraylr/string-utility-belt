@@ -21,10 +21,10 @@ const HEADING = 'Use this recipe on any web page'
 /** The strip's layout in both states: the pitch on the left, the action and its status on the right. */
 function Strip({ text, children }: { text: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-      <div className="grid gap-0.5 text-sm max-w-xl">
-        <p className="font-medium">{HEADING}</p>
-        <p className="text-muted">{text}</p>
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t">
+      <div className="grid gap-0.5 max-w-xl">
+        <p className="m-0 text-[13.5px] font-semibold">{HEADING}</p>
+        <p className="m-0 text-[12.5px] text-muted text-pretty">{text}</p>
       </div>
       {/* capped, so a status message wraps under the action instead of pushing it below the pitch */}
       <div className="grid gap-1 justify-items-start sm:justify-items-end sm:text-right sm:max-w-xs">{children}</div>
@@ -53,7 +53,7 @@ function SaveRecipe({ steps, name, recipeId, stepTypes }: Props & { stepTypes: r
         <Puzzle size={16} aria-hidden /> Save to extension
       </button>
       {/* always mounted: text injected together with a brand-new live region is not reliably announced */}
-      <p role="status" className={`text-xs ${outdated || (result && !result.ok) ? 'text-warn' : 'text-muted'}`}>
+      <p role="status" className={`m-0 text-xs ${outdated || (result && !result.ok) ? 'text-warn' : 'text-muted'}`}>
         {outdated
           ? 'This recipe needs a newer version of the extension. Update it, then reload this page.'
           : busy ? 'Saving…' : result ? (result.ok ? result.message : result.error) : ''}
@@ -79,7 +79,7 @@ function GetExtension({ recipeId }: { recipeId: string }) {
         <span className="sr-only"> (opens the Chrome Web Store in a new tab)</span>
       </a>
       {/* the page can only reach an extension installed before it loaded */}
-      <p role="status" className="text-xs text-muted">
+      <p role="status" className="m-0 text-xs text-muted">
         {followed ? 'Installed it? Reload this page to save this recipe to it.' : ''}
       </p>
     </Strip>

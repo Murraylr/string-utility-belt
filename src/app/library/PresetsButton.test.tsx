@@ -10,7 +10,7 @@ describe('PresetsButton', () => {
   it('opens the dialog on click, and Escape closes it and returns focus to the button', async () => {
     const user = userEvent.setup()
     renderButton()
-    const button = screen.getByRole('button', { name: 'presets' })
+    const button = screen.getByRole('button', { name: 'Presets' })
     expect(button).toHaveAttribute('aria-haspopup', 'dialog')
     expect(screen.queryByRole('dialog')).toBeNull()
 
@@ -35,6 +35,6 @@ describe('PresetsButton', () => {
     await screen.findByRole('dialog', { name: 'Preset gallery' })
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'presets' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Presets' }))
   })
 })

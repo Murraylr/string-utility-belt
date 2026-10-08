@@ -1,15 +1,15 @@
 ---
-title: Readability Score Calculator — Flesch, Fog, SMOG Online
+title: Readability Score Calculator: Flesch, Fog, SMOG Online
 description: Score English text with Flesch Reading Ease, Flesch-Kincaid, Gunning Fog, SMOG, Coleman-Liau, and ARI, as JSON or a plain-text report.
 ---
 ## What are readability formulas?
 
 Readability formulas estimate how hard a piece of writing is to read, usually expressed as a school grade
-level. Most date from the 1940s to the 1970s — Flesch–Kincaid, for example, was calibrated for US Navy
-training manuals — and they all work the same basic way: count words, sentences, and syllables (or
-letters), and plug the counts into a formula. This tool runs the text through six of the best-known formulas at once —
+level. Most date from the 1940s to the 1970s (Flesch–Kincaid, for example, was calibrated for US Navy
+training manuals), and they all work the same basic way: count words, sentences, and syllables (or
+letters), and plug the counts into a formula. This tool runs the text through six of the best-known formulas at once:
 [Flesch Reading Ease](https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests),
-Flesch-Kincaid Grade Level, Gunning Fog, SMOG, Coleman-Liau, and the Automated Readability Index — and
+Flesch-Kincaid Grade Level, Gunning Fog, SMOG, Coleman-Liau, and the Automated Readability Index. It then
 averages the five grade-level formulas into one overall estimate.
 
 ## How it works
@@ -64,7 +64,7 @@ With W words, S sentences, Y syllables and L letters (letters and digits), the f
 | Coleman–Liau | 0.0588 × (100 × L/W) − 0.296 × (100 × S/W) − 15.8 |
 | Automated Readability Index | 4.71 × L/W + 0.5 × W/S − 21.43 |
 
-A denser paragraph with longer words and sentences scores harder on most formulas — SMOG only moves once
+A denser paragraph with longer words and sentences scores harder on most formulas. SMOG only moves once
 words of three or more syllables appear, so it stays put here:
 
 ```example
@@ -98,7 +98,7 @@ output:
 3-or-more-syllable count) can differ, because the Fog count skips a word whose `-es`, `-ed` or `-ing`
 ending is what pushes it to three syllables: "beginning" counts for SMOG but not for Fog, while
 "developing" counts for both. (Gunning's other exclusions, such as proper nouns and compound words, are
-not applied.) Long Latinate vocabulary pushes every grade score up sharply — here both counts are 10 out
+not applied.) Long Latinate vocabulary pushes every grade score up sharply: here both counts are 10 out
 of 13 words:
 
 ```example
@@ -154,7 +154,7 @@ avg syllables / word:       1
 
 ## Options
 
-- **output format** — `json` (default, the full report shown above) or `text` (the same figures as a short
+- **output format**: `json` (default, the full report shown above) or `text` (the same figures as a short
   readable report).
 
 ## Common uses
@@ -176,7 +176,7 @@ avg syllables / word:       1
   listed one such as `etc.` never ends a sentence, even when it really does.
 - SMOG was designed for samples of 30 sentences; on shorter text the tool scales the polysyllable count
   up to 30 sentences, so SMOG (like every formula here) is shaky on a sentence or two.
-- These formulas measure surface complexity — word and sentence length, syllable count — not whether the
+- These formulas measure surface complexity (word and sentence length, syllable count), not whether the
   content itself is clear or well-organized. A short, jargon-free sentence can still be confusing, and
   these scores won't catch that.
 - For a plain word, sentence, and character count without the grade-level scoring, see

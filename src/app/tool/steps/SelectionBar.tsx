@@ -1,8 +1,10 @@
 /**
  * The "Select" toggle and bulk-action bar for one sequence (§8.13). Reads/writes
- * the nearest `<SelectionProvider>` (see SelectionContext.tsx). Macro names are
- * asked for inline (not `window.prompt`, which blocks the page and is suppressed
- * in sandboxed frames), and outcomes are announced through a polite live region.
+ * the nearest `<SelectionProvider>` (see SelectionContext.tsx). The top-level
+ * pipeline's toggle sits in the steps toolbar (`SelectToggle`); a nested sequence
+ * shows its own above its steps. Macro names are asked for inline (not
+ * `window.prompt`, which blocks the page and is suppressed in sandboxed frames),
+ * and outcomes are announced through a polite live region.
  */
 import React, { useEffect, useRef, useState } from 'react'
 import { useTool } from '@/app/ToolContext'
@@ -16,11 +18,29 @@ export interface SelectionBarProps {
   order: string[]
   parentId?: string
   lane?: number
-  /** Names a nested sequence ("lane 2", "macro") in the toggle's accessible name. */
+  /** Names a nested sequence ("lane 2", "macro"); a nested sequence shows its own toggle. */
   scopeLabel?: string
 }
 
 type Naming = 'group' | 'save' | null
+
+const ACTION = 'btn h-[26px] px-[9px] text-[12.5px] font-normal'
+
+/** Turns selection mode on and off for the nearest sequence. */
+export function SelectToggle({ scopeLabel }: { scopeLabel?: string }) {
+  const sel = useSelection()
+  if (!sel) return null
+  const { active, setActive, setToggleButton } = sel
+  const text = active ? 'Done selecting' : 'Select'
+  return (
+    <button ref={setToggleButton} type="button" aria-pressed={active}
+      className="btn-ghost aria-pressed:bg-surface-2 aria-pressed:text-fg"
+      aria-label={scopeLabel ? `${text.toLowerCase()} steps in ${scopeLabel}` : undefined}
+      onClick={() => setActive(!active)}>
+      {text}
+    </button>
+  )
+}
 
 export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
   const sel = useSelection()
@@ -28,7 +48,6 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
   const [naming, setNaming] = useState<Naming>(null)
   const [name, setName] = useState('macro')
   const [status, setStatus] = useState('')
-  const toggleRef = useRef<HTMLButtonElement>(null)
   const groupRef = useRef<HTMLButtonElement>(null)
   const saveRef = useRef<HTMLButtonElement>(null)
   const statusTimer = useRef<ReturnType<typeof setTimeout>>()
@@ -57,7 +76,7 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
       dispatch({ type: 'WRAP', ids: orderedSelected, as: 'macro', name: trimmed })
       sel.clear()
       announce(`grouped ${orderedSelected.length} steps into "${trimmed}"`)
-      stopNaming(toggleRef.current)
+      stopNaming(sel.toggleButton)
     } else {
       const steps = orderedSelected
         .map(id => findStep(state.steps, id))
@@ -67,7 +86,7 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
         saveEntry({ kind: 'macro', name: trimmed, steps })
         announce(`saved "${trimmed}" to library`)
       } catch {
-        announce(`could not save "${trimmed}" — browser storage is full or unavailable`)
+        announce(`Could not save "${trimmed}". Browser storage is full or unavailable.`)
       }
       stopNaming(saveRef.current)
     }
@@ -77,74 +96,77 @@ export default function SelectionBar({ order, scopeLabel }: SelectionBarProps) {
     dispatch({ type: 'WRAP', ids: orderedSelected, as: 'each' })
     sel.clear()
     announce(`${orderedSelected.length === 1 ? 'the step now runs' : `${orderedSelected.length} steps now run`} on each line`)
-    toggleRef.current?.focus()
+    sel.toggleButton?.focus()
   }
   const putInBranch = () => {
     dispatch({ type: 'WRAP', ids: orderedSelected, as: 'branch' })
     sel.clear()
     announce(`put ${orderedSelected.length} ${orderedSelected.length === 1 ? 'step' : 'steps'} in a branch`)
     // the pressed button is disabled once the selection clears: keep keyboard focus in the bar
-    toggleRef.current?.focus()
+    sel.toggleButton?.focus()
   }
   const deleteSelected = () => {
     // one REMOVE_STEP per id: there is no batched removal action, so undo is per step
     for (const id of orderedSelected) dispatch({ type: 'REMOVE_STEP', id })
     sel.clear()
     announce(`deleted ${orderedSelected.length} ${orderedSelected.length === 1 ? 'step' : 'steps'}`)
-    toggleRef.current?.focus()
+    sel.toggleButton?.focus()
   }
 
-  const toggleText = sel.active ? 'done selecting' : 'select'
+  // leaving selection mode drops a half-typed name: the form belongs to the bar
+  if (!sel.active && naming) setNaming(null)
+  const nameTarget = () => (naming === 'group' ? groupRef.current : saveRef.current)
+  const n = orderedSelected.length
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button ref={toggleRef} type="button" className="btn" aria-pressed={sel.active}
-        aria-label={scopeLabel ? `${toggleText} steps in ${scopeLabel}` : undefined}
-        onClick={() => { setNaming(null); sel.setActive(!sel.active) }}>
-        {toggleText}
-      </button>
-      {sel.active && (
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="selection actions">
-          <span className="text-sm muted">{orderedSelected.length} selected</span>
-          {hasSelection && !isContiguous && (
-            <span className="text-xs text-warn">selection must be contiguous (no gaps) to group or wrap</span>
-          )}
-          <button ref={groupRef} type="button" className="btn" disabled={!hasSelection || !isContiguous}
-            aria-expanded={naming === 'group'} onClick={() => startNaming('group')}>
-            Group into macro…
-          </button>
-          <button type="button" className="btn" disabled={!hasSelection || !isContiguous} onClick={putInBranch}>
-            Put in a branch
-          </button>
-          <button type="button" className="btn" disabled={!hasSelection || !isContiguous} onClick={runOnEach}
-            title="run the selected steps on every line on its own (switch to list items or JSON values on the new step)">
-            Run on each line
-          </button>
-          <button ref={saveRef} type="button" className="btn" disabled={!hasSelection}
-            aria-expanded={naming === 'save'} onClick={() => startNaming('save')}>
-            Save as macro…
-          </button>
-          <button type="button" className="btn text-danger" disabled={!hasSelection} onClick={deleteSelected}>
-            Delete selected
-          </button>
+    <>
+      {scopeLabel && (
+        <div className="flex items-center">
+          <SelectToggle scopeLabel={scopeLabel} />
         </div>
       )}
-      {sel.active && naming && (
-        <form className="flex flex-wrap items-center gap-2" onSubmit={e => { e.preventDefault(); submitName() }}>
-          <input autoFocus className="field" aria-label="name for the new macro" value={name} maxLength={120}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Escape') { e.preventDefault(); stopNaming(naming === 'group' ? groupRef.current : saveRef.current) }
-            }} />
-          <button type="submit" className="btn" disabled={!name.trim()}>{naming === 'group' ? 'Group' : 'Save'}</button>
-          <button type="button" className="btn"
-            onClick={() => stopNaming(naming === 'group' ? groupRef.current : saveRef.current)}>
-            Cancel
+      {sel.active && (
+        <div role="group" aria-label="selection actions"
+          className="flex flex-wrap items-center gap-1.5 px-2.5 py-2 border rounded-lg bg-surface-2">
+          <span className="text-[12.5px] font-medium pr-1">{n} selected</span>
+          <button ref={groupRef} type="button" className={ACTION} disabled={!hasSelection || !isContiguous}
+            aria-expanded={naming === 'group'} onClick={() => startNaming('group')}>
+            Group into macro
           </button>
-        </form>
+          <button type="button" className={ACTION} disabled={!hasSelection || !isContiguous} onClick={putInBranch}>
+            Put in a branch
+          </button>
+          <button type="button" className={ACTION} disabled={!hasSelection || !isContiguous} onClick={runOnEach}
+            title="Run the selected steps on every line on its own. You can switch to list items or JSON values afterwards.">
+            Run on each line
+          </button>
+          <button ref={saveRef} type="button" className={ACTION} disabled={!hasSelection}
+            aria-expanded={naming === 'save'} onClick={() => startNaming('save')}>
+            Save as macro
+          </button>
+          <button type="button" className={`${ACTION} text-danger hover:text-danger`} disabled={!hasSelection} onClick={deleteSelected}>
+            Delete
+          </button>
+          {hasSelection && !isContiguous && (
+            <span className="text-xs text-warn">Pick steps next to each other to group or wrap them.</span>
+          )}
+          {naming && (
+            <form className="flex flex-wrap gap-1.5 basis-full" onSubmit={e => { e.preventDefault(); submitName() }}>
+              <input autoFocus className="field h-7 flex-1 min-w-0 max-w-[280px]" aria-label="name for the new macro" value={name} maxLength={120}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape') { e.preventDefault(); stopNaming(nameTarget()) }
+                }} />
+              <button type="submit" className="btn-inv h-7 px-2.5 text-[12.5px]" disabled={!name.trim()}>{naming === 'group' ? 'Group' : 'Save'}</button>
+              <button type="button" className="btn-ghost h-7 px-2.5" onClick={() => stopNaming(nameTarget())}>
+                Cancel
+              </button>
+            </form>
+          )}
+        </div>
       )}
       {/* always rendered (never display:none) so screen readers track it before the first message */}
-      <span role="status" aria-live="polite" className="text-xs muted">{status}</span>
-    </div>
+      <span role="status" aria-live="polite" className="text-xs text-muted empty:sr-only">{status}</span>
+    </>
   )
 }

@@ -1,14 +1,14 @@
 ---
-title: Roman Numeral Converter — Number to MCMXCIV and Back
+title: Roman Numeral Converter: Number to MCMXCIV and Back
 description: Convert whole numbers from 1 to 3999 to Roman numerals online, or strictly parse Roman numerals back to numbers, one value per line.
 ---
 ## What are Roman numerals?
 
-Roman numerals represent numbers with combinations of seven letters — I (1), V (5), X (10), L (50), C
-(100), D (500), M (1000) — added together, with a subtractive shortcut for the 4s and 9s of each
+Roman numerals write numbers with combinations of seven letters: I (1), V (5), X (10), L (50), C
+(100), D (500) and M (1000). The letters are added together, with a subtractive shortcut for the 4s and 9s of each
 decimal place: IV (4) instead of IIII, IX (9), XL (40), XC (90), CD (400), and CM (900). This tool
-converts in both directions and only produces or accepts that standard subtractive form — the one
-used for movie copyright years, Super Bowl numbers, and regnal names — never looser variants. (Many
+converts in both directions and only produces or accepts that standard subtractive form, the one
+used for movie copyright years, Super Bowl numbers, and regnal names. Looser variants are rejected. (Many
 clock faces write 4 as IIII, which this parser rejects.)
 
 ## How it works
@@ -62,8 +62,8 @@ III
 
 ## Options
 
-- **direction** — `to-roman` (default) or `to-arabic`.
-- **per line** — on by default; converts each line separately, preserving blank lines and surrounding
+- **direction**: `to-roman` (default) or `to-arabic`.
+- **per line**: on by default; converts each line separately, preserving blank lines and surrounding
   whitespace around each value.
 
 ## Common uses
@@ -76,11 +76,11 @@ III
 
 ## Tips and pitfalls
 
-Roman numerals only cover 1 through 3999 here — there is no standard, universally recognized notation
+Roman numerals only cover 1 through 3999 here. There is no standard, universally recognized notation
 for zero or for numbers of 4000 and above (historical extensions exist but are not standardized), so
 values outside that range raise a clear "roman numerals cover 1-3999" error instead of guessing at an
 extension. Parsing rejects any numeral that is not in canonical subtractive form, which catches common
-mistakes like writing `IIII` for 4 or `IC` for 99 (the correct forms are `IV` and `XCIX`) — if a numeral
+mistakes like writing `IIII` for 4 or `IC` for 99 (the correct forms are `IV` and `XCIX`). If a numeral
 you expected to work is rejected, it is very likely not in the standard form. For converting a
 positional number base like binary or hex instead, see
 [number base convert](/util/number_base_convert/); for spelling numbers out in English words, see

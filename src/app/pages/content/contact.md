@@ -17,7 +17,7 @@ Describe the transformation you need, ideally with a short example input and the
 
 ## Privacy questions
 
-For anything about how the site handles data, see the [privacy policy](/privacy/) first — then email us if your question is not answered there.
+For anything about how the site handles data, read the [privacy policy](/privacy/) first. If it doesn't answer your question, email us.
 
 ## Advertising and partnerships
 

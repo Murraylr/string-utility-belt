@@ -1,5 +1,5 @@
 ---
-title: Grep Lines Online — Search Text by Pattern
+title: Grep Lines Online: Search Text by Pattern
 description: Filter text online to just the lines matching a substring or regex, with invert, whole word, context lines and line numbers, like grep.
 ---
 ## What does this grep tool do?
@@ -20,7 +20,7 @@ date
 output: banana
 ```
 
-Turning on **regular expression** lets the pattern use JavaScript regex syntax — not POSIX or PCRE, and compiled without the `u` flag, so `\p{…}` Unicode property escapes are not available. Each line is tested on its own, so `^` and `$` anchor to the line. In the example below, **line numbers** also prefixes each kept line with its 1-based position, using a colon for an actual match:
+Turning on **regular expression** lets the pattern use JavaScript regex syntax (not POSIX or PCRE), and compiled without the `u` flag, so `\p{…}` Unicode property escapes are not available. Each line is tested on its own, so `^` and `$` anchor to the line. In the example below, **line numbers** also prefixes each kept line with its 1-based position, using a colon for an actual match:
 
 ```example
 title: match a regex and show line numbers
@@ -81,17 +81,17 @@ cat
 the cat sat
 ```
 
-A blank **pattern** matches every line, the same as `grep ''` does — handy as a starting point before you fill in a real pattern.
+A blank **pattern** matches every line, the same as `grep ''` does. It is handy as a starting point before you fill in a real pattern.
 
 ## Options
 
-- **pattern (blank = match every line)** — the substring or regular expression to search for.
-- **regular expression** — treat **pattern** as a JavaScript regex instead of a literal substring. Default off.
-- **invert match** — keep the lines that do *not* match instead of the ones that do. Default off.
-- **ignore case** — case-insensitive matching. Default off.
-- **whole word** — require the match to sit on a word boundary rather than inside a larger run of word characters, where word characters are Unicode letters, digits and `_` (so `café` is not found inside `cafés`). Default off.
-- **context lines** — how many lines of surrounding context to include around each match, from 0 to 1000. Default `0`.
-- **line numbers** — prefix each kept line with its original 1-based line number, using `:` for a matched line and `-` for a context-only line.
+- **pattern (blank = match every line)**: the substring or regular expression to search for.
+- **regular expression**: treat **pattern** as a JavaScript regex instead of a literal substring. Default off.
+- **invert match**: keep the lines that do *not* match instead of the ones that do. Default off.
+- **ignore case**: case-insensitive matching. Default off.
+- **whole word**: require the match to sit on a word boundary rather than inside a larger run of word characters, where word characters are Unicode letters, digits and `_` (so `café` is not found inside `cafés`). Default off.
+- **context lines**: how many lines of surrounding context to include around each match, from 0 to 1000. Default `0`.
+- **line numbers**: prefix each kept line with its original 1-based line number, using `:` for a matched line and `-` for a context-only line.
 
 ## Common uses
 
@@ -102,7 +102,7 @@ A blank **pattern** matches every line, the same as `grep ''` does — handy as 
 
 ## Tips and pitfalls
 
-- Context lines are gathered around the lines that survive **invert match**, not around the original matches — inverting first and then adding context shows you what surrounds the *kept* lines.
+- Context lines are gathered around the lines that survive **invert match**, not around the original matches. Inverting first and then adding context shows you what surrounds the *kept* lines.
 - Each line keeps its own original line ending (LF or CRLF), so a file with mixed endings is not silently normalized to one style; the output only ends in a newline if the input did.
 - An invalid regular expression (unbalanced brackets, for example) throws an error rather than matching nothing.
 - To also rewrite the matched text instead of just keeping or dropping whole lines, use [find and replace](/util/replace/) or [sed script](/util/sed/).

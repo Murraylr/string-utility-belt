@@ -1,10 +1,10 @@
 ---
-title: Cron Expression Describer — Explain Cron Schedules
+title: Cron Expression Describer: Explain Cron Schedules
 description: Translate a cron expression into plain English online, with a field-by-field breakdown, locale support, and JSON output for automation schedules.
 ---
 ## What is a cron expression?
 
-A cron expression is the compact schedule syntax used by Unix `cron`, CI pipelines, Kubernetes `CronJob`s and countless job schedulers: five space-separated fields for minute, hour, day of month, month and day of week, each holding a value, a wildcard `*`, a range (`1-5`), a list (`1,15,30`) or a step (`*/15`). It is precise but unreadable at a glance — `0 9 * * 1-5` says nothing to most people until you know the field order. This tool reads an expression and produces a plain-English sentence plus a breakdown of what each field means, so you can check a schedule before you ship it.
+A cron expression is the compact schedule syntax used by Unix `cron`, CI pipelines, Kubernetes `CronJob`s and countless job schedulers: five space-separated fields for minute, hour, day of month, month and day of week, each holding a value, a wildcard `*`, a range (`1-5`), a list (`1,15,30`) or a step (`*/15`). It is precise but unreadable at a glance: `0 9 * * 1-5` says nothing to most people until you know the field order. This tool reads an expression and produces a plain-English sentence plus a breakdown of what each field means, so you can check a schedule before you ship it.
 
 ## How it works
 
@@ -22,7 +22,7 @@ month         *        every month
 day of week   MON-FRI  Monday through Friday
 ```
 
-Fields accept the usual cron syntax — wildcards, ranges, comma lists and steps (`*/15` = every 15 units) — plus the Quartz extensions many schedulers borrow: `L` and `LW` (last day / last weekday of the month), `L-3` (3 days before month end), `15W` (weekday nearest the 15th), `5#2` (the second Friday) and `5L` (the last Friday) — weekday numbers here use the default 0-based numbering, where 5 is Friday. A 6-field expression is read as seconds-first unless its last field is a 4-digit year or its third or fifth field is `?`, in which case it is read minute-first with a trailing year; a 7-field expression always ends in a year.
+Fields accept the usual cron syntax (wildcards, ranges, comma lists and steps, where `*/15` = every 15 units), plus the Quartz extensions many schedulers borrow: `L` and `LW` (last day / last weekday of the month), `L-3` (3 days before month end), `15W` (weekday nearest the 15th), `5#2` (the second Friday) and `5L` (the last Friday). Weekday numbers here use the default 0-based numbering, where 5 is Friday. A 6-field expression is read as seconds-first unless its last field is a 4-digit year or its third or fifth field is `?`, in which case it is read minute-first with a trailing year; a 7-field expression always ends in a year.
 
 `@yearly`, `@annually`, `@monthly`, `@weekly`, `@daily`, `@midnight` and `@hourly` expand to their standard 5-field equivalents, and `@reboot` is reported as a special one-off event rather than a schedule:
 
@@ -34,7 +34,7 @@ output: At system startup
 special  @reboot  At system startup
 ```
 
-Set `format` to `json` to get a structured result instead of the sentence-and-table text — useful when a later pipeline step needs to read the schedule programmatically rather than display it:
+Set `format` to `json` to get a structured result instead of the sentence-and-table text. That is useful when a later pipeline step needs to read the schedule programmatically rather than display it:
 
 ```example
 title: json output for a step schedule
@@ -161,12 +161,12 @@ output:
 
 ## Options
 
-- **output** — `text` (a sentence plus the field table) or `json` (a structured `{ expression, description, fields }` object).
-- **locale** — the language of the overall sentence: `en`, `es`, `fr`, `de`, `it`, `nl` or `pt_BR`. The field-by-field breakdown always stays in English regardless of locale.
-- **verbose wording** — expands the sentence with more detail, for example turning "Every 5 minutes" into "Every 5 minutes, every hour, every day".
-- **24-hour clock** — on by default (`09:30`); turn it off for 12-hour times with AM/PM (`09:30 AM`).
-- **weekday index starts at 0 (Sunday)** — on by default, matching classic cron where `0` and `7` both mean Sunday. Turn it off to read weekday numbers the Quartz way, 1-based from Sunday (1 = Sunday … 7 = Saturday).
-- **seconds field** — prepends `0` as a seconds field to a 5-field expression. A 6- or 7-field expression is left untouched.
+- **output**: `text` (a sentence plus the field table) or `json` (a structured `{ expression, description, fields }` object).
+- **locale**: the language of the overall sentence: `en`, `es`, `fr`, `de`, `it`, `nl` or `pt_BR`. The field-by-field breakdown always stays in English regardless of locale.
+- **verbose wording**: expands the sentence with more detail, for example turning "Every 5 minutes" into "Every 5 minutes, every hour, every day".
+- **24-hour clock**: on by default (`09:30`); turn it off for 12-hour times with AM/PM (`09:30 AM`).
+- **weekday index starts at 0 (Sunday)**: on by default, matching classic cron where `0` and `7` both mean Sunday. Turn it off to read weekday numbers the Quartz way, 1-based from Sunday (1 = Sunday … 7 = Saturday).
+- **seconds field**: prepends `0` as a seconds field to a 5-field expression. A 6- or 7-field expression is left untouched.
 
 ## Common uses
 

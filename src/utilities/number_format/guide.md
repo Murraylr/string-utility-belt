@@ -1,11 +1,11 @@
 ---
-title: Number Format Online — Thousands, Percent, Currency
+title: Number Format Online: Thousands, Percent, Currency
 description: Format numbers online as grouped thousands, percentages, currency, scientific or engineering notation, using any locale and separator.
 ---
 ## What does number formatting cover?
 
-Turning a raw number like `1234567.891` into something readable — `1,234,567.89`, `45.7%`,
-`$1,234.50` — depends on more than just rounding: it depends on grouping, a chosen notation, and
+Turning a raw number like `1234567.891` into something readable (`1,234,567.89`, `45.7%`,
+`$1,234.50`) depends on more than just rounding: it depends on grouping, a chosen notation, and
 often a locale's own conventions for where the decimal point and thousands separators go. For every
 style except scientific and engineering notation, this tool wraps the JavaScript engine's built-in
 `Intl.NumberFormat`, so it follows the same locale data (Unicode CLDR) that browsers use rather than a
@@ -23,7 +23,7 @@ params: {"style": "thousands", "decimals": 2}
 output: 1,234,567.89
 ```
 
-`percent` multiplies the value by 100 and appends a `%` sign — so `0.4567` (a fraction) becomes
+`percent` multiplies the value by 100 and appends a `%` sign, so `0.4567` (a fraction) becomes
 "45.7%", the same convention `Intl.NumberFormat`'s percent style uses:
 
 ```example
@@ -55,7 +55,7 @@ params: {"style": "currency"}
 output: $1,234.50
 ```
 
-A custom **separator** overrides the locale's own thousands separator — and forces grouping on even
+A custom **separator** overrides the locale's own thousands separator, and it forces grouping on even
 for the `decimal` and `fixed` styles, which are otherwise ungrouped:
 
 ```example
@@ -71,22 +71,22 @@ or `.` is the decimal separator from context.
 
 ## Options
 
-- **style** — `decimal` (plain, ungrouped), `thousands` (default, grouped), `scientific`,
+- **style**: `decimal` (plain, ungrouped), `thousands` (default, grouped), `scientific`,
   `engineering`, `percent`, `currency`, `compact` (`1.23M`-style), or `fixed` (always exactly
   **decimals** places, ungrouped by default).
-- **decimals** — 0–20, default 2. `fixed`, `percent`, `currency`, `scientific` and `engineering`
+- **decimals**: 0–20, default 2. `fixed`, `percent`, `currency`, `scientific` and `engineering`
   always show exactly this many decimal places (for the last two, after the mantissa's decimal
   point); `decimal`, `thousands` and `compact` show up to this many, dropping trailing zeros.
-- **locale** — a BCP 47 locale tag (default `en-US`) that governs grouping symbols, decimal marks, and
+- **locale**: a BCP 47 locale tag (default `en-US`) that governs grouping symbols, decimal marks, and
   currency formatting.
-- **currency** — an ISO 4217 code (default `USD`), used only by the `currency` style.
-- **separator** — a custom thousands separator; overrides the locale's own and forces grouping on.
+- **currency**: an ISO 4217 code (default `USD`), used only by the `currency` style.
+- **separator**: a custom thousands separator; overrides the locale's own and forces grouping on.
   It has no effect on `scientific` and `engineering`, which never group digits.
-- **per line** — on by default; formats each line of input independently.
+- **per line**: on by default; formats each line of input independently.
 
 ## Common uses
 
-- Displaying a computed value — a price, a percentage, a large count — in a UI-ready form without
+- Displaying a computed value (a price, a percentage, a large count) in a UI-ready form without
   writing formatting code.
 - Converting a number to another locale's conventions, for example checking how a US-formatted price
   reads in German or Indian number grouping.
@@ -102,7 +102,7 @@ problem. Well-formed but unknown values do not: an unknown code such as `XYZ` is
 itself (`XYZ 1,234.50`), and a locale the engine has no data for falls back to its default locale, so
 double-check the output when using an unusual tag. Engineering notation rounds the
 exact decimal value at the position that ends up displayed, not a value that has already drifted
-through ordinary floating-point multiplication — this matters at exact `...5` boundaries, where a naive
+through ordinary floating-point multiplication. This matters at exact `...5` boundaries, where a naive
 implementation can round the wrong way. Currency and some locales insert a non-breaking space rather
 than an ordinary one between the amount and the symbol; that is intentional (it keeps the two from
 wrapping onto separate lines) and not a rendering glitch. For converting a raw byte count rather than

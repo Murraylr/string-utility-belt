@@ -1,5 +1,5 @@
 ---
-title: Reverse Word Order Online — Flip Sentence Words
+title: Reverse Word Order Online: Flip Sentence Words
 description: Reverse the order of words in a line or across a whole text online, using a custom separator, and see worked examples.
 ---
 ## What does reversing word order mean?
@@ -8,7 +8,7 @@ Reversing word order keeps every word intact but flips the sequence they appear 
 
 ## How it works
 
-The tool splits the text on a **separator** (a space by default), reverses the resulting list of pieces, and joins them back together with the same separator. Because the split and join both use the exact separator string, any run of text between two separators — whether that is a real word or something else entirely — is treated as one unit and kept intact.
+The tool splits the text on a **separator** (a space by default), reverses the resulting list of pieces, and joins them back together with the same separator. Because the split and join both use the exact separator string, any run of text between two separators (whether that is a real word or something else entirely) is treated as one unit and kept intact.
 
 ```example
 title: reverse word order in a sentence
@@ -25,7 +25,7 @@ input: a,b,c
 output: c,b,a
 ```
 
-**Per line** (on by default) makes the tool treat each line independently, reversing the words within a line but never moving words across a line break — this is what you almost always want for multi-line text. Turning it off reverses across the *entire* input as one long sequence of separator-delimited pieces, so a newline that happens to fall inside a "word" (because it wasn't the separator you split on) travels along with that piece instead of marking a line boundary:
+**Per line** (on by default) makes the tool treat each line independently, reversing the words within a line but never moving words across a line break. This is what you almost always want for multi-line text. Turning it off reverses across the *entire* input as one long sequence of separator-delimited pieces, so a newline that happens to fall inside a "word" (because it wasn't the separator you split on) travels along with that piece instead of marking a line boundary:
 
 ```example
 title: with "per line" off, newlines travel with their word
@@ -55,8 +55,8 @@ If the input is empty, the result is empty regardless of any other option. An em
 
 ## Options
 
-- **separator** — the string used to split the text into pieces before reversing their order. Defaults to a single space. Supports the `\n`, `\r`, `\t` and `\\` escapes described above. Must not be empty.
-- **per line** — when on (the default), each line is reversed independently and line breaks are preserved exactly where they were, including a trailing `\r` on Windows-style CRLF lines. When off, the whole input is treated as one sequence split on the separator.
+- **separator**: the string used to split the text into pieces before reversing their order. Defaults to a single space. Supports the `\n`, `\r`, `\t` and `\\` escapes described above. Must not be empty.
+- **per line**: when on (the default), each line is reversed independently and line breaks are preserved exactly where they were, including a trailing `\r` on Windows-style CRLF lines. When off, the whole input is treated as one sequence split on the separator.
 
 ## Common uses
 

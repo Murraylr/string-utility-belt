@@ -1,10 +1,10 @@
 ---
-title: HTML to Markdown Converter Online — Convert HTML to MD
+title: HTML to Markdown Converter Online: Convert HTML to MD
 description: Convert HTML to Markdown online with atx or setext headings, a custom bullet marker, and fenced or indented code blocks, using Turndown.
 ---
 ## What is HTML to Markdown conversion?
 
-Markdown is easier to write, diff and store in version control than HTML, so it is common to want to turn scraped or exported HTML — a blog post, a wiki page, an email body — into Markdown source. This tool wraps Turndown, a well-established HTML-to-Markdown converter, and exposes its main formatting choices as options. [markdown to html](/util/markdown_to_html/) does the reverse conversion.
+Markdown is easier to write, diff and store in version control than HTML, so it is common to want to turn scraped or exported HTML (a blog post, a wiki page, an email body) into Markdown source. This tool wraps Turndown, a well-established HTML-to-Markdown converter, and exposes its main formatting choices as options. [markdown to html](/util/markdown_to_html/) does the reverse conversion.
 
 ## How it works
 
@@ -56,9 +56,9 @@ output:     x=1
 
 ## Options
 
-- **heading style** — `atx` (`# Heading`, the default) or `setext` (an underline of `=` for level 1 and `-` for level 2; Setext has no form for deeper levels, so `<h3>` to `<h6>` still come out as `###`-style atx headings).
-- **bullet marker** — `-`, `*` or `+` for unordered list items. Defaults to `-`.
-- **code block style** — `fenced` (triple backtick fences, the default; a `language-js` class on the `<code>` element becomes a `js` language hint after the opening fence) or `indented` (four leading spaces, with no language annotation possible).
+- **heading style**: `atx` (`# Heading`, the default) or `setext` (an underline of `=` for level 1 and `-` for level 2; Setext has no form for deeper levels, so `<h3>` to `<h6>` still come out as `###`-style atx headings).
+- **bullet marker**: `-`, `*` or `+` for unordered list items. Defaults to `-`.
+- **code block style**: `fenced` (triple backtick fences, the default; a `language-js` class on the `<code>` element becomes a `js` language hint after the opening fence) or `indented` (four leading spaces, with no language annotation possible).
 
 ## Common uses
 

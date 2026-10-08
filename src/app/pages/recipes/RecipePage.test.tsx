@@ -251,7 +251,7 @@ describe('RecipePage', () => {
 
   it('answers an unknown slug with a not-found page kept out of search indexes', async () => {
     render(<RecipePage slug="no-such-recipe" />)
-    expect(await screen.findByRole('heading', { level: 1, name: /unknown recipe/i })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'No recipe at this address' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Browse all recipes' }).getAttribute('href')).toBe('/recipes/')
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
   })

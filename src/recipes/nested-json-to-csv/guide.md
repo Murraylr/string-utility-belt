@@ -1,5 +1,5 @@
 ---
-title: Nested JSON to CSV — Flatten API Responses Into Columns
+title: Nested JSON to CSV: Flatten API Responses Into Columns
 description: Turn a nested JSON API response into CSV: pick the records out of the envelope, spread nested objects and arrays into columns, get snake_case headers.
 ---
 

@@ -1,10 +1,10 @@
 ---
-title: JSONPath Query Tool Online — Filter & Extract JSON
-description: Query JSON online with JSONPath — wildcards, recursive descent, slices, unions and filter expressions — and get matching values, paths or a count.
+title: JSONPath Query Tool Online: Filter & Extract JSON
+description: Query JSON online with JSONPath (wildcards, recursive descent, slices, unions and filter expressions) and get matching values, paths or a count.
 ---
 ## What is JSONPath?
 
-JSONPath is to JSON what a simple XPath is to XML: a compact expression language for picking out one or more values from a document by describing where they live, rather than writing code to walk the structure by hand. `$.store.book[0].title` reads as "from the root, into `store`, into `book`, the first element, its `title`." This tool implements a practical JSONPath subset — child access, wildcards, recursive descent, array slices, unions and filter expressions — directly against your JSON input.
+JSONPath is to JSON what a simple XPath is to XML: a compact expression language for picking out one or more values from a document by describing where they live, rather than writing code to walk the structure by hand. `$.store.book[0].title` reads as "from the root, into `store`, into `book`, the first element, its `title`." This tool implements a practical JSONPath subset directly against your JSON input: child access, wildcards, recursive descent, array slices, unions and filter expressions.
 
 ## How it works
 
@@ -17,7 +17,7 @@ input: {"store":{"book":[{"author":"Nigel Rees","price":8.95},{"author":"Evelyn 
 output: ["Nigel Rees","Evelyn Waugh"]
 ```
 
-`[*]` (or `.*`) is the wildcard: it matches every element of an array or every value of an object. `..` before a segment is recursive descent — it searches at every depth, not just the immediate children:
+`[*]` (or `.*`) is the wildcard: it matches every element of an array or every value of an object. `..` before a segment is recursive descent: it searches at every depth, not just the immediate children:
 
 ```example
 title: recursive descent finds a key at any depth
@@ -61,9 +61,9 @@ output: 2
 
 ## Options
 
-- **path** — the JSONPath expression to evaluate (default `$`, the whole document).
-- **result** — `values` (default), `paths`, `first` or `count`.
-- **indent** — spaces of indentation for `values`/`paths`/`first` output that is itself JSON, 0 to 10 (default 2). Ignored by `count`, and by a `first` result that is a plain string.
+- **path**: the JSONPath expression to evaluate (default `$`, the whole document).
+- **result**: `values` (default), `paths`, `first` or `count`.
+- **indent**: spaces of indentation for `values`/`paths`/`first` output that is itself JSON, 0 to 10 (default 2). Ignored by `count`, and by a `first` result that is a plain string.
 
 ## Common uses
 
@@ -74,7 +74,7 @@ output: 2
 
 ## Tips and pitfalls
 
-- A path or filter that matches nothing is not an error — it returns an empty array (`[]`), a count of `0`, or an empty string for `first`, so a pipeline can keep flowing.
+- A path or filter that matches nothing is not an error. It returns an empty array (`[]`), a count of `0`, or an empty string for `first`, so a pipeline can keep flowing.
 - Writing `[?(price)]` instead of `[?(@.price)]` is a common mistake this tool rejects outright with a clear error, since a bare word left unqualified would otherwise silently match every element.
 - `.length` on a string (`$.name.length`) counts Unicode code points, not UTF-16 units, so an emoji such as 😀 counts as one character (a multi-code-point sequence such as a flag still counts as several). On an array, `.length` is its element count.
 - For a full structural comparison between two documents rather than a query into one, use [json diff](/util/json_diff/); to reshape the matched values afterward, pipe them into [json pretty](/util/json_pretty/) or [json flatten](/util/json_flatten/).

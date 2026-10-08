@@ -13,7 +13,7 @@ describe('HomeDirectory', () => {
     const hrefs = screen.getAllByRole('link').map(a => a.getAttribute('href'))
     const featured = featuredRecipes(RECIPE_INDEX).map(r => `/recipes/${r.slug}/`)
     expect(featured.length).toBeGreaterThan(0)
-    expect(hrefs).toEqual([...featured, '/recipes/', ...POPULAR_UTILITY_IDS.map(id => `/util/${id}/`), '/utilities/'])
+    expect(hrefs).toEqual(['/recipes/', ...featured, '/utilities/', ...POPULAR_UTILITY_IDS.map(id => `/util/${id}/`)])
     expect(screen.getByRole('link', { name: `Browse all ${registry.list().length} utilities` })).toBeTruthy()
     expect(screen.getByRole('link', { name: `Browse all ${RECIPE_INDEX.length} recipes` })).toBeTruthy()
   })

@@ -187,7 +187,8 @@ describe('renderDocsContent', () => {
     // the section nav's entries point at its sections
     expect(doc.querySelectorAll('nav[aria-label="Docs sections"] a')).toHaveLength(sections.length)
     const hrefs = [...doc.querySelectorAll('a')].map(a => a.getAttribute('href'))
-    expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/', '/docs/']))
+    // the section links are plain in-page anchors, so they work before (or without) the app's script
+    expect(hrefs).toEqual(expect.arrayContaining(['/', '/utilities/', '/docs/#pipeline']))
     expect(hrefs.filter(h => !h?.startsWith('/'))).toEqual([])
   })
 })

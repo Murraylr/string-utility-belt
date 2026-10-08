@@ -17,17 +17,17 @@ export const TITLE_BUDGET = 60
  */
 export function pageTitle(title: string): string {
   if (title.includes(SITE_NAME)) return title
-  const branded = `${title} — ${SITE_NAME}`
+  const branded = `${title} | ${SITE_NAME}`
   return branded.length <= TITLE_BUDGET ? branded : title
 }
 
 /** A utility name as a heading: legacy ids-as-names (`base64_encode`) read better spaced. */
 export const displayName = (name: string): string => name.replace(/_/g, ' ')
 
-export const HOME_TITLE = `Free Online String & Text Tools — ${SITE_NAME}`
+export const HOME_TITLE = `Free Online String & Text Tools | ${SITE_NAME}`
 
 export const homeDescription = (count: number): string =>
-  `${count} free string and text tools that run in your browser: encode, decode, hash, format and convert — Base64, URL, JSON, SHA-256 and more.`
+  `${count} free string and text tools that run in your browser: encode, decode, hash, format and convert text: Base64, URL, JSON, SHA-256 and more.`
 
 export const utilitiesTitle = (count: number): string => pageTitle(`${count} Free Online Text & String Tools`)
 
@@ -46,7 +46,7 @@ export const DOCS_DESCRIPTION =
   "Learn to chain text utilities into a pipeline, configure and reorder steps, preview each step's output, and copy, download or share the result."
 
 /**
- * Linked from the home page (static and rendered) — high-demand tools, so the
+ * Linked from the home page (static and rendered): high-demand tools, so the
  * site's most-linked page passes its weight to the pages people search for.
  * Ids that no longer exist are skipped.
  */

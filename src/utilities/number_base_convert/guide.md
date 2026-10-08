@@ -1,5 +1,5 @@
 ---
-title: Number Base Converter — Hex, Binary, Octal, Base 2–36
+title: Number Base Converter: Hex, Binary, Octal, Base 2–36
 description: Convert whole numbers between any base from 2 to 36 online, with 0x/0b/0o auto-detection, digit grouping, and exact BigInt precision.
 ---
 ## What is a number base?
@@ -33,7 +33,7 @@ params: {"from": 0, "to": 2}
 output: 11111111
 ```
 
-**group digits** inserts a space every N digits, counted from the right — the natural way to read a
+**group digits** inserts a space every N digits, counted from the right. It is the natural way to read a
 long binary or hex value, similar to how a decimal number groups into thousands:
 
 ```example
@@ -55,18 +55,18 @@ output: 18ee90ff6c373e0ee4e3f0ad2
 
 ## Options
 
-- **from base** — 2–36, default 10; `0` auto-detects `0x`/`0b`/`0o`, otherwise decimal. With the
-  default of 10, a prefixed value like `0xff` is rejected (`x` is not a decimal digit) — set 16 or 0.
+- **from base**: 2–36, default 10; `0` auto-detects `0x`/`0b`/`0o`, otherwise decimal. With the
+  default of 10, a prefixed value like `0xff` is rejected (`x` is not a decimal digit), so set 16 or 0.
   A prefix that matches the declared base is stripped; one that does not (like `0b1` when `from` is
   16) is read as an ordinary digit sequence instead, since `b` is itself a valid hex digit.
-- **to base** — 2–36, default 16.
-- **uppercase** — renders letter digits (`a`–`z`) as uppercase. Off by default.
-- **prefix** — prepends `0x`, `0b`, or `0o` to the output for bases 16, 2, and 8; other bases have no
+- **to base**: 2–36, default 16.
+- **uppercase**: renders letter digits (`a`–`z`) as uppercase. Off by default.
+- **prefix**: prepends `0x`, `0b`, or `0o` to the output for bases 16, 2, and 8; other bases have no
   conventional prefix and get none even with this on.
-- **group digits** — inserts a space every N digits from the right; `0` (default) disables grouping.
-  Grouped input is also accepted back — spaces, commas, and underscores between digits are ignored
+- **group digits**: inserts a space every N digits from the right; `0` (default) disables grouping.
+  Grouped input is also accepted back: spaces, commas, and underscores between digits are ignored
   when parsing.
-- **per line** — on by default; converts each line of input separately.
+- **per line**: on by default; converts each line of input separately.
 
 ## Common uses
 
@@ -78,7 +78,7 @@ output: 18ee90ff6c373e0ee4e3f0ad2
 
 ## Tips and pitfalls
 
-Only whole numbers are supported — a decimal point in the input is rejected outright, since a fraction
+Only whole numbers are supported. A decimal point in the input is rejected outright, since a fraction
 that ends neatly in one base (0.1 in decimal) can repeat forever in another (binary). Negative numbers
 keep a leading minus sign (`-255` becomes `-ff`); there is no two's-complement output. A digit that is not
 valid in the declared base (a `2` under `from base: 2`, or a `g` in hex) produces an error naming the

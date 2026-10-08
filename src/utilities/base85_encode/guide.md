@@ -1,5 +1,5 @@
 ---
-title: Base85 Encode Online — Ascii85 & Z85 Converter
+title: Base85 Encode Online: Ascii85 & Z85 Converter
 description: Encode text or bytes as Base85 online using the Ascii85, Z85, or RFC 1924 alphabet, with the classic z shortcut and optional <~ ~> delimiters.
 ---
 ## What is Base85 encoding?
@@ -32,7 +32,7 @@ output: <~9jqo^BlbD-BleB1DJ+*+F(f,q~>
 
 ### The `z` shortcut
 
-In the **ascii85** variant only, a complete 4-byte group of zero bytes — a common case in sparse binary data — collapses to a single `z` character instead of the usual 5. The group has to line up on a 4-byte boundary; zeros in a short final group are encoded normally. The Z85 and RFC 1924 alphabets don't get this shortcut, because `z` is an ordinary data character in both of them:
+In the **ascii85** variant only, a complete 4-byte group of zero bytes (a common case in sparse binary data) collapses to a single `z` character instead of the usual 5. The group has to line up on a 4-byte boundary; zeros in a short final group are encoded normally. The Z85 and RFC 1924 alphabets don't get this shortcut, because `z` is an ordinary data character in both of them:
 
 ```example
 title: four zero bytes collapse to a single z
@@ -62,8 +62,8 @@ output: Xk~0{Zv
 
 ## Options
 
-- **variant** — `ascii85` (default, Adobe/PostScript), `z85` (ZeroMQ), or `rfc1924`. [base85 decode](/util/base85_decode/) needs the same one.
-- **delimiters** — wraps the output in `<~ ~>` (default off). Only meaningful for `ascii85`-style consumers that expect Adobe's convention; leave it off for Z85 or RFC 1924 data.
+- **variant**: `ascii85` (default, Adobe/PostScript), `z85` (ZeroMQ), or `rfc1924`. [base85 decode](/util/base85_decode/) needs the same one.
+- **delimiters**: wraps the output in `<~ ~>` (default off). Only meaningful for `ascii85`-style consumers that expect Adobe's convention; leave it off for Z85 or RFC 1924 data.
 
 ## Common uses
 
@@ -73,6 +73,6 @@ output: Xk~0{Zv
 
 ## Tips and pitfalls
 
-- The three variants share the general algorithm but not the alphabet — encoding with `z85` and decoding with the default `ascii85` variant will fail or silently produce the wrong bytes.
+- The three variants share the general algorithm but not the alphabet. Encoding with `z85` and decoding with the default `ascii85` variant will fail or silently produce the wrong bytes.
 - The `z` shortcut only applies to `ascii85`; don't expect a lone `z` in Z85 or RFC 1924 output to mean four zero bytes.
-- This is an encoding, not encryption — it hides nothing and needs no key to reverse with [base85 decode](/util/base85_decode/).
+- This is an encoding, not encryption. It hides nothing and needs no key to reverse with [base85 decode](/util/base85_decode/).

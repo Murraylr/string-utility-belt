@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { ExternalLink } from 'lucide-react'
 import { formatForDisplay } from '@/core/coerce'
 import { countSteps, isBranchStep, isEachStep, isMacroStep, isUtilityStep } from '@/core/steps'
 import { itemNoun } from '@/core/split'
@@ -26,25 +27,29 @@ function EmbedInner({ payload, quarantined, name }: { payload: string; quarantin
 
   return (
     // the embed renders without the site chrome, so it supplies its own landmark and heading
-    <main className="p-3 text-sm grid gap-3 text-fg">
-      <h1 className="sr-only">{name ? `${name} — ` : ''}shared String Utility Belt pipeline</h1>
-      <div className="grid gap-1">
-        <label className="muted" htmlFor="embed-input">input</label>
+    <main className="p-3 grid gap-3 text-[13px] text-fg bg-canvas">
+      <h1 className="sr-only">{name ? `${name}: ` : ''}shared String Utility Belt pipeline</h1>
+      <div className="grid gap-1.5">
+        <label className="text-[13px] font-semibold" htmlFor="embed-input">Input</label>
         <textarea
           id="embed-input"
-          className="field mono text-sm min-h-[80px]"
-          placeholder="type or paste your text here…"
+          className="field min-h-20 resize-y font-mono text-[12.5px] leading-5"
+          placeholder="Type or paste your text here"
           value={typeof input === 'string' ? input : ''}
           onChange={e => setInput(e.target.value)}
         />
       </div>
 
       {state.steps.length > 0 && (
-        <div>
-          <div className="muted mb-1" id="embed-steps-label">steps</div>
-          <ol className="grid gap-0.5 list-decimal list-inside" aria-labelledby="embed-steps-label">
-            {state.steps.map(s => (
-              <li key={s.id} className={s.enabled === false ? 'text-muted line-through' : undefined}>
+        <div className="grid gap-1.5">
+          <div className="text-[13px] font-semibold" id="embed-steps-label">Steps</div>
+          <ol role="list" className="m-0 p-0 list-none flex flex-wrap gap-1.5" aria-labelledby="embed-steps-label">
+            {state.steps.map((s, i) => (
+              <li
+                key={s.id}
+                className={`inline-flex items-center gap-1.5 h-[26px] px-2 border rounded-md bg-surface text-[12.5px] ${s.enabled === false ? 'text-muted line-through' : ''}`}
+              >
+                <span className="font-mono text-[11px] text-muted" aria-hidden>{i + 1}</span>
                 {stepLabel(s)}{s.enabled === false && <span className="sr-only"> (disabled)</span>}
               </li>
             ))}
@@ -53,30 +58,30 @@ function EmbedInner({ payload, quarantined, name }: { payload: string; quarantin
       )}
 
       {quarantined > 0 && (
-        <div className="text-xs text-warn">
-          This pipeline contains custom code; those steps are disabled here. Open it in String Utility Belt to review them.
-        </div>
+        <p className="m-0 text-xs text-warn">
+          This pipeline contains custom code, so those steps are disabled here. Open it in String Utility Belt to review them.
+        </p>
       )}
 
-      <div className="grid gap-1">
-        <div className="muted" id="embed-result-label">result</div>
+      <div className="grid gap-1.5">
+        <div className="text-[13px] font-semibold" id="embed-result-label">Result</div>
         <pre
           role="region"
           aria-labelledby="embed-result-label"
           aria-busy={run.running}
-          className="border rounded-xl p-2 bg-surface-2 mono text-xs whitespace-pre-wrap wrap-anywhere max-h-64 overflow-auto"
-        >{run.result ? formatForDisplay(run.result.out) : run.running ? 'running…' : ''}</pre>
-        {firstError && <div role="alert" className="text-xs text-danger">{firstError}</div>}
+          className="m-0 min-h-10 max-h-64 overflow-auto px-2.5 py-2 border rounded-md bg-surface-2 font-mono text-[12.5px] leading-5 whitespace-pre-wrap wrap-anywhere"
+        >{run.result ? formatForDisplay(run.result.out) : run.running ? 'Running…' : ''}</pre>
+        {firstError && <div role="alert" className="text-xs text-danger-ink">{firstError}</div>}
         {runHeld && (
           <div role="status" className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="muted">This pipeline has to run on the page itself, so it waits for you.</span>
-            <button type="button" className="btn" onClick={run.runNow}>Run</button>
+            <span className="text-muted">This pipeline has to run on the page itself, so it waits for you.</span>
+            <button type="button" className="btn-inv h-7 px-2.5 text-[12.5px]" onClick={run.runNow}>Run</button>
           </div>
         )}
       </div>
 
       <a className="btn justify-self-start" href={openUrl} target="_blank" rel="noopener noreferrer">
-        Open in String Utility Belt
+        Open in String Utility Belt <ExternalLink size={13} aria-hidden />
       </a>
     </main>
   )
@@ -96,9 +101,9 @@ export default function EmbedPage({ payload }: { payload: string }) {
 
   if (decoded.error) {
     return (
-      <main className="p-3">
+      <main className="p-3 bg-canvas">
         <h1 className="sr-only">shared String Utility Belt pipeline</h1>
-        <div role="alert" className="text-sm text-danger">{decoded.error}</div>
+        <div role="alert" className="px-3 py-2.5 border border-danger-line rounded-md bg-danger-bg text-[13px] text-danger-ink">{decoded.error}</div>
       </main>
     )
   }

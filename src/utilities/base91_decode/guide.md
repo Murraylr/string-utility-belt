@@ -1,5 +1,5 @@
 ---
-title: basE91 Decode Online — Base91 to Text Converter
+title: basE91 Decode Online: Base91 to Text Converter
 description: Decode basE91 (Base91) text back to plain text or raw bytes online, ignoring line breaks and other whitespace.
 ---
 ## What is basE91 decoding?
@@ -10,7 +10,7 @@ This reverses [basE91 encode](/util/base91_encode/): it takes a basE91 string an
 
 1. Whitespace (including line breaks) is stripped.
 2. Characters are consumed two at a time; each pair combines into one value: `value = first + second * 91`.
-3. That value is merged into a running bit queue, contributing either 13 or 14 bits depending on its size — mirroring exactly how the encoder decided how many bits to take.
+3. That value is merged into a running bit queue, contributing either 13 or 14 bits depending on its size. This mirrors exactly how the encoder decided how many bits to take.
 4. Whenever the queue holds a full byte (8 bits), it's emitted, and the queue keeps the leftover bits for the next pair.
 5. The resulting bytes are decoded as UTF-8 text, unless you ask for raw bytes.
 
@@ -48,7 +48,7 @@ output: héllo ✓ 🎉
 
 ## Options
 
-- **output** — `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is necessary for any data that wasn't text to begin with.
+- **output**: `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched, which is necessary for any data that wasn't text to begin with.
 
 ## Common uses
 
@@ -59,5 +59,5 @@ output: héllo ✓ 🎉
 ## Tips and pitfalls
 
 - basE91 never produces an apostrophe, backslash, or hyphen, so any of those characters (or any non-ASCII character) in your input means it isn't valid basE91 and decoding will fail. Whitespace, by contrast, is stripped wherever it appears.
-- If decoding throws "not valid UTF-8", the original data was binary — switch the output option to `bytes`.
+- If decoding throws "not valid UTF-8", the original data was binary. Switch the output option to `bytes`.
 - This tool has no alphabet or variant option: there is exactly one basE91 alphabet, unlike [base32 decode](/util/base32_decode/) or [base85 decode](/util/base85_decode/).

@@ -1,10 +1,10 @@
 ---
-title: Markdown to HTML Converter Online — Render Markdown
+title: Markdown to HTML Converter Online: Render Markdown
 description: Convert Markdown to HTML online with GitHub-flavored syntax, optional hard line breaks, and slug ids on headings, powered by the marked parser.
 ---
 ## What is Markdown to HTML conversion?
 
-Markdown is written as plain text but needs to become HTML before a browser can render it — that is what every static site generator, README viewer and comment system does behind the scenes. This tool wraps `marked`, a widely used Markdown parser, so you can see exactly what HTML a piece of Markdown produces. [html to markdown](/util/html_to_markdown/) converts back the other way.
+Markdown is written as plain text but needs to become HTML before a browser can render it. That is what every static site generator, README viewer and comment system does behind the scenes. This tool wraps `marked`, a widely used Markdown parser, so you can see exactly what HTML a piece of Markdown produces. [html to markdown](/util/html_to_markdown/) converts back the other way.
 
 ## How it works
 
@@ -35,7 +35,7 @@ output:
 
 ```
 
-Turning on **add ids to headings** gives every heading an `id` attribute derived from its own text — lowercased, punctuation other than `-` and `_` stripped, spaces turned into hyphens — much like the slugs GitHub uses for its in-page heading links. One difference: a run of several spaces becomes a single hyphen here, where GitHub writes one hyphen per space. A repeated heading text gets a numeric suffix (`a`, `a-1`, `a-2`) so ids stay unique:
+Turning on **add ids to headings** gives every heading an `id` attribute derived from its own text (lowercased, punctuation other than `-` and `_` stripped, spaces turned into hyphens), much like the slugs GitHub uses for its in-page heading links. One difference: a run of several spaces becomes a single hyphen here, where GitHub writes one hyphen per space. A repeated heading text gets a numeric suffix (`a`, `a-1`, `a-2`) so ids stay unique:
 
 ```example
 title: heading ids, github-style slugs
@@ -51,9 +51,9 @@ output:
 
 ## Options
 
-- **github flavored markdown** — enables GFM extensions (tables, strikethrough, autolinked URLs). On by default.
-- **newlines become &lt;br&gt;** — treats every single line break inside a paragraph as a hard break (`<br>`) instead of leaving it as a soft newline. Off by default.
-- **add ids to headings** — adds a GitHub-style slug `id` to every heading, de-duplicated when the same heading text repeats. Off by default.
+- **github flavored markdown**: enables GFM extensions (tables, strikethrough, autolinked URLs). On by default.
+- **newlines become &lt;br&gt;**: treats every single line break inside a paragraph as a hard break (`<br>`) instead of leaving it as a soft newline. Off by default.
+- **add ids to headings**: adds a GitHub-style slug `id` to every heading, de-duplicated when the same heading text repeats. Off by default.
 
 ## Common uses
 
@@ -65,4 +65,4 @@ output:
 
 - This tool expects Markdown text; passing structured data from a previous pipeline step raises an error rather than silently stringifying it.
 - Empty input produces empty output.
-- Rendered HTML is not sanitized against XSS — raw HTML embedded in the Markdown source (such as `<img onerror=…>`) passes through unchanged, and so do `javascript:` link URLs. Treat the output as untrusted if the Markdown came from an untrusted source, and run it through a real HTML sanitizer before putting it on a page. If you need plain text instead of HTML, [strip markdown](/util/markdown_strip/) skips the HTML step entirely.
+- Rendered HTML is not sanitized against XSS. Raw HTML embedded in the Markdown source (such as `<img onerror=…>`) passes through unchanged, and so do `javascript:` link URLs. Treat the output as untrusted if the Markdown came from an untrusted source, and run it through a real HTML sanitizer before putting it on a page. If you need plain text instead of HTML, [strip markdown](/util/markdown_strip/) skips the HTML step entirely.

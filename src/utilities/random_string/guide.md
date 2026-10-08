@@ -1,10 +1,10 @@
 ---
-title: Random String Generator — Custom Character Sets
+title: Random String Generator: Custom Character Sets
 description: Generate random strings online from alphanumeric, hex, symbol or fully custom character sets, with a length, count and seed you control.
 ---
 ## What is a random string generator?
 
-A random string generator draws characters uniformly at random from a chosen alphabet to build a string of a given length — no character-class guarantees, no pronounceability, just uniform sampling from whatever set of characters you pick. That makes it a good fit for API tokens, test fixtures, CSS class names, or any place you need filler text with a specific, predictable shape rather than a memorable password (for that, see [password generator](/util/password_generator/) instead).
+A random string generator draws characters uniformly at random from a chosen alphabet to build a string of a given length. There are no character-class guarantees and no pronounceability, just uniform sampling from whatever set of characters you pick. That makes it a good fit for API tokens, test fixtures, CSS class names, or any place you need filler text with a specific, predictable shape rather than a memorable password (for that, see [password generator](/util/password_generator/) instead).
 
 ## How it works
 
@@ -35,7 +35,7 @@ params: {"charset": "custom", "custom": "ab-d", "length": 8, "seed": 5}
 output: adcbdadd
 ```
 
-The `all` preset draws from every printable ASCII character except the space — letters, digits, and punctuation together:
+The `all` preset draws from every printable ASCII character except the space: letters, digits, and punctuation together:
 
 ```example
 title: the "all" preset (letters, digits and symbols)
@@ -55,11 +55,11 @@ output:
 
 ## Options
 
-- **length** — how many characters long the string should be; default `16`, from 0 to 4096.
-- **character set** — one of the presets below, or `custom`.
-- **custom characters (a-z ranges ok)** — only used when the character set is `custom`; write literal characters or `a-z`-style ranges. A leading or trailing `-` is treated as a literal dash. The set is split into Unicode code points, so most single emoji and other characters outside the Basic Multilingual Plane stay whole, but multi-code-point sequences (flags, skin-tone emoji, a letter plus combining accent) are split into their parts. A character written twice is twice as likely to be drawn.
-- **count** — how many strings to generate at once, one per line; default `1`, up to 10,000. The total output (`length × count`) is capped at 1,000,000 characters.
-- **seed (0 = random)** — `0` (the default) draws from the browser's cryptographic random number generator, so every run is unpredictable. Any other integer switches to a small non-cryptographic PRNG and reproduces the exact same output every time — useful for tests and documentation, never for anything that needs to be unguessable.
+- **length**: how many characters long the string should be; default `16`, from 0 to 4096.
+- **character set**: one of the presets below, or `custom`.
+- **custom characters (a-z ranges ok)**: only used when the character set is `custom`; write literal characters or `a-z`-style ranges. A leading or trailing `-` is treated as a literal dash. The set is split into Unicode code points, so most single emoji and other characters outside the Basic Multilingual Plane stay whole, but multi-code-point sequences (flags, skin-tone emoji, a letter plus combining accent) are split into their parts. A character written twice is twice as likely to be drawn.
+- **count**: how many strings to generate at once, one per line; default `1`, up to 10,000. The total output (`length × count`) is capped at 1,000,000 characters.
+- **seed (0 = random)**: `0` (the default) draws from the browser's cryptographic random number generator, so every run is unpredictable. Any other integer switches to a small non-cryptographic PRNG and reproduces the exact same output every time. That is useful for tests and documentation, never for anything that needs to be unguessable.
 
 The built-in presets:
 
@@ -83,7 +83,7 @@ The built-in presets:
 
 ## Tips and pitfalls
 
-- This tool ignores its input entirely — the input box has no effect on the generated string.
+- This tool ignores its input entirely. The input box has no effect on the generated string.
 - Every entry in the chosen set (so every character, unless a custom set lists one twice) is equally likely on every draw (rejection sampling avoids the modulo bias a naive `random % n` would add), and nothing outside the set is ever produced.
-- For a genuinely unpredictable token meant for production use (a session ID, an API secret), leave the seed at `0` — a non-zero seed exists purely to make output reproducible for tests and documentation.
+- For a genuinely unpredictable token meant for production use (a session ID, an API secret), leave the seed at `0`. A non-zero seed exists purely to make output reproducible for tests and documentation.
 - If you need raw random bytes rather than a printable string, use [random bytes](/util/random_bytes/) instead; if you need a specifically ID-shaped value, see [nanoid](/util/nanoid/) or [uuid](/util/uuid/).

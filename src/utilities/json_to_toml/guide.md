@@ -1,5 +1,5 @@
 ---
-title: JSON to TOML Converter — Convert JSON to TOML Online
+title: JSON to TOML Converter: Convert JSON to TOML Online
 description: Convert JSON objects to TOML online. See how nested objects become tables, object arrays become array-of-tables, and why null values are rejected.
 ---
 ## What is TOML?
@@ -13,7 +13,7 @@ A JSON object's top-level keys become TOML key-value pairs or table headers:
 1. Scalars (strings, numbers, booleans) at the top level become plain `key = value` lines.
 2. An array of scalars becomes an inline array, `tags = [ "cli", "text" ]`.
 3. A nested object becomes a `[section]` table, with its own keys underneath.
-4. An array of objects becomes an array-of-tables, written as repeated `[[section]]` blocks — one per array entry.
+4. An array of objects becomes an array-of-tables, written as repeated `[[section]]` blocks, one per array entry.
 
 TOML requires every bare key-value pair to appear before the first table header in a document, so the converter reorders scalar keys ahead of any `[section]` or `[[section]]` blocks it emits, even if they came later in the source JSON.
 
@@ -49,7 +49,7 @@ a = 2
 
 ```
 
-Keys that are not valid bare TOML identifiers — including any non-ASCII key — are automatically quoted:
+Keys that are not valid bare TOML identifiers (including any non-ASCII key) are automatically quoted:
 
 ```example
 title: non-ascii keys are quoted
@@ -61,7 +61,7 @@ output:
 
 ## Null values and other limits
 
-TOML has no `null` literal, so this tool refuses to silently drop a null-valued key — it raises an error naming the exact path (for example `"user.email" is null`) instead of producing a document that quietly lost data. Drop the key or give it a real value before converting. The source document must also be a JSON object at the top level; a bare array, string, number or `null` has no table to attach to and is rejected. An empty object (`{}`) produces an empty document rather than a stray blank line. Parsed JSON does not keep `1.0` apart from `1`, so a whole-number float is written as a TOML integer (`x = 1`), and a date-like string stays a quoted string rather than becoming a TOML datetime.
+TOML has no `null` literal, so this tool refuses to silently drop a null-valued key. It raises an error naming the exact path (for example `"user.email" is null`) instead of producing a document that quietly lost data. Drop the key or give it a real value before converting. The source document must also be a JSON object at the top level; a bare array, string, number or `null` has no table to attach to and is rejected. An empty object (`{}`) produces an empty document rather than a stray blank line. Parsed JSON does not keep `1.0` apart from `1`, so a whole-number float is written as a TOML integer (`x = 1`), and a date-like string stays a quoted string rather than becoming a TOML datetime.
 
 ## Common uses
 
@@ -71,6 +71,6 @@ TOML has no `null` literal, so this tool refuses to silently drop a null-valued 
 
 ## Tips and pitfalls
 
-- Run [json validate](/util/json_validate/) first if you are not sure the input is well-formed JSON — this tool reports invalid JSON with the underlying parser's message.
+- Run [json validate](/util/json_validate/) first if you are not sure the input is well-formed JSON. This tool reports invalid JSON with the underlying parser's message.
 - If you need YAML instead, see [json to yaml](/util/json_to_yaml/), which does allow `null`.
 - For a quick look at nested JSON structure before converting, [json pretty](/util/json_pretty/) is a useful first step.

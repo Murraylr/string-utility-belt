@@ -33,7 +33,7 @@ describe('<EachCard />', () => {
     expect(screen.getByRole('combobox', { name: 'split the input into' })).toHaveValue('lines')
     expect(screen.getByRole('group', { name: 'steps run on each line' })).toBeInTheDocument()
     expect(screen.getByTestId('body')).toHaveAttribute('data-scope', 'run-on-each step')
-    expect(screen.getByText('step 2')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'step 2 menu' })).toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: 'item separator' })).toBeNull()
   })
 
@@ -62,7 +62,7 @@ describe('<EachCard />', () => {
   it('toggles skipping empty items', async () => {
     const user = userEvent.setup()
     render(<EachCard step={makeEach()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    const skip = screen.getByRole('checkbox', { name: 'skip empty lines' })
+    const skip = screen.getByRole('checkbox', { name: 'Skip empty lines' })
     expect(skip).toBeChecked()
     await user.click(skip)
     expect(dispatch).toHaveBeenCalledWith({ type: 'UPDATE_STEP', id: 'e1', patch: { skipEmpty: false } })
@@ -80,14 +80,14 @@ describe('<EachCard />', () => {
     render(<EachCard step={makeEach()} index={0} onDelete={() => {}} onToggle={() => {}} />)
     expect(screen.getByTestId('each-stats')).toHaveTextContent('12 lines · 2 failed')
     expect(screen.getByRole('alert')).toHaveTextContent('2 of 12 lines failed (first: line 4: bad)')
-    expect(screen.getByText(/their previews show line 4, the first that failed/)).toBeInTheDocument()
+    expect(screen.getByText(/previews show line 4, the first that failed/)).toBeInTheDocument()
     expect(document.querySelector('[data-preview="each"]')).toHaveTextContent('a b')
   })
 
   it('explains what the error policy means for items', async () => {
     const user = userEvent.setup()
     render(<EachCard step={makeEach()} index={0} onDelete={() => {}} onToggle={() => {}} />)
-    await user.click(screen.getByRole('button', { name: 'advanced' }))
+    await user.click(screen.getByRole('button', { name: 'Advanced' }))
     expect(screen.getByText(/For each item whose steps fail/)).toBeInTheDocument()
   })
 
@@ -97,9 +97,9 @@ describe('<EachCard />', () => {
     const onToggle = vi.fn()
     const onUnwrap = vi.fn()
     render(<EachCard step={makeEach()} index={0} onDelete={onDelete} onToggle={onToggle} onUnwrap={onUnwrap} />)
-    await user.click(screen.getByRole('button', { name: 'unwrap' }))
+    await user.click(screen.getByRole('button', { name: 'Unwrap' }))
     await user.click(screen.getByRole('button', { name: 'delete step 1' }))
-    await user.click(screen.getByRole('checkbox', { name: 'toggle step 1' }))
+    await user.click(screen.getByRole('switch', { name: 'toggle step 1' }))
     expect(onUnwrap).toHaveBeenCalled()
     expect(onDelete).toHaveBeenCalled()
     expect(onToggle).toHaveBeenCalledWith(false)

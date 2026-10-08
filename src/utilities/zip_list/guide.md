@@ -1,12 +1,12 @@
 ---
-title: ZIP List Online — Inspect a .zip Archive's Contents
+title: ZIP List Online: Inspect a .zip Archive's Contents
 description: List every entry in a ZIP archive online with its original size, compressed size and compression method, without extracting any files.
 ---
 ## What is a ZIP listing?
 
 Every ZIP archive ends with a central directory: a compact index of every entry's name, size,
-compression method, and where its data sits in the file. A listing reads only that directory — it
-never decompresses a single entry — so it stays fast on large archives and works even for entries
+compression method, and where its data sits in the file. A listing reads only that directory (it
+never decompresses a single entry), so it stays fast on large archives and works even for entries
 whose compression method this app cannot decode. Pair it with [zip extract](/util/zip_extract/) once you
 know which entry you actually want.
 
@@ -47,7 +47,7 @@ output:
 Each entry reports its **name** (read as UTF-8 when the archive flags it that way, as modern tools
 do, so non-ASCII characters and emoji come through; otherwise one character per byte), its
 uncompressed **size**, its **compressedSize** on disk, whether it is a **directory** entry (a name
-ending in `/`, holding no file content), and its **method** — `stored` for uncompressed data,
+ending in `/`, holding no file content), and its **method**: `stored` for uncompressed data,
 `deflate` for the overwhelming majority of real-world ZIPs, or a named/numbered method for anything
 else the ZIP format allows:
 
@@ -93,7 +93,7 @@ output:
 }
 ```
 
-Empty input is not an error — it simply lists zero entries. (Directory entries, by contrast, are
+Empty input is not an error. It simply lists zero entries. (Directory entries, by contrast, are
 listed and counted like any other entry, with `directory: true`.)
 
 ```example
@@ -111,7 +111,7 @@ output:
 ## Common uses
 
 - Auditing what a downloaded ZIP actually contains before extracting anything from it.
-- Checking whether an archive is worth decompressing at all — a `totalCompressedSize` close to
+- Checking whether an archive is worth decompressing at all: a `totalCompressedSize` close to
   `totalSize` usually means the content was already compressed (images, video, other archives).
 - Confirming which method each entry uses before picking one to pull out with
   [zip extract](/util/zip_extract/), since only `stored` and `deflate` entries can be extracted here.
@@ -121,13 +121,13 @@ output:
 ## Tips and pitfalls
 
 Listing never decompresses anything, so it succeeds even for entries using a compression method this
-app cannot decode — bzip2, LZMA, or anything else the ZIP format allows — reporting them as a named or
+app cannot decode (bzip2, LZMA, or anything else the ZIP format allows), reporting them as a named or
 numbered method rather than failing. That makes this the safe first step on an unfamiliar archive:
 check what is inside, and only reach for [zip extract](/util/zip_extract/) on the entries whose method
 is `stored` or `deflate`. Sizes are reported in bytes as stored in the archive's own metadata, not
 measured by actually inflating each entry, so they reflect what the archive claims rather than a
-re-verified truth — a maliciously crafted archive could in principle claim different sizes than its
+re-verified truth. A maliciously crafted archive could in principle claim different sizes than its
 real content, though that only matters if you are treating an untrusted ZIP as more trustworthy than
-it is. A structurally valid ZIP with no entries at all — just an end-of-central-directory record and
-nothing else — is a real, if unusual, possibility and lists cleanly as zero entries rather than
+it is. A structurally valid ZIP with no entries at all (just an end-of-central-directory record and
+nothing else) is a real, if unusual, possibility and lists cleanly as zero entries rather than
 erroring out.

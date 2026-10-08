@@ -64,44 +64,46 @@ function SaveToExtensionDialog({ stepTypes, onClose, returnFocus }: DialogProps)
   }
 
   return (
-    <Dialog title="Save to extension" onClose={onClose} returnFocus={returnFocus}>
-      <p className="text-sm muted">
-        Saved pipelines and favourites appear on the extension&apos;s right-click menu for selected text. Edit or delete
-        them on the extension&apos;s options page.
+    <Dialog title="Save to extension" widthClass="max-w-[500px]" onClose={onClose} returnFocus={returnFocus}>
+      <p className="m-0 text-[13px] text-muted text-pretty">
+        Saved pipelines and favourites show up in the extension&apos;s right-click menu for selected text. You can edit or
+        delete them on the extension&apos;s options page.
       </p>
 
-      <form className="grid gap-2" onSubmit={savePipeline}>
-        <label className="muted" htmlFor={nameId}>pipeline name</label>
-        <input id={nameId} className="field" value={name} maxLength={MAX_PIPELINE_NAME} autoComplete="off"
-          placeholder="e.g. decode JWT payload" onChange={e => setName(e.target.value)} />
-        <div className="text-xs text-muted">Saving under a name the extension already has updates that pipeline.</div>
-        {empty && <div className="text-sm text-muted">Add some steps to the pipeline first.</div>}
+      <form className="grid gap-1.5" onSubmit={savePipeline}>
+        <label className="text-[11.5px] text-muted" htmlFor={nameId}>Pipeline name</label>
+        <div className="flex flex-wrap gap-1.5">
+          <input id={nameId} className="field flex-1 min-w-40 h-[30px]" value={name} maxLength={MAX_PIPELINE_NAME} autoComplete="off"
+            placeholder="e.g. decode JWT payload" onChange={e => setName(e.target.value)} />
+          <button type="submit" className="cta h-[30px] px-3" disabled={!canSave}>Save pipeline</button>
+        </div>
+        <span className="text-xs text-muted">If the extension already has a pipeline with this name, it gets updated.</span>
+        {empty && <span className="text-[12.5px] text-warn">Add some steps first.</span>}
         {tooNew.length > 0 && (
-          <div role="alert" className="text-sm text-warn">
+          <div role="alert" className="text-[12.5px] text-warn">
             This version of the extension can&apos;t save {tooNew.join(' or ')}. Update the extension to save this pipeline.
           </div>
         )}
         {unsupportedNames.length > 0 && (
-          <div role="alert" className="text-sm text-warn">
-            The extension can&apos;t run {unsupportedNames.join(', ')} — remove {unsupportedNames.length === 1 ? 'that step' : 'those steps'} to save this pipeline.
+          <div role="alert" className="text-[12.5px] text-warn">
+            The extension can&apos;t run {unsupportedNames.join(', ')}. Remove {unsupportedNames.length === 1 ? 'that step' : 'those steps'} to save this pipeline.
           </div>
         )}
-        <button type="submit" className="cta justify-self-start" disabled={!canSave}>save pipeline</button>
       </form>
 
-      <div className="pt-2 border-t grid gap-2">
-        <p className="text-sm">
+      <div className="pt-3 border-t flex flex-wrap items-center gap-2.5">
+        <p className="m-0 flex-1 min-w-[200px] text-[13px]">
           {runnableFavorites.length
             ? `Add your ${runnableFavorites.length} starred ${runnableFavorites.length === 1 ? 'utility' : 'utilities'} to the extension's favourites.`
             : 'Star utilities in the picker to add them to the extension\'s favourites.'}
         </p>
-        <button type="button" className="btn justify-self-start" disabled={busy || runnableFavorites.length === 0} onClick={addFavorites}>
-          add favourites
+        <button type="button" className="btn h-7 px-2.5 text-[12.5px]" disabled={busy || runnableFavorites.length === 0} onClick={addFavorites}>
+          Add favourites
         </button>
       </div>
 
-      <div role="status" aria-live="polite" className={`text-sm ${result && !result.ok ? 'text-warn' : ''}`}>
-        {busy ? 'saving…' : result ? (result.ok ? result.message : result.error) : ''}
+      <div role="status" aria-live="polite" className={`text-[12.5px] ${result && !result.ok ? 'text-warn' : 'text-add-ink'}`}>
+        {busy ? 'Saving…' : result ? (result.ok ? result.message : result.error) : ''}
       </div>
     </Dialog>
   )
@@ -115,8 +117,8 @@ export default function SaveToExtensionButton() {
   if (!extension) return null
   return (
     <>
-      <button ref={buttonRef} type="button" className="btn" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        <Puzzle size={16} aria-hidden /> save to extension
+      <button ref={buttonRef} type="button" className="btn h-[30px] px-2.5" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <Puzzle size={14} aria-hidden /> Save to extension
       </button>
       {open && <SaveToExtensionDialog stepTypes={extension.stepTypes} onClose={() => setOpen(false)} returnFocus={buttonRef} />}
     </>

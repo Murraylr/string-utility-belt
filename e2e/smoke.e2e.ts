@@ -41,7 +41,7 @@ const UPPER_STEP = { id: 'u1', utilityId: 'case', params: { mode: 'upper' } }
 test.describe('smoke', () => {
   test('home page renders the tool under the app title', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle('Free Online String & Text Tools — String Utility Belt')
+    await expect(page).toHaveTitle('Free Online String & Text Tools | String Utility Belt')
     // wait for the app to mount so errors thrown while rendering are caught by the fixture
     await expect(page.locator('#pipeline-input')).toBeVisible()
   })
@@ -50,11 +50,7 @@ test.describe('smoke', () => {
     await page.goto('/')
     await page.locator('#pipeline-input').fill('  Héllo World  ')
 
-    // the toolbar has a children slot other features fill; pick the select that offers utilities
-    const quickAdd = page
-      .locator('section[aria-label="pipeline toolbar"] select')
-      .filter({ has: page.locator('option[value="slug"]') })
-      .first()
+    const quickAdd = page.getByRole('combobox', { name: 'quick add a utility' })
     await quickAdd.selectOption('trim')
     await quickAdd.selectOption('slug')
 

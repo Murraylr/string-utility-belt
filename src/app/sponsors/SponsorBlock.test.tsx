@@ -42,8 +42,8 @@ describe('SponsorBlock', () => {
     const logo = block.querySelector('img')!
     expect(logo.getAttribute('src')).toBe('/sponsors/acme.svg')
     expect([logo.getAttribute('width'), logo.getAttribute('height'), logo.getAttribute('alt')]).toEqual(['48', '48', ''])
-    expect(block.textContent).toContain('Sponsor · Advertise')
-    expect(screen.getByRole('link', { name: 'Advertise' }).getAttribute('href')).toBe('/advertise/')
+    expect(block.textContent).toContain('SponsorAdvertise here')
+    expect(screen.getByRole('link', { name: 'Advertise here' }).getAttribute('href')).toBe('/advertise/')
   })
 
   it('renders on the server with no script or inline handler', () => {
@@ -59,12 +59,12 @@ describe('PageSponsor', () => {
     render(<PageSponsor page={{ kind: 'utility', id: 'trim' }} sponsorships={[past]} className="mt-3" />)
     expect(screen.queryByRole('complementary', { name: 'Sponsor' })).toBeNull()
     const block = screen.getByRole('complementary', { name: 'From String Utility Belt' })
-    expect(block.className).toBe('sponsor hidden sm:flex mt-3')
+    expect(block.className).toBe('sponsor hidden sm:grid mt-3')
     expect(block.getAttribute('data-promo')).toBe('vscode')
     const link = screen.getByRole('link', { name: `${PROMOS.vscode.name} — ${PROMOS.vscode.text} (opens in a new tab)` })
     expect(link.getAttribute('href')).toBe(PROMOS.vscode.link.href)
     expect(link.getAttribute('rel')).toBe('noopener')
-    expect(block.textContent).toContain('From String Utility Belt · Advertise')
+    expect(block.textContent).toContain('From String Utility BeltAdvertise here')
   })
 
   it("shows today's sponsor and reports a click by ids only", () => {

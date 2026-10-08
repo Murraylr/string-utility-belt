@@ -1,13 +1,13 @@
 ---
-title: Gzip Compress Online — Create a .gz Stream from Text
+title: Gzip Compress Online: Create a .gz Stream from Text
 description: Compress text or bytes into a gzip stream online, at a level from 0 (store) to 9 (smallest), with deterministic output and exact byte examples.
 ---
 ## What is gzip?
 
 Gzip ([RFC 1952](https://www.rfc-editor.org/rfc/rfc1952)) is the compression format behind `.gz`
 files and the `Content-Encoding: gzip` header that makes most web traffic smaller in transit. Inside,
-it is the same DEFLATE algorithm as [deflate compress](/util/deflate_compress/) — LZ77 back-references
-plus Huffman coding — but wrapped in its own header (10 bytes, plus optional fields such as a file
+it is the same DEFLATE algorithm as [deflate compress](/util/deflate_compress/) (LZ77 back-references
+plus Huffman coding), but wrapped in its own header (10 bytes, plus optional fields such as a file
 name, which this tool never writes) and an 8-byte trailer holding a CRC-32 checksum and the
 uncompressed size. That wrapper is what makes gzip streams self-contained and recognizable
 by their `1f 8b` magic bytes, unlike a bare DEFLATE stream or even a zlib-wrapped one.
@@ -29,7 +29,7 @@ output-matches: ^bytes\[31, 139, 08, 00, 00, 00, 00, 00, 00, 03, 243, 72, 205, 2
 The first two bytes, `1f 8b`, are gzip's fixed magic number; the third, `08`, means "DEFLATE" (the
 only compression method gzip ever defines). After a flags byte come four bytes (offsets 4–7) that
 normally hold a modification timestamp, but this tool always writes zero there, so compressing the
-same input twice produces byte-for-byte identical output — useful when you want to diff two
+same input twice produces byte-for-byte identical output. That is useful when you want to diff two
 compressed artifacts and care only about their content, not when they were made. (The examples match
 the output against a pattern only because the UTF-8 rendering of these bytes is unprintable; every
 byte is still pinned.)
@@ -63,7 +63,7 @@ trade one for the other; for most text, the gains above the default `6` are smal
 ## Common uses
 
 - Producing a real `.gz` file or a gzip-encoded HTTP body to test decompression elsewhere.
-- Shrinking a large text payload — logs, JSON exports, CSV data — before storing or transmitting it.
+- Shrinking a large text payload (logs, JSON exports, CSV data) before storing or transmitting it.
 - Comparing how much a particular input actually compresses at different levels before committing to
   one in a larger system.
 - Feeding the result into [base64 encode](/util/base64_encode/) or [hex encode](/util/hex_encode/) to
@@ -71,12 +71,12 @@ trade one for the other; for most text, the gains above the default `6` are smal
 
 ## Tips and pitfalls
 
-Gzip is compression, not encryption — the output carries no secrecy at all, and anyone with a gzip
+Gzip is compression, not encryption. The output carries no secrecy at all, and anyone with a gzip
 decoder (including [gzip decompress](/util/gzip_decompress/) right here) can recover the original
 bytes instantly. Very short or already-compressed input (an image, a video, previously gzipped data)
 typically grows slightly under gzip, because the 18 bytes of header and trailer outweigh anything the
 compressor can find to shrink; that overhead only pays for itself once the input has real repetition
-to exploit. If you need the same compressed data without gzip's own header and trailer — for example
-to embed inside another format that tracks length and checksum itself — use
+to exploit. If you need the same compressed data without gzip's own header and trailer (for example
+to embed inside another format that tracks length and checksum itself), use
 [deflate compress](/util/deflate_compress/) with the `raw` format instead, since gzip and raw DEFLATE
 are not interchangeable even though they share the same underlying algorithm.

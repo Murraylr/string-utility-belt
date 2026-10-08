@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **New look across the whole site.** Warm, flat surfaces with a single orange accent, Instrument Sans for text and
+  JetBrains Mono for data, in light and dark. The header now has a search box for the command palette, icon links
+  to the extensions, CLI and MCP server, and a keyboard shortcuts button. Every page and the pipeline editor were
+  rebuilt in the new style; every feature works as before.
+- **Browser extension: new look** for the toolbar popup and options page, matching the site in light and dark. The
+  popup shows a clear banner when a right-click run fails and links to the options page; deleting a saved pipeline
+  now takes a second click on "Confirm delete" instead of a browser dialog.
+- **Plainer wording** on buttons, hints and the about, contact, integrations and advertise pages.
+
+### Added
+
+- **More of our own tools on content pages.** Besides the sponsor block, utility, recipe, blog, docs, changelog and
+  index pages show our VS Code extension, command-line tool or MCP server in a thin strip under the header, a
+  banner in the content or a card in the side column. Each is labelled "From String Utility Belt", none is sold to
+  sponsors, and none appears on phones. The pipeline editor shows one of our own extensions under the output, and
+  never a sponsor.
+
 ## [1.9.1] - 2026-10-08
 
 ### Changed

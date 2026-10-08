@@ -17,6 +17,7 @@ import type { Recipe } from '../../src/recipes/types'
 import { metaOfRecipe } from '../gen-recipes'
 import { readSourceDates, type SourceDates } from './lastmod'
 import type { Sponsorship } from '../../src/app/sponsors/sponsors'
+import { promoPlan } from '../../src/app/sponsors/promos'
 
 const ROOT = process.cwd()
 const NOW = new Date('2026-01-02T03:04:05Z')
@@ -78,7 +79,7 @@ afterAll(() => {
 
 describe('buildSeo utility guides', () => {
   const GUIDE = [
-    '---', 'title: Trim Whitespace Online — Strip Spaces', 'description: Strip leading and trailing whitespace. $& $$', '---',
+    '---', 'title: Trim Whitespace Online: Strip Spaces', 'description: Strip leading and trailing whitespace. $& $$', '---',
     '## What it removes', '', `Everything ${XSS}`, '',
     '```example', 'input:   padded', 'output: padded', '```',
   ].join('\n')
@@ -94,9 +95,9 @@ describe('buildSeo utility guides', () => {
 
   it("takes the page title and description from the guide's frontmatter", () => {
     const doc = html(read(dist, 'util/trim/index.html'))
-    expect(doc.title).toBe('Trim Whitespace Online — Strip Spaces — String Utility Belt')
+    expect(doc.title).toBe('Trim Whitespace Online: Strip Spaces | String Utility Belt')
     expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Strip leading and trailing whitespace. $& $$')
-    expect(doc.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Trim Whitespace Online — Strip Spaces — String Utility Belt')
+    expect(doc.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe('Trim Whitespace Online: Strip Spaces | String Utility Belt')
     const ld = JSON.parse(doc.querySelector('script[type="application/ld+json"]')!.textContent!)
     expect(ld.description).toBe('Strip leading and trailing whitespace. $& $$')
   })
@@ -113,7 +114,7 @@ describe('buildSeo utility guides', () => {
 
   it('falls back to the utility name/description, with no guide section, when there is no guide', () => {
     const doc = html(read(dist, 'util/pad/index.html'))
-    expect(doc.title).toBe(`${pad.name} — String Utility Belt`)
+    expect(doc.title).toBe(`${pad.name} | String Utility Belt`)
     expect(doc.querySelector('#root details')).toBeNull()
     expect(logs).toContain('[build-seo] warning: 1 of 2 utilities have no guide.md')
   })
@@ -189,7 +190,7 @@ describe('buildSeo over a built dist/', () => {
 
   it('gives the home page its title, RSS discovery, canonical, default OG and site-name JSON-LD', () => {
     const doc = html(read(dist, 'index.html'))
-    expect(doc.title).toBe('Free Online String & Text Tools — String Utility Belt')
+    expect(doc.title).toBe('Free Online String & Text Tools | String Utility Belt')
     expect(doc.querySelector('link[rel="alternate"][type="application/rss+xml"]')?.getAttribute('href')).toBe(`${SITE}/rss.xml`)
     expect(doc.querySelectorAll('link[rel="canonical"]')).toHaveLength(1)
     expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/default.png`)
@@ -264,7 +265,7 @@ describe('buildSeo over a built dist/', () => {
       const ld = [...doc.querySelectorAll('script[type="application/ld+json"]')].map(s => JSON.parse(s.textContent!))
       expect(ld.map(d => d['@type'])[1], slug).toBe('BreadcrumbList')
     }
-    expect(html(read(dist, 'privacy/index.html')).title).toBe('Privacy Policy — String Utility Belt')
+    expect(html(read(dist, 'privacy/index.html')).title).toBe('Privacy Policy | String Utility Belt')
     // the Google Analytics disclosures, with the opt-out links
     const privacy = html(read(dist, 'privacy/index.html')).querySelector('#root main')!
     expect(privacy.textContent).toContain('Google Analytics sets no cookies')
@@ -274,7 +275,7 @@ describe('buildSeo over a built dist/', () => {
 
   it('writes a 404 page that is kept out of the index and links back into the site', () => {
     const doc = html(read(dist, '404.html'))
-    expect(doc.title).toBe('Page not found — String Utility Belt')
+    expect(doc.title).toBe('Page not found | String Utility Belt')
     expect(doc.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')
     expect(doc.querySelector('link[rel="canonical"]')).toBeNull()
     expect(doc.querySelector('#root h1')?.textContent).toBe('Page not found')
@@ -520,8 +521,18 @@ describe('buildSeo recipes', () => {
     const promo = html(read(dist, 'recipes/shout-slugs/index.html')).querySelector('#root main header aside[data-promo]')!
     expect(promo.getAttribute('data-promo')).toBe('vscode')
     expect(promo.getAttribute('aria-label')).toBe('From String Utility Belt')
-    expect(promo.className).toBe('sponsor hidden sm:flex')
+    expect(promo.className).toBe('sponsor hidden sm:grid')
     expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
+  })
+
+  it('pre-renders the inline promo the app shows after "Step by step", and one after the index\'s first category', () => {
+    const page = html(read(dist, 'recipes/shout-slugs/index.html'))
+    const inline = page.querySelector('#root main aside[data-promo-slot="inline"]')!
+    expect(inline.getAttribute('data-promo')).toBe(promoPlan({ kind: 'recipe', slug: 'shout-slugs' }).inline)
+    expect(inline.previousElementSibling?.querySelector('#recipe-steps-h')).toBeTruthy()
+    const index = html(read(dist, 'recipes/index.html')).querySelector('#root main aside[data-promo-slot="inline"]')!
+    expect(index.getAttribute('data-promo')).toBe(promoPlan({ kind: 'index' }).inline)
+    expect(index.previousElementSibling?.tagName).toBe('SECTION')
   })
 
   it('lists recipes on their index, links them from the utilities they use and the sitemap', () => {
@@ -568,8 +579,8 @@ describe('buildSeo with hostile utility metadata', () => {
       expect([...doc.querySelectorAll('script')].every(s => s.type === 'module' || s.type === 'application/ld+json'), rel).toBe(true)
     }
     const doc = html(read(dist, 'util/evil_util/index.html'))
-    expect(doc.title).toBe(`${XSS} — String Utility Belt`)
-    expect(doc.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(`${XSS} — String Utility Belt`)
+    expect(doc.title).toBe(`${XSS} | String Utility Belt`)
+    expect(doc.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(`${XSS} | String Utility Belt`)
     expect(doc.querySelector('#root h1')?.textContent).toBe(XSS)
     // the example's input and output blocks (the first <pre> is the command-line snippet)
     expect([...doc.querySelectorAll('#root pre')].map(p => p.textContent)).toContain(XSS)

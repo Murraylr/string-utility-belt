@@ -7,22 +7,32 @@ import LargeInputBanner from './LargeInputBanner'
 import { SIZE_GUARD } from './useRunner'
 import { writePref } from '@/app/prefs'
 
+/** Where the last run ran and whether it was partial (the output panel shows this, not the controls). */
+function RunProbe() {
+  const { run } = useTool()
+  return <span data-testid="run">{run.where ? `${run.where}${run.partial ? ' partial' : ''}` : ''}</span>
+}
+
 function renderWithTool(ui: React.ReactNode, initialInput = '') {
   return render(
     <ToolProvider initialSteps={[]} initialInput={initialInput} persist={false}>
       {ui}
+      <RunProbe />
     </ToolProvider>,
   )
 }
 
+const lastRun = () => screen.getByTestId('run').textContent
+
 afterEach(() => localStorage.clear())
 
 describe('EngineControls', () => {
-  it('renders the live/manual toggle and a status chip once a run completes', async () => {
+  it('renders the live/manual toggle, and no timing of its own (the output panel shows it)', async () => {
     renderWithTool(<EngineControls />, 'hello')
     expect(screen.getByRole('button', { name: 'Live' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Manual' })).toHaveAttribute('aria-pressed', 'false')
-    await waitFor(() => expect(screen.getByText(/main thread/)).toBeInTheDocument())
+    await waitFor(() => expect(lastRun()).toBe('main'))
+    expect(screen.getByRole('group', { name: 'engine controls' })).not.toHaveTextContent(/\d+\s?ms/)
   })
 
   it('switching to Manual enables the Run button; switching back to Live disables it', async () => {
@@ -39,7 +49,7 @@ describe('EngineControls', () => {
   it('toggles the "preview first 64 KB" pref', async () => {
     const user = userEvent.setup()
     renderWithTool(<EngineControls />, 'hello')
-    const checkbox = screen.getByRole('checkbox', { name: /preview first 64 kb/i })
+    const checkbox = screen.getByRole('checkbox', { name: /first 64 kb/i })
     expect(checkbox).not.toBeChecked()
     await user.click(checkbox)
     expect(checkbox).toBeChecked()
@@ -58,18 +68,17 @@ describe('EngineControls', () => {
     const user = userEvent.setup()
     const bigish = Array.from({ length: 400 }, () => 'y'.repeat(200)).join('\n') // > 64 KB, < SIZE_GUARD
     renderWithTool(<EngineControls />, bigish)
-    await waitFor(() => expect(screen.getByText(/partial/)).toBeInTheDocument())
+    await waitFor(() => expect(lastRun()).toBe('main partial'))
     const runButton = screen.getByRole('button', { name: 'Run' })
     expect(runButton).toBeEnabled()
     await user.click(runButton)
-    await waitFor(() => expect(screen.queryByText(/partial/)).not.toBeInTheDocument())
-    expect(screen.getByText(/main thread/)).toBeInTheDocument()
+    await waitFor(() => expect(lastRun()).toBe('main'))
     expect(runButton).toBeDisabled()
   })
 
   it('shows no large-input banner for ordinary input', async () => {
     renderWithTool(<EngineControls />, 'hello')
-    await waitFor(() => expect(screen.getByText(/main thread/)).toBeInTheDocument())
+    await waitFor(() => expect(lastRun()).toBe('main'))
     expect(screen.queryByText(/live preview paused/i)).not.toBeInTheDocument()
   })
 })
@@ -103,10 +112,10 @@ describe('LargeInputBanner', () => {
     renderWithTool(<EngineControls />, big)
     const banner = await screen.findByRole('status')
     expect(banner).toHaveTextContent(/large input \(1\.0 MB\) — live preview paused/i)
-    expect(screen.queryByText(/ms$/)).not.toBeInTheDocument() // nothing has run yet
+    expect(lastRun()).toBe('') // nothing has run yet
     await user.click(within(banner).getByRole('button', { name: /run full input/i }))
     // an empty pipeline over a huge string is line-chunkable, so it runs chunked
-    await waitFor(() => expect(screen.getByText(/chunked · \d+ms/)).toBeInTheDocument())
+    await waitFor(() => expect(lastRun()).toBe('chunked'))
     // still paused for the next edit: the banner stays
     expect(screen.getByRole('status')).toHaveTextContent(/live preview paused/i)
   })

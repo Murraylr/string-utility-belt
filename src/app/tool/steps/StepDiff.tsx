@@ -25,7 +25,7 @@ type Outcome =
   | { for: PreparedDiff; status: 'ready'; rows: DiffRow[] }
   | { for: PreparedDiff; status: 'too-complex' | 'error' }
 
-const note = (text: string, cls = 'muted italic') => <div className={`text-sm ${cls}`}>{text}</div>
+const note = (text: string, cls = 'text-muted') => <div className={`px-3.5 pt-1 pb-2.5 text-xs ${cls}`}>{text}</div>
 
 export default function StepDiff({ before, after }: StepDiffProps) {
   const prepared = useMemo(() => prepareDiff(before, after), [before, after])
@@ -47,22 +47,23 @@ export default function StepDiff({ before, after }: StepDiffProps) {
   if (prepared.kind === 'type-mismatch') return note('different value types')
   if (prepared.kind === 'too-large') return note('too large to diff')
   if (prepared.kind === 'same') return note('no textual change')
-  if (!outcome || outcome.for !== prepared) return note('diffing…', 'muted')
+  if (!outcome || outcome.for !== prepared) return note('diffing…')
   if (outcome.status !== 'ready') {
     return outcome.status === 'error' ? note('could not compute diff', 'text-danger') : note('too many changes to diff')
   }
 
   return (
-    <div role="group" aria-label="step diff" className="font-mono text-xs rounded-xl border overflow-auto max-h-80">
+    <div role="group" aria-label="step diff" className="font-mono text-xs leading-[18px] pt-1 pb-2 overflow-auto max-h-[200px]">
       {outcome.rows.map((r, i) => {
         if (r.type === 'collapse') {
-          return <div key={i} className="px-2 py-0.5 muted italic">… {r.count} unchanged {r.count === 1 ? 'line' : 'lines'}</div>
+          return <div key={i} className="px-3.5 text-muted">… {r.count} unchanged {r.count === 1 ? 'line' : 'lines'}</div>
         }
-        const cls = r.type === 'add' ? 'bg-success/10 text-success' : r.type === 'remove' ? 'bg-danger/10 text-danger' : ''
+        const cls = r.type === 'add' ? 'bg-add-bg text-add-ink' : r.type === 'remove' ? 'bg-del-bg text-del-ink' : ''
         const marker = r.type === 'add' ? '+' : r.type === 'remove' ? '-' : ' '
         return (
-          <div key={i} className={`px-2 whitespace-pre-wrap wrap-anywhere ${cls}`}>
-            {marker} {r.text}
+          <div key={i} className={`flex px-3.5 ${cls}`}>
+            <span className="w-[22px] shrink-0 whitespace-pre select-none">{marker} </span>
+            <span className="min-w-0 whitespace-pre-wrap wrap-anywhere">{r.text}</span>
           </div>
         )
       })}

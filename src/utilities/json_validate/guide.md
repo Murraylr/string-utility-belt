@@ -1,10 +1,10 @@
 ---
-title: JSON Validator Online — Check JSON Syntax
+title: JSON Validator Online: Check JSON Syntax
 description: Validate JSON syntax online and see the exact error, line, column and source excerpt; optionally allow JSON5-style comments and trailing commas.
 ---
 ## What does a JSON validator check?
 
-Most JSON errors — a missing comma, an unclosed brace, a stray trailing comma — are invisible until something tries to parse the document and fails. This tool runs a full JSON parser over your input and reports either that it's valid, or exactly what's wrong: the error message, the line and column where it occurs, and a short excerpt of that line so you don't have to hunt for it. It never guesses at a fix; it tells you precisely where the parser gave up.
+Most JSON errors (a missing comma, an unclosed brace, a stray trailing comma) are invisible until something tries to parse the document and fails. This tool runs a full JSON parser over your input and reports either that it's valid, or exactly what's wrong: the error message, the line and column where it occurs, and a short excerpt of that line so you don't have to hunt for it. It never guesses at a fix; it tells you precisely where the parser gave up.
 
 ## How it works
 
@@ -38,7 +38,7 @@ output:
 }
 ```
 
-Under the hood, strict mode checks the input with the JavaScript engine's native `JSON.parse`, which is the authority on whether it's really valid — but its error text is engine-specific and doesn't always pinpoint the problem. So on failure, the tool re-scans the input with its own hand-written parser whose only job is to walk up to the first syntax error and report exactly where it is. (With strict off, that hand-written scanner alone decides validity.)
+Under the hood, strict mode checks the input with the JavaScript engine's native `JSON.parse`, which is the authority on whether it's really valid. But its error text is engine-specific and doesn't always pinpoint the problem. So on failure, the tool re-scans the input with its own hand-written parser whose only job is to walk up to the first syntax error and report exactly where it is. (With strict off, that hand-written scanner alone decides validity.)
 
 ### Strict vs. lenient mode
 
@@ -58,11 +58,11 @@ output:
 }
 ```
 
-Whatever mode you use, the check is purely syntactic. It confirms the text can be parsed into a value; it does not check that value against any particular shape or set of required fields — for that, use [json schema validate](/util/json_schema_validate/).
+Whatever mode you use, the check is purely syntactic. It confirms the text can be parsed into a value; it does not check that value against any particular shape or set of required fields. For that, use [json schema validate](/util/json_schema_validate/).
 
 ## Options
 
-- **strict (RFC 8259)** — on by default. Off accepts JSON5/JSONC syntax: comments, trailing commas, single quotes, unquoted keys, and hex/`+`/leading-dot numbers.
+- **strict (RFC 8259)**: on by default. Off accepts JSON5/JSONC syntax: comments, trailing commas, single quotes, unquoted keys, and hex/`+`/leading-dot numbers.
 
 ## Common uses
 
@@ -73,7 +73,7 @@ Whatever mode you use, the check is purely syntactic. It confirms the text can b
 
 ## Tips and pitfalls
 
-- Empty input reports `valid: false` with the message `empty input` rather than treating a blank box as trivially valid — there is nothing to parse yet.
+- Empty input reports `valid: false` with the message `empty input` rather than treating a blank box as trivially valid. There is nothing to parse yet.
 - The excerpt is capped at 120 code points; a very long line is trimmed around the error position with `…` markers rather than dumped in full.
 - Column counts code points, not UTF-16 units, so a line containing an emoji before the error still reports the column a person would count by eye.
-- If your source legitimately uses JSON5 or JSONC syntax and you want the strict JSON equivalent rather than just a validity check, use [json5 / jsonc parse](/util/json5_parse/) instead — it converts rather than just reports.
+- If your source legitimately uses JSON5 or JSONC syntax and you want the strict JSON equivalent rather than just a validity check, use [json5 / jsonc parse](/util/json5_parse/) instead. It converts rather than just reports.

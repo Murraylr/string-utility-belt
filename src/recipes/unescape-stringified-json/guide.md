@@ -1,5 +1,5 @@
 ---
-title: Unescape Stringified JSON — Strip Backslashes and Format
+title: Unescape Stringified JSON: Strip Backslashes and Format
 description: Turn JSON full of backslashes back into indented JSON, quoted or not, stringified once or twice. Text that is already valid JSON is only reformatted.
 ---
 

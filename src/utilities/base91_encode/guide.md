@@ -1,10 +1,10 @@
 ---
-title: basE91 Encode Online — Text to Base91 Converter
+title: basE91 Encode Online: Text to Base91 Converter
 description: Encode text or bytes as basE91 online, a denser printable-ASCII encoding than Base64 that avoids spaces, apostrophes, hyphens and backslashes.
 ---
 ## What is basE91 encoding?
 
-basE91 (also written Base91) is a denser alternative to [base64 encode](/util/base64_encode/): it uses 91 printable ASCII characters instead of 64, so it needs fewer characters to represent the same bytes — roughly **23% overhead** for typical data (as little as about 14% for input made mostly of zero bits) instead of Base64's 33%. The alphabet is every printable ASCII character except the apostrophe (`'`), the backslash (`\`), and the hyphen (`-`), and it never produces a space, so the result can go inside a single-quoted shell string without extra escaping. It does include the double quote (`"`), so a double-quoted string, such as a C or JSON string literal, still needs escaping. basE91 was designed by Joachim Henke as a denser sibling to Base64 — it is not an IETF standard the way Base32 and Base64 are (RFC 4648).
+basE91 (also written Base91) is a denser alternative to [base64 encode](/util/base64_encode/): it uses 91 printable ASCII characters instead of 64, so it needs fewer characters to represent the same bytes: roughly **23% overhead** for typical data (as little as about 14% for input made mostly of zero bits) instead of Base64's 33%. The alphabet is every printable ASCII character except the apostrophe (`'`), the backslash (`\`), and the hyphen (`-`), and it never produces a space, so the result can go inside a single-quoted shell string without extra escaping. It does include the double quote (`"`), so a double-quoted string, such as a C or JSON string literal, still needs escaping. basE91 was designed by Joachim Henke as a denser sibling to Base64. It is not an IETF standard the way Base32 and Base64 are (RFC 4648).
 
 ## How it works
 
@@ -23,7 +23,7 @@ output: TPwJh>Io2Tv!lE
 
 ### Raw bytes, including values above 0x7F
 
-Because basE91 operates on bytes, not text, it round-trips raw binary data exactly — including bytes above 0x7F that would need explicit UTF-8 handling elsewhere:
+Because basE91 operates on bytes, not text, it round-trips raw binary data exactly, including bytes above 0x7F that would need explicit UTF-8 handling elsewhere:
 
 ```example
 title: raw bytes are encoded exactly, byte for byte
@@ -54,6 +54,6 @@ output:
 
 ## Tips and pitfalls
 
-- This tool has no configurable options — there is only one basE91 alphabet, unlike [base32 encode](/util/base32_encode/) or [base85 encode](/util/base85_encode/), which support multiple variants.
-- basE91 is an encoding, not encryption or compression. It hides nothing, and the output is always larger than the input — only less so than with Base64.
+- This tool has no configurable options. There is only one basE91 alphabet, unlike [base32 encode](/util/base32_encode/) or [base85 encode](/util/base85_encode/), which support multiple variants.
+- basE91 is an encoding, not encryption or compression. It hides nothing, and the output is always larger than the input, only less so than with Base64.
 - To recover the original text or bytes, use [basE91 decode](/util/base91_decode/).

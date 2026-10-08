@@ -1,6 +1,6 @@
 import React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import SitePage from './SitePage'
 import { headingId, parseSitePage } from './sitePages'
 import { readPref, writePref } from '@/app/prefs'
@@ -16,9 +16,24 @@ describe('SitePage', () => {
     for (const link of screen.getAllByRole('link', { name: "Google's Ads Settings" })) {
       expect(link.getAttribute('href')).toBe('https://adssettings.google.com/')
     }
-    expect(document.title).toBe('Privacy Policy — String Utility Belt')
+    expect(document.title).toBe('Privacy Policy | String Utility Belt')
     unmount()
     expect(document.title).toBe('String Utility Belt')
+  })
+
+  it('lists the sections beside the page, by in-page links, with one of our own tools under them', () => {
+    const { container } = render(<SitePage slug="privacy" />)
+    const toc = screen.getByRole('navigation', { name: 'On this page' })
+    const link = within(toc).getByRole('link', { name: 'Cookies and analytics' })
+    expect(link).toHaveAttribute('href', '/privacy/#cookies-and-analytics')
+    expect(container.querySelector('#cookies-and-analytics')?.tagName).toBe('H2')
+    expect(container.querySelector('[data-promo-slot="rail"]')).toHaveAccessibleName('From String Utility Belt')
+  })
+
+  it('keeps our own promos off the advertise page, which sells the sponsor slot', () => {
+    const { container } = render(<SitePage slug="advertise" />)
+    expect(screen.getByRole('navigation', { name: 'On this page' })).toBeTruthy()
+    expect(container.querySelector('[data-promo-slot]')).toBeNull()
   })
 
   it('links the site pages to each other by crawlable paths', () => {
@@ -69,6 +84,7 @@ describe('parseSitePage', () => {
     expect(page.html).toContain('<h1 class="md-h1">About</h1>')
     expect(page.html).toContain('<h2 id="why" class="md-h2">Why</h2>')
     expect(page.html).toContain('<ul class="md-ul"><li class="md-li">one</li><li class="md-li">two</li></ul>')
+    expect(page.sections).toEqual([{ id: 'why', title: 'Why' }])
   })
 
   it('gives each section heading a unique id from its text, for links to a section', () => {
@@ -77,6 +93,11 @@ describe('parseSitePage', () => {
     expect(page.html).toContain('<h2 id="vs-code-extension" class="md-h2">VS Code extension</h2>')
     expect(page.html).toMatch(/<h2 id="subelt-friends" class="md-h2"><code[^>]*>subelt<\/code> &amp; friends<\/h2>/)
     expect([...page.html.matchAll(/<h3 id="([^"]+)"/g)].map(m => m[1])).toEqual(['setup', 'setup-2'])
+    // the contents list: `##` sections only, as plain text
+    expect(page.sections).toEqual([
+      { id: 'vs-code-extension', title: 'VS Code extension' },
+      { id: 'subelt-friends', title: 'subelt & friends' },
+    ])
   })
 })
 

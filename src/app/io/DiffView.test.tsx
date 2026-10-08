@@ -17,19 +17,21 @@ const diffLines = vi.hoisted(() => vi.fn((a: string, b: string, opts: { callback
 }))
 vi.mock('diff', () => ({ diffLines }))
 
+/** Each line is a row of [sign, text]. */
+const rows = (region: HTMLElement) => Array.from(region.children).map(r => Array.from(r.children).map(c => c.textContent))
+
 describe('DiffView', () => {
   it('lazily loads the diff package and renders added/removed lines', async () => {
     render(<DiffView before="hello" after="world" />)
     expect(screen.getByText(/computing diff/i)).toBeTruthy()
     const region = await screen.findByRole('region', { name: 'input to output diff' })
-    expect(region.textContent).toContain('- hello')
-    expect(region.textContent).toContain('+ world')
+    expect(rows(region)).toEqual([['-', 'hello'], ['+', 'world']])
   })
 
   it('shows unchanged content with a neutral prefix', async () => {
     render(<DiffView before="same" after="same" />)
     const region = await screen.findByRole('region', { name: 'input to output diff' })
-    expect(region.textContent).toBe('  same')
+    expect(rows(region)).toEqual([['', 'same']])
   })
 
   it('passes a timeout so a pathological diff cannot hang the page, and says so when it expires', async () => {
@@ -52,7 +54,7 @@ describe('DiffView', () => {
     await screen.findByRole('region', { name: 'input to output diff' })
     rerender(<DiffView before="one" after="three" />)
     expect(screen.queryByText(/computing diff/i)).toBeNull()
-    expect(screen.getByRole('region', { name: 'input to output diff' }).textContent).toContain('+ two')
-    await waitFor(() => expect(screen.getByRole('region', { name: 'input to output diff' }).textContent).toContain('+ three'))
+    expect(rows(screen.getByRole('region', { name: 'input to output diff' }))).toContainEqual(['+', 'two'])
+    await waitFor(() => expect(rows(screen.getByRole('region', { name: 'input to output diff' }))).toContainEqual(['+', 'three']))
   })
 })

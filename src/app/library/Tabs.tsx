@@ -32,7 +32,7 @@ export default function Tabs<T extends string>({ label, tabs, value, onChange, p
   }
 
   return (
-    <div className="flex items-center gap-2" role="tablist" aria-label={label}>
+    <div className="flex gap-0.5 -mt-1 mb-0.5 border-b" role="tablist" aria-label={label}>
       {tabs.map((t, i) => {
         const selected = t.id === value
         return (
@@ -45,7 +45,7 @@ export default function Tabs<T extends string>({ label, tabs, value, onChange, p
             aria-selected={selected}
             aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
-            className={`btn ${selected ? 'bg-primary-600 text-white hover:bg-primary-700' : ''}`}
+            className={`h-8 px-2.5 -mb-px border-b-2 text-[13px] font-medium ${selected ? 'border-acc text-fg' : 'border-transparent text-muted hover:text-fg'}`}
             onClick={() => onChange(t.id)}
             onKeyDown={e => onKeyDown(e, i)}
           >

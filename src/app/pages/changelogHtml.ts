@@ -65,3 +65,32 @@ export function renderChangelogHtml(md: string): string {
   // identifier) would otherwise force this narrow article wider than the viewport.
   return html.replace(INLINE_CODE_CLASS, 'class="md-code wrap-break-word"')
 }
+
+/** One `## [version] - date` section, its notes rendered by `renderChangelogHtml`. */
+export interface ChangelogReleaseHtml {
+  /** `Unreleased`, `1.7.0`…, without Keep a Changelog's link brackets. */
+  version: string
+  /** ISO `YYYY-MM-DD`, when the heading carries one. */
+  date?: string
+  html: string
+}
+
+/** `## [1.7.0] - 2026-10-08`, `## [Unreleased]`, `## 1.2.0` */
+const RELEASE_HEADING = /^##[ \t]+\[?([^\]\n]+?)\]?(?:[ \t]+-[ \t]+(\d{4}-\d{2}-\d{2}))?[ \t]*$/
+
+/**
+ * CHANGELOG.md split into its releases, newest first (as written), for the changelog
+ * page's version column. The `# Changelog` title and the intro before the first
+ * release are left out: the page has its own header.
+ */
+export function renderChangelogReleases(md: string): ChangelogReleaseHtml[] {
+  const releases: { version: string; date?: string; body: string[] }[] = []
+  let inFence = false
+  for (const line of String(md).replace(/\r\n?/g, '\n').split('\n')) {
+    if (FENCE.test(line)) inFence = !inFence
+    const heading = inFence ? null : RELEASE_HEADING.exec(line)
+    if (heading) releases.push({ version: heading[1].trim(), date: heading[2], body: [] })
+    else releases[releases.length - 1]?.body.push(line)
+  }
+  return releases.map(({ version, date, body }) => ({ version, date, html: renderChangelogHtml(body.join('\n').trim()) }))
+}

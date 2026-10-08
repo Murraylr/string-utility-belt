@@ -20,19 +20,34 @@ describe('<BlogIndex />', () => {
     await waitFor(() => expect(screen.getByText('No posts yet.')).toBeInTheDocument())
   })
 
-  it('lists fetched posts using the theme-token card class (no hardcoded bg-white)', async () => {
+  it('lists fetched posts as hairline rows with their tags (no hardcoded bg-white)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve([{ slug: 'a', title: 'Post A', date: '2025-01-01', description: 'desc' }]),
+      json: () => Promise.resolve([{ slug: 'a', title: 'Post A', date: '2025-01-01', description: 'desc', tags: ['base64', 7, 'cli'] }]),
     }))
     render(<BlogIndex />)
     const link = await screen.findByText('Post A')
     // the pre-rendered post's crawlable path, not a #/ route
     expect(link).toHaveAttribute('href', '/blog/a/')
-    const card = link.closest('li')
-    expect(card.className).toContain('card')
-    expect(card.className).not.toMatch(/bg-white|text-gray/)
+    const row = link.closest('li')
+    expect(row.className).toContain('border-t')
+    expect(row.className).not.toMatch(/bg-white|text-gray/)
     expect(screen.getByText('desc')).toBeInTheDocument()
+    // string tags only
+    expect([...row.querySelectorAll('.chip')].map(c => c.textContent)).toEqual(['base64', 'cli'])
+  })
+
+  it('shows one of our own tools after the newest post, never a sponsor', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve([{ slug: 'a', title: 'Post A' }, { slug: 'b', title: 'Post B' }]),
+    }))
+    const { container } = render(<BlogIndex />)
+    await screen.findByText('Post B')
+    const rows = [...container.querySelectorAll('ul > li')]
+    expect(rows[0].textContent).toContain('Post A')
+    expect(rows[1].querySelector('[data-promo-slot="inline"]')).toHaveAccessibleName('From String Utility Belt')
+    expect(rows[2].textContent).toContain('Post B')
   })
 
   it('falls back to an empty list when the fetch rejects', async () => {
@@ -68,7 +83,7 @@ describe('<BlogIndex /> (review regressions)', () => {
       }))
       render(<BlogIndex />)
       await screen.findByText('Post A')
-      expect(screen.getAllByRole('listitem')).toHaveLength(1)
+      expect(screen.getAllByRole('link').filter(a => a.getAttribute('href')?.startsWith('/blog/'))).toHaveLength(1)
       expect(screen.getByText('January 15, 2025').tagName).toBe('TIME')
     } finally {
       process.env.TZ = tz

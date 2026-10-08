@@ -7,6 +7,8 @@ export interface SitePageDoc {
   description: string
   /** The body — its own `# heading` included — as trusted HTML. */
   html: string
+  /** The `##` sections, in order, as plain text with their anchor ids: the page's table of contents. */
+  sections: { id: string; title: string }[]
 }
 
 const SECTION_HEADING = /<h([23]) class="md-h\1">([\s\S]*?)<\/h\1>/g
@@ -37,11 +39,23 @@ function withSectionIds(html: string): string {
   })
 }
 
+const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" }
+const H2_WITH_ID = /<h2 id="([^"]+)" class="md-h2">([\s\S]*?)<\/h2>/g
+
+/** The text of the `##` headings `withSectionIds` gave an id, undoing `escapeHtml`'s entities. */
+function sectionsOf(html: string): SitePageDoc['sections'] {
+  return [...html.matchAll(H2_WITH_ID)].map(([, id, inner]) => ({
+    id,
+    title: inner.replace(/<[^>]*>/g, '').replace(/&(?:amp|lt|gt|quot|#39);/g, e => ENTITIES[e]).trim(),
+  }))
+}
+
 /**
  * Frontmatter `title` and `description`, then markdown in the guide syntax
  * (lists, tables, links) whose `#` line is the page's `<h1>`.
  */
 export function parseSitePage(source: string): SitePageDoc {
   const { title = '', description = '' } = parseGuide(source)
-  return { title, description, html: withSectionIds(renderMarkdownDocument(source)) }
+  const html = withSectionIds(renderMarkdownDocument(source))
+  return { title, description, html, sections: sectionsOf(html) }
 }

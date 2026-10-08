@@ -1,5 +1,5 @@
 ---
-title: Password Entropy Calculator — Shannon Entropy Online
+title: Password Entropy Calculator: Shannon Entropy Online
 description: Calculate Shannon entropy per character and in total, plus a rough length × charset password-strength score and crack-time estimate.
 ---
 ## What is entropy, and what is password entropy?
@@ -12,7 +12,7 @@ easy to confuse:
   character you already know every other one.
 - **Password entropy** ignores which characters you actually typed. It only looks at which *kinds* of
   character appear (lowercase letters, digits, symbols, and so on) and computes
-  `length × log2(charsetSize)` — the entropy the string *would* have if every character had been picked uniformly at random
+  `length × log2(charsetSize)`: the entropy the string *would* have if every character had been picked uniformly at random
   from those classes. This is the textbook "pool size × length" formula behind many simple strength
   meters, and it is what the strength rating, crack-time estimate, and guess count on this page are based
   on.
@@ -45,7 +45,7 @@ output:
 }
 ```
 
-`charsetSize` is built from which character classes are present — 26 for lowercase, 26 for uppercase, 10
+`charsetSize` is built from which character classes are present: 26 for lowercase, 26 for uppercase, 10
 for digits, 1 for a literal space, 32 for other printable punctuation, plus the exact number of distinct
 control or non-ASCII characters seen (a conservative floor for characters outside the ASCII printable
 range). `passwordEntropy` is then `length × log2(charsetSize)`, and `strength` and `crackTime` are derived
@@ -53,7 +53,7 @@ from that number, not from `entropyPerCharacter`.
 
 That distinction matters: a string like `aaaaaa` has an `entropyPerCharacter` and `totalEntropy` of exactly
 0 (it is maximally predictable), yet its `passwordEntropy` is still 28.2 bits (6 × log2 26), because the
-calculation only knows the string is six lowercase letters — it has no idea the letters are all the same
+calculation only knows the string is six lowercase letters. It has no idea the letters are all the same
 one, so it rates it "weak" rather than "very weak". Shannon entropy would catch the repetition; password
 entropy, by design, does not:
 
@@ -98,10 +98,10 @@ est. crack time:        1.9e+22 years
 
 ## Options
 
-- **unit** — `bits` (default) or `nats`. Switches every entropy figure between the two units;
+- **unit**: `bits` (default) or `nats`. Switches every entropy figure between the two units;
   `passwordEntropyBits` and the strength rating always stay in bits regardless of this setting, since the
   strength ladder and crack-time estimate are defined in bits.
-- **output format** — `json` (default, a structured report) or `text` (the same numbers as a short
+- **output format**: `json` (default, a structured report) or `text` (the same numbers as a short
   readable report, shown above).
 
 ## Crack-time assumptions
@@ -109,7 +109,7 @@ est. crack time:        1.9e+22 years
 The crack-time figure is back-of-the-envelope arithmetic, not a security assessment. It takes the password
 entropy above (so it assumes the string was generated at random from its character classes), assumes an
 attacker searching half of that keyspace on average, and divides by a fixed 10 billion (10¹⁰) guesses per
-second — roughly a fast, unthrottled offline attack against a fast, unsalted hash. Real attackers try
+second, which is roughly a fast, unthrottled offline attack against a fast, unsalted hash. Real attackers try
 dictionary words, common patterns and leaked passwords first, so a human-chosen password like
 `password123` falls in moments, not the "3 months" shown above. The fixed rate also ignores online
 rate-limiting and slow password hashes such as bcrypt or Argon2, which change the effective
@@ -118,7 +118,7 @@ guesses-per-second by many orders of magnitude.
 ## Common uses
 
 - Getting a quick length × charset figure for a random password or API key produced by
-  [password generator](/util/password_generator/) or [random string](/util/random_string/) — for truly
+  [password generator](/util/password_generator/) or [random string](/util/random_string/). For truly
   random character strings, that figure is a fair approximation.
 - Measuring how evenly characters are distributed in a string (Shannon entropy per character), for
   example to spot low-variety or repetitive data.
@@ -127,7 +127,7 @@ guesses-per-second by many orders of magnitude.
 ## Tips and pitfalls
 
 - This is not a real-world password strength checker. It has no idea what a dictionary word, a keyboard
-  pattern, or a previously breached password looks like — `password1` and an equally long random string
+  pattern, or a previously breached password looks like. `password1` and an equally long random string
   from the same character classes get the same password-entropy score, even though a real attacker would
   guess the former almost immediately with a wordlist.
 - Because password entropy is derived only from length and character-class membership, adding one

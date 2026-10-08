@@ -1,5 +1,5 @@
 ---
-title: Word Frequency Counter — Most Common Words Online
+title: Word Frequency Counter: Most Common Words Online
 description: Count how often each word appears in text online, with options for stop words, minimum length, punctuation, and table, JSON, or CSV output.
 ---
 ## What does this tool do?
@@ -17,7 +17,7 @@ hat  1
 
 ## How it works
 
-With the default **strip punctuation** setting, the text is split into words — runs of letters and digits that may include an internal apostrophe or hyphen, so `don't` and `well-known` each count as a single word — and each one is tallied. Rows are sorted by count, highest first; words tied on count are then sorted by character code (alphabetical for lowercase words, with uppercase sorting before lowercase), which is why `cat`, `end`, and `hat` — each appearing once above — are listed in that order.
+With the default **strip punctuation** setting, the text is split into words (runs of letters and digits that may include an internal apostrophe or hyphen, so `don't` and `well-known` each count as a single word), and each one is tallied. Rows are sorted by count, highest first; words tied on count are then sorted by character code (alphabetical for lowercase words, with uppercase sorting before lowercase), which is why `cat`, `end`, and `hat` (each appearing once above) are listed in that order.
 
 By default the table only shows the **top 20** words; anything past that is still counted toward the `totalWords` and `uniqueWords` figures of the JSON output but not displayed, so a long document's table does not run on forever. Set **top n** to `0` to show every word.
 
@@ -43,7 +43,7 @@ the  1
 
 ## Removing stop words and short words
 
-Turning on **remove stop words** drops a built-in list of common English function words — "the", "and", "of", "is", and similar — so the remaining list is closer to the meaningful vocabulary of the text.
+Turning on **remove stop words** drops a built-in list of common English function words ("the", "and", "of", "is", and similar), so the remaining list is closer to the meaningful vocabulary of the text.
 
 ```example
 title: stop words are excluded when turned on
@@ -65,12 +65,12 @@ dddd  1
 
 ## Options
 
-- **top n (0 = all)** — how many rows to display, sorted by frequency (default 20; `0` shows every word).
-- **ignore case** — folds words together regardless of case (default on).
-- **remove stop words** — excludes common English function words (default off).
-- **min word length** — the shortest word length to count, in characters (default 1, meaning no filtering).
-- **format** — `table` (default), `json` (an object with `totalWords`, `uniqueWords`, and a `words` array), or `csv`.
-- **strip punctuation** — treats a word as just its letters and digits, ignoring surrounding punctuation (default on); turning it off keeps punctuation attached, so `hi,` and `hi` count as different words.
+- **top n (0 = all)**: how many rows to display, sorted by frequency (default 20; `0` shows every word).
+- **ignore case**: folds words together regardless of case (default on).
+- **remove stop words**: excludes common English function words (default off).
+- **min word length**: the shortest word length to count, in characters (default 1, meaning no filtering).
+- **format**: `table` (default), `json` (an object with `totalWords`, `uniqueWords`, and a `words` array), or `csv`.
+- **strip punctuation**: treats a word as just its letters and digits, ignoring surrounding punctuation (default on); turning it off keeps punctuation attached, so `hi,` and `hi` count as different words.
 
 ## Common uses
 
@@ -81,7 +81,7 @@ dddd  1
 
 ## Tips and pitfalls
 
-- Because only the top 20 words are shown by default, a longer document may hide words you expect to see — set **top n** to `0` if you need the complete list.
+- Because only the top 20 words are shown by default, a longer document may hide words you expect to see. Set **top n** to `0` if you need the complete list.
 - Words are tokenized as letters and digits, so numbers count as words on their own and hyphenated or apostrophized words stay whole; punctuation-only tokens are dropped when **strip punctuation** is on.
 - With **strip punctuation** on, emoji and other symbols are never counted as words, since a word must start with a letter or digit; turn it off and any run of non-whitespace, emoji included, counts.
 - For a plain overall word count without a per-word breakdown, use [count](/util/count/). For analyzing common word pairs or sequences instead of single words, see [ngram_frequency](/util/ngram_frequency/).

@@ -15,8 +15,8 @@ export default function ShareButton() {
 
   return (
     <>
-      <button ref={buttonRef} className="btn" aria-haspopup="dialog" onClick={() => setOpen(true)}>
-        <Share2 size={16} aria-hidden /> share
+      <button ref={buttonRef} className="btn h-[30px] px-2.5" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        <Share2 size={14} aria-hidden /> Share
       </button>
       {open && <ShareDialog onClose={() => setOpen(false)} returnFocus={buttonRef} />}
     </>

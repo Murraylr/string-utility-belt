@@ -23,7 +23,7 @@ describe('CopyAsMenu', () => {
     render(<CopyAsMenu value="hello" label="copy" />)
     await user.click(screen.getByRole('button', { name: 'copy' }))
     expect(writeText).toHaveBeenCalledWith('hello')
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('copied'))
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Copied'))
   })
 
   it('opens the menu and copies as a JSON string literal', async () => {
@@ -38,11 +38,11 @@ describe('CopyAsMenu', () => {
     const { user, writeText } = setupWithClipboard()
     render(<CopyAsMenu value={new Uint8Array([0, 255, 16])} label="copy" />)
     await user.click(screen.getByRole('button', { name: 'copy as…' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'hex' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Hex' }))
     expect(writeText).toHaveBeenCalledWith('00ff10')
 
     await user.click(screen.getByRole('button', { name: 'copy as…' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'base64' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Base64' }))
     expect(writeText).toHaveBeenLastCalledWith(btoa(String.fromCharCode(0, 255, 16)))
   })
 
@@ -64,7 +64,7 @@ describe('CopyAsMenu', () => {
     const { user } = setupWithClipboard('reject')
     render(<CopyAsMenu value="x" label="copy" />)
     await user.click(screen.getByRole('button', { name: 'copy' }))
-    expect(await screen.findByText('failed')).toBeTruthy()
+    expect(await screen.findByText('Failed')).toBeTruthy()
   })
 
   it('is icon-only with an accessible name when no label is given', () => {
@@ -91,10 +91,10 @@ describe('CopyAsMenu', () => {
     const { user, writeText } = setupWithClipboard()
     const { rerender } = render(<CopyAsMenu value="é" label="copy" />)
     await user.click(screen.getByRole('button', { name: 'copy as…' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'hex' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Hex' }))
     expect(writeText).toHaveBeenLastCalledWith('c3a9')
     await user.click(screen.getByRole('button', { name: 'copy as…' }))
-    await user.click(await screen.findByRole('menuitem', { name: 'base64' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Base64' }))
     expect(writeText).toHaveBeenLastCalledWith('w6k=')
     rerender(<CopyAsMenu value={{ a: 1 }} label="copy" />)
     await user.click(screen.getByRole('button', { name: 'copy as…' }))

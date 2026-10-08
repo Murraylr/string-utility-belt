@@ -245,7 +245,7 @@ describe('LibraryDialog', () => {
     expect(listEntries('pipeline')[0].input).toBeUndefined()
     expect(screen.getByText(/saved “no input”/i)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('checkbox', { name: 'save input with pipeline' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Save input with pipeline' }))
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(listEntries('pipeline')).toHaveLength(1)
     expect(listEntries('pipeline')[0].input).toBe('my input')
@@ -259,7 +259,7 @@ describe('LibraryDialog', () => {
     await waitFor(() => expect(probe()).toHaveAttribute('data-name', 'with input'))
 
     await user.click(screen.getByRole('button', { name: 'reopen library' }))
-    expect(screen.getByRole('checkbox', { name: 'save input with pipeline' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Save input with pipeline' })).toBeChecked()
     await user.click(screen.getByRole('button', { name: 'Save' }))
     expect(listEntries('pipeline')[0].input).toBe('keep me')
   })
@@ -358,12 +358,11 @@ describe('LibraryDialog', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/not valid JSON/i)
   })
 
-  it('rings the search box wrapper while its unstyled input has focus (it has no focus style of its own)', () => {
+  it('highlights the search box wrapper while its unstyled input has focus (it has no focus style of its own)', () => {
     render(<Harness initialSteps={[step('a')]} />)
     const search = screen.getByRole('textbox', { name: 'search pipelines' })
     expect(search.className).toContain('outline-hidden')
     const wrapper = search.parentElement as HTMLElement
-    expect(wrapper.className).toContain('focus-within:ring-2')
-    expect(wrapper.className).toContain('focus-within:ring-primary-500')
+    expect(wrapper.className).toContain('focus-within:border-acc')
   })
 })

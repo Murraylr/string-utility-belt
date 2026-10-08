@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ClipboardCopy } from 'lucide-react'
+import { Check, Copy } from 'lucide-react'
 import { asText, isBytes } from '@/core/coerce'
 import { encodeShare } from '@/core/serialize'
 import type { PipelineDoc } from '@/types/utility'
@@ -81,53 +81,60 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
     trackShare('share_json_download')
   }
 
+  const copyLabel = (idle: string) => copyStatus === 'copied' ? 'Copied' : copyStatus === 'error' ? 'Copy failed' : idle
+  const CopyIcon = copyStatus === 'copied' ? Check : Copy
+  const textareaClass = 'w-full min-h-24 resize-y px-2.5 py-[9px] border rounded-md bg-canvas font-mono text-[11.5px] leading-[17px] wrap-anywhere outline-hidden focus:border-acc'
+
   return (
-    <Dialog title="Share pipeline" onClose={onClose} returnFocus={returnFocus}>
+    <Dialog title="Share pipeline" widthClass="max-w-[540px]" onClose={onClose} returnFocus={returnFocus}>
       <Tabs label="share format" tabs={TABS} value={tab} onChange={setTab} panelId="share-panel" idPrefix="share-tab" />
 
-      <label className="text-sm flex items-center gap-2">
-        <input type="checkbox" checked={includeInput} disabled={bytesInput} onChange={e => setIncludeInput(e.target.checked)} />
+      <label className="flex items-center gap-2 text-[13px] cursor-pointer has-[:disabled]:cursor-default">
+        <input type="checkbox" className="accent-acc" checked={includeInput} disabled={bytesInput} onChange={e => setIncludeInput(e.target.checked)} />
         Include my input
       </label>
       {bytesInput && (
-        <div className="text-xs text-muted">binary input can&apos;t be shared in a link (links carry text only) — only the pipeline steps will be included.</div>
+        <p className="m-0 text-xs text-muted">Binary input can&apos;t be shared, because links carry text only. The steps are still included.</p>
       )}
 
       {tab === 'link' ? (
-        <div id="share-panel" role="tabpanel" aria-labelledby="share-tab-link" className="grid gap-2">
-          <label className="muted" htmlFor="share-url">link</label>
-          <textarea id="share-url" readOnly className="field mono text-xs min-h-[72px]" value={shareUrl} onFocus={e => e.currentTarget.select()} />
-          <div className="text-xs text-muted">{shareUrl.length.toLocaleString()} characters</div>
+        <div id="share-panel" role="tabpanel" aria-labelledby="share-tab-link" className="grid gap-3">
+          <label className="sr-only" htmlFor="share-url">link</label>
+          <textarea id="share-url" readOnly className={textareaClass} value={shareUrl} onFocus={e => e.currentTarget.select()} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button className="btn-inv h-[30px] px-3" onClick={() => copy(shareUrl, () => trackShare('share_link_copy'))}>
+              <CopyIcon size={13} aria-hidden />{copyLabel('Copy link')}
+            </button>
+            <span className="font-mono text-[11px] text-muted">{shareUrl.length.toLocaleString()} characters</span>
+          </div>
           {shareUrl.length > WARN_LENGTH && (
-            <div role="alert" className="text-sm text-warn">
-              This link is quite long ({shareUrl.length.toLocaleString()} characters) — some chat apps and old browsers
-              truncate very long URLs. Consider unchecking "include my input" or downloading the .json file instead.
-            </div>
+            <p role="alert" className="m-0 text-[12.5px] text-warn">
+              This link is quite long. Chat apps and older browsers can cut off long links. Try leaving the input out, or
+              download the .json instead.
+            </p>
           )}
-          <button className="btn justify-self-start" onClick={() => copy(shareUrl, () => trackShare('share_link_copy'))}>
-            {copyStatus === 'copied' ? <Check size={16} /> : <ClipboardCopy size={16} />}
-            {copyStatus === 'copied' ? 'copied' : copyStatus === 'error' ? 'copy failed' : 'copy link'}
-          </button>
         </div>
       ) : (
-        <div id="share-panel" role="tabpanel" aria-labelledby="share-tab-embed" className="grid gap-2">
-          <label className="muted" htmlFor="embed-snippet">embed snippet</label>
-          <textarea id="embed-snippet" readOnly className="field mono text-xs min-h-[96px]" value={embedSnippet} onFocus={e => e.currentTarget.select()} />
-          <button className="btn justify-self-start" onClick={() => copy(embedSnippet, () => trackShare('embed_code_copy'))}>
-            {copyStatus === 'copied' ? <Check size={16} /> : <ClipboardCopy size={16} />}
-            {copyStatus === 'copied' ? 'copied' : copyStatus === 'error' ? 'copy failed' : 'copy snippet'}
-          </button>
+        <div id="share-panel" role="tabpanel" aria-labelledby="share-tab-embed" className="grid gap-3">
+          <label className="sr-only" htmlFor="embed-snippet">embed snippet</label>
+          <textarea id="embed-snippet" readOnly className={textareaClass} value={embedSnippet} onFocus={e => e.currentTarget.select()} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button className="btn-inv h-[30px] px-3" onClick={() => copy(embedSnippet, () => trackShare('embed_code_copy'))}>
+              <CopyIcon size={13} aria-hidden />{copyLabel('Copy snippet')}
+            </button>
+            <span className="font-mono text-[11px] text-muted">{embedSnippet.length.toLocaleString()} characters</span>
+          </div>
         </div>
       )}
 
       <span role="status" aria-live="polite" className="sr-only">
         {copyStatus === 'copied'
           ? `${tab === 'link' ? 'link' : 'embed snippet'} copied to clipboard`
-          : copyStatus === 'error' ? 'copy failed — select the text and copy it manually' : ''}
+          : copyStatus === 'error' ? 'copy failed. Select the text and copy it yourself.' : ''}
       </span>
 
-      <div className="pt-2 border-t">
-        <button className="btn" onClick={downloadJson}>Download .json</button>
+      <div className="pt-3 border-t">
+        <button className="btn h-[30px] px-2.5" onClick={downloadJson}>Download .json</button>
       </div>
     </Dialog>
   )

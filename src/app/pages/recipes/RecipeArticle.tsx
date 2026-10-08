@@ -7,6 +7,7 @@
  * every handler is optional (the pre-render passes none).
  */
 import React from 'react'
+import { ArrowRight } from 'lucide-react'
 import type { BranchStep, Condition, EachStep, PipelineStep, ValueType } from '@/types/utility'
 import { isBranchStep, isEachStep, isMacroStep, isUtilityStep, utilityIds, walkSteps } from '@/core/steps'
 import { itemNoun } from '@/core/split'
@@ -15,18 +16,22 @@ import type { Preview, SkipTrace, StepTrace } from '@/recipes/trace'
 import { utilityPath } from '../related'
 import { changedParams, describeString, nameOf, revealInvisible, stepCountText, stepTitle, stringPairs, type UtilityLookup } from './recipeHelpers'
 
+
+/** An inline param value. */
+const CODE = 'font-mono px-[5px] py-px rounded bg-surface-2 whitespace-pre-wrap wrap-anywhere'
+
 /** One param value, as the recipe runs it: strings raw (never JSON-escaped), rule tables as rows. */
 function ParamValue({ value }: { value: unknown }) {
   const pairs = stringPairs(value)
   if (pairs) {
     return (
-      <table className="mono text-xs border-separate border-spacing-x-2">
+      <table className="font-mono text-xs border-separate border-spacing-x-2 -mx-2">
         <tbody>
           {pairs.map(([find, replace], i) => (
             <tr key={i}>
-              <td className="wrap-anywhere"><code className="bg-surface-2 rounded px-1">{describeString(find)}</code></td>
+              <td className="wrap-anywhere"><code className={CODE}>{describeString(find)}</code></td>
               <td aria-label="becomes" className="text-muted">→</td>
-              <td className="wrap-anywhere"><code className="bg-surface-2 rounded px-1">{describeString(replace)}</code></td>
+              <td className="wrap-anywhere"><code className={CODE}>{describeString(replace)}</code></td>
             </tr>
           ))}
         </tbody>
@@ -35,39 +40,43 @@ function ParamValue({ value }: { value: unknown }) {
   }
   const shown = typeof value === 'string' ? describeString(value) : JSON.stringify(value)
   return shown.includes('\n') || shown.length > 60
-    ? <pre className="mono whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2">{shown}</pre>
-    : <code className="mono bg-surface-2 rounded px-1 wrap-anywhere">{shown}</code>
+    ? <pre className="m-0 font-mono whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-md px-2 py-1.5">{shown}</pre>
+    : <code className={CODE}>{shown}</code>
 }
 
 function ParamList({ params }: { params: Array<{ key: string; label: string; value: unknown }> }) {
   if (params.length === 0) return null
   return (
-    <dl className="grid gap-1 text-xs">
+    <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
       {params.map(({ key, label, value }) => (
-        <div key={key} className="grid gap-1">
+        <div key={key} className="contents">
           <dt className="text-muted">{label}</dt>
-          <dd className="min-w-0 overflow-auto"><ParamValue value={value} /></dd>
+          <dd className="m-0 min-w-0 overflow-auto"><ParamValue value={value} /></dd>
         </div>
       ))}
     </dl>
   )
 }
 
-function PreviewBlock({ preview, label }: { preview: Preview; label: string }) {
+/** A step's output (`full`, in the timeline) or a skipped step's result (`compact`, in its card). */
+function PreviewBlock({ preview, label, compact }: { preview: Preview; label: string; compact?: boolean }) {
   const note = preview.kind === 'bytes'
     ? `${preview.size} bytes${preview.truncated ? ', first shown as hex' : ', as hex'}`
     : preview.truncated ? `first part of ${preview.size.toLocaleString('en-US')} characters` : null
   const shown = preview.kind === 'bytes' ? { text: preview.text, legend: [] } : revealInvisible(preview.text)
+  const size = compact ? 'px-2.5 py-2 text-[11.5px] leading-[18px] max-h-[150px]' : 'px-[11px] py-[9px] text-xs leading-[19px] max-h-[220px]'
   return (
-    <figure className="grid gap-1 min-w-0">
-      <figcaption className="text-xs text-muted">{label}{note ? ` (${note})` : ''}</figcaption>
-      <pre className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-2 max-h-72 overflow-auto">
+    <figure className="m-0 grid gap-1 content-start min-w-0">
+      <figcaption className="text-[11px] text-muted">{label}{note ? ` (${note})` : ''}</figcaption>
+      <pre className={`m-0 rounded-md bg-surface-2 font-mono whitespace-pre-wrap wrap-anywhere overflow-auto ${size}`}>
         {shown.text}{preview.truncated ? '\n…' : ''}
       </pre>
-      {shown.legend.length > 0 && <p className="text-xs text-muted">Shown as symbols: {shown.legend.join(', ')}.</p>}
+      {shown.legend.length > 0 && <p className="m-0 text-[11px] text-muted">Shown as symbols: {shown.legend.join(', ')}.</p>}
     </figure>
   )
 }
+
+const UTILITY_LINK = 'text-[12.5px] text-muted underline decoration-line-2 underline-offset-[3px]'
 
 const VALUE_TYPE_NAMES: Record<ValueType, string> = { string: 'text', bytes: 'bytes', json: 'JSON' }
 
@@ -82,10 +91,10 @@ function flagNote(flags = ''): string {
 function ConditionNote({ condition }: { condition?: Condition }) {
   if (!condition || condition.kind === 'always') return null
   const what = condition.kind === 'regex'
-    ? <>matches <code className="mono">{condition.pattern}</code>{flagNote(condition.flags)}</>
+    ? <>matches <code className="font-mono">{condition.pattern}</code>{flagNote(condition.flags)}</>
     : condition.kind === 'nonEmpty' ? 'is not empty' : `is ${VALUE_TYPE_NAMES[condition.type]}`
   return (
-    <p className="text-xs text-muted">
+    <p className="m-0 text-xs text-muted">
       {condition.negate
         ? <>Skipped (its input passes through) when the input {what}.</>
         : <>Runs only when its input {what}; otherwise the input passes through.</>}
@@ -100,7 +109,7 @@ function ErrorNote({ step }: { step: PipelineStep }) {
   const text = isEachStep(step)
     ? step.onError === 'empty' ? `A ${noun} whose steps fail comes out empty.` : `One ${noun} that fails fails the whole step.`
     : step.onError === 'empty' ? 'If it fails, the next step gets empty input.' : 'If it fails, the steps after it do not run.'
-  return <p className="text-xs text-muted">{text}</p>
+  return <p className="m-0 text-xs text-muted">{text}</p>
 }
 
 /** How a "run on each" step cuts its input, as the line above its steps. */
@@ -108,7 +117,7 @@ function eachIntro(step: EachStep): React.ReactNode {
   const empty = step.skipEmpty === false ? ', empty ones included,' : ''
   switch (step.split.mode) {
     case 'lines': return <>Each line{empty} goes through:</>
-    case 'delimiter': return <>Each item between <code className="mono">{describeString(step.split.separator)}</code>{empty} goes through:</>
+    case 'delimiter': return <>Each item between <code className="font-mono">{describeString(step.split.separator)}</code>{empty} goes through:</>
     case 'json-array': return <>Each element of the JSON array{empty} goes through:</>
     case 'json-values': return <>Each value of the JSON object{empty} goes through:</>
   }
@@ -117,7 +126,7 @@ function eachIntro(step: EachStep): React.ReactNode {
 /** How a branch puts its lanes back together, as the line above its lanes. */
 function branchIntro(step: BranchStep): React.ReactNode {
   const merge = step.merge ?? { mode: 'concat' }
-  const sep = (separator = '\n') => <code className="mono">{describeString(separator)}</code>
+  const sep = (separator = '\n') => <code className="font-mono">{describeString(separator)}</code>
   switch (merge.mode) {
     case 'concat': return <>Every lane gets the same input, and their outputs are joined with {sep(merge.separator)}:</>
     case 'zip': return <>Every lane gets the same input, and their outputs are interleaved line by line, joined with {sep(merge.separator)}:</>
@@ -128,17 +137,17 @@ function branchIntro(step: BranchStep): React.ReactNode {
 
 /** A nested step's name: a link to its utility's page, after the step's own label when it has one. */
 function NestedTitle({ step, utility }: { step: PipelineStep; utility: UtilityLookup }) {
-  if (!isUtilityStep(step)) return <span className="text-sm">{stepTitle(step, utility)}</span>
-  const link = <a className="underline underline-offset-2" href={utilityPath(step.utilityId)}>{nameOf(step.utilityId, utility)}</a>
+  if (!isUtilityStep(step)) return <span className="text-[13px] font-medium">{stepTitle(step, utility)}</span>
+  const link = <a className={UTILITY_LINK} href={utilityPath(step.utilityId)}>{nameOf(step.utilityId, utility)}</a>
   return step.label
-    ? <span className="text-sm">{step.label} <span className="text-muted">(</span>{link}<span className="text-muted">)</span></span>
-    : <span className="text-sm">{link}</span>
+    ? <span className="text-[13px] font-medium">{step.label} <span className="text-muted">(</span>{link}<span className="text-muted">)</span></span>
+    : <span className="text-[13px]">{link}</span>
 }
 
 /** Steps inside a container, in order, each with everything it is set to. */
 function StepSequence({ steps, utility }: { steps: PipelineStep[]; utility: UtilityLookup }) {
   return (
-    <ol className="grid gap-2 border-l-2 pl-3 min-w-0">
+    <ol className="m-0 p-0 list-none grid gap-2 border-l border-line-2 pl-3 min-w-0">
       {steps.map(s => (
         <li key={s.id} className="grid gap-1 min-w-0">
           <NestedTitle step={s} utility={utility} />
@@ -216,6 +225,8 @@ export interface RecipeWidgetProps {
   extension?: React.ReactNode
 }
 
+const PANE = 'h-40 md:h-60 m-0 px-4 pt-1.5 pb-3.5 font-mono text-[12.5px] leading-5'
+
 /**
  * The worked example, live: pick a sample or paste your own input, see the output,
  * then open the pipeline in the editor. Fixed-height panes, so the static render
@@ -225,22 +236,22 @@ export interface RecipeWidgetProps {
 export function RecipeWidget(props: RecipeWidgetProps) {
   const { samples, sampleId, input, output, error, running, stepCount, openHref, onSample, onInput, onOpen, onCopy, copied, notice, extension } = props
   return (
-    <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-try-h">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="recipe-try-h" className="text-lg font-medium">Try it with your own data</h2>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="examples">
+    <section className="border rounded-[10px] bg-surface min-w-0" aria-labelledby="recipe-try-h">
+      <div className="flex flex-wrap items-center gap-2.5 py-2.5 pr-3 pl-4 border-b">
+        <h2 id="recipe-try-h" className="m-0 flex-1 min-w-[180px] text-sm font-semibold">Try it with your own data</h2>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Examples">
           {samples.map(s => (
-            <button key={s.id} type="button" className="chip" aria-pressed={s.id === sampleId} onClick={onSample && (() => onSample(s.id))}>
+            <button key={s.id} type="button" className="pill" aria-pressed={s.id === sampleId} onClick={onSample && (() => onSample(s.id))}>
               {s.title}
             </button>
           ))}
         </div>
       </div>
-      <div className="grid lg:grid-cols-2 gap-4 min-w-0">
-        <label className="grid gap-1 text-sm min-w-0">
-          <span className="muted">Input — paste your own</span>
+      <div className="grid md:grid-cols-2 min-w-0">
+        <label className="grid content-start min-w-0 border-b md:border-b-0 md:border-r">
+          <span className="px-4 pt-2.5 text-[11.5px] text-muted">Input. Paste your own.</span>
           <textarea
-            className="field mono text-xs h-40 lg:h-64 resize-y"
+            className={`${PANE} block w-full resize-y border-0 bg-transparent outline-hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-acc`}
             value={input}
             readOnly={!onInput}
             onChange={onInput && (e => onInput(e.target.value))}
@@ -248,31 +259,31 @@ export function RecipeWidget(props: RecipeWidgetProps) {
             aria-label="recipe input"
           />
         </label>
-        <div className="grid gap-1 text-sm min-w-0 content-start">
-          <span className="muted"><span id="recipe-output-label">Output</span>{running ? ' — running…' : ''}</span>
+        <div className="grid content-start min-w-0 bg-strip">
+          <span className="px-4 pt-2.5 text-[11.5px] text-muted"><span id="recipe-output-label">Output</span>{running ? ' · running…' : ''}</span>
           <pre
             role="status"
             aria-labelledby="recipe-output-label"
             aria-busy={running || undefined}
-            className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-xl p-3 h-40 lg:h-64 overflow-auto transition-opacity aria-busy:opacity-60"
+            className={`${PANE} whitespace-pre-wrap wrap-anywhere overflow-auto transition-opacity aria-busy:opacity-60`}
           >{output}</pre>
         </div>
       </div>
       {/* always mounted: text injected together with a brand-new live region is not reliably announced */}
-      <div role="status" className={notice ? 'card flex flex-wrap items-center justify-between gap-3 px-3 py-2 text-sm' : 'sr-only'}>
+      <div role="status" className={notice ? 'flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-t text-[13px]' : 'sr-only'}>
         {notice && (
           <>
             <span>{notice.text}</span>
-            <button type="button" className="btn" onClick={notice.onAction}>{notice.action}</button>
+            <button type="button" className="btn h-[30px] text-[12.5px]" onClick={notice.onAction}>{notice.action}</button>
           </>
         )}
       </div>
-      {error && <p role="alert" className="text-sm text-danger bg-danger/10 border border-danger/30 rounded-xl p-2">{error}</p>}
-      <div className="flex flex-wrap items-center gap-3">
-        <a className="cta" href={openHref} rel="nofollow" onClick={onOpen}>Open in the editor</a>
+      {error && <p role="alert" className="m-0 px-4 py-[9px] border-t border-danger-line bg-danger-bg text-[13px] text-danger-ink">{error}</p>}
+      <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 border-t">
+        <a className="cta" href={openHref} rel="nofollow" onClick={onOpen}>Open in the editor<ArrowRight size={13} aria-hidden /></a>
         <button type="button" className="btn" onClick={onCopy}>{copied ? 'Copied' : 'Copy output'}</button>
-        <span className="text-sm text-muted">
-          {stepCountText(stepCount)}, every one editable. Runs in your browser: nothing you paste is uploaded.
+        <span className="text-[12.5px] text-muted">
+          {stepCountText(stepCount)}, all editable. It runs in your browser, so nothing you paste is uploaded.
         </span>
       </div>
       {extension}
@@ -294,11 +305,13 @@ export interface RecipeArticleProps {
   related: RecipeMeta[]
   /** The page's sponsor block, at the end of the header, before the live widget. */
   sponsor?: React.ReactNode
+  /** The page's inline house promo, after "Step by step" (`PagePromo` in the app, `ExtraPromo` in the pre-render). */
+  promo?: React.ReactNode
   /** A run is in progress: the step outputs shown are about to change. */
   running?: boolean
 }
 
-export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, sponsor, running }: RecipeArticleProps) {
+export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, related, sponsor, promo, running }: RecipeArticleProps) {
   const traceOf = new Map(steps.map(s => [s.id, s]))
   const skipOf = new Map((skip ?? []).map(s => [s.id, s]))
   // every step id, nested ones included, to the number of the top-level step it is in
@@ -308,47 +321,53 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
   const utilitiesUsed = utilityIds(recipe.steps)
 
   return (
-    <article className="w-full max-w-5xl mx-auto grid gap-6 min-w-0">
-      <header className="grid gap-2">
-        <nav aria-label="breadcrumb" className="text-sm text-muted">
-          <a className="underline underline-offset-2" href={RECIPES_PATH}>Recipes</a>
-          <span aria-hidden> / </span>
+    <article className="w-full grid gap-10 min-w-0">
+      <header className="grid gap-2.5 pb-6 border-b min-w-0">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1.5 text-[12.5px] text-muted">
+          <a className="text-muted hover:text-acc" href={RECIPES_PATH}>Recipes</a>
+          <span aria-hidden>/</span>
           <span>{recipe.category}</span>
         </nav>
-        <h1 className="text-2xl sm:text-3xl font-semibold">{recipe.name}</h1>
-        <p className="muted max-w-3xl">{recipe.summary}</p>
-        <ol className="flex flex-wrap items-center gap-1 text-xs" aria-label="steps">
+        <h1 className="page-title max-w-[820px]">{recipe.name}</h1>
+        <p className="page-lead max-w-[680px]">{recipe.summary}</p>
+        <ol className="mt-1 p-0 list-none flex flex-wrap items-center gap-1.5" aria-label="Steps">
           {recipe.steps.map((s, i) => (
-            <li key={s.id} className="flex items-center gap-1">
-              {i > 0 && <span aria-hidden className="text-muted">→</span>}
-              <span className="chip">{stepTitle(s, utility)}</span>
+            <li key={s.id} className="flex items-center gap-1.5 min-w-0">
+              {i > 0 && <ArrowRight size={12} aria-hidden className="text-muted shrink-0" />}
+              <span className="min-h-6 px-[9px] flex items-center gap-1.5 border rounded-xl bg-surface text-[12.5px]">
+                <span className="font-mono text-[10.5px] text-acc">{i + 1}</span>{stepTitle(s, utility)}
+              </span>
             </li>
           ))}
         </ol>
-        {sponsor}
+        {sponsor && <div className="mt-2.5 max-w-[560px]">{sponsor}</div>}
       </header>
 
       {live}
 
-      <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-steps-h">
-        <h2 id="recipe-steps-h" className="text-lg font-medium">Step by step</h2>
-        <ol className="grid gap-5 transition-opacity aria-busy:opacity-60" aria-busy={running || undefined}>
+      <section className="grid gap-[18px] min-w-0" aria-labelledby="recipe-steps-h">
+        <h2 id="recipe-steps-h" className="section-title">Step by step</h2>
+        <ol className="m-0 p-0 list-none grid transition-opacity aria-busy:opacity-60" aria-busy={running || undefined}>
           {recipe.steps.map((s, i) => {
             const trace = traceOf.get(s.id)
             return (
-              <li key={s.id} className="grid gap-2 border-t pt-4 first:border-t-0 first:pt-0 min-w-0">
-                <h3 className="font-medium">{i + 1}. {stepTitle(s, utility)}</h3>
-                <p className="text-sm">{s.why}</p>
-                <div className="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 min-w-0">
+              <li key={s.id} className="group grid grid-cols-[36px_minmax(0,1fr)] gap-x-3.5 min-w-0">
+                <div aria-hidden className="flex flex-col items-center">
+                  <span className="size-7 grid place-items-center border border-line-2 rounded-md bg-surface font-mono text-[11.5px] font-medium">{i + 1}</span>
+                  <span className="flex-1 w-px min-h-4 bg-line-2 group-last:hidden" />
+                </div>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-x-7 gap-y-3 pt-[3px] pb-7 min-w-0">
                   <div className="grid gap-2 content-start min-w-0">
+                    <h3 className="m-0 text-[15px] leading-[22px] font-semibold"><span className="sr-only">{i + 1}. </span>{stepTitle(s, utility)}</h3>
+                    <p className="m-0 text-sm leading-[22px] text-pretty">{s.why}</p>
                     {isUtilityStep(s) && (
-                      <a className="text-sm underline underline-offset-2 w-fit" href={utilityPath(s.utilityId)}>{nameOf(s.utilityId, utility)}</a>
+                      <a className={`justify-self-start ${UTILITY_LINK}`} href={utilityPath(s.utilityId)}>{nameOf(s.utilityId, utility)}</a>
                     )}
                     <StepSettings step={s} utility={utility} />
                   </div>
                   <div className="grid gap-2 content-start min-w-0">
-                    {trace?.error && <p className="text-sm text-danger">This step failed: {trace.error}</p>}
-                    {trace?.skipped && <p className="text-xs text-muted">Its condition did not match this input, so the input passed through unchanged.</p>}
+                    {trace?.error && <p className="m-0 text-[13px] text-danger-ink">This step failed: {trace.error}</p>}
+                    {trace?.skipped && <p className="m-0 text-xs text-muted">Its condition did not match this input, so the input passed through unchanged.</p>}
                     {trace?.output && <PreviewBlock preview={trace.output} label="Output after this step" />}
                   </div>
                 </div>
@@ -358,31 +377,33 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
         </ol>
       </section>
 
+      {promo}
+
       {/* an empty list means it could not be worked out in this browser: leave the section out */}
-      {(skip === null || skip.length > 0) && <section className="card p-4 sm:p-6 grid gap-4" aria-labelledby="recipe-skip-h">
+      {(skip === null || skip.length > 0) && <section className="grid gap-3.5 min-w-0" aria-labelledby="recipe-skip-h">
         <div className="grid gap-1">
-          <h2 id="recipe-skip-h" className="text-lg font-medium">What if you skip a step?</h2>
-          <p className="text-sm muted">
-            Each step is there for a reason. Here is what the example “{firstSample.title}” turns into with one step left out.
+          <h2 id="recipe-skip-h" className="section-title">What if you skip a step?</h2>
+          <p className="m-0 text-sm leading-[22px] text-muted">
+            Each step is there for a reason. This is what the example “{firstSample.title}” turns into with one step left out.
           </p>
         </div>
         {skip === null
-          ? <p className="text-sm muted" role="status">Working it out…</p>
+          ? <p className="m-0 text-sm text-muted" role="status">Working it out…</p>
           : (
-            <ul className="grid gap-4">
+            <ul className="m-0 p-0 list-none grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-3">
               {recipe.steps.map((s, i) => {
                 const result = skipOf.get(s.id)
                 if (!result) return null
                 const at = result.error && index.get(result.error.stepId)
                 const where = at ? `step ${at} (${stepTitle(recipe.steps[at - 1], utility)})` : 'a later step'
                 return (
-                  <li key={s.id} className="grid gap-2 border-t pt-3 first:border-t-0 first:pt-0 min-w-0">
-                    <h3 className="text-sm font-medium">Without step {i + 1}, {stepTitle(s, utility)}</h3>
-                    {result.error && <p className="text-sm">The pipeline breaks: {where} fails with “{result.error.message}”.</p>}
+                  <li key={s.id} className="grid gap-2 content-start px-3.5 pt-3 pb-3.5 border rounded-lg bg-surface min-w-0">
+                    <h3 className="m-0 text-[13.5px] font-semibold">Without step {i + 1}, {stepTitle(s, utility)}</h3>
+                    {result.error && <p className="m-0 text-[13px]">The pipeline breaks: {where} fails with “{result.error.message}”.</p>}
                     {!result.error && result.unchanged && (
-                      <p className="text-sm muted">Nothing changes for this example: the step is there for inputs like the other examples.</p>
+                      <p className="m-0 text-[13px] text-muted">No difference for this example. The step is there for inputs like the other examples.</p>
                     )}
-                    {!result.error && !result.unchanged && result.output && <PreviewBlock preview={result.output} label="The result instead" />}
+                    {!result.error && !result.unchanged && result.output && <PreviewBlock preview={result.output} label="The result instead" compact />}
                   </li>
                 )
               })}
@@ -391,42 +412,52 @@ export function RecipeArticle({ recipe, utility, guideHtml, steps, skip, live, r
       </section>}
 
       {/* trusted: renderMarkdownDocument escapes every character of the guide source */}
-      <section className="md card p-4 sm:p-6 min-w-0 [&>div>:first-child]:mt-0" aria-label="guide">
+      <section className="md max-w-[720px] pt-2 min-w-0 [&>div>:first-child]:mt-0" aria-label="guide">
         <div dangerouslySetInnerHTML={{ __html: guideHtml }} />
       </section>
 
-      <section className="card p-4 sm:p-6 grid gap-4 min-w-0" aria-labelledby="recipe-more-h">
-        <h2 id="recipe-more-h" className="text-lg font-medium">Utilities in this recipe</h2>
-        <ul className="grid sm:grid-cols-2 gap-2 text-sm">
-          {utilitiesUsed.map(id => (
-            <li key={id}>
-              <a className="underline underline-offset-2" href={utilityPath(id)}>{nameOf(id, utility)}</a>
-              {utility(id)?.description && <span className="text-muted"> — {utility(id)!.description}</span>}
-            </li>
-          ))}
-        </ul>
-        {related.length > 0 && (
-          <>
-            <h2 className="text-lg font-medium">More recipes</h2>
-            <RecipeCards recipes={related} />
-          </>
-        )}
-        <a className="btn w-fit" href={RECIPES_PATH}>Browse all recipes</a>
+      <section className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-7 pt-7 border-t min-w-0" aria-label="Related">
+        <div className="grid gap-1 content-start min-w-0">
+          <h2 className="m-0 mb-1.5 text-[13px] font-semibold">Utilities in this recipe</h2>
+          <ul className="m-0 p-0 list-none grid">
+            {utilitiesUsed.map(id => (
+              <li key={id} className="grid">
+                <a className="link-row" href={utilityPath(id)}>
+                  <span>{nameOf(id, utility)}</span>
+                  {utility(id)?.description && <span>{utility(id)!.description}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="grid gap-1 content-start min-w-0">
+          <h2 className="m-0 mb-1.5 text-[13px] font-semibold">More recipes</h2>
+          {related.length > 0 && (
+            <ul className="m-0 p-0 list-none grid">
+              {related.map(r => (
+                <li key={r.slug} className="grid">
+                  <a className="link-row" href={recipePath(r.slug)}><span>{r.name}</span><span>{r.category}</span></a>
+                </li>
+              ))}
+            </ul>
+          )}
+          <a className="more-link pt-2.5 border-t" href={RECIPES_PATH}>All recipes <span aria-hidden>→</span></a>
+        </div>
       </section>
     </article>
   )
 }
 
 /** Recipe cards linking to their pages: the hub, related recipes, the home page and utility pages. */
-export function RecipeCards({ recipes, className = 'grid sm:grid-cols-2 lg:grid-cols-3 gap-2' }: { recipes: RecipeMeta[]; className?: string }) {
+export function RecipeCards({ recipes, className = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-3' }: { recipes: RecipeMeta[]; className?: string }) {
   return (
-    <ul className={className}>
+    <ul className={`m-0 p-0 list-none ${className}`}>
       {recipes.map(r => (
-        <li key={r.slug}>
-          <a className="block h-full p-3 rounded-xl border bg-surface hover:border-primary-600 hover:shadow-glow transition" href={recipePath(r.slug)}>
-            <div className="font-medium">{r.name}</div>
-            <div className="text-xs text-muted line-clamp-2">{r.summary}</div>
-            <div className="text-xs text-muted mt-1">{r.chain.join(' → ')}</div>
+        <li key={r.slug} className="grid">
+          <a className="grid gap-1.5 content-start px-4 pt-3.5 pb-4 border rounded-lg bg-surface hover:border-acc hover:text-fg transition-colors" href={recipePath(r.slug)}>
+            <span className="text-[14.5px] leading-5 font-semibold">{r.name}</span>
+            <span className="text-[13px] leading-[19px] text-muted text-pretty line-clamp-2">{r.summary}</span>
+            {r.chain.length > 0 && <span className="pt-1 font-mono text-[11px] leading-[17px] text-muted">{r.chain.join(' → ')}</span>}
           </a>
         </li>
       ))}
@@ -434,29 +465,34 @@ export function RecipeCards({ recipes, className = 'grid sm:grid-cols-2 lg:grid-
   )
 }
 
-/** The recipe index's body: every recipe, by category. */
-export function RecipesIndex({ recipes }: { recipes: RecipeMeta[] }) {
+/** The recipe index's body: every recipe, by category, with the page's inline promo after the first category. */
+export function RecipesIndex({ recipes, promo }: { recipes: RecipeMeta[]; promo?: React.ReactNode }) {
   const groups = RECIPE_CATEGORIES
     .map(category => ({ category, items: recipes.filter(r => r.category === category) }))
     .filter(g => g.items.length > 0)
   return (
-    <div className="w-full max-w-5xl mx-auto grid gap-6 min-w-0">
-      <header className="grid gap-2">
-        <h1 className="text-2xl font-semibold">Recipes</h1>
-        <p className="muted max-w-3xl">
-          Ready-made pipelines for jobs that take more than one tool: decoding layered formats, cleaning pasted text,
-          converting data between shapes. Each recipe shows every step with its real output and opens in the editor,
-          where you can change anything.
+    <div className="w-full grid gap-10 min-w-0">
+      <header className="grid gap-2 max-w-[640px]">
+        <h1 className="page-title">Recipes</h1>
+        <p className="page-lead">
+          Ready-made pipelines for jobs one tool can’t do alone: layered formats, messy pasted text, data in the wrong
+          shape. Every step shows its real output, and you can open the whole thing in the editor to change it.
         </p>
       </header>
-      {groups.map(g => (
-        <section key={g.category} className="card p-4 sm:p-6 grid gap-3" aria-labelledby={`recipes-${g.category.replace(/\W+/g, '-').toLowerCase()}`}>
-          <h2 id={`recipes-${g.category.replace(/\W+/g, '-').toLowerCase()}`} className="text-lg font-medium">{g.category}</h2>
-          <RecipeCards recipes={g.items} />
-        </section>
-      ))}
-      <p className="text-sm muted">
-        Looking for a single conversion? <a className="underline underline-offset-2" href="/utilities/">Browse all utilities</a>.
+      {groups.map((g, i) => {
+        const id = `recipes-${g.category.replace(/\W+/g, '-').toLowerCase()}`
+        return (
+          <React.Fragment key={g.category}>
+            <section className="grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-x-8 min-w-0" aria-labelledby={id}>
+              <h2 id={id} className="m-0 pt-1 text-[17px] leading-6 font-semibold tracking-[-0.01em]">{g.category}</h2>
+              <RecipeCards recipes={g.items} />
+            </section>
+            {i === 0 && promo}
+          </React.Fragment>
+        )
+      })}
+      <p className="m-0 text-sm text-muted">
+        Need a single conversion instead? <a className="underline decoration-acc underline-offset-[3px]" href="/utilities/">Browse all utilities</a>.
       </p>
     </div>
   )

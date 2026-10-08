@@ -24,7 +24,7 @@ export default function RegexParam({ id, spec, value, onChange, error, described
     <div className="flex flex-col gap-1">
       <input
         id={id}
-        className="field font-mono text-xs"
+        className="field h-[30px] min-w-0 font-mono text-[12.5px]"
         placeholder={spec.placeholder}
         spellCheck={false}
         autoComplete="off"
@@ -34,7 +34,7 @@ export default function RegexParam({ id, spec, value, onChange, error, described
         onChange={e => onChange(e.target.value)}
       />
       {result && (
-        <span id={countId} className="text-xs text-muted">
+        <span id={countId} className="text-[11.5px] text-muted">
           {result.count}{result.capped ? '+' : ''} match{result.count === 1 ? '' : 'es'} in sample
           {result.truncated ? ` (first ${Math.round(REGEX_MAX_SCAN / 1000)} KB)` : ''}
         </span>

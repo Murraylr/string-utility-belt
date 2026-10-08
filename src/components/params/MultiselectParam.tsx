@@ -12,10 +12,10 @@ export default function MultiselectParam({ id, spec, value, onChange, describedB
   }
 
   return (
-    <fieldset id={id} className="flex flex-col gap-1 rounded-xl border p-2" aria-describedby={describedBy}>
-      <legend className="text-muted px-1">{spec.label}</legend>
+    <fieldset id={id} className="flex flex-col gap-1 rounded-md border px-2.5 pb-2 pt-1" aria-describedby={describedBy}>
+      <legend className="px-1 text-[11.5px] text-muted">{spec.label}</legend>
       {spec.options.map(opt => (
-        <label key={opt} className="flex items-center gap-2 text-sm">
+        <label key={opt} className="flex items-center gap-[7px] text-[12.5px] cursor-pointer">
           <input type="checkbox" checked={value.includes(opt)} onChange={e => toggle(opt, e.target.checked)} />
           {opt}
         </label>

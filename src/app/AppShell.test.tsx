@@ -75,7 +75,7 @@ describe('site links', () => {
     history.replaceState(null, '', '/no/such/page')
     const { unmount } = render(<AppShell />)
     expect(screen.getByText('Page not found.')).toBeTruthy()
-    expect(document.title).toBe('Page not found — String Utility Belt')
+    expect(document.title).toBe('Page not found | String Utility Belt')
     expect(screen.getByPlaceholderText(/type or paste/i)).toBeTruthy()
     // the SPA fallback answered with index.html and a 200
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex')

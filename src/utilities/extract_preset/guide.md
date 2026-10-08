@@ -1,5 +1,5 @@
 ---
-title: Extract URLs, Emails & Patterns Online — Text Scraper
+title: Extract URLs, Emails & Patterns Online: Text Scraper
 description: Pull URLs, emails, phone numbers, dates, hex colors, UUIDs, and 14 more built-in patterns out of any text, with dedupe, sort, and count.
 ---
 ## What does this tool extract?
@@ -33,7 +33,7 @@ output: ada@example.com
 555-123-4567
 ```
 
-Unicode text is handled correctly — a hashtag can contain accented letters, and `words` walks the text by
+Unicode text is handled correctly: a hashtag can contain accented letters, and `words` walks the text by
 character, not by ASCII assumptions:
 
 ```example
@@ -55,7 +55,7 @@ input: card 4111 1111 1111 1111 exp 12/29
 output: 4111 1111 1111 1111
 ```
 
-Turn on **count only** to get just the number of matches instead of the matches themselves — handy when
+Turn on **count only** to get just the number of matches instead of the matches themselves. That is handy when
 you only need to know how many mentions, links, or dates are in a document:
 
 ```example
@@ -67,22 +67,22 @@ output: 3
 
 ## Options
 
-- **extract** — one or more of: `urls`, `emails`, `ipv4`, `ipv6`, `numbers`, `integers`, `hashtags`,
+- **extract**: one or more of: `urls`, `emails`, `ipv4`, `ipv6`, `numbers`, `integers`, `hashtags`,
   `mentions`, `hex-colors`, `uuids`, `quoted-strings`, `dates`, `times`, `phone`, `html-tags`, `words`,
   `domains`, `file-paths`, `credit-cards`, `jwt`. Defaults to `urls`.
-- **unique** — off by default. Removes repeated matches, keeping the first occurrence of each.
-- **sort** — off by default. Sorts the results alphabetically, or numerically when every selected type is
+- **unique**: off by default. Removes repeated matches, keeping the first occurrence of each.
+- **sort**: off by default. Sorts the results alphabetically, or numerically when every selected type is
   `numbers` or `integers`.
-- **separator** — the text placed between matches in the output, a newline by default. Accepts typed
+- **separator**: the text placed between matches in the output, a newline by default. Accepts typed
   escapes like `\t` and `\n`, or any literal text.
-- **count only** — off by default. When on, the output is just the number of matches, ignoring
+- **count only**: off by default. When on, the output is just the number of matches, ignoring
   **separator**.
 
 ## Common uses
 
 - Pulling every link or email address out of a pasted email thread, support ticket, or document.
-- Auditing text for accidentally-included personal data — email addresses, phone numbers, or credit card
-  numbers — before publishing it.
+- Auditing text for accidentally-included personal data (email addresses, phone numbers, or credit card
+  numbers) before publishing it.
 - Counting how many dates, mentions, or hashtags appear in a body of text without opening a spreadsheet.
 - Extracting all the IP addresses, file paths, or UUIDs mentioned in a log file for further processing with
   [line set operations](/util/set_operations/) or [count duplicate lines](/util/uniq_count/).
@@ -91,11 +91,11 @@ output: 3
 
 - The patterns behind these types are pragmatic, not formal grammars: `emails` and `urls` cover normal
   real-world formats but are not full RFC validators, `phone` uses a loose shape match with a 7–15 digit
-  filter, and `credit-cards` checks only the Luhn checksum and a 13–19 digit length — a match is not proof
+  filter, and `credit-cards` checks only the Luhn checksum and a 13–19 digit length, so a match is not proof
   that a card exists. If you already have a specific value and only want to know whether it's well-formed,
   use [validate](/util/validate/) instead, which reports why a value fails.
 - `dates` and `times` will each find their own piece inside a combined ISO timestamp like
-  `2024-03-01T10:00:00Z` — the date and the time are reported separately, not as one match.
+  `2024-03-01T10:00:00Z`. The date and the time are reported separately, not as one match.
 - For a pattern this list doesn't cover, write your own with [regex extract](/util/regex_extract/), or use
   [grep lines](/util/grep_lines/) to keep only the lines that match a pattern instead of pulling out the
   matched text.

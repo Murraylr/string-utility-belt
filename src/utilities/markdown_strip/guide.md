@@ -1,10 +1,10 @@
 ---
-title: Markdown to Text — Strip Markdown Formatting Online
+title: Markdown to Text: Strip Markdown Formatting Online
 description: Strip Markdown formatting down to plain text online. Removes headings, emphasis, links and lists, with options to keep link URLs and code blocks.
 ---
 ## What is stripping Markdown?
 
-Sometimes you want the words a Markdown document contains without any of its syntax — for a search index, a notification preview, a word count, or a plain-text export. This tool removes Markdown's structural markers (heading `#`, blockquote `>`, list bullets), its inline formatting (`**bold**`, `_italic_`, backtick code spans) and its links and images, leaving readable prose behind. Unlike [strip html tags](/util/strip_html_tags/), it understands Markdown syntax specifically rather than HTML tags.
+Sometimes you want the words a Markdown document contains without any of its syntax, for a search index, a notification preview, a word count, or a plain-text export. This tool removes Markdown's structural markers (heading `#`, blockquote `>`, list bullets), its inline formatting (`**bold**`, `_italic_`, backtick code spans) and its links and images, leaving readable prose behind. Unlike [strip html tags](/util/strip_html_tags/), it understands Markdown syntax specifically rather than HTML tags.
 
 ## How it works
 
@@ -20,7 +20,7 @@ output: Title
 Some bold and italic text with a link.
 ```
 
-Inline emphasis and links are then processed a paragraph at a time rather than a line at a time, because CommonMark allows emphasis and links to span a soft line wrap inside a paragraph — treating each line in isolation would leave an opening `*` with no matching closer:
+Inline emphasis and links are then processed a paragraph at a time rather than a line at a time, because CommonMark allows emphasis and links to span a soft line wrap inside a paragraph. Treating each line in isolation would leave an opening `*` with no matching closer:
 
 ```example
 title: emphasis spanning a wrapped line is still recognized
@@ -30,7 +30,7 @@ output: a soft
 wrapped b
 ```
 
-Fenced code blocks (opened and closed by a line of three or more backticks or `~~~`) are handled specially: their contents are left completely untouched by inline formatting rules — nothing inside a code block is emphasis or a link — and are either kept or dropped as a whole block, based on **keep code block contents**:
+Fenced code blocks (opened and closed by a line of three or more backticks or `~~~`) are handled specially: their contents are left completely untouched by inline formatting rules (nothing inside a code block is emphasis or a link), and are either kept or dropped as a whole block, based on **keep code block contents**:
 
 ````example
 title: keep link urls and code block contents
@@ -53,8 +53,8 @@ An inline code span also protects its own contents: Markdown syntax typed inside
 
 ## Options
 
-- **keep link urls** — off by default, which reduces `[text](url)` to just `text`. When on, the URL is appended in parentheses: `text (url)`. Applies to both inline links and images; reference-style links (`[text][ref]`) always reduce to their text.
-- **keep code block contents** — on by default, which keeps the text inside fenced code blocks (without the fence markers). When off, fenced code blocks are removed entirely. Indented (four-space) code blocks are not recognized as code and are treated like ordinary text.
+- **keep link urls**: off by default, which reduces `[text](url)` to just `text`. When on, the URL is appended in parentheses: `text (url)`. Applies to both inline links and images; reference-style links (`[text][ref]`) always reduce to their text.
+- **keep code block contents**: on by default, which keeps the text inside fenced code blocks (without the fence markers). When off, fenced code blocks are removed entirely. Indented (four-space) code blocks are not recognized as code and are treated like ordinary text.
 
 ## Common uses
 

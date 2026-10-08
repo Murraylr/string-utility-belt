@@ -1,13 +1,13 @@
 ---
-title: CSV Transpose Tool — Swap Rows and Columns
+title: CSV Transpose Tool: Swap Rows and Columns
 description: Flip CSV rows into columns and columns into rows online, re-quoting fields as needed and keeping line endings and non-ASCII text.
 ---
 ## What does transposing a CSV do?
 
 Transposing swaps a table's rows and columns: what used to read across now
 reads down, and vice versa. It is the same operation as a spreadsheet's
-"paste transposed," useful when a table was exported sideways — one record
-per column instead of per row — or when you want to compare a handful of
+"paste transposed," useful when a table was exported sideways (one record
+per column instead of per row), or when you want to compare a handful of
 fields across many records by putting the fields down the left edge.
 
 ## How it works
@@ -74,7 +74,7 @@ output: a,"",z
 
 ## Options
 
-- **delimiter** — `auto` (default) detects comma, tab, semicolon, or pipe;
+- **delimiter**: `auto` (default) detects comma, tab, semicolon, or pipe;
   or set one explicitly, including delimiter names like `pipe` or an escape
   like `\t`.
 
@@ -92,10 +92,10 @@ output: a,"",z
 
 - Transposing a non-rectangular table pads it to rectangular first, which
   means running the transform twice on ragged input will not exactly
-  restore the original — the padding cells stay padding cells.
+  restore the original. The padding cells stay padding cells.
 - CRLF line endings are preserved: the output uses whichever style (LF or
   CRLF) the source used outside quoted fields.
 - To re-delimit the result afterward, chain
-  [csv change delimiter](/util/csv_delimiter/); to pick specific columns —
-  or, applied after transposing, specific original rows — use
+  [csv change delimiter](/util/csv_delimiter/); to pick specific columns
+  (or, applied after transposing, specific original rows), use
   [csv select columns](/util/csv_columns/).

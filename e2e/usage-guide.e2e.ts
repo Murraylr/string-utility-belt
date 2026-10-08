@@ -18,7 +18,7 @@ test.describe('usage guide', () => {
 
     await page.goto('/docs/')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(HEADING)
-    await expect(page).toHaveTitle('How to use — String Utility Belt')
+    await expect(page).toHaveTitle('How to use | String Utility Belt')
     await expect(page.getByRole('navigation', { name: 'main' }).getByRole('link', { name: 'Docs' }))
       .toHaveAttribute('aria-current', 'page')
   })

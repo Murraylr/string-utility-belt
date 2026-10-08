@@ -1,11 +1,11 @@
 ---
-title: Bitwise Operations Online — AND, OR, XOR, Shift, Rotate
+title: Bitwise Operations Online: AND, OR, XOR, Shift, Rotate
 description: Run bitwise AND, OR, XOR, NOT, shifts, rotates, popcount or bit reversal on integers online at 8/16/32/64-bit width, in radix 2 to 36.
 ---
 ## What are bitwise operations?
 
 Bitwise operations work on the individual binary digits of an integer rather than its value as a
-whole — flipping bits, combining two numbers bit by bit, or sliding bits left and right within a fixed
+whole: flipping bits, combining two numbers bit by bit, or sliding bits left and right within a fixed
 width. They show up constantly in low-level code: packing flags into a byte, masking out part of a
 value, implementing checksums and hashes, or working with binary protocols where every bit has a
 defined meaning. This tool runs one operation at a time against a chosen bit width, so you can see
@@ -27,7 +27,7 @@ params: {"operation": "and", "operand": "10", "width": "8", "outputRadix": 2}
 output: 00001000
 ```
 
-Shift and rotate amounts are read as a plain decimal count, regardless of **input radix** —
+Shift and rotate amounts are read as a plain decimal count, regardless of **input radix**:
 `operand: "10"` means ten positions even when the input radix is 16 (only an explicit `0x`, `0b` or
 `0o` prefix on the amount changes that). `rotate-left` and `rotate-right`
 wrap bits around the chosen width instead of discarding them, which is what plain shifts do:
@@ -49,8 +49,8 @@ params: {"operation": "popcount", "width": "8"}
 output: 8
 ```
 
-With **per line** left on (the default), each line of input — and each whitespace-separated value
-within a line — is converted independently, so you can process a whole list of values in one step:
+With **per line** left on (the default), each line of input (and each whitespace-separated value
+within a line) is converted independently, so you can process a whole list of values in one step:
 
 ```example
 title: converting two values per line
@@ -65,19 +65,19 @@ output:
 
 ## Options
 
-- **operation** — `and`, `or`, `xor`, `not`, `shift-left`, `shift-right` (arithmetic, sign-extending),
+- **operation**: `and`, `or`, `xor`, `not`, `shift-left`, `shift-right` (arithmetic, sign-extending),
   `unsigned-shift-right`, `rotate-left`, `rotate-right`, `popcount`, or `reverse-bits`.
-- **operand** — the second value for `and`/`or`/`xor` (read in **input radix**), or the shift/rotate
+- **operand**: the second value for `and`/`or`/`xor` (read in **input radix**), or the shift/rotate
   count (decimal unless prefixed). Unused by `not`, `popcount`, and `reverse-bits`, though it must
   still be a valid number.
-- **width** — `8`, `16`, `32`, or `64` bits. Every value is masked to this width before the operation
+- **width**: `8`, `16`, `32`, or `64` bits. Every value is masked to this width before the operation
   runs, and shift/rotate counts wrap or clamp to it.
-- **input radix** — `0` (default) auto-detects a `0x`, `0b`, or `0o` prefix and otherwise reads
+- **input radix**: `0` (default) auto-detects a `0x`, `0b`, or `0o` prefix and otherwise reads
   decimal; set 2–36 to force a specific radix, in which case a matching prefix on the input is
   stripped, but one that only coincidentally looks like a prefix (`0b1a` in hex, since `b` is a valid
   hex digit) is read as an ordinary digit instead.
-- **output radix** — 2–36, default 2 (binary). Power-of-two radixes are zero-padded to the full width.
-- **per line** — on by default; processes each line, and each whitespace-separated token within it,
+- **output radix**: 2–36, default 2 (binary). Power-of-two radixes are zero-padded to the full width.
+- **per line**: on by default; processes each line, and each whitespace-separated token within it,
   separately. Turn it off to treat the whole input as one value.
 
 ## Common uses
@@ -94,8 +94,8 @@ output:
 `shift-right` is arithmetic: it preserves the sign by extending the value's top bit, so shifting a
 value with its high bit set right stays "negative" in that width instead of filling with zeros.
 `unsigned-shift-right` always fills with zeros, matching most bitwise contexts where values are treated
-as unsigned. If your input value does not fit the chosen radix — an `8` in a binary literal, or a
-letter beyond what the input radix allows — the tool reports exactly which character is invalid and in
+as unsigned. If your input value does not fit the chosen radix (an `8` in a binary literal, or a
+letter beyond what the input radix allows), the tool reports exactly which character is invalid and in
 what radix, rather than silently truncating the string. For value conversions without bitwise
 operations, see [number base convert](/util/number_base_convert/); for inspecting a floating-point
 number's raw bits specifically, see [ieee 754 float bits](/util/ieee754/).

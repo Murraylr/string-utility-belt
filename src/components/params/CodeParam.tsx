@@ -27,7 +27,7 @@ function PlainCodeArea({ id, value, onChange, placeholder, invalid: bad, describ
     <textarea
       ref={setRef}
       id={id}
-      className="field font-mono text-xs"
+      className="field min-w-0 resize-y bg-canvas font-mono text-[12.5px] leading-[19px]"
       rows={8}
       spellCheck={false}
       placeholder={placeholder}

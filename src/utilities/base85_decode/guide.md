@@ -1,5 +1,5 @@
 ---
-title: Base85 Decode Online — Ascii85 & Z85 Decoder
+title: Base85 Decode Online: Ascii85 & Z85 Decoder
 description: Decode Ascii85, Z85, or RFC 1924 Base85 to text or raw bytes online, handling <~ ~> delimiters, whitespace, and the z zero-group shortcut.
 ---
 ## What is Base85 decoding?
@@ -55,7 +55,7 @@ output: hello
 
 ### The `z` and `y` shortcuts
 
-In the **ascii85** variant, a `z` between groups expands to four `0x00` bytes — the inverse of the encoder's `z` shortcut for all-zero groups. A `y` expands to four `0x20` (space) bytes; that is an extension from the old `btoa` tool, which [base85 encode](/util/base85_encode/) never emits but this decoder accepts. Either letter in the middle of a 5-character group is an error. In Z85 and RFC 1924, `z` and `y` are ordinary data characters instead, since those alphabets include them as regular digits.
+In the **ascii85** variant, a `z` between groups expands to four `0x00` bytes. This is the inverse of the encoder's `z` shortcut for all-zero groups. A `y` expands to four `0x20` (space) bytes; that is an extension from the old `btoa` tool, which [base85 encode](/util/base85_encode/) never emits but this decoder accepts. Either letter in the middle of a 5-character group is an error. In Z85 and RFC 1924, `z` and `y` are ordinary data characters instead, since those alphabets include them as regular digits.
 
 ```example
 title: y expands to four spaces before the rest of the data
@@ -66,8 +66,8 @@ output:
 
 ## Options
 
-- **variant** — `ascii85` (default), `z85`, or `rfc1924`. Must match the encoder.
-- **output** — `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched.
+- **variant**: `ascii85` (default), `z85`, or `rfc1924`. Must match the encoder.
+- **output**: `text` (default) decodes the bytes as UTF-8; `bytes` returns them untouched.
 
 ## Common uses
 
@@ -78,7 +78,7 @@ output:
 ## Tips and pitfalls
 
 - A group of 5 characters that decodes to a number larger than 2³² − 1 is not valid Base85 and is rejected with a "group overflows 32 bits" error, rather than silently truncated.
-- A single leftover character at the end ("truncated" data) can never be valid — a real final group always has at least 2 characters.
+- A single leftover character at the end ("truncated" data) can never be valid. A real final group always has at least 2 characters.
 - Short final groups are accepted in every variant, including Z85, whose strict specification only defines whole 5-character groups.
 - `<~` and `~>` are only stripped as a matched pair in RFC 1924, because `<`, `>`, and `~` are ordinary digits in that alphabet; a real payload can legitimately start or end with what looks like half a delimiter.
-- If decoding throws "not valid UTF-8", the original data was binary — switch the output option to `bytes`.
+- If decoding throws "not valid UTF-8", the original data was binary. Switch the output option to `bytes`.

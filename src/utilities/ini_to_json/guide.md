@@ -14,7 +14,7 @@ one. It parses that text into a plain JSON object.
 
 ## How it works
 
-1. Lines are read one at a time. `[section]` opens a new section — every
+1. Lines are read one at a time. `[section]` opens a new section, and every
    `key=value` line after it is nested under that section until the next
    header. Keys before the first `[section]` become top-level properties.
 2. A `;` or `#` starts a comment only when it opens the line or is preceded
@@ -29,7 +29,7 @@ one. It parses that text into a plain JSON object.
    (`c.d = 1`) becomes real nested objects instead of one literal key.
 6. With **coerce value types** on, `true`/`yes`/`on` and `false`/`no`/`off`
    (in any letter case) become booleans, `null`/`nil` becomes `null`, and
-   number-like values become JSON numbers — anything else, including a
+   number-like values become JSON numbers. Anything else, including a
    quoted value, stays text.
 
 ```example
@@ -112,28 +112,28 @@ output:
 
 ## Options
 
-- **nest dotted names** — off by default (a dotted section or key becomes
+- **nest dotted names**: off by default (a dotted section or key becomes
   one literal name, `"db.primary"`); on, splits on `.` and nests real
   objects, `{ "db": { "primary": { ... } } }`.
-- **coerce value types** — off by default (every value is a string); on,
+- **coerce value types**: off by default (every value is a string); on,
   converts recognizable booleans (`true`/`yes`/`on`, `false`/`no`/`off`),
   `null`/`nil`, and number-like values to real JSON types. Number parsing is
-  lenient — `007`, `+5`, and `.5` become `7`, `5`, and `0.5` — so quote a
+  lenient (`007`, `+5`, and `.5` become `7`, `5`, and `0.5`), so quote a
   value such as a zip code to keep its leading zero; integers beyond 2^53
   stay text. Quoted values are never coerced.
-- **indent** — spaces of JSON indentation, from 0 to 10 (default 2).
+- **indent**: spaces of JSON indentation, from 0 to 10 (default 2).
 
 ## Common uses
 
 - Reading an application's `.ini` or `.conf` file into JSON for validation,
   diffing, or programmatic editing.
 - Migrating a legacy INI-based configuration to a JSON-based config loader.
-- Seeing a config file's structure at a glance — which keys sit in which
+- Seeing a config file's structure at a glance: which keys sit in which
   section, and which keys repeat.
 
 ## Tips and pitfalls
 
-- A key and a section cannot share a path — writing `a=1` and later
+- A key and a section cannot share a path. Writing `a=1` and later
   `[a]` throws a "conflicting key" error rather than silently discarding
   one of them.
 - Keys named `__proto__`, `toString`, or `constructor` are treated as

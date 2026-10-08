@@ -1,11 +1,11 @@
 ---
-title: Detect Format Online — Identify JSON, Base64, JWT & More
+title: Detect Format Online: Identify JSON, Base64, JWT & More
 description: Guess whether text is JSON, YAML, CSV, base64, hex, a JWT, a UUID, a URL, Markdown, SQL, gzip and more, with a confidence score for each guess.
 ---
 ## What does format detection do?
 
-When you're handed a mystery string — a value copied from a log, a database column, or someone else's
-config file — this tool guesses what it is. It runs the text past more than two dozen pattern checks (valid JSON,
+When you're handed a mystery string (a value copied from a log, a database column, or someone else's
+config file), this tool guesses what it is. It runs the text past more than two dozen pattern checks (valid JSON,
 YAML-shaped lines, CSV columns, base64 and base32 alphabets, hex digits, JWTs, UUIDs, URLs, IP addresses,
 timestamps, Markdown markers, SQL statements, gzip and zlib magic bytes, Morse code, ROT13 and more) and
 returns every format that matched, ranked by how confident each guess is. It is a triage tool, not a
@@ -59,7 +59,7 @@ output:
 ```
 
 A few detectors can fire on the same text for different reasons. A URL that carries a `key=value` query
-string also looks a little like a one-line INI `key=value` entry — the tool reports both, but keeps the
+string also looks a little like a one-line INI `key=value` entry. The tool reports both, but keeps the
 weaker guess at a clearly lower confidence:
 
 ```example
@@ -80,8 +80,8 @@ output:
 ]
 ```
 
-When nothing structured matches at all — ordinary prose in a script that has no dedicated detector, for
-example — the tool returns a "plain text" result instead of an empty list. It scores 0.5 when no detector
+When nothing structured matches at all (ordinary prose in a script that has no dedicated detector, for
+example), the tool returns a "plain text" result instead of an empty list. It scores 0.5 when no detector
 fired at all, and is added at 0.25 alongside the other candidates when some fired but none reached 0.3:
 
 ```example
@@ -104,7 +104,7 @@ Empty input returns an empty list rather than a fallback entry, since there is n
 JSON, JSON5, YAML, TOML, INI, `.env`, HTML, XML, CSV, TSV, base64 and base64url, hex, base32, URL-encoded
 query strings, JWTs, UUIDs, data URIs, gzip and zlib (by magic bytes or a base64-wrapped gzip stream),
 email addresses, URLs, IPv4/IPv6 addresses, Unix timestamps, Markdown, SQL statements, Morse code, raw
-binary (0/1 strings), and ROT13-obfuscated English text. There are no parameters to configure — you paste
+binary (0/1 strings), and ROT13-obfuscated English text. There are no parameters to configure. You paste
 text (or bytes) in, and every detector that fires with a non-zero score comes back, sorted by confidence.
 
 ## Common uses
@@ -120,13 +120,13 @@ text (or bytes) in, and every detector that fires with a non-zero score comes ba
 ## Tips and pitfalls
 
 - Confidence scores are heuristics, not proof. A short or ambiguous string can score moderately on several
-  formats at once — always sanity-check the top guess against the note before trusting it, especially
+  formats at once. Always sanity-check the top guess against the note before trusting it, especially
   around 0.3–0.5.
 - A single `key=value`-shaped line (such as `FOO=bar`) will often show up weakly as INI, TOML and `.env`
-  at the same time, because all three share that basic shape — each of those detectors caps a one-line
+  at the same time, because all three share that basic shape, and each of those detectors caps a one-line
   input at 0.4. A real config file with multiple lines and a section header scores much higher than a
   single ambiguous line does.
-- Detection works line by line for some formats (email, URL, IP, UUID) — every line must match for the
+- Detection works line by line for some formats (email, URL, IP, UUID). Every line must match for the
   whole input to be reported as that format, so mixing one bad line into an otherwise clean list will drop
   its confidence or remove it from the results entirely.
 - This tool identifies structure; it does not validate values within that structure. Once you know a value

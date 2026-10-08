@@ -139,7 +139,7 @@ describe('RecipeArticle', () => {
   it('counts the numbered steps in the widget, in the singular for one', () => {
     const widget = (stepCount: number) => renderToStaticMarkup(
       <RecipeWidget samples={recipe.samples} sampleId="a" input="" output="" stepCount={stepCount} openHref="/#/p/x" />)
-    expect(widget(1)).toContain('1 step, every one editable.')
-    expect(widget(4)).toContain('4 steps, every one editable.')
+    expect(widget(1)).toContain('1 step, all editable.')
+    expect(widget(4)).toContain('4 steps, all editable.')
   })
 })

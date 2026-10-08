@@ -236,14 +236,15 @@ describe('CommandPalette', () => {
   it('keeps Tab inside the dialog', () => {
     render(<><button>outside</button><CommandPalette /></>)
     open()
+    // the search box comes first, the Esc (close) button last
     const close = screen.getByLabelText('close')
     close.focus()
-    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true })
+    fireEvent.keyDown(close, { key: 'Tab' })
     expect(document.activeElement).toBe(combobox())
-    fireEvent.keyDown(combobox(), { key: 'Tab' })
+    fireEvent.keyDown(combobox(), { key: 'Tab', shiftKey: true })
     expect(document.activeElement).toBe(close)
     screen.getByRole('dialog').focus()
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab', shiftKey: true })
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Tab' })
     expect(document.activeElement).toBe(combobox())
   })
 

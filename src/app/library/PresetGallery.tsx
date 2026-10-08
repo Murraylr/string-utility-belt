@@ -1,5 +1,4 @@
 import React from 'react'
-import { Sparkles } from 'lucide-react'
 import { cloneWithNewIds, countSteps } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
 import { track } from '@/app/analytics/analytics'
@@ -27,20 +26,25 @@ export default function PresetGallery({ onClose, returnFocus }: PresetGalleryPro
   }
 
   return (
-    <Dialog title="Preset gallery" onClose={onClose} className="max-w-4xl" returnFocus={returnFocus}>
-      <p className="muted">Shipped example pipelines — "Try it" replaces the current pipeline and input with the preset (undo brings the old steps back).</p>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3" role="list" aria-label="presets">
+    <Dialog title="Preset gallery" onClose={onClose} widthClass="max-w-[880px]" returnFocus={returnFocus}>
+      <p className="m-0 text-[13px] text-muted">Try it replaces your pipeline and input with the preset. Undo brings your steps back.</p>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(230px,100%),1fr))] gap-2" role="list" aria-label="presets">
         {PRESETS.map(preset => {
           const n = countSteps(preset.steps)
           return (
-            <div key={preset.id} role="listitem" className="card p-4 grid gap-2 content-start">
+            <div key={preset.id} role="listitem" className="grid gap-1.5 content-start p-3 border rounded-[7px]">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-medium leading-snug">{preset.name}</h3>
-                <span className="chip shrink-0">{n} step{n === 1 ? '' : 's'}</span>
+                <h3 className="m-0 text-[13.5px] font-semibold leading-[18px]">{preset.name}</h3>
+                <span className="font-mono text-[10.5px] text-muted whitespace-nowrap">{n} step{n === 1 ? '' : 's'}</span>
               </div>
-              <p className="text-sm text-muted">{preset.description}</p>
-              <button className="btn justify-self-start mt-1" aria-label={`Try it: ${preset.name}`} onClick={() => tryIt(preset.id)}>
-                <Sparkles size={14} aria-hidden /> Try it
+              <p className="m-0 text-[12.5px] text-muted text-pretty">{preset.description}</p>
+              <button
+                type="button"
+                className="justify-self-start mt-1 h-[26px] px-2.5 border rounded-[5px] bg-surface text-[12.5px] font-medium hover:border-acc hover:text-acc"
+                aria-label={`Try it: ${preset.name}`}
+                onClick={() => tryIt(preset.id)}
+              >
+                Try it
               </button>
             </div>
           )

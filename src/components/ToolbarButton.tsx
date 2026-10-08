@@ -6,10 +6,10 @@ export default function ToolbarButton({ icon: Icon, label, onClick, disabled }: 
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="btn"
+      className="btn h-[30px] px-2.5"
     >
-      <Icon size={16} aria-hidden="true" />
-      <span className="text-sm">{label}</span>
+      <Icon size={14} aria-hidden="true" />
+      <span>{label}</span>
     </button>
   )
 }

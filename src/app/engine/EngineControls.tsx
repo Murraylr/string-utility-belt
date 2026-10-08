@@ -1,14 +1,13 @@
+import { Play } from 'lucide-react'
 import { useTool } from '@/app/ToolContext'
 import { usePref } from '@/app/prefs'
 import LargeInputBanner from './LargeInputBanner'
 
-const WHERE_LABEL: Record<string, string> = { main: 'main thread', worker: 'worker', chunked: 'chunked' }
+/** The pressed mode is raised by `.segmented`; Live also lights its dot. */
+const MODE = 'flex items-center gap-1.5 aria-pressed:text-fg'
 
-/** `.btn` has no pressed look of its own; without this the active mode is only in the a11y tree. */
-const TOGGLE = 'btn aria-pressed:bg-primary-600 aria-pressed:border-primary-600 aria-pressed:text-white aria-pressed:hover:bg-primary-700'
-
-/** Compact toolbar group for the engine: live/manual mode, a manual Run button, the
- * "preview first 64 KB" toggle, and a status chip for where/how long the last run took. */
+/** Compact toolbar group for the engine: the "first 64 KB" live-preview limit, live/manual
+ * mode and a Run button. Where and how long the last run took is shown on the output panel. */
 export default function EngineControls() {
   const { liveRun, setLiveRun, run } = useTool()
   const [previewLimit, setPreviewLimit] = usePref('previewLimit', false)
@@ -17,30 +16,32 @@ export default function EngineControls() {
   const runUseful = !liveRun || run.partial || !!run.largeInput?.paused
 
   return (
-    <div className="flex flex-wrap items-center gap-3" role="group" aria-label="engine controls">
-      <div className="inline-flex items-center gap-1" role="group" aria-label="run mode">
-        <button type="button" className={TOGGLE} aria-pressed={liveRun} onClick={() => setLiveRun(true)}>Live</button>
-        <button type="button" className={TOGGLE} aria-pressed={!liveRun} onClick={() => setLiveRun(false)}>Manual</button>
+    <div className="flex flex-wrap items-center gap-1" role="group" aria-label="engine controls">
+      <label className="btn-ghost cursor-pointer" title="Run live on the first 64 KB only. Run always uses the whole input.">
+        <input type="checkbox" checked={previewLimit} onChange={e => setPreviewLimit(e.target.checked)} />
+        First 64 KB
+      </label>
+      <div className="segmented ml-1" role="group" aria-label="run mode">
+        <button type="button" className={MODE} aria-pressed={liveRun} onClick={() => setLiveRun(true)}>
+          <span aria-hidden="true" className={`size-1.5 rounded-full ${liveRun ? 'bg-acc' : 'bg-line-2'}`} />
+          Live
+        </button>
+        <button type="button" className={MODE} aria-pressed={!liveRun} onClick={() => setLiveRun(false)}>Manual</button>
       </div>
       <button
         type="button"
-        className="btn"
+        className="btn h-7 px-2.5 text-[12.5px] ml-0.5"
         disabled={!runUseful}
-        title="Run the pipeline on the full input now (Ctrl+Enter)"
+        title="Run the whole input now (Ctrl+Enter)"
         onClick={run.runNow}
       >
+        <Play size={12} aria-hidden="true" />
         Run
       </button>
-      <label className="text-sm flex items-center gap-2">
-        <input type="checkbox" checked={previewLimit} onChange={e => setPreviewLimit(e.target.checked)} />
-        preview first 64 KB
-      </label>
-      {run.where && (
-        <span className="chip" title={`ran on the ${WHERE_LABEL[run.where] ?? run.where} in ${run.ms.toFixed(0)}ms`}>
-          {WHERE_LABEL[run.where] ?? run.where}{run.partial ? ' · partial' : ''} · {run.ms.toFixed(0)}ms
-        </span>
-      )}
-      <LargeInputBanner />
+      {/* the banner takes a row of its own; while idle it is only a hidden live region */}
+      <div className="basis-full has-[>.sr-only]:basis-auto">
+        <LargeInputBanner />
+      </div>
     </div>
   )
 }

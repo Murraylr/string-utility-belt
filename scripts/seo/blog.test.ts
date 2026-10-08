@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import path from 'node:path'
 import { parseBlogManifest, readBlogManifest, readBlogPostSource, isSafeSlug, dropRepeatedTitle } from './blog'
 import { parseFrontmatter } from '../../src/lib/markdown.js'
+import { parseTags } from '../../src/components/blogManifest'
 
 const PUBLIC_BLOG = path.join(process.cwd(), 'public', 'blog')
 
@@ -37,6 +38,13 @@ describe('readBlogManifest / readBlogPostSource (public/blog fixtures — the bu
     const posts = readBlogManifest(PUBLIC_BLOG)
     for (const post of posts) {
       expect(readBlogPostSource(PUBLIC_BLOG, post.slug)).not.toBeNull()
+    }
+  })
+
+  it("lists each post's tags as its frontmatter does, so the index and the post agree", () => {
+    for (const post of readBlogManifest(PUBLIC_BLOG)) {
+      const { frontmatter } = parseFrontmatter(readBlogPostSource(PUBLIC_BLOG, post.slug)!)
+      expect((post as { tags?: string[] }).tags, post.slug).toEqual(parseTags(frontmatter.tags))
     }
   })
 

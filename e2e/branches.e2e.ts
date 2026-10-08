@@ -6,7 +6,7 @@ test.describe('branches', () => {
   test('a branch with two lanes shows the merged output', async ({ page }) => {
     await page.goto('/')
 
-    await page.getByRole('button', { name: 'branch' }).click()
+    await page.getByRole('button', { name: 'Branch', exact: true }).click()
     const branch = page.locator('[data-step-id]').first()
     await expect(branch).toBeVisible()
 

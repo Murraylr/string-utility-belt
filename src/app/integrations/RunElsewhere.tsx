@@ -31,14 +31,14 @@ function Snippet({ label, code, onCopied }: SnippetProps) {
     }, () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
   }
   return (
-    <div className="grid gap-1">
-      <div className="flex items-center justify-between gap-2">
-        <span id={labelId} className="text-xs text-muted">{label}</span>
-        <button type="button" className="btn text-xs" aria-describedby={labelId} onClick={onCopy}>
+    <div className="border rounded-lg bg-strip min-w-0">
+      <div className="flex items-center justify-between gap-2 pl-3.5 pr-1.5 pt-1.5">
+        <span id={labelId} className="text-[11px] text-muted">{label}</span>
+        <button type="button" className="btn-ghost h-6 text-[11.5px]" aria-describedby={labelId} onClick={onCopy}>
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <pre aria-labelledby={labelId} className="mono text-xs whitespace-pre-wrap wrap-anywhere bg-surface-2 rounded-lg p-3">
+      <pre aria-labelledby={labelId} className="m-0 px-3.5 pt-1 pb-3 font-mono text-[12.5px] leading-5 whitespace-pre-wrap wrap-anywhere">
         <code>{code}</code>
       </pre>
     </div>
@@ -66,20 +66,20 @@ export default function RunElsewhere({ meta, input, params, onCopy, onDocsClick 
   const cli = cliCommand(meta, input, params)
   if (cli === undefined) return null
   return (
-    <section className="card p-6 grid gap-3" aria-labelledby={headingId}>
-      <h2 id={headingId} className="text-lg font-medium">Run it from your terminal or AI agent</h2>
-      <p className="text-sm muted">
+    <section className="grid gap-3.5 min-w-0" aria-labelledby={headingId}>
+      <h2 id={headingId} className="section-title">Run it from your terminal or AI agent</h2>
+      <p className="m-0 text-sm leading-[22px] text-muted text-pretty">
         The same utility runs on your own machine in the{' '}
-        <a className="underline" href={hrefOf('cli')} onClick={() => onDocsClick?.('cli')}>subelt command-line tool</a>{' '}
-        and the <a className="underline" href={hrefOf('mcp')} onClick={() => onDocsClick?.('mcp')}>MCP server</a>, so
+        <a className="text-fg underline decoration-acc underline-offset-[3px]" href={hrefOf('cli')} onClick={() => onDocsClick?.('cli')}>subelt command-line tool</a>{' '}
+        and the <a className="text-fg underline decoration-acc underline-offset-[3px]" href={hrefOf('mcp')} onClick={() => onDocsClick?.('mcp')}>MCP server</a>, so
         scripts and agents get the exact result instead of a guess. They update as you try the utility on this page.
       </p>
       <Snippet label="Terminal (Node.js 20+)" code={cli} onCopied={() => onCopy?.('cli')} />
       <Snippet label="Add the MCP server to Claude Code" code={MCP_ADD_COMMAND} onCopied={() => onCopy?.('mcp')} />
-      <p className="text-sm muted">
-        Your agent then calls <code className="mono">run_utility</code> with{' '}
-        <code className="mono wrap-anywhere">{mcpArguments(meta, params)}</code> and your text as{' '}
-        <code className="mono">input</code>.
+      <p className="m-0 text-sm leading-[22px] text-muted text-pretty">
+        Your agent then calls <code className="font-mono text-[0.86em] px-[5px] py-px rounded-[4px] bg-surface-2 text-fg">run_utility</code> with{' '}
+        <code className="font-mono text-[0.86em] px-[5px] py-px rounded-[4px] bg-surface-2 text-fg wrap-anywhere">{mcpArguments(meta, params)}</code> and your text as{' '}
+        <code className="font-mono text-[0.86em] px-[5px] py-px rounded-[4px] bg-surface-2 text-fg">input</code>.
       </p>
     </section>
   )

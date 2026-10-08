@@ -36,55 +36,62 @@ async function loadLanguageExtension(kind: OutputKind) {
  */
 const BASIC_SETUP = { lineNumbers: true, foldGutter: false } as const
 
-const PRE_CLASS = 'mono whitespace-pre-wrap wrap-anywhere border rounded-2xl p-3 bg-surface min-h-[160px] max-h-128 overflow-auto'
+const PRE_CLASS = 'm-0 p-4 min-h-[280px] overflow-auto font-mono text-[13.5px] leading-[22px] whitespace-pre-wrap wrap-anywhere'
+/** Cap used when the host doesn't pick one for its layout. */
+const DEFAULT_MAX_HEIGHT = '32rem'
 
 export interface OutputViewProps {
   value: Value
   text: string
   /** Accessible name of the highlighted editor. */
   label?: string
+  /** CSS max-height of the scrolling view. */
+  maxHeight?: string
 }
 
 /** Renders a pipeline value: hex/text toggle for bytes, syntax-highlighted read-only CodeMirror for text/json. */
-export default function OutputView({ value, text, label = 'output' }: OutputViewProps) {
+export default function OutputView({ value, text, label = 'output', maxHeight = DEFAULT_MAX_HEIGHT }: OutputViewProps) {
   const dark = useDarkMode()
-  if (isBytes(value)) return <BytesView bytes={value} />
-  return <HighlightedText value={value} text={text} dark={dark} label={label} />
+  if (isBytes(value)) return <BytesView bytes={value} maxHeight={maxHeight} />
+  return <HighlightedText value={value} text={text} dark={dark} label={label} maxHeight={maxHeight} />
 }
 
-function BytesView({ bytes }: { bytes: Uint8Array }) {
+function BytesView({ bytes, maxHeight }: { bytes: Uint8Array; maxHeight: string }) {
   // null: follow the content (text-like bytes as text, anything else as hex) until the user picks
   const [chosen, setChosen] = useState<'text' | 'hex' | null>(null)
   const auto = useMemo(() => (looksLikeText(bytes) ? 'text' : 'hex'), [bytes])
   const view = chosen ?? auto
   return (
-    <div className="grid gap-2">
-      <div className="flex items-center gap-2" role="group" aria-label="show bytes as">
-        <button type="button" className="btn" aria-pressed={view === 'text'} onClick={() => setChosen('text')}>text</button>
-        <button type="button" className="btn" aria-pressed={view === 'hex'} onClick={() => setChosen('hex')}>hex</button>
+    <div>
+      <div className="flex items-center gap-2 px-3.5 pt-2.5">
+        <span className="text-xs text-muted" aria-hidden>Show as</span>
+        <div className="segmented" role="group" aria-label="Show bytes as">
+          <button type="button" aria-pressed={view === 'text'} onClick={() => setChosen('text')}>Text</button>
+          <button type="button" aria-pressed={view === 'hex'} onClick={() => setChosen('hex')}>Hex</button>
+        </div>
       </div>
-      {view === 'hex' ? <HexView bytes={bytes} /> : <BytesAsText bytes={bytes} />}
+      {view === 'hex' ? <HexView bytes={bytes} maxHeight={maxHeight} /> : <BytesAsText bytes={bytes} maxHeight={maxHeight} />}
     </div>
   )
 }
 
-function BytesAsText({ bytes }: { bytes: Uint8Array }) {
+function BytesAsText({ bytes, maxHeight }: { bytes: Uint8Array; maxHeight: string }) {
   // memoised and capped: the panel re-renders on run-state flips, and a multi-megabyte <pre> freezes the page
   const decoded = useMemo(() => decodeUtf8Prefix(bytes, MAX_BYTES_AS_TEXT), [bytes])
   const cut = bytes.length > MAX_BYTES_AS_TEXT
   return (
     <>
-      <pre className={PRE_CLASS} tabIndex={0}>{decoded}</pre>
+      <pre className={PRE_CLASS} style={{ maxHeight }} tabIndex={0}>{decoded}</pre>
       {cut && (
-        <p className="muted text-xs">
-          showing the first 1 MB of {bytes.length.toLocaleString()} bytes — copy or download for all of it
+        <p className="m-0 px-4 pb-3 text-xs text-muted">
+          Showing the first 1 MB of {bytes.length.toLocaleString()} bytes. Copy or download to get all of it.
         </p>
       )}
     </>
   )
 }
 
-function HighlightedText({ value, text, dark, label }: { value: Value; text: string; dark: boolean; label: string }) {
+function HighlightedText({ value, text, dark, label, maxHeight }: { value: Value; text: string; dark: boolean; label: string; maxHeight: string }) {
   const tooBig = text.length > MAX_HIGHLIGHT_CHARS
   // detection parses JSON / scans every line, so it is skipped for outputs that won't be highlighted anyway
   const kind = useMemo<OutputKind>(() => (tooBig ? 'text' : detectKind(value, text)), [value, text, tooBig])
@@ -125,12 +132,12 @@ function HighlightedText({ value, text, dark, label }: { value: Value; text: str
   }, [cm, extension, label])
 
   if (plain || failed || !cm) {
-    return <pre className={PRE_CLASS} tabIndex={0}>{text}</pre>
+    return <pre className={PRE_CLASS} style={{ maxHeight }} tabIndex={0}>{text}</pre>
   }
 
   const CodeMirror = cm.default
   return (
-    <div className="border rounded-2xl overflow-hidden" data-testid="output-codemirror">
+    <div className="overflow-hidden text-[13.5px]" data-testid="output-codemirror">
       {/* readOnly (not editable={false}) keeps the editor focusable, so keyboard users can move and select */}
       <CodeMirror
         value={text}
@@ -138,7 +145,8 @@ function HighlightedText({ value, text, dark, label }: { value: Value; text: str
         theme={dark ? 'dark' : 'light'}
         extensions={extensions}
         basicSetup={BASIC_SETUP}
-        maxHeight="32rem"
+        minHeight="280px"
+        maxHeight={maxHeight}
       />
     </div>
   )
