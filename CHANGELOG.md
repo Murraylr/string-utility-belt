@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The privacy policy says how long Google Analytics data is kept (14 months) and that a copy is exported to Google
+  BigQuery in our own Google Cloud project, where it is also deleted after 14 months.
+
 ## [1.8.0] - 2026-10-08
 
 ### Added
