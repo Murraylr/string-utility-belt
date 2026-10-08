@@ -14,7 +14,7 @@ This reverses [base64 encode](/util/base64_encode/): it takes a Base64 string (f
 4. The resulting bytes are decoded as UTF-8 text.
 
 ```example
-title: padding marks a short final group — aGk= is two bytes
+title: padding marks a short final group (aGk= is two bytes)
 input: aGk=
 output: hi
 ```

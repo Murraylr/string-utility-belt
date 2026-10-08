@@ -42,7 +42,7 @@ fractions are not: `0.1` cannot be represented exactly in binary floating point,
 precision:
 
 ```example
-title: 0.1 cannot be stored exactly — the breakdown shows what really is
+title: 0.1 cannot be stored exactly; the breakdown shows what really is
 input: 0.1
 params: {"direction": "to-bits", "precision": "single", "format": "breakdown"}
 output:
