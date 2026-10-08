@@ -1,7 +1,9 @@
-// Rebuild first: node node_modules/vite/bin/vite.js build --config packages/extension/vite.config.ts
+// Rebuild first: npm run build:extension
 // Then: node packages/extension/store-listing/generate.mjs
-// Uses a temporary Chromium profile, the real unpacked extension, and local fonts.
+// Uses a temporary Chromium profile and the real unpacked extension. Downloads the design's two
+// typefaces (Instrument Sans, JetBrains Mono) from Google Fonts at run time, so it needs network.
 import { chromium } from '@playwright/test'
+import LZString from 'lz-string'
 import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -15,14 +17,44 @@ const sourceDir = path.join(dir, 'sources')
 await mkdir(assetDir, { recursive: true })
 await mkdir(sourceDir, { recursive: true })
 const data = (buf, type = 'image/png') => `data:${type};base64,${buf.toString('base64')}`
-// Reuse the established S logo from the app, rather than the old blank-square extension placeholder.
+// The installed extension's own icon: the store icon must match what the toolbar shows.
 const icon = data(await readFile(path.join(root, 'public/icons/icon-512.png')))
-const font = data(await readFile(path.join(root, 'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-600-normal.woff2')), 'font/woff2')
-const bold = data(await readFile(path.join(root, 'node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2')), 'font/woff2')
+
+/**
+ * The Latin subset of a Google Fonts family as `@font-face` rules with the font files inlined,
+ * so the extension pages and the artwork render in the design's typefaces in any Chromium.
+ */
+async function googleFont(query) {
+  const ua = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36'
+  const css = await (await fetch(`https://fonts.googleapis.com/css2?${query}&display=swap`, { headers: { 'user-agent': ua } })).text()
+  const latin = css.split('/* ').filter(block => block.startsWith('latin */')).map(block => block.slice('latin */'.length))
+  if (!latin.length) throw new Error(`No Latin faces in the Google Fonts response for ${query}`)
+  const faces = await Promise.all(latin.map(async face => {
+    const url = face.match(/url\((https:[^)]+)\)/)[1]
+    const font = Buffer.from(await (await fetch(url)).arrayBuffer())
+    return face.replace(url, data(font, 'font/woff2'))
+  }))
+  return faces.join('\n')
+}
+const fonts = (await googleFont('family=Instrument+Sans:wght@400;500;600;700')) + '\n' + (await googleFont('family=JetBrains+Mono:wght@400;500'))
+// what the saved, editable sources load instead of ~240 KB of inlined font files each
+const fontsImport = "@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');"
+
+// The site's tokens (src/index.css), light and dark.
+const THEMES = {
+  light: { bg: '#f8f7f3', strip: '#f2f0ec', surface: '#fefdfa', line: '#dcd9d3', line2: '#beb9b3', ink: '#1f1915', muted: '#69625d', acc: '#ca4b20', shadow: 'rgb(40 30 22 / .22)' },
+  dark: { bg: '#110f0d', strip: '#171412', surface: '#1a1614', line: '#312d29', line2: '#4c4742', ink: '#eae7e3', muted: '#a39d98', acc: '#ea7b4e', shadow: 'rgb(0 0 0 / .6)' },
+}
+
+/** A pipeline as the website's share link carries it (`encodeShare`). */
+const shareLink = doc => `https://stringutilitybelt.com/#/p/${LZString.compressToEncodedURIComponent(JSON.stringify(doc))}`
+
 const profile = await mkdtemp(path.join(tmpdir(), 'subelt-store-'))
 const extension = path.join(root, 'packages/extension/dist')
 const context = await chromium.launchPersistentContext(profile, {
-  channel: 'chromium', headless: true, viewport: { width: 1280, height: 800 },
+  // CHROMIUM_PATH: a Chromium build to use instead of Playwright's own (e.g. a preinstalled one)
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chromium' }),
+  headless: true, viewport: { width: 1280, height: 800 },
   deviceScaleFactor: 2, colorScheme: 'light',
   args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
 })
@@ -33,83 +65,181 @@ try {
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', e => errors.push(e.message))
+  const useFonts = () => page.addStyleTag({ content: fonts }).then(() => page.evaluate(() => document.fonts.ready))
+
   const examples = [
-    { file: '01-decode-base64', utility: 'base64_decode', input: 'SGVsbG8sIGRldmVsb3BlciE=', expected: 'Hello, developer!', kicker: 'DECODE & ENCODE', title: 'Decode without<br>the detour.', text: 'Turn encoded strings into readable text<br>right from your toolbar.', tags: ['Base64', 'URL encoding', 'JWT decode'], note: 'Also available from the right-click menu.', color: '#bbb6ff' },
-    { file: '02-format-json', utility: 'json_pretty', input: '{"name":"Ada","role":"developer","active":true}', expected: '{\n  "name": "Ada",\n  "role": "developer",\n  "active": true\n}', outputHeight: 116, kicker: 'FORMAT & INSPECT', title: 'Make JSON<br>readable.', text: 'Pretty-print a compact payload.<br>Choose the indentation. Copy the result.', tags: ['JSON formatting', 'Adjustable indent'], note: 'Real input. Immediate output.', color: '#a8e7d2' },
-    { file: '03-change-case', utility: 'case', input: 'make every word count', expected: 'Make Every Word Count', param: 'title', kicker: 'EVERYDAY TEXT TOOLS', title: 'Get text<br>into shape.', text: 'Switch case, trim whitespace, and clean<br>up text with a utility for the job.', tags: ['Uppercase', 'Lowercase', 'Title case'], note: 'Use the popup to customize supported settings.', color: '#ffc7a8' },
-    { file: '04-hash-text', utility: 'hash', input: 'hello', expected: createHash('sha256').update('hello').digest('hex'), kicker: 'DEVELOPER ESSENTIALS', title: 'A hash,<br>in a few clicks.', text: 'Choose an algorithm and generate<br>a digest locally in your browser.', tags: ['SHA-256', 'SHA-384', 'SHA-512'], note: 'Copy the output and keep moving.', color: '#bdd5ff' },
+    { file: '01-decode-base64', utility: 'base64_decode', input: 'SGVsbG8sIGRldmVsb3BlciE=', expected: 'Hello, developer!', theme: 'light',
+      kicker: 'Decode and encode', title: 'Decode it where<br>you found it.', text: 'Select the text, right-click, done. Or paste it<br>into the toolbar popup.', tags: ['Base64', 'URL encoding', 'JWT'] },
+    { file: '02-format-json', utility: 'json_pretty', input: '{"name":"Ada","role":"developer","active":true}', expected: '{\n  "name": "Ada",\n  "role": "developer",\n  "active": true\n}', outputHeight: 112, theme: 'light',
+      kicker: 'Format and inspect', title: 'Make JSON<br>readable.', text: 'Pretty-print a compact payload, pick the indent<br>and copy the result.', tags: ['JSON', 'YAML', 'SQL'] },
+    { file: '03-change-case', utility: 'case', param: 'title', input: 'make every word count', expected: 'Make Every Word Count', theme: 'light',
+      kicker: 'Everyday text', title: 'Get text<br>into shape.', text: 'Change case, trim whitespace and tidy up<br>text with the right utility for the job.', tags: ['Title case', 'Trim', 'Slugify'] },
+    { file: '04-hash-text', utility: 'hash', input: 'hello', expected: createHash('sha256').update('hello').digest('hex'), theme: 'dark',
+      kicker: 'Light or dark', title: 'Hash text<br>in two clicks.', text: 'SHA-256 and friends, worked out on your device.<br>The popup follows your system theme.', tags: ['SHA-256', 'SHA-384', 'SHA-512'] },
   ]
   const captures = []
   for (const ex of examples) {
+    await page.emulateMedia({ colorScheme: ex.theme })
     await page.goto(`chrome-extension://${extensionId}/popup.html`)
     await page.locator('#utility option').first().waitFor({ state: 'attached' })
-    const count = await page.locator('#utility option').count()
+    await useFonts()
+    // favourites are listed again at the top of the menu: count each utility once
+    const count = new Set(await page.locator('#utility option').evaluateAll(options => options.map(o => o.value).filter(Boolean))).size
     await page.locator('#utility').selectOption(ex.utility)
-    if (ex.param) await page.locator('#params select').selectOption(ex.param)
+    if (ex.param) await page.locator('#params select').first().selectOption(ex.param)
     await page.locator('#input').fill(ex.input)
     await page.locator('#run').click()
     await page.waitForFunction(() => document.querySelector('#status').textContent === 'Done.')
     const output = await page.locator('#output').inputValue()
     if (output !== ex.expected) throw new Error(`Unexpected output for ${ex.utility}: ${output}`)
-    // Textarea resizing is a native part of the popup. Give multi-line JSON enough room.
+    // Resizing the result box is a native part of the popup: give multi-line JSON the room it needs.
     if (ex.outputHeight) await page.locator('#output').evaluate((el, h) => { el.style.height = `${h}px` }, ex.outputHeight)
-    await page.locator('#utility').focus()
-    await page.locator('#utility').blur()
+    await page.locator('#run').blur()
     const raw = await page.locator('body').screenshot({ path: path.join(sourceDir, `${ex.file}-capture.png`) })
-    captures.push({ ...ex, raw: data(raw), count, ratio: raw.readUInt32BE(16) / raw.readUInt32BE(20) })
-    results.push({ example: ex.utility, input: ex.input, output, offeredUtilities: count })
+    captures.push({ ...ex, raw: data(raw), ratio: raw.readUInt32BE(16) / raw.readUInt32BE(20), label: 'Toolbar popup' })
+    results.push({ example: ex.utility, theme: ex.theme, input: ex.input, output, offeredUtilities: count })
   }
+
+  // The options page with a saved pipeline, added the way a user would: from a share link.
+  await page.emulateMedia({ colorScheme: 'light' })
   await page.goto(`chrome-extension://${extensionId}/options.html`)
-  await page.locator('#search').fill('base64_')
-  await page.locator('input[value="base64_decode"]').check()
-  await page.locator('input[value="base64_encode"]').check()
+  await page.locator('#favorites li').first().waitFor()
+  await useFonts()
+  // Trim the default menu to the four a user here keeps, and save it, as the page asks.
+  while (await page.locator('#favorites li').count() > 4) await page.locator('#favorites li').last().getByRole('button', { name: /^Remove/ }).click()
   await page.locator('#save').click()
-  await page.waitForFunction(() => document.querySelector('#status').textContent === 'Saved.')
-  await page.locator('#save').blur()
-  const optionsRaw = await page.locator('body').screenshot({ path: path.join(sourceDir, '05-customize-menu-capture.png') })
-  captures.push({ file: '05-customize-menu', raw: data(optionsRaw), ratio: optionsRaw.readUInt32BE(16) / optionsRaw.readUInt32BE(20), options: true, kicker: 'A MENU THAT FITS YOU', title: 'Your menu.<br>Your tools.', text: 'Search the utility library and choose<br>what appears when you right-click.', tags: ['Search', 'Select', 'Save'], note: 'Start with ten useful defaults. Make it your own.', color: '#cfb9ff' })
+  await page.waitForFunction(() => document.querySelector('#status').textContent === 'Saved. The menu is updated.')
+  const pipeline = { v: 2, name: 'Clean up a URL slug', steps: [
+    { id: 'a', utilityId: 'trim', enabled: true, params: {} },
+    { id: 'b', utilityId: 'slug', enabled: true, params: {} },
+  ] }
+  await page.locator('#import-link').fill(shareLink(pipeline))
+  await page.locator('#import').click()
+  await page.waitForFunction(name => document.querySelector('#pipeline-status').textContent === `Added “${name}”.`, pipeline.name)
+  // the list re-renders from the storage change, a moment after the status line
+  await page.locator('#pipelines li').first().waitFor()
+  const listed = await page.locator('#pipelines li input').first().inputValue()
+  if (listed !== pipeline.name) throw new Error(`Imported pipeline listed as ${listed}`)
+  await page.locator('#import').blur()
+  const favourites = await page.locator('#favorites li').count()
+  // The page from its title to the saved pipelines: everything the menu shows, nothing below.
+  // a window tall enough for the whole column, so the capture never stops at the fold
+  await page.setViewportSize({ width: 1280, height: 1600 })
+  const column = await page.locator('main.page').boundingBox()
+  const top = await page.locator('.intro').boundingBox()
+  const end = await page.locator('#pipelines').boundingBox()
+  const pad = 28
+  const optionsRaw = await page.screenshot({ path: path.join(sourceDir, '05-customize-menu-capture.png'),
+    clip: { x: column.x - pad, y: Math.max(0, top.y - pad), width: column.width + 2 * pad, height: end.y + end.height + 14 - Math.max(0, top.y - pad) } })
+  results.push({ example: 'options', favourites, importedPipeline: pipeline.name })
+  captures.push({ file: '05-customize-menu', raw: data(optionsRaw), ratio: optionsRaw.readUInt32BE(16) / optionsRaw.readUInt32BE(20), options: true, theme: 'light', label: 'Extension options',
+    kicker: 'Your menu', title: 'Your favourites,<br>one right-click away.', text: 'Order the utilities you use most, and save whole<br>pipelines from the website to run in one step.', tags: ['Favourites', 'Saved pipelines', 'Share links'] })
   if (errors.length) throw new Error(errors.join('\n'))
 
-  // Compose the verified captures into full-bleed listing artwork.
+  // Compose the verified captures into the listing artwork, in the site's design.
   const render = await context.newPage()
-  const css = `@font-face{font-family:Jakarta;src:url('${font}');font-weight:600}@font-face{font-family:Jakarta;src:url('${bold}');font-weight:800}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:Jakarta,sans-serif;color:#fff;background:#13152c} .canvas{width:100%;height:100%;position:relative;overflow:hidden;background:radial-gradient(ellipse at 96% 14%,#35316a 0%,transparent 62%),#13152c}.grid{position:absolute;inset:0;background-image:linear-gradient(#ffffff05 1px,transparent 1px),linear-gradient(90deg,#ffffff05 1px,transparent 1px);background-size:40px 40px}.brand{position:absolute;top:44px;left:54px;display:flex;align-items:center;gap:15px;font-size:19px;letter-spacing:-.5px}.brand img{width:40px;height:40px;border-radius:8px}.copy{position:absolute;left:58px;top:202px}.kicker{font-size:13px;font-weight:800;letter-spacing:2.8px;color:var(--accent)}h1{font-size:61px;line-height:1.12;letter-spacing:-3.4px;margin:22px 0 24px;font-weight:800}p{font-size:19px;line-height:1.7;color:#c0c2d9;margin:0}.tags{display:flex;gap:9px;margin-top:32px}.tags span{font-size:12px;border:1px solid #51516e;border-radius:20px;padding:9px 13px;color:#e5e4f6}.note{position:absolute;left:58px;bottom:91px;font-size:13px;color:#acafc9}.foot{position:absolute;bottom:34px;left:58px;right:54px;display:flex;justify-content:space-between;font-size:10px;letter-spacing:2px;color:#8e91ad}.shot{position:absolute;left:659px;top:138px;width:510px;border-radius:13px;overflow:hidden;box-shadow:0 32px 100px #0008;border:1px solid #ffffff30;background:white}.shot img{display:block;width:100%}.shot-label{position:absolute;left:659px;top:108px;font-size:10px;letter-spacing:2px;color:#acaeca}.orb{position:absolute;width:660px;height:660px;right:-146px;top:56px;border:1px solid #aaa1ff22;border-radius:50%}.orb:after{content:'';position:absolute;inset:48px;border:1px solid #aaa1ff15;border-radius:50%}`
-  const html = (body, extra = '') => `<!doctype html><html><head><meta charset="utf-8"><style>${css}${extra}</style></head><body>${body}</body></html>`
+  const base = t => `${fonts}
+    :root{--bg:${t.bg};--strip:${t.strip};--surface:${t.surface};--line:${t.line};--line2:${t.line2};--ink:${t.ink};--muted:${t.muted};--acc:${t.acc};--shadow:${t.shadow}}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+    body{font-family:'Instrument Sans',sans-serif;color:var(--ink);background:var(--bg)}
+    .canvas{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
+    .brand{position:absolute;display:flex;align-items:center;gap:12px;font-size:19px;font-weight:600;letter-spacing:-.01em}
+    .keycap{font-family:'JetBrains Mono',monospace;font-weight:500;line-height:1;border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:6px}
+    .mono{font-family:'JetBrains Mono',monospace}`
+  const html = (css, body) => `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${body}</body></html>`
   async function exportHtml(name, markup, width, height, transparent = false) {
-    await writeFile(path.join(sourceDir, `${name}.html`), markup)
+    await writeFile(path.join(sourceDir, `${name}.html`), markup.replace(fonts, fontsImport))
     await render.setViewportSize({ width, height })
     await render.setContent(markup)
     await render.evaluate(() => document.fonts.ready)
-    // CSS viewport is exact; capture at CSS scale to get upload dimensions, not retina dimensions.
+    // The CSS viewport is exact: capture at CSS scale for upload dimensions, not retina ones.
     await render.screenshot({ path: path.join(assetDir, `${name}.png`), scale: 'css', omitBackground: transparent })
   }
+
+  const screenshotCss = t => base(t) + `
+    .brand{top:46px;left:60px}.brand .keycap{font-size:13px;padding:6px 7px 5px}
+    .copy{position:absolute;left:60px;top:196px;width:500px}
+    .kicker{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--acc)}
+    h1{font-size:58px;line-height:64px;font-weight:600;letter-spacing:-.03em;margin:20px 0 22px}
+    p{font-size:19px;line-height:30px;color:var(--muted);margin:0}
+    .tags{display:flex;gap:8px;margin-top:30px}.tags span{font-size:14px;line-height:1;padding:9px 13px;border:1px solid var(--line2);border-radius:999px}
+    .desk{position:absolute;left:600px;top:0;right:0;bottom:0;background:var(--strip);border-left:1px solid var(--line)}
+    .shot-label{position:absolute;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}
+    .shot{position:absolute;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);box-shadow:0 30px 80px -30px var(--shadow)}
+    .shot img{display:block;width:100%}
+    .foot{position:absolute;left:60px;bottom:40px;display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)}`
   for (let i = 0; i < captures.length; i++) {
     const c = captures[i]
-    const shotWidth = Math.min(c.options ? 604 : 510, 590 * c.ratio)
-    const shotLeft = 918 - shotWidth / 2
-    const markup = html(`<main class="canvas" style="--accent:${c.color}"><div class="grid"></div><div class="orb"></div><div class="brand"><img src="${icon}">String Utility Belt</div><div class="copy"><div class="kicker">${c.kicker}</div><h1>${c.title}</h1><p>${c.text}</p><div class="tags">${c.tags.map(t => `<span>${t}</span>`).join('')}</div></div><div class="shot-label">${c.options ? 'EXTENSION OPTIONS' : 'TOOLBAR POPUP'}</div><div class="shot"><img src="${c.raw}"></div><div class="note">${c.note}</div><div class="foot"><span>STRING UTILITY BELT / CHROME EXTENSION</span><span>0${i + 1} / 05</span></div></main>`, c.options ? '.shot{left:622px;top:165px;width:604px}.shot-label{left:622px;top:133px}' : '')
-    const fitted = markup.replace('</style>', `.shot{left:${shotLeft}px;top:138px;width:${shotWidth}px}.shot-label{left:${shotLeft}px;top:108px}</style>`)
-    await exportHtml(c.file, fitted, 1280, 800)
-  }
-  // Use the established S mark, normalized to the store's square icon safe area.
-  await exportHtml('store-icon-128', html(`<img src="${icon}" style="position:absolute;left:16px;top:16px;width:96px;height:96px">`, 'html,body{background:transparent}'), 128, 128, true)
-  // Keep the toolbar/package icons consistent with the corrected store artwork.
-  for (const size of [16, 32, 48, 128]) {
-    const padding = size === 128 ? 16 : 0
-    await render.setViewportSize({ width: size, height: size })
-    await render.setContent(html(`<img src="${icon}" style="position:absolute;left:${padding}px;top:${padding}px;width:${size - 2 * padding}px;height:${size - 2 * padding}px">`, 'html,body{background:transparent}'))
-    await render.screenshot({ path: path.join(root, `packages/extension/icons/icon${size}.png`), scale: 'css', omitBackground: true })
+    const t = THEMES[c.theme]
+    // centred in the right-hand panel, as large as its height allows
+    const maxW = c.options ? 600 : 470
+    const width = Math.round(Math.min(maxW, (c.options ? 680 : 620) * c.ratio))
+    const height = width / c.ratio
+    const left = Math.round(600 + (680 - width) / 2)
+    const topY = Math.round((800 - height) / 2 + 12)
+    const markup = html(screenshotCss(t) + `.shot{left:${left}px;top:${topY}px;width:${width}px}.shot-label{left:${left}px;top:${topY - 26}px}`,
+      `<main class="canvas"><div class="desk"></div>
+        <div class="brand"><span class="keycap">sub</span>String Utility Belt</div>
+        <div class="copy"><div class="kicker">${c.kicker}</div><h1>${c.title}</h1><p>${c.text}</p><div class="tags">${c.tags.map(tag => `<span>${tag}</span>`).join('')}</div></div>
+        <div class="shot-label">${c.label}</div><div class="shot"><img src="${c.raw}"></div>
+        <div class="foot"><span>For Chrome, Edge and Brave</span><span>0${i + 1} / 05</span></div></main>`)
+    await exportHtml(c.file, markup, 1280, 800)
   }
 
-  const promoCss = `.canvas{background:radial-gradient(ellipse at 95% 0%,#8571ff 0%,transparent 68%),linear-gradient(125deg,#30208f,#4f46e5)}.promo-brand{position:absolute;left:30px;top:28px;display:flex;align-items:center;gap:18px}.promo-brand img{width:58px;height:58px;border:1px solid #ffffff35;border-radius:12px}.promo-brand h2{font-size:28px;letter-spacing:-1px;line-height:1.12;margin:0;font-weight:800}.flow{position:absolute;left:30px;right:30px;top:135px;display:flex;align-items:center;gap:14px}.code{font-family:ui-monospace,Consolas,monospace;font-size:32px;padding:17px 22px;border:1px solid #ffffff35;background:#ffffff10;border-radius:14px;box-shadow:0 18px 36px #21107040}.code.out{color:#191449;background:#dcfff1;border-color:#dcfff1}.arrow{font-size:25px;color:#d7d1ff}.promo-note{position:absolute;bottom:23px;left:32px;font-size:11px;letter-spacing:2px;color:#e1dcff}.big-ring{position:absolute;right:-100px;top:-140px;width:550px;height:550px;border:1px solid #ffffff16;border-radius:50%}`
-  await exportHtml('small-promo-440x280', html(`<main class="canvas"><div class="big-ring"></div><div class="promo-brand"><img src="${icon}"><h2>String<br>Utility Belt</h2></div><div class="flow"><div class="code">aB cD</div><span class="arrow">→</span><div class="code out">Ab Cd</div></div><div class="promo-note">TEXT TOOLS, WITHIN REACH.</div></main>`, promoCss), 440, 280)
-  await exportHtml('marquee-promo-1400x560', html(`<main class="canvas"><div class="grid"></div><div class="big-ring"></div><div class="promo-brand"><img src="${icon}"><h2>String<br>Utility Belt</h2></div><div class="marquee-line">Text tools,<br>within reach.</div><div class="graphic"><div class="mini">aGVsbG8=</div><div class="wire"></div><div class="center"><img src="${icon}"></div><div class="wire second"></div><div class="mini output">hello<span>✓</span></div><div class="chip one">{ }</div><div class="chip two">Aa</div><div class="chip three">#</div></div><div class="promo-note">DECODE · FORMAT · TRANSFORM</div></main>`, promoCss + `.promo-brand{left:68px;top:59px}.promo-brand img{width:70px;height:70px}.promo-brand h2{font-size:31px}.marquee-line{position:absolute;left:68px;top:187px;font-size:67px;line-height:1.12;letter-spacing:-3px;font-weight:800}.promo-note{left:72px;bottom:65px;font-size:13px;letter-spacing:3px}.big-ring{width:880px;height:880px;right:-55px;top:-169px}.graphic{position:absolute;left:635px;top:100px;width:700px;height:380px}.mini{position:absolute;top:80px;left:0;background:#20195a;border:1px solid #b5a6ff88;padding:24px 30px;border-radius:18px;font:30px ui-monospace,Consolas,monospace;box-shadow:0 20px 44px #20115950}.center{position:absolute;left:265px;top:63px;width:130px;height:130px;padding:15px;border:1px solid #ffffff70;background:#ffffff17;border-radius:28px;transform:rotate(-8deg);box-shadow:0 20px 40px #21134a55}.center img{width:100%;border-radius:16px}.wire{position:absolute;left:208px;top:126px;width:59px;height:2px;background:#c3b6ff}.wire.second{left:394px;width:59px}.mini.output{left:451px;background:#dcfff1;color:#23184d;top:80px}.mini.output span{font-size:20px;margin-left:25px;color:#408972}.chip{position:absolute;border:1px solid #ffffff45;border-radius:16px;padding:13px 21px;font:28px ui-monospace,Consolas,monospace;background:#ffffff15}.one{top:243px;left:170px;transform:rotate(-10deg)}.two{top:256px;left:315px;transform:rotate(8deg)}.three{top:231px;left:463px;transform:rotate(-8deg)}`), 1400, 560)
-  const thumbs = await Promise.all(['01-decode-base64','02-format-json','03-change-case','04-hash-text','05-customize-menu','small-promo-440x280','marquee-promo-1400x560','store-icon-128'].map(async name => ({ name, url: data(await readFile(path.join(assetDir, `${name}.png`))) })))
-  await exportHtml('contact-sheet', html(`<div class="gallery">${thumbs.map(t => `<figure><img src="${t.url}"><figcaption>${t.name}</figcaption></figure>`).join('')}</div>`, 'body{background:#eef0f7}.gallery{padding:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}figure{margin:0;height:280px;background:white;padding:12px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center}figure img{max-width:100%;max-height:230px;object-fit:contain}figcaption{font-size:12px;color:#33395a;padding-top:9px}'), 1440, 950)
+  // The store icon is the extension's own toolbar icon, centred in the store's 96 px safe area.
+  await exportHtml('store-icon-128', html('html,body{margin:0;background:transparent}', `<img src="${icon}" style="position:absolute;left:16px;top:16px;width:96px;height:96px">`), 128, 128, true)
+
+  const promoCss = base(THEMES.light) + `
+    .flow{position:absolute;display:flex;align-items:center}
+    .card{font-family:'JetBrains Mono',monospace;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:0 20px 50px -24px var(--shadow)}
+    .card.out{border-color:var(--acc);color:var(--acc)}
+    .arrow{color:var(--acc);font-family:'JetBrains Mono',monospace}
+    .note{position:absolute;font-family:'JetBrains Mono',monospace;color:var(--muted)}`
+  await exportHtml('small-promo-440x280', html(promoCss + `
+      .brand{left:28px;top:30px;font-size:22px}.brand .keycap{font-size:14px;padding:6px 7px 5px}
+      h1{position:absolute;left:28px;top:82px;margin:0;font-size:34px;line-height:38px;font-weight:600;letter-spacing:-.03em}
+      .flow{left:28px;top:178px;gap:12px}.card{font-size:18px;padding:12px 15px}.arrow{font-size:18px}
+      .note{left:28px;bottom:16px;font-size:11px}`,
+    `<main class="canvas"><div class="brand"><span class="keycap">sub</span>String Utility Belt</div>
+      <h1>Text tools on<br>your right-click.</h1>
+      <div class="flow"><div class="card">aGVsbG8=</div><span class="arrow">→</span><div class="card out">hello</div></div></main>`), 440, 280)
+  await exportHtml('marquee-promo-1400x560', html(promoCss + `
+      .brand{left:72px;top:64px;font-size:24px}.brand .keycap{font-size:15px;padding:7px 8px 6px}
+      h1{position:absolute;left:72px;top:170px;margin:0;font-size:72px;line-height:78px;font-weight:600;letter-spacing:-.035em}
+      .note{left:74px;bottom:66px;font-size:15px}
+      .desk{position:absolute;left:760px;top:0;right:0;bottom:0;background:var(--strip);border-left:1px solid var(--line)}
+      .steps{position:absolute;left:830px;top:96px;display:grid;gap:0;width:500px}
+      .step{display:grid;grid-template-columns:40px 1fr;column-gap:16px}
+      .num{display:flex;flex-direction:column;align-items:center}.num span{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:8px;background:var(--surface);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500}
+      .num i{flex:1;width:1px;background:var(--line2);min-height:16px}
+      .step .card{margin-bottom:18px;padding:14px 18px 15px;font-family:'Instrument Sans',sans-serif}
+      .step .card b{display:block;font-size:19px;font-weight:600}
+      .step .card code{display:block;margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--strip);font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--muted)}
+      .step:last-child .card{border-color:var(--acc)}.step:last-child code{color:var(--ink)}`,
+    `<main class="canvas"><div class="desk"></div>
+      <div class="brand"><span class="keycap">sub</span>String Utility Belt</div>
+      <h1>Text tools on<br>your right-click.</h1>
+      <div class="note">Decode · Format · Hash · 240+ utilities</div>
+      <div class="steps">
+        <div class="step"><div class="num"><span>01</span><i></i></div><div class="card"><b>Selected text</b><code>eyJ1c2VyIjoiYWRhIn0=</code></div></div>
+        <div class="step"><div class="num"><span>02</span><i></i></div><div class="card"><b>base64 decode</b><code>{"user":"ada"}</code></div></div>
+        <div class="step"><div class="num"><span>03</span></div><div class="card"><b>json pretty</b><code>{<br>&nbsp;&nbsp;"user": "ada"<br>}</code></div></div>
+      </div></main>`), 1400, 560)
+
+  const thumbs = await Promise.all(['01-decode-base64', '02-format-json', '03-change-case', '04-hash-text', '05-customize-menu', 'small-promo-440x280', 'marquee-promo-1400x560', 'store-icon-128']
+    .map(async name => ({ name, url: data(await readFile(path.join(assetDir, `${name}.png`))) })))
+  await exportHtml('contact-sheet', html(base(THEMES.light) + `.gallery{padding:24px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}figure{margin:0;height:280px;background:var(--surface);border:1px solid var(--line);padding:12px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center}figure img{max-width:100%;max-height:230px;object-fit:contain}figcaption{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);padding-top:9px}`,
+    `<div class="gallery">${thumbs.map(t => `<figure><img src="${t.url}"><figcaption>${t.name}</figcaption></figure>`).join('')}</div>`), 1440, 950)
   // The contact sheet is a review aid, kept outside the upload directory.
   await writeFile(path.join(dir, 'contact-sheet.png'), await readFile(path.join(assetDir, 'contact-sheet.png')))
   await rm(path.join(assetDir, 'contact-sheet.png'))
-  await writeFile(path.join(dir, 'capture-verification.json'), JSON.stringify({ extensionVersion: JSON.parse(await readFile(path.join(extension, 'manifest.json'))).version, source: 'Real unpacked extension in isolated Chromium; no mocked Chrome APIs.', examples: results, pageErrors: errors }, null, 2) + '\n')
-  console.log(`Created 8 upload assets and contact sheet. ${results[0].offeredUtilities} utilities offered; ${results.length} real outputs verified.`)
+  await writeFile(path.join(dir, 'capture-verification.json'), JSON.stringify({
+    extensionVersion: JSON.parse(await readFile(path.join(extension, 'manifest.json'))).version,
+    source: 'Real unpacked extension in isolated Chromium; no mocked Chrome APIs.',
+    fonts: 'Instrument Sans and JetBrains Mono, the typefaces the extension names first, loaded into the captured pages.',
+    examples: results, pageErrors: errors,
+  }, null, 2) + '\n')
+  console.log(`Created 8 upload assets and the contact sheet. ${results[0].offeredUtilities} utilities offered; ${examples.length} real outputs verified.`)
 } finally {
   await context.close()
   // Only remove the temporary profile made by this script, never a user's browser profile.

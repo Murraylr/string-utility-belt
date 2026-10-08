@@ -7,7 +7,7 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 292887
+      "bytes": 84106
     },
     {
       "file": "02-format-json.png",
@@ -16,7 +16,7 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 322855
+      "bytes": 83510
     },
     {
       "file": "03-change-case.png",
@@ -25,7 +25,7 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 306778
+      "bytes": 78022
     },
     {
       "file": "04-hash-text.png",
@@ -34,7 +34,7 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 315390
+      "bytes": 82386
     },
     {
       "file": "05-customize-menu.png",
@@ -43,16 +43,7 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 290501
-    },
-    {
-      "file": "marquee-promo-1400x560.png",
-      "width": 1400,
-      "height": 560,
-      "bitDepth": 8,
-      "colorType": 2,
-      "format": "24-bit RGB PNG",
-      "bytes": 508872
+      "bytes": 135232
     },
     {
       "file": "small-promo-440x280.png",
@@ -61,7 +52,16 @@
       "bitDepth": 8,
       "colorType": 2,
       "format": "24-bit RGB PNG",
-      "bytes": 92861
+      "bytes": 17247
+    },
+    {
+      "file": "marquee-promo-1400x560.png",
+      "width": 1400,
+      "height": 560,
+      "bitDepth": 8,
+      "colorType": 2,
+      "format": "24-bit RGB PNG",
+      "bytes": 54922
     },
     {
       "file": "store-icon-128.png",
@@ -69,7 +69,7 @@
       "height": 128,
       "bitDepth": 8,
       "colorType": 6,
-      "format": "RGBA PNG",
+      "format": "32-bit RGBA PNG",
       "bytes": 3050
     }
   ],
