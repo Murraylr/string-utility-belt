@@ -2,17 +2,24 @@
 import type { Recipe } from '../types'
 import r0 from '../bulk-utm-link-builder/recipe'
 import r1 from '../clean-chatgpt-text/recipe'
-import r2 from '../decode-cloudwatch-logs-data/recipe'
-import r3 from '../decode-flask-session-cookie/recipe'
-import r4 from '../decode-helm-release-secret/recipe'
-import r5 from '../decode-kubernetes-secret/recipe'
-import r6 from '../decode-saml-request/recipe'
-import r7 from '../excel-column-to-sql-in-clause/recipe'
-import r8 from '../fix-bash-bad-interpreter/recipe'
-import r9 from '../fix-pdf-line-breaks/recipe'
-import r10 from '../nested-json-to-csv/recipe'
-import r11 from '../spring-boot-yaml-to-env-vars/recipe'
-import r12 from '../unescape-stringified-json/recipe'
+import r2 from '../convert-unix-timestamps-in-json/recipe'
+import r3 from '../decode-cloudwatch-logs-data/recipe'
+import r4 from '../decode-flask-session-cookie/recipe'
+import r5 from '../decode-helm-release-secret/recipe'
+import r6 from '../decode-jwts-in-log-file/recipe'
+import r7 from '../decode-kubernetes-secret/recipe'
+import r8 from '../decode-saml-request/recipe'
+import r9 from '../env-file-to-kubernetes-secret/recipe'
+import r10 from '../excel-column-to-sql-in-clause/recipe'
+import r11 from '../extract-domains-from-urls/recipe'
+import r12 from '../fix-bash-bad-interpreter/recipe'
+import r13 from '../fix-pdf-line-breaks/recipe'
+import r14 from '../hash-email-list-for-customer-match/recipe'
+import r15 from '../nested-json-to-csv/recipe'
+import r16 from '../parse-user-agents-from-access-log/recipe'
+import r17 from '../remove-tracking-parameters-from-urls/recipe'
+import r18 from '../spring-boot-yaml-to-env-vars/recipe'
+import r19 from '../unescape-stringified-json/recipe'
 
 export const STATIC_RECIPES: Recipe[] = [
   r0,
@@ -28,4 +35,11 @@ export const STATIC_RECIPES: Recipe[] = [
   r10,
   r11,
   r12,
+  r13,
+  r14,
+  r15,
+  r16,
+  r17,
+  r18,
+  r19,
 ]

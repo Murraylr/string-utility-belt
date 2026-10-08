@@ -42,6 +42,9 @@ const readU32LE = (b: Uint8Array, i: number) =>
 const CORRUPT =
   'gzip integrity check failed: the CRC-32/size trailer does not match the decompressed data (corrupt or truncated input)'
 
+/** The shortest gzip member: a 10-byte header, an empty deflate block (2 bytes) and the 8-byte trailer. */
+const MIN_GZIP_LENGTH = 20
+
 /**
  * Decompress a gzip stream and check it.
  *
@@ -52,6 +55,14 @@ const CORRUPT =
  * against its slice of the output.
  */
 async function gunzipVerified(bytes: Uint8Array): Promise<Uint8Array> {
+  // The streaming reader checks a header only once it has all of it, so a few bytes of
+  // anything (`{`, `[`, a cut-off `H4sIAAAA`) end the stream with no member and no error,
+  // and the trailer check below would report them as damaged gzip. They are not gzip.
+  if (!hasGzipMagic(bytes)) throw new Error('invalid gzip data')
+  if (bytes.length < MIN_GZIP_LENGTH) {
+    throw new Error(`only ${bytes.length} bytes, and the shortest gzip stream is ${MIN_GZIP_LENGTH}`)
+  }
+
   const { Gunzip } = await getFflate()
 
   const chunks: Uint8Array[] = []
