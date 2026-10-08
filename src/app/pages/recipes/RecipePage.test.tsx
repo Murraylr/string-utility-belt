@@ -8,6 +8,9 @@ import { traceRecipe, TRACE_ELEMENT_ID, type RecipeTrace } from '@/recipes/trace
 import recipe from '@/recipes/excel-column-to-sql-in-clause/recipe'
 import { execute } from '@/app/engine/executor'
 import { track } from '@/app/analytics/analytics'
+import { toPipelineSteps } from '@/recipes/types'
+import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
+import { installFakeExtension } from '@/app/extension/fakeExtension'
 import * as openInEditor from './openInEditor'
 import RecipePage from './RecipePage'
 
@@ -207,6 +210,22 @@ describe('RecipePage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Copy output' }))
     expect(writeText).toHaveBeenCalledWith(main.output)
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeTruthy()
+  })
+
+  it('offers to save the recipe to the browser extension, under the recipe\'s name, once it answers', async () => {
+    __resetExtensionBridgeForTests()
+    const fake = installFakeExtension()
+    try {
+      render(<RecipePage slug={SLUG} />)
+      const widget = (await screen.findByRole('heading', { name: 'Try it with your own data' })).closest('section')!
+      fireEvent.click(await within(widget).findByRole('button', { name: 'Save to extension' }))
+      await waitFor(() => expect(fake.sent.some(s => s.message.type === 'request')).toBe(true))
+      expect(fake.sent.find(s => s.message.type === 'request')!.message.request)
+        .toEqual({ type: 'save-pipeline', name: recipe.name, steps: toPipelineSteps(recipe.steps) })
+    } finally {
+      vi.unstubAllGlobals()
+      __resetExtensionBridgeForTests()
+    }
   })
 
   it('answers an unknown slug with a not-found page kept out of search indexes', async () => {

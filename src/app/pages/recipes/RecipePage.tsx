@@ -19,6 +19,7 @@ import { RecipeArticle, RecipeWidget } from './RecipeArticle'
 import { openInEditorHref, relatedRecipes, stepTitle } from './recipeHelpers'
 import { loadRecipeData, peekRecipeData, type RecipeData } from './recipeData'
 import { followLink, openPipelineInEditor } from './openInEditor'
+import RecipeExtension from './RecipeExtension'
 
 type Load = { status: 'loading' } | { status: 'missing' } | { status: 'error' } | { status: 'ok'; data: RecipeData }
 
@@ -219,6 +220,7 @@ function RecipeView({ data }: { data: RecipeData }) {
           onCopy={onCopy}
           copied={copied}
           notice={notice}
+          extension={<RecipeExtension steps={steps} name={recipe.name} recipeId={recipe.slug} />}
         />
       )}
     />

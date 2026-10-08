@@ -30,7 +30,9 @@ scalars.
    delimiter, a quote, a newline, or leading/trailing whitespace — the
    whitespace case exists so a value like `"  x  "` still round-trips
    through a reader that trims unquoted fields, such as
-   [csv to json](/util/csv_to_json/).
+   [csv to json](/util/csv_to_json/). A row whose only field is empty — an
+   empty value in a one-column table — is written as `""`, because a bare
+   blank line is skipped by most readers.
 
 ```example
 title: array of objects with a header row
@@ -57,6 +59,17 @@ params: {"flatten": true}
 input: [{"user":{"name":"Ada"},"tags":["x","y"]}]
 output: user.name,tags[0],tags[1]
 Ada,x,y
+```
+
+In a one-column table, an empty value is quoted so the row is not lost:
+
+```example
+title: an empty value in a one-column table
+input: [{"email":"a@example.com"},{"email":""}]
+output:
+email
+a@example.com
+""
 ```
 
 The **columns** option both filters and reorders the output:
@@ -101,9 +114,8 @@ output: c,a
   header on.
 - To reverse this conversion, use [csv to json](/util/csv_to_json/), which
   understands the same RFC 4180 quoting. Flat records of strings come back
-  intact, except that in a one-column table an empty value is written as a
-  blank line, which the reader drops. Numbers come back as numbers only with that utility's typing
-  option on (which also converts number-like strings). `null` comes back as
+  intact, empty values included. Numbers come back as numbers only with that
+  utility's typing option on (which also converts number-like strings). `null` comes back as
   an empty string, a missing key as an empty value, and nested data as JSON
   text or flat `a.b` keys.
 - Invalid JSON input throws an error naming the parse failure rather than

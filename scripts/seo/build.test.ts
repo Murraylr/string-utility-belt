@@ -336,19 +336,20 @@ describe('buildSeo over a built dist/', () => {
     const shipped: Array<{ title: string }> = JSON.parse(read(ROOT, 'public/blog/_manifest.json'))
     // The real CHANGELOG's "Unreleased" section fills up between releases (every PR adds to it), so its
     // item comes and goes; buildRssItems' own tests cover when it appears and how it is dated.
+    // Every release adds an item at the top, so the expected releases come from the changelog itself.
     const released = items.filter(i => i.title !== 'Unreleased changes')
-    expect(released.map(i => i.title)).toEqual([
-      'Release 1.5.0',
-      'Release 1.4.0',
-      ...shipped.map(p => p.title),
-      'Release 1.3.0',
-    ])
-    expect(released[0].pubDate).toBe(new Date('2026-10-07T00:00:00Z').toUTCString())
-    expect(released[1].pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
-    // undated release: no pubDate rather than the build date or the epoch
-    const undated = released[released.length - 1]
-    expect(undated.pubDate).toBeUndefined()
-    expect(undated.guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
+    const versions = [...read(ROOT, 'CHANGELOG.md').matchAll(/^## \[(\d[^\]]*)\]/gm)].map(m => `Release ${m[1]}`)
+    expect(versions).toEqual(expect.arrayContaining(['Release 1.4.0', 'Release 1.3.0']))
+    expect(released.map(i => i.title).sort()).toEqual([...shipped.map(p => p.title), ...versions].sort())
+    // dated items come newest first, with the changelog's own date
+    const dates = released.filter(i => i.pubDate).map(i => Date.parse(i.pubDate!))
+    expect(dates).toEqual([...dates].sort((a, b) => b - a))
+    expect(released.find(i => i.title === 'Release 1.4.0')?.pubDate).toBe(new Date('2026-10-06T00:00:00Z').toUTCString())
+    // undated release: last, with no pubDate rather than the build date or the epoch
+    const oldest = released[released.length - 1]
+    expect(oldest.title).toBe('Release 1.3.0')
+    expect(oldest.pubDate).toBeUndefined()
+    expect(oldest.guid).toBe('tag:stringutilitybelt.com,2025:changelog/1.3.0')
   })
 
   it('is idempotent: a second run over its own output changes nothing', async () => {
