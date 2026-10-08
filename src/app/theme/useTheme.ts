@@ -11,7 +11,7 @@ const ORDER: ThemeMode[] = ['system', 'light', 'dark']
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 // the static <meta name="theme-color"> in index.html is only a placeholder until this runs
-const META_COLOR: Record<ResolvedTheme, string> = { light: '#f8fafc', dark: '#0b0f19' }
+const META_COLOR: Record<ResolvedTheme, string> = { light: '#f8f7f3', dark: '#110f0d' }
 
 /** Coerces a stored pref (which may be stale, hand-edited or corrupt) to a valid mode. */
 export function normalizeThemeMode(value: unknown): ThemeMode {

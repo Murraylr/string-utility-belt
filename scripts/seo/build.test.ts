@@ -520,7 +520,7 @@ describe('buildSeo recipes', () => {
     const promo = html(read(dist, 'recipes/shout-slugs/index.html')).querySelector('#root main header aside[data-promo]')!
     expect(promo.getAttribute('data-promo')).toBe('vscode')
     expect(promo.getAttribute('aria-label')).toBe('From String Utility Belt')
-    expect(promo.className).toBe('sponsor hidden sm:flex')
+    expect(promo.className).toBe('sponsor hidden sm:grid')
     expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
   })
 

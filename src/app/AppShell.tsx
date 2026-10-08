@@ -1,6 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react'
-import { Search } from 'lucide-react'
-import BackgroundFX from '@/components/BackgroundFX'
+import { Keyboard, Search } from 'lucide-react'
 import { getRoute, isInAppPath, isPlainLeftClick, navigateToPath, onRouteChange, type Route, type SitePageSlug } from '@/lib/router'
 import { ToolProvider } from './ToolContext'
 import ToolPage from './tool/ToolPage'
@@ -8,7 +7,7 @@ import SharedPipeline from './share/SharedPipeline'
 import ThemeToggle from './theme/ThemeToggle'
 import CommandPalette from './commands/CommandPalette'
 import ShortcutsHelp from './commands/ShortcutsHelp'
-import { EVENT_OPEN_PALETTE } from './commands/commands'
+import { EVENT_OPEN_PALETTE, EVENT_OPEN_SHORTCUTS } from './commands/commands'
 import UpdateBanner from './pwa/UpdateBanner'
 import InstallButton from './pwa/InstallButton'
 import IntegrationsNav from './integrations/IntegrationsNav'
@@ -18,6 +17,8 @@ import { useDocumentMeta } from './pages/useDocumentMeta'
 import { useNoindex } from './pages/useNoindex'
 import { pageTitle } from './pages/seo'
 import { RecipePage, RecipesIndexPage } from './pages/recipes/routes'
+import PagePromo from './sponsors/PagePromo'
+import type { PromoPage } from './sponsors/promos'
 
 // Only the tool ships in the entry chunk; every other route is fetched on first visit.
 const BlogIndex = lazy(() => import('@/components/BlogIndex'))
@@ -61,12 +62,12 @@ const FOOTER_LINKS = [
 export function Footer() {
   const { t } = useT()
   return (
-    <footer className="border-t mt-8">
-      <div className="max-w-7xl mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
-        <nav aria-label={t('footer.label')} className="flex flex-wrap gap-x-4 gap-y-2">
-          {FOOTER_LINKS.map(l => <a key={l.href} href={l.href} className="hover:underline">{t(l.key)}</a>)}
+    <footer className="border-t">
+      <div className="max-w-[1440px] mx-auto px-6 py-5 flex flex-wrap items-center justify-between gap-3 text-[12.5px] text-muted">
+        <nav aria-label={t('footer.label')} className="flex flex-wrap gap-x-[18px] gap-y-1.5">
+          {FOOTER_LINKS.map(l => <a key={l.href} href={l.href} className="text-muted hover:text-fg">{t(l.key)}</a>)}
         </nav>
-        <p>© {new Date().getFullYear()} String Utility Belt</p>
+        <p className="m-0 font-mono text-[11px]">© {new Date().getFullYear()} String Utility Belt · MIT</p>
       </div>
     </footer>
   )
@@ -92,32 +93,34 @@ function useInAppLinks() {
   }, [])
 }
 
+/** The site's mark: "sub" in a keycap, then the name. */
+function Logo() {
+  return (
+    <a href="/" className="flex items-center gap-2.5 shrink-0 hover:text-fg">
+      <span aria-hidden="true" className="font-mono text-[11px] font-medium leading-none px-1.5 pt-[5px] pb-1 border border-fg border-b-2 rounded-[4px]">sub</span>
+      <span className="text-[15px] font-semibold tracking-[-0.01em]">String Utility Belt</span>
+    </a>
+  )
+}
+
 /** `current` (the active route's name) marks its nav link with `aria-current="page"`. */
 export function Header({ children, current }: { children?: React.ReactNode; current?: Route['name'] }) {
   const { t } = useT()
   return (
-    <header className="sticky top-0 backdrop-blur-sm bg-surface/60 border-b z-10">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-        <a href="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-primary-600 text-white grid place-content-center font-bold shadow-glow" aria-hidden>S</div>
-          <div>
-            <div className="font-semibold leading-tight">String Utility Belt</div>
-            <div className="text-xs text-muted hidden sm:block">build a chain of string utilities</div>
-          </div>
-        </a>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-          <nav className="flex items-center gap-3 sm:gap-4 text-sm" aria-label="main">
-            {NAV.map(n => {
-              const active = !!current && (n.routes as ReadonlyArray<string>).includes(current)
-              return (
-                <a key={n.href} href={n.href} aria-current={active ? 'page' : undefined}
-                  className={`hover:underline ${active ? 'underline underline-offset-4 decoration-2' : ''}`}>{t(n.key)}</a>
-              )
-            })}
-          </nav>
-          <IntegrationsNav />
-          {children}
-        </div>
+    <header className="sticky top-0 z-30 bg-[rgb(var(--c-header)/.92)] backdrop-blur-sm border-b">
+      <div className="max-w-[1440px] mx-auto px-6 min-h-14 flex flex-wrap items-center gap-x-6">
+        <Logo />
+        <nav className="flex items-stretch gap-5 h-14 text-[13.5px] font-medium overflow-x-auto" aria-label="main">
+          {NAV.map(n => {
+            const active = !!current && (n.routes as ReadonlyArray<string>).includes(current)
+            return (
+              <a key={n.href} href={n.href} aria-current={active ? 'page' : undefined}
+                className={`flex items-center pt-0.5 -mb-px border-b-2 whitespace-nowrap ${active ? 'border-acc text-fg' : 'border-transparent text-muted hover:text-fg'}`}>{t(n.key)}</a>
+            )
+          })}
+        </nav>
+        <div className="flex-1 min-w-0" />
+        {children}
       </div>
     </header>
   )
@@ -152,12 +155,35 @@ function NotFoundNotice() {
 /** Opens the command palette; the visible counterpart of Ctrl+K. */
 function PaletteButton() {
   return (
-    <button type="button" className="btn" aria-label="Open command palette (Ctrl+K)"
-      onClick={() => window.dispatchEvent(new CustomEvent(EVENT_OPEN_PALETTE))}>
-      <Search size={16} />
-      <kbd className="hidden md:inline text-xs text-muted font-mono">Ctrl K</kbd>
+    <button type="button" aria-label="Open command palette (Ctrl+K)"
+      onClick={() => window.dispatchEvent(new CustomEvent(EVENT_OPEN_PALETTE))}
+      className="flex items-center gap-2.5 flex-[0_1_240px] min-w-[120px] h-8 pl-2.5 pr-1.5 my-3 border rounded-md bg-surface-2 text-muted text-[13px] text-left hover:border-line-2">
+      <Search size={15} aria-hidden="true" />
+      <span className="flex-1 truncate">Search or run a command</span>
+      <kbd className="kbd">Ctrl K</kbd>
     </button>
   )
+}
+
+/** The "?" shortcut's visible counterpart. */
+function ShortcutsButton() {
+  return (
+    <button type="button" className="icon-btn" aria-label="Keyboard shortcuts (?)" title="Keyboard shortcuts (?)"
+      onClick={() => window.dispatchEvent(new CustomEvent(EVENT_OPEN_SHORTCUTS))}>
+      <Keyboard size={16} aria-hidden="true" />
+    </button>
+  )
+}
+
+/** Which page a route is for the extra promo slots, or none: the tool, shared pipelines and embeds carry no promotion. */
+function promoPageOf(route: Route): PromoPage | undefined {
+  switch (route.name) {
+    case 'utility': return { kind: 'utility', id: route.params.id }
+    case 'recipe': return { kind: 'recipe', slug: route.params.slug }
+    case 'blogPost': return { kind: 'blog', slug: route.params.slug }
+    case 'home': case 'pipeline': case 'notFound': case 'embed': return undefined
+    default: return { kind: 'index' }
+  }
 }
 
 export default function AppShell() {
@@ -174,19 +200,28 @@ export default function AppShell() {
   // a user into clicking. A script check is enough — without scripts nothing renders.
   if (isFramed()) return <FramedNotice />
 
+  const promoPage = promoPageOf(route)
+  const isTool = route.name === 'home' || route.name === 'notFound' || route.name === 'pipeline'
+
   return (
-    <div className="relative min-h-screen text-fg">
-      <BackgroundFX />
+    <div className="relative min-h-screen flex flex-col text-fg">
       {/* focus, don't navigate: with hash routing, href="#main" would route to an unknown page */}
       <a href="#main" className="sr-only-focusable absolute left-2 top-2 z-50 btn"
         onClick={e => { e.preventDefault(); document.getElementById('main')?.focus() }}>Skip to content</a>
+      <UpdateBanner />
       <Header current={route.name}>
         <PaletteButton />
-        <InstallButton />
-        <ThemeToggle />
+        <IntegrationsNav />
+        <div className="flex items-center gap-1 shrink-0">
+          <InstallButton />
+          <ShortcutsButton />
+          <ThemeToggle />
+        </div>
       </Header>
-      <UpdateBanner />
-      <main id="main" tabIndex={-1} className="max-w-7xl mx-auto px-4 py-8 grid gap-8 outline-hidden">
+      {promoPage && <PagePromo page={promoPage} slot="strip" />}
+      <main id="main" tabIndex={-1} className={`flex-1 w-full mx-auto px-6 min-w-0 outline-hidden ${isTool
+        ? 'max-w-[1440px] pt-7 pb-[72px] grid gap-7'
+        : 'max-w-[1200px] pt-10 pb-20'}`}>
         <Suspense fallback={<PageLoading />}>
           {route.name === 'blogIndex' && <BlogIndex />}
           {route.name === 'blogPost' && <BlogPost slug={route.params.slug} />}

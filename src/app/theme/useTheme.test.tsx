@@ -66,10 +66,10 @@ describe('useTheme', () => {
     const { result } = renderHook(() => useTheme())
 
     act(() => result.current.setTheme('dark'))
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0b0f19')
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#110f0d')
 
     act(() => result.current.setTheme('light'))
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f8fafc')
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#f8f7f3')
   })
 
   it('follows OS prefers-color-scheme changes while on system', () => {
@@ -125,7 +125,7 @@ describe('useTheme (review regressions)', () => {
     expect(result.current.resolved).toBe('light')
     act(() => media.setMatches(true))
     expect(result.current.resolved).toBe('dark')
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0b0f19')
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#110f0d')
   })
 
   it('treats a corrupt stored pref as system instead of leaking it through', () => {
@@ -134,7 +134,7 @@ describe('useTheme (review regressions)', () => {
     const { result } = renderHook(() => useTheme())
     expect(result.current.theme).toBe('system')
     expect(result.current.resolved).toBe('dark')
-    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#0b0f19')
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe('#110f0d')
     act(() => result.current.cycle())
     expect(result.current.theme).toBe('light')
   })
