@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **"Run it from your terminal or AI agent"** on every utility page that the CLI and MCP server can run: the exact
+  `npx subelt …` command for what the page's playground just did (updating as you type or change a parameter), the
+  one-line MCP install for Claude Code, and the `run_utility` arguments an agent would send — each with a copy button.
 - **Seven recipes built on run on each**: turn a `.env` file into a Kubernetes Secret; convert Unix timestamps
   in a JSON response to dates; decode every JWT in a log, HAR file or curl trace; remove tracking parameters
   from a list of URLs; hash an email list with SHA-256 for Customer Match; extract the domain from each URL in
@@ -17,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The MCP server's README starts with installing it from npm (`npx -y @string-utility-belt/mcp`) for Claude Code,
+  Claude Desktop and other clients; building from a checkout moved to its own section.
 - Recipe pages show what runs inside a run-on-each or branch step: every nested step with its link, the
   settings it changes, its condition and what happens when it fails, how an each step splits its input and
   how a branch merges its lanes, in the pre-rendered page too.

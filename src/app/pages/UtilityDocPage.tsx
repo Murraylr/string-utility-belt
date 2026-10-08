@@ -19,6 +19,7 @@ import { RecipeCards } from './recipes/RecipeArticle'
 import { recipesUsing } from './recipes/recipeHelpers'
 import { SITE_NAME, displayName, pageTitle } from './seo'
 import PageSponsor from '@/app/sponsors/PageSponsor'
+import RunElsewhere from '@/app/integrations/RunElsewhere'
 
 const ENV_NOTES: Record<UtilityEnv, string> = {
   dom: 'Needs the DOM (DOMParser/document) — browser main thread only.',
@@ -248,6 +249,14 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
           {saved && <span role="status" className="text-sm text-success">Added — opening the tool…</span>}
         </div>
       </section>
+
+      <RunElsewhere
+        meta={meta}
+        input={playInput}
+        params={playParams}
+        onCopy={integration => track('snippet_copy', { integration, utility_id: id, source: 'doc_page' })}
+        onDocsClick={integration => track('integration_click', { integration, utility_id: id, source: 'doc_page' })}
+      />
 
       <UtilityGuide name={meta.name} state={guide} onOpen={() => track('guide_open', { utility_id: id })} />
 

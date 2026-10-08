@@ -6,6 +6,35 @@ An [MCP](https://modelcontextprotocol.io) server that exposes [String Utility Be
 string-transformation utilities — and its pipeline engine — as tools an AI agent can call
 directly, with no browser involved.
 
+## Install
+
+Nothing to clone or build: clients run it from npm with `npx` (Node.js 20 or later).
+
+**Claude Code**
+
+```bash
+claude mcp add subelt -- npx -y @string-utility-belt/mcp
+```
+
+**Claude Desktop, Cursor and other MCP clients**: add this to the client's MCP configuration
+(for Claude Desktop, `claude_desktop_config.json`), then restart the client:
+
+```json
+{
+  "mcpServers": {
+    "subelt": {
+      "command": "npx",
+      "args": ["-y", "@string-utility-belt/mcp"]
+    }
+  }
+}
+```
+
+It is also on [Smithery](https://smithery.ai/servers/string-utility-belt/string-utility-belt) and in the
+official MCP Registry as `com.stringutilitybelt/mcp`. Then ask your agent for something like "base64-decode this
+and pretty-print the JSON": it finds the utilities with `list_utilities` and runs them with `run_utility` or
+`run_pipeline`.
+
 ## Tools
 
 - **`list_utilities`** — `{ category?, query?, limit? }` → `{ items: [{ id, name, category, description }], total, categories }`, best matches first. `query` is a set of words that must all match (in any order) somewhere in the id, name, tags, aliases or description. Start here.
@@ -50,28 +79,13 @@ dependency bundled in — only Node's own built-ins are external). It is an SSR 
 dependencies resolve to their Node variants; the same file doubles as the job-runner entry
 (`--job-runner`).
 
-## Using it with Claude Code
+## Running a local build
+
+To try changes from a checkout, point the client at the built file instead of the npm package:
 
 ```bash
 claude mcp add subelt -- node /absolute/path/to/string-utility-belt/packages/mcp/dist/server.mjs
 ```
-
-## Using it with Claude Desktop
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "subelt": {
-      "command": "node",
-      "args": ["/absolute/path/to/string-utility-belt/packages/mcp/dist/server.mjs"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after editing the config.
 
 ## Development
 
