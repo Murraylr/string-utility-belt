@@ -23,7 +23,7 @@ Arrays become columns, not rows, and column order follows first appearance: when
 
 Numbers are parsed into JavaScript's 64-bit floating-point numbers and printed again, so `1249.50` comes out as `1249.5`, `1e3` as `1000`, and an integer above 9007199254740991 can come out rounded (12345678901234567890 becomes 12345678901234567000). Amounts and IDs sent as strings pass through untouched.
 
-A path that matches nothing gives empty output rather than an error, and so does an empty array: check the path first when the result is blank. If you turn off the header row, disable the last step as well, or it renames your first record. With a single column, an empty cell is a blank line, and the header step drops blank lines, so keep a second column such as the id. JSON Lines input needs a [jsonl to json](/util/jsonl_to_json/) step in front.
+A path that matches nothing gives empty output rather than an error, and so does an empty array: check the path first when the result is blank. If you turn off the header row, disable the last step as well, or it renames your first record. JSON Lines input needs a [jsonl to json](/util/jsonl_to_json/) step in front.
 
 Excel guesses column types when you double-click a CSV file, dropping the leading zero from 02134 and keeping only 15 significant digits of a long number; import through Data > From Text/CSV to set such columns to text. Cells that begin with =, +, - or @ are left as they are, and spreadsheet apps may evaluate them as formulas, so look over data other people typed before opening it there.
 

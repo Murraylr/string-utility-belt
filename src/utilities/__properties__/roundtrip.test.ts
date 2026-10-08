@@ -483,20 +483,15 @@ roundtrip(
 // records" per the spec, and the ragged case belongs to json_to_csv's own
 // unit tests.
 //
-// Columns are pinned to 2+: a single-column table whose only value is ''
-// serializes to a bare blank line, which `csv_to_json`'s parser deliberately
-// (and correctly, for messy real-world CSV) treats as a stray separator line
-// and drops — see `dropBlankRows` in csv_to_json/index.ts. That ambiguity
-// only exists for a lone empty column; two or more columns always produce a
-// delimiter character even when every field is empty, so the row can never
-// be mistaken for a blank line.
-const csvRecords = safeKeys(4).chain((rawKeys) => {
-  const keys = rawKeys.length >= 2 ? rawKeys : [...rawKeys, rawKeys[0] + '_2']
-  return fc.array(
+// One-column tables are included on purpose: their empty value is the case a
+// bare blank line would lose (`csv_to_json` drops blank lines), so json_to_csv
+// must write it as `""`.
+const csvRecords = safeKeys(4).chain((keys) =>
+  fc.array(
     fc.record(Object.fromEntries(keys.map((k) => [k, leafString(12)]))),
     { minLength: 1, maxLength: 5 }
   )
-})
+)
 roundtrip(
   'json_to_csv / csv_to_json',
   csvRecords,

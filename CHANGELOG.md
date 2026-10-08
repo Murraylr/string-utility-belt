@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   desktop Chrome, Edge or other Chromium browser without it, the page links to the extension's Chrome Web
   Store listing instead; other browsers and phones, which can't install it, see neither.
 
+### Fixed
+
+- CSV: an empty value in a one-column table no longer disappears. `csv normalize headers` used to drop it
+  (it parsed as a blank line), and `json to csv` wrote it as a blank line that `csv to json` skipped; both
+  now write it as `""`, and `csv normalize headers` also keeps a final `""` that has no trailing newline.
+
 ## [1.5.0] - 2026-10-07
 
 ### Added

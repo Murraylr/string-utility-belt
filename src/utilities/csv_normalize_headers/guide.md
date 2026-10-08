@@ -9,8 +9,7 @@ Spreadsheet exports usually have human-readable headers like `First Name` or
 an API client — almost always wants a consistent identifier style instead:
 `first_name`, `firstName`, and so on. This tool rewrites only the header row
 to the case style you choose; data values are left untouched (rows are
-re-written with quotes only where a field needs them, and blank lines are
-dropped).
+re-written with quotes only where a field needs them).
 
 ## How it works
 
@@ -76,6 +75,26 @@ a,,c
 output:
 a,column_2,c
 1,2,3
+```
+
+Blank lines between rows are dropped from a table with two or more columns,
+where they cannot be a record. In a one-column table a blank line is a
+record whose value is empty, so it is kept and written as `""` — the form
+that readers which skip blank lines, such as
+[csv to json](/util/csv_to_json/), still count as a row:
+
+```example
+title: an empty value in a one-column table is kept
+input:
+Email Address
+a@example.com
+
+b@example.com
+output:
+email_address
+a@example.com
+""
+b@example.com
 ```
 
 ## Options
