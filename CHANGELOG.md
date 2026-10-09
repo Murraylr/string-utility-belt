@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-10-09
+
 ### Changed
 
 - **Recipes are now called presets.** The pages moved from `/recipes/` to `/presets/`, and the editor's
