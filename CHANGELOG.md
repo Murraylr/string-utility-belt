@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.2] - 2026-10-09
+
 ### Changed
 
 - **One promo per page.** Utility, recipe and blog pages show only their sponsor slot (one of our own tools while it is
