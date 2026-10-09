@@ -8,11 +8,13 @@ import { LOGO_DIR, sponsoredHref, type SponsorPage, type Sponsorship } from './s
  * pixel or cookie of the sponsor's ever runs. Rendered by the app (`PageSponsor`) and by
  * the pre-render (`scripts/seo/content.ts`), so both show the same markup.
  */
-export default function SponsorBlock({ sponsorship: s, page, className }: {
+export default function SponsorBlock({ sponsorship: s, page, onFollow, className }: {
   sponsorship: Sponsorship
   page: SponsorPage
   /** Layout classes for the block, e.g. spacing in the column it sits in. */
   className?: string
+  /** Called when the visitor follows the sponsor's link (the app counts it; the pre-render has none). */
+  onFollow?: () => void
 }) {
   return (
     <Slot
@@ -22,6 +24,7 @@ export default function SponsorBlock({ sponsorship: s, page, className }: {
       text={s.text}
       href={sponsoredHref(s, page)}
       rel="sponsored noopener"
+      onFollow={onFollow}
       className={className}
       data={{ 'data-sponsorship': s.id }}
     />

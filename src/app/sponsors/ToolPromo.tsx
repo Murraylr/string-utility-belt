@@ -1,4 +1,5 @@
 import React from 'react'
+import { countEvent } from '@/app/events/countEvent'
 import { useExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
 import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
@@ -18,5 +19,9 @@ export default function ToolPromo({ className }: { className?: string }) {
   const [, setIntegrationsSeen] = usePref(INTEGRATIONS_SEEN_PREF, false)
   if (status === 'checking') return null
   const id: PromoId = status === 'absent' && canInstallExtension() ? 'chrome' : 'vscode'
-  return <PromoBlock id={id} onFollow={() => setIntegrationsSeen(true)} className={className} />
+  const onFollow = () => {
+    countEvent({ name: 'integration_click', integration: id, source: 'promo_tool' })
+    setIntegrationsSeen(true)
+  }
+  return <PromoBlock id={id} onFollow={onFollow} className={className} />
 }

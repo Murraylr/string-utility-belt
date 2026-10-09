@@ -4,6 +4,7 @@ import { formatForDisplay } from '@/core/coerce'
 import { isPlainLeftClick } from '@/lib/router'
 import { execute } from '@/app/engine/executor'
 import { useRunner } from '@/app/engine/useRunner'
+import { countEvent } from '@/app/events/countEvent'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { RECIPES_PATH, toPipelineSteps, type Recipe } from '@/recipes/types'
 import type { PipelineStep } from '@/types/utility'
@@ -173,9 +174,12 @@ function RecipeView({ data }: { data: RecipeData }) {
   const onOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainLeftClick(e, e.currentTarget)) return
     e.preventDefault()
+    const outcome = openPipelineInEditor({ steps, input, name: recipe.name })
+    if (outcome === 'kept') return
+    countEvent({ name: 'recipe_open', recipe: recipe.slug })
     // without storage the editor cannot be handed the recipe: its share link carries the
     // steps and the example input (never typed text), and runs without storage
-    if (openPipelineInEditor({ steps, input, name: recipe.name }) === 'failed') followLink(openHref)
+    if (outcome === 'failed') followLink(openHref)
   }
 
   const [copied, setCopied] = useState(false)

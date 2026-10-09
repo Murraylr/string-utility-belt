@@ -1,4 +1,5 @@
 import React from 'react'
+import { countEvent } from '@/app/events/countEvent'
 import { useExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
 import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
@@ -19,5 +20,9 @@ export default function HousePromo({ page, className }: { page: SponsorPage; cla
   const fixed = fixedPromo(page)
   if (!fixed && status === 'checking') return null
   const id = fixed ?? choosePromo(page, status === 'absent' && canInstallExtension())
-  return <PromoBlock id={id} onFollow={() => setIntegrationsSeen(true)} className={className} />
+  const onFollow = () => {
+    countEvent({ name: 'integration_click', integration: id, source: 'promo' })
+    setIntegrationsSeen(true)
+  }
+  return <PromoBlock id={id} onFollow={onFollow} className={className} />
 }

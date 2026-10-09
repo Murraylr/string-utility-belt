@@ -12,6 +12,16 @@ interface ExecutionContext {
   passThroughOnException(): void
 }
 
+interface AnalyticsEngineDataPoint {
+  indexes?: ((ArrayBuffer | string) | null)[]
+  doubles?: number[]
+  blobs?: ((ArrayBuffer | string) | null)[]
+}
+
+interface AnalyticsEngineDataset {
+  writeDataPoint(event?: AnalyticsEngineDataPoint): void
+}
+
 interface ExportedHandler<Env = unknown> {
   fetch?(request: Request, env: Env, ctx: ExecutionContext): Response | Promise<Response>
 }

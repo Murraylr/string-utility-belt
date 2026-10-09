@@ -15,7 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 - **Google Analytics.** The site sets no cookies and loads no tracking script: Cloudflare Web Analytics counts page views
-  without cookies or identifiers, and never sees what you paste. The privacy policy, the about page and the README say so.
+  without cookies or identifiers, and never sees what you paste. The site itself counts only clicks on sponsor links, links
+  to our tools and recipes opened in the editor, by id and with nothing about the visitor. The privacy policy, the about
+  page and the README say so.
 
 ## [1.11.1] - 2026-10-09
 

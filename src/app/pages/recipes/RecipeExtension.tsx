@@ -3,6 +3,7 @@ import { Puzzle } from 'lucide-react'
 import { unknownStepTypes, type BridgeResult } from '@/core/extensionBridge'
 import type { PipelineStep } from '@/types/utility'
 import { usePref } from '@/app/prefs'
+import { countEvent } from '@/app/events/countEvent'
 import { sendToExtension, useExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
 import { ChromeIcon } from '@/app/integrations/icons'
@@ -64,6 +65,7 @@ function GetExtension() {
   const [followed, setFollowed] = useState(false)
 
   const onClick = () => {
+    countEvent({ name: 'integration_click', integration: 'chrome', source: 'recipe' })
     setIntegrationsSeen(true)
     setFollowed(true)
   }

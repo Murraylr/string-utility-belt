@@ -9,7 +9,10 @@ import { CHROME_WEB_STORE_URL, INTEGRATIONS_SEEN_PREF } from '@/app/integrations
 import { readPref } from '@/app/prefs'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension, type FakeExtension } from '@/app/extension/fakeExtension'
+import { countEvent } from '@/app/events/countEvent'
 import RecipeExtension from './RecipeExtension'
+
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 
 const STEPS = toPipelineSteps(excelToSql.steps)
 const SAVE = { name: 'Save to extension' }
@@ -28,6 +31,7 @@ const settle = () => new Promise(r => setTimeout(r, 0))
 
 beforeEach(() => {
   __resetExtensionBridgeForTests()
+  vi.mocked(countEvent).mockClear()
 })
 
 afterEach(() => {
@@ -49,13 +53,14 @@ describe('RecipeExtension without the extension', () => {
     expect(screen.queryByRole('button', SAVE)).toBeNull()
   })
 
-  it('marks the integrations as seen and says how to finish', async () => {
+  it('counts the click, marks the integrations as seen and says how to finish', async () => {
     desktopChromium()
     renderStrip()
     const link = screen.getByRole('link', GET)
     link.addEventListener('click', e => e.preventDefault()) // jsdom cannot open a tab
     await userEvent.setup().click(link)
 
+    expect(countEvent).toHaveBeenCalledWith({ name: 'integration_click', integration: 'chrome', source: 'recipe' })
     expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
     expect(screen.getByRole('status')).toHaveTextContent('Installed it? Reload this page to save this recipe to it.')
   })
@@ -118,6 +123,7 @@ describe('RecipeExtension with the extension', () => {
   it('asks for an update instead of saving a recipe whose step types an older extension would drop', async () => {
     vi.unstubAllGlobals()
     __resetExtensionBridgeForTests()
+  vi.mocked(countEvent).mockClear()
     fake = installFakeExtension() // predates "run on each"
     renderStrip(toPipelineSteps(kubernetesSecret.steps), kubernetesSecret.name)
     expect(await screen.findByRole('button', SAVE)).toBeDisabled()

@@ -22,6 +22,11 @@
 	"observability": {
 		"enabled": true
 	},
+	// POST /api/event (worker/events.ts) adds a data point here; Cloudflare creates the dataset
+	// on the first write and keeps data points for three months. Read it with `npm run events`.
+	"analytics_engine_datasets": [
+		{ "binding": "EVENTS", "dataset": "sub_events" }
+	],
 	"routes": [
 		{
 			"pattern": "stringutilitybelt.com",

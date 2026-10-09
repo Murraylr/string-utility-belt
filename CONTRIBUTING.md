@@ -113,9 +113,10 @@ Two rules that are easy to miss:
   formatting-level rules.
 - Tests are colocated with the code they cover (`X.test.ts` / `X.test.tsx` next to `X.ts`).
 - Keep pull requests focused: one feature or fix per PR, with tests. Don't mix refactors into a fix.
-- The site has no analytics code of its own: page views are counted by Cloudflare Web Analytics,
-  which the host injects. Never send input or output text anywhere. If a change alters what data
-  leaves the browser, update [the privacy policy](src/app/pages/content/privacy.md) in the same PR.
+- Page views are counted by Cloudflare Web Analytics, which the host injects. The only events the
+  site counts itself are the allow-list in `src/lib/countedEvents.ts` (ids only, never input or
+  output text). If a change alters what data leaves the browser, update
+  [the privacy policy](src/app/pages/content/privacy.md) in the same PR.
 
 ## Pull requests
 

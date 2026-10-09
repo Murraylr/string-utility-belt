@@ -12,8 +12,10 @@ import { STEP_TYPES } from '@/core/steps'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension } from '@/app/extension/fakeExtension'
 import * as openInEditor from './openInEditor'
+import { countEvent } from '@/app/events/countEvent'
 import RecipePage from './RecipePage'
 
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 vi.mock('@/app/engine/executor', async importOriginal => {
   const mod = await importOriginal<typeof import('@/app/engine/executor')>()
   return { ...mod, execute: vi.fn(mod.execute) }
@@ -36,7 +38,7 @@ function embed(trace: unknown) {
   document.head.appendChild(script)
 }
 
-beforeEach(() => { vi.mocked(execute).mockClear() })
+beforeEach(() => { vi.mocked(execute).mockClear(); vi.mocked(countEvent).mockClear() })
 afterEach(() => {
   document.getElementById(TRACE_ELEMENT_ID)?.remove()
   document.querySelector('meta[name="robots"]')?.remove()
@@ -187,6 +189,7 @@ describe('RecipePage', () => {
     expect(loadState().steps.map(s => ('utilityId' in s ? s.utilityId : ''))).toEqual(recipe.steps.map(s => ('utilityId' in s ? s.utilityId : '')))
     expect(loadState().name).toBe(recipe.name)
     expect(sessionStorage.getItem('sub:handoff-input')).toBe('mine')
+    expect(countEvent).toHaveBeenCalledWith({ name: 'recipe_open', recipe: SLUG })
   })
 
   it('follows the share link instead when storage refuses the recipe', async () => {
@@ -200,6 +203,7 @@ describe('RecipePage', () => {
       fireEvent.click(open)
       expect(follow).toHaveBeenCalledWith(open.getAttribute('href'))
       expect(location.pathname).toBe(`/recipes/${SLUG}/`)
+      expect(countEvent).toHaveBeenCalledWith({ name: 'recipe_open', recipe: SLUG })
     } finally {
       vi.restoreAllMocks()
     }
@@ -211,6 +215,7 @@ describe('RecipePage', () => {
     await screen.findByRole('heading', { level: 1, name: recipe.name })
     fireEvent.click(screen.getByRole('link', { name: 'Open in the editor' }), { ctrlKey: true })
     expect(location.pathname).toBe(`/recipes/${SLUG}/`)
+    expect(countEvent).not.toHaveBeenCalled()
   })
 
   it('copies the output', async () => {

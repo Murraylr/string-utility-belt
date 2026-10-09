@@ -33,6 +33,7 @@ npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
 npm run release -- plan   # what a release from HEAD would ship, at which versions (read-only; RELEASING.md)
+npm run events            # counted clicks from Analytics Engine (-- --days N | --month YYYY-MM; needs a CF token)
 ```
 
 ## Architecture
@@ -161,8 +162,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
   link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
   name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
-  of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor; its link's UTM
-  campaign is the booking id and its content the page), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
+  of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, a `sponsor_click` count;
+  its link's UTM campaign is the booking id and its content the page), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
   Both go through `Slot` (the shared layout).
 - An unbooked slot shows one of our own tools (`HousePromo` → `PromoBlock`, `promos.ts`; one promo per
   `INTEGRATION_LINKS` entry, same links and `INTEGRATION_ICONS`): labelled "From String Utility Belt", never "Sponsor".
@@ -171,14 +172,15 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `canInstallExtension()` and it has not answered, else VS Code. Store pages open in a new tab, the CLI/MCP sections of
   /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
   browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
-  never shift; following one marks the integrations seen, as the header's links do.
+  never shift; a click counts as `integration_click` from `promo` and marks the integrations seen.
 - Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
   `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
   slot stays the page's one sponsor, as `/advertise/` promises. **A page shows at most one promo**: `promoPlan(page)`
   leaves every extra slot of a sponsorable page (utility, recipe, blog post) empty, gives an index or reading page one
   browser-independent tool with an on-site link (the MCP server) in whichever of `inline`/`rail` its layout carries
   (none carries both), and never fills the `strip`. A slot the plan leaves empty renders nothing; `e2e/promos.e2e.ts`
-  fails on a desktop page showing two. Hidden below `sm`. Never on `/advertise/` itself.
+  fails on a desktop page showing two. Hidden below `sm`; clicks count as `integration_click` from
+  `promo_<slot>`. Never on `/advertise/` itself.
 
 ### Content-Security-Policy (`public/_headers`)
 - Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme script and the
@@ -193,14 +195,21 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   policy update.
 
 ### Analytics
-- No analytics code in the app, and no cookies. Cloudflare Web Analytics (cookieless; the zone injects its beacon at
-  the edge, so no build sees it) counts page views per path, with countries, devices and load timings; it drops the
-  query and fragment, so share links' input never reaches it. Google Analytics was removed on 2026-10-09; never add
-  a tracking script or per-feature event reporting without the user asking, and update the privacy policy with it.
-- Sponsor reports come from those page views; sponsors measure clicks themselves through the UTM parameters on
-  their link (`sponsoredHref`). Search data: BigQuery project `string-utility-belt` (US) holds the Search Console
-  bulk export (`searchconsole`, from 2026-10-08), plus GA4 export tables (`analytics_507388453`) that expire 426
-  days after collection, as the privacy policy promises.
+- No cookies and no tracking scripts. Cloudflare Web Analytics (cookieless; the zone injects its beacon at the edge,
+  so no build sees it) counts page views per path, with countries, devices and load timings; it drops the query and
+  fragment, so share links' input never reaches it. Google Analytics was removed on 2026-10-09.
+- The site counts three events itself (`src/lib/countedEvents.ts`, the contract): `sponsor_click {sponsorship, page}`,
+  `integration_click {integration, source}` and `recipe_open {recipe}`. The app sends them with `countEvent()`
+  (`src/app/events/countEvent.ts`: `sendBeacon`, production host only, never under webdriver) to `POST /api/event`
+  (`worker/events.ts`: same-origin only, rate-limited, strict allow-list parse), which writes one Workers Analytics
+  Engine data point (index = event name, blob1/blob2 = its ids, nothing about the request) to the `sub_events`
+  dataset (`EVENTS` binding, kept three months). A new event or field changes the contract, the report
+  (`scripts/events/report.ts`) and the privacy policy's "Clicks we count ourselves" together; ids only, never text.
+- `npm run events [-- --days N | --month YYYY-MM]` prints the counts (needs `CLOUDFLARE_ACCOUNT_ID` and a
+  `CLOUDFLARE_API_TOKEN` with Account Analytics: Read); `--month` is a sponsor's monthly click report. Counts are
+  indicative (anyone can forge a same-origin header from a script); sponsors also see clicks under their UTM campaign.
+- Search data: BigQuery project `string-utility-belt` (US) holds the Search Console bulk export (`searchconsole`, from
+  2026-10-08), plus GA4 export tables (`analytics_507388453`) that expire 426 days after collection.
 
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).
@@ -208,7 +217,7 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Worker (`worker/`) and packages (`packages/`)
 - `worker/api.ts`: `POST /api/run`, `GET /api/utilities[/:id]` (public CORS, rate-limited, per-request
-  budget), `GET /api/fetch?url=` (same-origin fetch proxy with SSRF guards). Everything else is static assets.
+  budget), `GET /api/fetch?url=` (same-origin fetch proxy with SSRF guards), `POST /api/event` (counted events). Everything else is static assets.
 - `packages/core` is a build artifact over `src/core` + the static registry; `cli` (`subelt`), `mcp`
   (stdio server; runs jobs in killable child processes), `extension` (MV3), `vscode`. Each has a README.
 - App ↔ extension: `src/core/extensionBridge.ts` is the shared contract (messages, `BRIDGE_ORIGINS`, the store

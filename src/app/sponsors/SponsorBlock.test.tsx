@@ -2,6 +2,7 @@ import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { countEvent } from '@/app/events/countEvent'
 import SponsorBlock from './SponsorBlock'
 import PageSponsor from './PageSponsor'
 import { utcDay, type Sponsorship } from './sponsors'
@@ -11,6 +12,7 @@ import { canInstallExtension } from '@/app/extension/installable'
 import { readPref } from '@/app/prefs'
 import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 vi.mock('@/app/extension/bridge', () => ({ useExtensionStatus: vi.fn() }))
 vi.mock('@/app/extension/installable', () => ({ canInstallExtension: vi.fn() }))
 
@@ -19,7 +21,7 @@ function browser(status: ExtensionStatus, installable: boolean) {
   vi.mocked(useExtensionStatus).mockReturnValue(status)
   vi.mocked(canInstallExtension).mockReturnValue(installable)
 }
-beforeEach(() => { localStorage.clear(); browser('absent', false) })
+beforeEach(() => { localStorage.clear(); vi.mocked(countEvent).mockClear(); browser('absent', false) })
 
 const today = utcDay(new Date())
 const booking: Sponsorship = {
@@ -65,10 +67,11 @@ describe('PageSponsor', () => {
     expect(block.textContent).toContain('From String Utility BeltAdvertise here')
   })
 
-  it("shows today's sponsor", () => {
+  it("shows today's sponsor and counts a click by booking and page only", () => {
     render(<PageSponsor page={{ kind: 'recipe', slug: 'decode-saml-request' }} sponsorships={[booking]} className="mt-3" />)
     expect(screen.getByRole('complementary', { name: 'Sponsor' }).className).toBe('sponsor mt-3')
-    expect(screen.getByRole('link', { name: /Acme/ }).getAttribute('href')).toContain('utm_content=recipes%2Fdecode-saml-request')
+    fireEvent.click(screen.getByRole('link', { name: /Acme/ }))
+    expect(countEvent).toHaveBeenCalledWith({ name: 'sponsor_click', sponsorship: 'acme-now', page: 'recipes/decode-saml-request' })
   })
 })
 
@@ -109,10 +112,11 @@ describe('HousePromo', () => {
     expect(promoOn({ kind: 'utility', id: 'csv_to_json' })).toBe('vscode')
   })
 
-  it('marks the integrations seen when followed', () => {
+  it('counts a click as an integration click from the promo, and marks the integrations seen', () => {
     browser('absent', true)
     render(<PageSponsor page={trim} sponsorships={[]} />)
     fireEvent.click(screen.getByRole('link', { name: /String Utility Belt for Chrome/ }))
+    expect(countEvent).toHaveBeenCalledWith({ name: 'integration_click', integration: 'chrome', source: 'promo' })
     expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
   })
 

@@ -58,8 +58,9 @@ echo 'eyJ1c2VyIjoiYWRhIn0=' | npx subelt base64_decode json_pretty
 Open [stringutilitybelt.com](https://stringutilitybelt.com) — nothing to install, and every
 transformation runs in your browser (see the [privacy policy](https://stringutilitybelt.com/privacy/)
 for the few features that contact the server). The site sets no cookies and runs no tracking
-scripts: Cloudflare Web Analytics counts page views without cookies and never receives what you
-paste, and the site's Content-Security-Policy blocks scripts from anywhere else. The how-to guide lives in the app
+scripts: Cloudflare Web Analytics counts page views without cookies, the site's own server counts
+clicks on sponsor and tool links by id alone, neither ever receives what you paste, and the site's
+Content-Security-Policy blocks scripts from anywhere else. The how-to guide lives in the app
 itself: click **Docs** in the header, or go to [`/docs/`](https://stringutilitybelt.com/docs/). Each
 utility's settings and examples are on its own page, listed at
 [`/utilities/`](https://stringutilitybelt.com/utilities/).

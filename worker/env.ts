@@ -12,6 +12,8 @@ export interface ApiEnv {
   FETCH_PROXY?: string
   /** The built SPA in ./dist; only consulted for non-API paths. */
   ASSETS?: Fetcher
+  /** Workers Analytics Engine dataset `POST /api/event` adds to (`wrangler.jsonc`); without it events are dropped. */
+  EVENTS?: AnalyticsEngineDataset
 }
 
 /** The slice of a utility registry the API needs (the static registry in production). */
@@ -48,6 +50,8 @@ export interface ApiOptions {
   rateLimit?: { limit: number; windowMs: number }
   /** POST /api/run, per client IP (a bucket separate from the fetch proxy's). */
   runRateLimit?: { limit: number; windowMs: number }
+  /** POST /api/event, per client IP. */
+  eventRateLimit?: { limit: number; windowMs: number }
   /** Rate-limiter clock. */
   now?: () => number
   /** Defaults to the global `fetch`, looked up per call so tests can stub it. */

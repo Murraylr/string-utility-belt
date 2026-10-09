@@ -43,6 +43,7 @@
         "check:guides": "vite-node scripts/check-guides.ts",
         "check:recipes": "vite-node scripts/check-recipes.ts",
         "build:site": "npm run build && npm run build:seo",
+        "events": "vite-node scripts/events.ts",
         "release": "vite-node scripts/release.ts"
     },
     "dependencies": {
