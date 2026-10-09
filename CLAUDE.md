@@ -174,9 +174,11 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   never shift; clicks are `integration_click`, `source: 'promo'`.
 - Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
   `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
-  slot stays the page's one sponsor, as `/advertise/` promises. `promoPlan(page)` gives each slot a different
-  browser-independent tool (VS Code, MCP, CLI), never the one the sponsor slot may show, so the pre-render matches
-  the app; a slot the plan leaves empty renders nothing. Hidden below `sm`; clicks are `integration_click` with
+  slot stays the page's one sponsor, as `/advertise/` promises. **A page shows at most one promo**: `promoPlan(page)`
+  leaves every extra slot of a sponsorable page (utility, recipe, blog post) empty, gives an index or reading page one
+  browser-independent tool with an on-site link (the MCP server) in whichever of `inline`/`rail` its layout carries
+  (none carries both), and never fills the `strip`. A slot the plan leaves empty renders nothing; `e2e/promos.e2e.ts`
+  fails on a desktop page showing two. Hidden below `sm`; clicks are `integration_click` with
   `source: 'promo_<slot>'`. Never on `/advertise/` itself.
 
 ### Content-Security-Policy (`public/_headers`)

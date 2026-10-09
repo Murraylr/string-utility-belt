@@ -5,7 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { track } from '@/app/analytics/analytics'
 import ExtraPromo from './ExtraPromo'
 import PagePromo from './PagePromo'
-import { PROMOS, fixedPromo, promoPlan, type ExtraSlot, type PromoPage } from './promos'
+import { PROMOS, promoPlan, type ExtraSlot, type PromoPage } from './promos'
 
 vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
 beforeEach(() => vi.mocked(track).mockClear())
@@ -23,20 +23,20 @@ describe('promoPlan', () => {
     { kind: 'blog', slug: 'anything' },
   ]
 
-  it.each(pages)('gives every slot of %o a different tool, never the sponsor slot’s', page => {
-    const plan = promoPlan(page)
-    const ids = SLOTS.map(s => plan[s]).filter(Boolean)
-    expect(new Set(ids).size).toBe(ids.length)
-    if (page.kind !== 'index') expect(ids).not.toContain(fixedPromo(page) ?? 'vscode')
+  it.each(pages.filter(p => p.kind !== 'index'))('leaves every extra slot of %o empty: its sponsor slot is its one promo', page => {
+    expect(promoPlan(page)).toEqual({})
+  })
+
+  it('gives an index page one tool, in whichever content slot its layout carries, and never the strip', () => {
+    expect(promoPlan({ kind: 'index' })).toEqual({ inline: 'mcp', rail: 'mcp' })
   })
 
   it('only uses tools that do not depend on the browser, so the pre-render matches', () => {
     for (const page of pages) expect(Object.values(promoPlan(page))).not.toContain('chrome')
   })
 
-  it('fills content slots before the strip', () => {
-    expect(promoPlan({ kind: 'index' })).toEqual({ inline: 'vscode', rail: 'mcp', strip: 'cli' })
-    expect(promoPlan({ kind: 'utility', id: 'trim' })).toEqual({ inline: 'mcp', rail: 'cli' })
+  it('links an index page only within this site', () => {
+    for (const id of Object.values(promoPlan({ kind: 'index' }))) expect(PROMOS[id].link.external).toBe(false)
   })
 })
 
@@ -66,13 +66,17 @@ describe('ExtraPromo', () => {
 
 describe('PagePromo', () => {
   it('reports a click with its slot as the source', () => {
-    render(<PagePromo page={{ kind: 'utility', id: 'trim' }} slot="rail" />)
-    fireEvent.click(screen.getByRole('link', { name: PROMOS.cli.cta }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'cli', source: 'promo_rail', sponsor_page: 'util/trim' })
+    render(<PagePromo page={{ kind: 'index' }} slot="rail" />)
+    fireEvent.click(screen.getByRole('link', { name: PROMOS.mcp.cta }))
+    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'mcp', source: 'promo_rail' })
   })
 
-  it('renders nothing for a slot the plan leaves empty', () => {
-    const { container } = render(<PagePromo page={{ kind: 'utility', id: 'trim' }} slot="strip" />)
+  it.each([
+    [{ kind: 'utility', id: 'trim' } as const, 'rail' as const],
+    [{ kind: 'utility', id: 'trim' } as const, 'inline' as const],
+    [{ kind: 'index' } as const, 'strip' as const],
+  ])('renders nothing for a slot the plan leaves empty (%o, %s)', (page, slot) => {
+    const { container } = render(<PagePromo page={page} slot={slot} />)
     expect(container.innerHTML).toBe('')
   })
 })

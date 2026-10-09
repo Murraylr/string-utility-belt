@@ -525,11 +525,9 @@ describe('buildSeo recipes', () => {
     expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
   })
 
-  it('pre-renders the inline promo the app shows after "Step by step", and one after the index\'s first category', () => {
+  it('pre-renders no extra promo on a recipe page, and the index\'s one after its first category', () => {
     const page = html(read(dist, 'recipes/shout-slugs/index.html'))
-    const inline = page.querySelector('#root main aside[data-promo-slot="inline"]')!
-    expect(inline.getAttribute('data-promo')).toBe(promoPlan({ kind: 'recipe', slug: 'shout-slugs' }).inline)
-    expect(inline.previousElementSibling?.querySelector('#recipe-steps-h')).toBeTruthy()
+    expect(page.querySelector('#root main aside[data-promo-slot]')).toBeNull()
     const index = html(read(dist, 'recipes/index.html')).querySelector('#root main aside[data-promo-slot="inline"]')!
     expect(index.getAttribute('data-promo')).toBe(promoPlan({ kind: 'index' }).inline)
     expect(index.previousElementSibling?.tagName).toBe('SECTION')

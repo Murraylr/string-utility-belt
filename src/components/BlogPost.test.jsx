@@ -164,13 +164,13 @@ describe('<BlogPost /> header and footer', () => {
     expect(header.lastElementChild).toHaveClass('sponsor')
   })
 
-  it('ends with one of our own tools and the other posts, by their crawlable paths', async () => {
+  it('ends with the other posts, by their crawlable paths, and no extra promo', async () => {
     vi.stubGlobal('fetch', fetchFor(TAGGED))
     const { container } = render(<BlogPost slug="tagged" />)
     const other = await screen.findByRole('link', { name: 'Other post' })
     expect(other).toHaveAttribute('href', '/blog/other/')
     expect(screen.queryByRole('link', { name: 'Tagged' })).toBeNull()
-    expect(container.querySelector('[data-promo-slot="inline"]')).toHaveAccessibleName('From String Utility Belt')
+    expect(container.querySelector('[data-promo-slot]')).toBeNull()
   })
 })
 
