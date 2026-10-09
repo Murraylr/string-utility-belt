@@ -12,7 +12,7 @@ String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and p
 ## The short version
 
 - The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except as described under "Features that contact our server".
-- We use **Google Analytics** to understand how the site is used. Outside the European Economic Area, the UK and Switzerland it uses cookies; inside them it runs without cookies.
+- We use **Google Analytics** to understand how the site is used. Outside the European Economic Area, the UK and Switzerland it uses cookies; inside them it runs without cookies. Our host, Cloudflare, also counts page views and load times, without cookies.
 - The site loads **no advertising scripts**. A sponsor's message, where a page shows one, is part of the page itself: it runs no code, sets no cookies and never sees what you type.
 - There are no user accounts, and we do not sell your personal information.
 - The browser extension, VS Code extension, command-line tool, MCP server and library run on your own device. They contain no analytics or ads and do not send your text anywhere, except when you choose to open text in the website (see "Browser and editor extensions and developer tools").
@@ -61,6 +61,10 @@ These run entirely on your computer, on the text you give them, and make no netw
 ### Google Analytics
 
 We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. It also records which features you use, for example which utilities you add to a pipeline, how large your input is (as a rough size range), that you copied or downloaded a result, copied a command-line or AI agent snippet, or followed a sponsor's link, or what you typed into a utility search box. It never records the text, files or share links you work with: a shared pipeline is reported only as "a shared pipeline". To tell people from automated traffic, the site notes whether a visit showed real mouse, keyboard or touch input, and remembers that on your device. With Google signals turned on, Google also associates this data with your Google account if you are signed in and have allowed ads personalization, which gives us aggregate reports on visitors' age range, gender and interests; you can stop this in [Google's Ads Settings](https://adssettings.google.com/). We only look at this information in aggregate. Google Analytics keeps it for 14 months, after which only aggregated totals remain. We also export it daily to Google BigQuery, Google's cloud database, in our own Google Cloud project in the United States, so we can analyse it; that copy is deleted after 14 months too. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
+
+### Cloudflare Web Analytics
+
+Cloudflare, our host, also counts page views and measures how fast pages load, using a small script it adds to each page. It sets no cookies, stores nothing on your device and uses no identifier that persists between visits. For a sample of page views it records the page's address and the page that referred you, both without anything after a `?` or `#` (so never the input carried in a share link), your browser, operating system and device type, your country, and loading and responsiveness timings (including which page element they concern, but never its text). We see only aggregate reports. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
 
 ### Google Fonts
 

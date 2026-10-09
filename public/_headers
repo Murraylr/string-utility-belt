@@ -4,8 +4,10 @@
 # frameable; AppShell refuses to render anything else inside a frame.
 #
 # Content-Security-Policy — what each directive is for:
-# - script-src: this site's files, Google Analytics' gtag.js, and three inline scripts by
-#   SHA-256 (no 'unsafe-inline'): index.html's theme and Consent Mode scripts, and the
+# - script-src: this site's files, Google Analytics' gtag.js, Cloudflare Web Analytics'
+#   beacon (the zone injects it into every page at the edge, so no build sees it; it reports
+#   to /cdn-cgi/rum and strips the fragment and query from the URLs it sends), and three
+#   inline scripts by SHA-256 (no 'unsafe-inline'): index.html's theme and Consent Mode scripts, and the
 #   custom-code sandbox's bootstrap (src/app/sandbox/frame.ts) — a srcdoc frame and the
 #   Blob-URL Worker it starts inherit this policy on top of their own. `npm test`
 #   (scripts/csp.test.ts) names the hash to add or drop after any of them changes, and
@@ -20,7 +22,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-1vD0G2u6HxMsRuzeJrDja6uqhzcCB6+OZqSM7tcGIPw=' 'sha256-eslJAb/3HuXGqyPFI8TcmVqu1JJi+AH5Qsj83dLfhFk=' 'sha256-e3JLvqPIAXkjEg3QWQg3qfG5KAeariOwujRV06XHyn8=' 'unsafe-eval' 'wasm-unsafe-eval' https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.google.com; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-1vD0G2u6HxMsRuzeJrDja6uqhzcCB6+OZqSM7tcGIPw=' 'sha256-eslJAb/3HuXGqyPFI8TcmVqu1JJi+AH5Qsj83dLfhFk=' 'sha256-e3JLvqPIAXkjEg3QWQg3qfG5KAeariOwujRV06XHyn8=' 'unsafe-eval' 'wasm-unsafe-eval' https://*.googletagmanager.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.google.com; connect-src 'self' https:; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'
 
 # Raw markdown the app fetches to render each guide and post. Crawlers must still be
 # able to fetch it (search engines render the pages with it), but the pre-rendered

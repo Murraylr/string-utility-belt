@@ -27,11 +27,14 @@ describe('the site CSP (public/_headers)', () => {
     expect(inlineScripts(indexHtml)).toHaveLength(2)
   })
 
-  it('never allows inline script or script from anywhere but this site and Google Analytics', () => {
+  it('never allows inline script or script from anywhere but this site, Google Analytics and Cloudflare Web Analytics', () => {
     const scriptSrc = csp.get('script-src')!
     expect(scriptSrc).not.toContain("'unsafe-inline'")
     expect(scriptSrc).not.toContain('data:')
-    expect(scriptSrc.filter(s => /^https?:|^\*/.test(s))).toEqual(['https://*.googletagmanager.com'])
+    expect(scriptSrc.filter(s => /^https?:|^\*/.test(s))).toEqual([
+      'https://*.googletagmanager.com',
+      'https://static.cloudflareinsights.com'
+    ])
     expect(csp.get('default-src')).toEqual(["'self'"])
     expect(csp.get('object-src')).toEqual(["'none'"])
     expect(csp.get('base-uri')).toEqual(["'self'"])
