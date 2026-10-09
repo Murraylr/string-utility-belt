@@ -112,6 +112,9 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `<script type="application/json" id="recipe-trace">`. `RecipePage` reads that trace, so nothing runs on load; the
   first edit runs live (worker). `main.tsx` preloads a recipe route's chunk and data before mounting
   (`preloadable`, capped at 2.5s) so React replaces the static HTML with the same page, not "Loading…".
+- The editor's Recipes button (`src/app/library/RecipesButton.tsx` → `RecipeGallery.tsx`, lazy: the index stays out of the
+  entry chunk) lists `RECIPE_INDEX` by category; "Try it" loads one recipe chunk and replaces the pipeline (undoable).
+  There are no separate presets: a shipped example pipeline is a recipe, and a one-utility example belongs on its utility.
 - "Open in the editor" (`openInEditor.ts`) autosaves the visitor's pipeline to the library, saves the recipe as the
   working pipeline and hands off the input; its href is a `#/p/` share link carrying only the example input.
 - A `<textarea>` turns CRLF into LF: pasted Windows line endings never reach a recipe, only the samples' own text.
@@ -122,7 +125,7 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - `tool/` (tool page, IO panels, step list), `engine/` (Web Worker execution, chunked mode, cancellation,
   adaptive debounce), `io/` (file/fetch input, history, diff/hex/output views, stats, download),
   `share/` (share links, `trust.ts` quarantines `custom_js` from links), `sandbox/` (custom JS runs in a
-  sandboxed iframe + worker), `library/` (named pipelines, presets), `magic/` (auto-detect),
+  sandboxed iframe + worker), `library/` (named pipelines, the editor's recipe gallery), `magic/` (auto-detect),
   `search/`, `commands/`, `pages/` (utility index/doc pages, embed, changelog), `pwa/`, `i18n/`, `theme/`.
 - Components in `src/components/` (`StepCard`, `UtilityPicker`, `ParamsEditor` + `params/*` per kind, `CopyAsMenu`, …).
 
@@ -202,7 +205,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   params only) — GA's own history-based page views are off in the stream settings.
 - Utility pages report `snippet_copy {integration: 'cli'|'mcp', utility_id}` and `integration_click {source: 'doc_page'}` from
   "Run it from your terminal or AI agent" (`src/app/integrations/RunElsewhere.tsx`, commands built and CLI-tested in `snippets.ts`).
-- Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`;
+- Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`
+  (`method: 'recipe_gallery'` from the editor's Recipes dialog);
   page views carry `recipe_id` (register it as a custom dimension).
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
   counts and size buckets only, never input/output text. New params need a custom dimension in GA

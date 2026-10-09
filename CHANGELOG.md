@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Recipes in the editor.** The editor's Presets button is now **Recipes**: it lists every published recipe by
+  category, "Try it" loads the recipe's steps and worked example, and "How it works" opens its page. The command
+  palette's "Start from a recipe" opens the same list.
+- New recipes: **Extract unique email addresses from text** and **Clean up text pasted from Microsoft Word**.
+
+### Removed
+
+- The separate preset gallery. Single-step presets (Decode a JWT, CSV to JSON, Hex dump, JSON to YAML, …) live on as
+  their utilities' own pages, and the multi-step ones as recipes. Pipelines you saved from a preset stay in your library.
+
 ## [1.11.2] - 2026-10-09
 
 ### Changed

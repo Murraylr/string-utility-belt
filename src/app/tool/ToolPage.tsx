@@ -3,7 +3,7 @@ import { useTool } from '@/app/ToolContext'
 import ToolCommandBridge from '@/app/commands/ToolCommandBridge'
 import ShareButton from '@/app/share/ShareButton'
 import LibraryButton from '@/app/library/LibraryButton'
-import PresetsButton from '@/app/library/PresetsButton'
+import RecipesButton from '@/app/library/RecipesButton'
 import SaveToExtensionButton from '@/app/extension/SaveToExtensionButton'
 import IOSection from './IOSection'
 import StepsSection from './steps/StepsSection'
@@ -35,7 +35,7 @@ export default function ToolPage({ banner }: { banner?: React.ReactNode }) {
         </p>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <PresetsButton />
+        <RecipesButton />
         <LibraryButton />
         <ShareButton />
         <SaveToExtensionButton />

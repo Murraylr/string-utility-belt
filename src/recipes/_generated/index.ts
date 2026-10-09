@@ -51,6 +51,28 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     "published": "2026-10-07"
   },
   {
+    "slug": "clean-text-pasted-from-word",
+    "name": "Clean up text pasted from Microsoft Word",
+    "summary": "Paste text copied out of a Word document and get plain text that behaves: curly quotes and dashes undone, list bullets turned into hyphens, hidden hyphens and no-break spaces gone.",
+    "category": "Writing & Marketing",
+    "utilityIds": [
+      "collapse_whitespace",
+      "multi_replace",
+      "remove_invisible",
+      "sed",
+      "smart_quotes"
+    ],
+    "chain": [
+      "hidden characters",
+      "spaces and blank lines",
+      "bullets and numbered items",
+      "dashes back to hyphens",
+      "straight quotes"
+    ],
+    "stepCount": 5,
+    "published": "2026-10-09"
+  },
+  {
     "slug": "convert-unix-timestamps-in-json",
     "name": "Convert Unix timestamps in a JSON response to dates",
     "summary": "Paste an API response and get the same JSON back with its epoch seconds and milliseconds turned into ISO 8601 dates at any depth, while small ids, prices and phone numbers stay as they are.",
@@ -252,6 +274,24 @@ export const RECIPE_INDEX: RecipeMeta[] = [
     ],
     "stepCount": 2,
     "published": "2026-10-08"
+  },
+  {
+    "slug": "extract-unique-emails-from-text",
+    "name": "Extract unique email addresses from text",
+    "summary": "Paste an email thread, a CSV export or a contact page and get each address once: matched in any surrounding text, lower-cased so case variants count as one, sorted, and with no-reply senders left out.",
+    "category": "Data & Spreadsheets",
+    "utilityIds": [
+      "case",
+      "extract_preset",
+      "grep_lines"
+    ],
+    "chain": [
+      "lower-case",
+      "pull out unique addresses",
+      "leave out no-reply senders"
+    ],
+    "stepCount": 3,
+    "published": "2026-10-09"
   },
   {
     "slug": "fix-bash-bad-interpreter",

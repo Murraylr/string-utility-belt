@@ -1,4 +1,4 @@
-/** roadmap §13.3 — the library (save/clear/load) and the preset gallery. */
+/** roadmap §13.3 — the library (save/clear/load) and the recipe gallery. */
 import { test, expect } from '@playwright/test'
 import { quickAdd, result, setInput } from './utils'
 
@@ -49,18 +49,20 @@ test.describe('library', () => {
   })
 })
 
-test.describe('presets', () => {
-  test('"Try it" loads a preset\'s steps and sample input, and produces the expected output', async ({ page }) => {
+test.describe('recipes', () => {
+  test('"Try it" loads a recipe\'s steps and worked example, and produces its output', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('button', { name: 'Presets', exact: true }).click()
-    const gallery = page.getByRole('dialog', { name: 'Preset gallery' })
+    await page.getByRole('button', { name: 'Recipes', exact: true }).click()
+    const gallery = page.getByRole('dialog', { name: 'Recipes' })
     await expect(gallery).toBeVisible()
 
-    await gallery.getByRole('button', { name: 'Try it: Double URL-decode' }).click()
+    await gallery.getByRole('button', { name: 'Try it: Extract unique email addresses from text' }).click()
     await expect(gallery).toBeHidden()
 
-    await expect(page.locator('#pipeline-input')).toHaveValue('hello%2520world%2521')
-    await expect(page.locator('[data-step-id]')).toHaveCount(2)
-    await expect(result(page)).toHaveText('hello world!')
+    await expect(page.locator('#pipeline-input')).toHaveValue(/^From: Dana Whitfield <Dana\.Whitfield@example\.com>\n/)
+    await expect(page.locator('[data-step-id]')).toHaveCount(3)
+    await expect(result(page)).toHaveText(
+      'dana.whitfield@example.com\nleo.martins@example.org\nmarcus.oneil@example.org\npriya.raman@example.net\nsupport@example.com',
+    )
   })
 })

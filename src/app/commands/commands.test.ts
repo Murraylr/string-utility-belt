@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   commands, commandById, listShortcuts, TOOL_COMMAND_EVENT, EVENT_MAGIC, EVENT_OPEN_SHARE,
-  EVENT_OPEN_LIBRARY, EVENT_OPEN_PRESETS, EVENT_TOGGLE_THEME, EVENT_OPEN_SHORTCUTS,
+  EVENT_OPEN_LIBRARY, EVENT_OPEN_RECIPES, EVENT_TOGGLE_THEME, EVENT_OPEN_SHORTCUTS,
   attachToolBridge, hasToolBridge, queueToolCommand, type ToolCommandDetail,
 } from './commands'
 
@@ -62,7 +62,7 @@ describe('commands', () => {
     ['magic-decode', EVENT_MAGIC],
     ['share', EVENT_OPEN_SHARE],
     ['library', EVENT_OPEN_LIBRARY],
-    ['presets', EVENT_OPEN_PRESETS],
+    ['recipes', EVENT_OPEN_RECIPES],
   ]
 
   it.each(TOOL_DIALOGS)('%s fires the %s window event straight away while an editor is on screen', (id, eventName) => {
