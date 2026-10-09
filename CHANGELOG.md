@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-10-09
+
 ### Fixed
 
 - Cloudflare Web Analytics counts visits again: the site's Content-Security-Policy blocked the script Cloudflare adds
