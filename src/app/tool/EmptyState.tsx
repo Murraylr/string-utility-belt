@@ -12,7 +12,7 @@ const MAX_SUGGESTIONS = 3
 /**
  * Shown by `StepsSection` in place of the step list while the pipeline has no steps:
  * what the input looks like it could be, as first steps to add with one click. The
- * add buttons and recipes link follow it in the section's add row.
+ * add buttons and presets link follow it in the section's add row.
  */
 export default function EmptyState() {
   const { input, dispatch } = useTool()
@@ -35,7 +35,7 @@ export default function EmptyState() {
         <span className="sr-only"> {n} suggestion{n === 1 ? '' : 's'}</span>
       </>
     )
-  } else status = 'No obvious decoding for this input. Add a step or start from a recipe.'
+  } else status = 'No obvious decoding for this input. Add a step or start from a preset.'
 
   return (
     <div className="grid grid-cols-[32px_minmax(0,1fr)] gap-x-3">

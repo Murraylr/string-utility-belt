@@ -22,7 +22,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), in
 
 /**
  * Accessible modal shell shared by every dialog this workstream owns (share,
- * library, recipes): role="dialog", a labelled title, a Tab-cycle focus trap,
+ * library, presets): role="dialog", a labelled title, a Tab-cycle focus trap,
  * Escape to close, and focus returned to whatever opened it. Rendered into
  * <body> so a transformed / backdrop-filtered ancestor (a sticky blurred header,
  * an animated card) cannot turn the fixed overlay into a clipped box.

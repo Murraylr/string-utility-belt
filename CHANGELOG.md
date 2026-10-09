@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Recipes are now called presets.** The pages moved from `/recipes/` to `/presets/`, and the editor's
+  Recipes button, the header link and the command palette's "Start from a preset" follow. Old `/recipes/…` links
+  redirect permanently to the same page, and `#/recipes` links still open it.
+
 ## [1.12.0] - 2026-10-09
 
 ### Added

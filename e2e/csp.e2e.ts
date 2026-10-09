@@ -23,7 +23,7 @@ test.beforeEach(async ({ page }) => {
 const violations = (page: Page) => page.evaluate(() => window.__cspViolations ?? [])
 
 const PAGES = [
-  '/', '/utilities/', '/util/base64_encode/', '/recipes/', '/recipes/decode-saml-request/',
+  '/', '/utilities/', '/util/base64_encode/', '/presets/', '/presets/decode-saml-request/',
   '/blog/', '/docs/', '/about/', '/privacy/', '/advertise/', '/no-such-page/',
 ]
 

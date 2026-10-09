@@ -10,7 +10,7 @@ import { SPONSOR_TOPICS, type SponsorTopicId } from './topics'
 /** A content page that can carry a sponsor. The tool, embeds and index pages never do. */
 export type SponsorPage =
   | { kind: 'utility'; id: string }
-  | { kind: 'recipe'; slug: string }
+  | { kind: 'preset'; slug: string }
   | { kind: 'blog'; slug: string }
 
 export interface Sponsorship {
@@ -42,7 +42,7 @@ export const utcDay = (date: Date): string => date.toISOString().slice(0, 10)
 /** The page's path without slashes (`util/jwt_decode`): the UTM content and the analytics `sponsor_page`. */
 export function pageKey(page: SponsorPage): string {
   if (page.kind === 'utility') return `util/${page.id}`
-  if (page.kind === 'recipe') return `recipes/${page.slug}`
+  if (page.kind === 'preset') return `presets/${page.slug}`
   return `blog/${page.slug}`
 }
 
@@ -52,7 +52,7 @@ export function topicOf(page: SponsorPage): SponsorTopicId | undefined {
   const ids = Object.keys(SPONSOR_TOPICS) as SponsorTopicId[]
   return page.kind === 'utility'
     ? ids.find(t => (SPONSOR_TOPICS[t].utilities as readonly string[]).includes(page.id))
-    : ids.find(t => (SPONSOR_TOPICS[t].recipes as readonly string[]).includes(page.slug))
+    : ids.find(t => (SPONSOR_TOPICS[t].presets as readonly string[]).includes(page.slug))
 }
 
 const isLive = (s: Sponsorship, day: string) => s.start <= day && day <= s.end

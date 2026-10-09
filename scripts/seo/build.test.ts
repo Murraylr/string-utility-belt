@@ -10,11 +10,11 @@ import { POPULAR_UTILITY_IDS, DOCS_DESCRIPTION, DOCS_TITLE, displayName, homeDes
 import { SITE_PAGES } from '../../src/lib/router'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import { resolveOg, resolveOutDir } from '../build-seo'
-import { STATIC_RECIPES } from '../../src/recipes/_generated/static'
-import { step } from '../../src/recipes/define'
-import { TRACE_ELEMENT_ID, type RecipeTrace } from '../../src/recipes/trace'
-import type { Recipe } from '../../src/recipes/types'
-import { metaOfRecipe } from '../gen-recipes'
+import { STATIC_PRESETS } from '../../src/presets/_generated/static'
+import { step } from '../../src/presets/define'
+import { TRACE_ELEMENT_ID, type PresetTrace } from '../../src/presets/trace'
+import type { Preset } from '../../src/presets/types'
+import { metaOfPreset } from '../gen-presets'
 import { readSourceDates, type SourceDates } from './lastmod'
 import type { Sponsorship } from '../../src/app/sponsors/sponsors'
 import { promoPlan } from '../../src/app/sponsors/promos'
@@ -130,17 +130,17 @@ describe('buildSeo over a built dist/', () => {
     result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: m => logs.push(m) })
   }, 60000)
 
-  it('writes one crawlable page per utility and recipe, plus the indexes, blog, changelog, docs, site pages and 404', () => {
+  it('writes one crawlable page per utility and preset, plus the indexes, blog, changelog, docs, site pages and 404', () => {
     const utilDirs = readdirSync(path.join(dist, 'util'))
     expect(utilDirs.sort()).toEqual(MANIFEST.map(m => m.id).sort())
-    const recipeDirs = readdirSync(path.join(dist, 'recipes')).filter(f => f !== 'index.html')
-    expect(recipeDirs.sort()).toEqual(STATIC_RECIPES.map(r => r.slug).sort())
-    for (const rel of ['utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
+    const presetDirs = readdirSync(path.join(dist, 'presets')).filter(f => f !== 'index.html')
+    expect(presetDirs.sort()).toEqual(STATIC_PRESETS.map(r => r.slug).sort())
+    for (const rel of ['utilities/index.html', 'presets/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html',
       'blog/base64-encode-decode-online/index.html', 'blog/md5-insecure-but-useful/index.html',
       'about/index.html', 'privacy/index.html', 'contact/index.html', 'integrations/index.html', 'advertise/index.html', '404.html']) {
       expect(existsSync(path.join(dist, rel)), rel).toBe(true)
     }
-    expect(result.pages).toBe(MANIFEST.length + STATIC_RECIPES.length + 13)
+    expect(result.pages).toBe(MANIFEST.length + STATIC_PRESETS.length + 13)
   })
 
   it('gives every utility page exactly one title and canonical, and JSON-LD that parses', () => {
@@ -210,12 +210,12 @@ describe('buildSeo over a built dist/', () => {
   })
 
   it('surrounds every pre-rendered page with the site nav and footer links', () => {
-    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'recipes/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
+    for (const rel of ['index.html', 'util/trim/index.html', 'utilities/index.html', 'presets/index.html', 'blog/index.html', 'changelog/index.html', 'docs/index.html', 'privacy/index.html', '404.html']) {
       const doc = html(read(dist, rel))
       const footer = [...doc.querySelectorAll('#root footer a')].map(a => a.getAttribute('href'))
-      expect(footer, rel).toEqual(['/utilities/', '/recipes/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/', '/advertise/'])
+      expect(footer, rel).toEqual(['/utilities/', '/presets/', '/blog/', '/changelog/', '/integrations/', '/about/', '/privacy/', '/contact/', '/advertise/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="main"] a')].map(a => a.getAttribute('href')), rel)
-        .toEqual(['/', '/docs/', '/utilities/', '/recipes/', '/blog/', '/changelog/'])
+        .toEqual(['/', '/docs/', '/utilities/', '/presets/', '/blog/', '/changelog/'])
       expect([...doc.querySelectorAll('#root > header nav[aria-label="Integrations"] a')].map(a => a.getAttribute('href')), rel)
         .toEqual(INTEGRATION_LINKS.map(l => l.href))
     }
@@ -322,8 +322,8 @@ describe('buildSeo over a built dist/', () => {
     expect(locs).toEqual(expect.arrayContaining([
       `${SITE}/`, `${SITE}/docs/`, `${SITE}/utilities/`, `${SITE}/util/trim/`, `${SITE}/blog/`,
       `${SITE}/blog/md5-insecure-but-useful/`, `${SITE}/changelog/`,
-      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`, `${SITE}/advertise/`, `${SITE}/recipes/`,
-      ...STATIC_RECIPES.map(r => `${SITE}/recipes/${r.slug}/`),
+      `${SITE}/about/`, `${SITE}/privacy/`, `${SITE}/contact/`, `${SITE}/integrations/`, `${SITE}/advertise/`, `${SITE}/presets/`,
+      ...STATIC_PRESETS.map(r => `${SITE}/presets/${r.slug}/`),
     ]))
     // every page `pages` counts but the 404, plus the home page (written apart from the count)
     expect(locs).toHaveLength(result.pages - 1 + 1)
@@ -382,8 +382,8 @@ describe('buildSeo over a built dist/', () => {
 
 describe('buildSeo sponsorships', () => {
   const pick = (id: string) => MANIFEST.find(m => m.id === id)!
-  const saml = STATIC_RECIPES.find(r => r.slug === 'decode-saml-request')!
-  const samlGuide = readFileSync(path.join(ROOT, 'src', 'recipes', saml.slug, 'guide.md'), 'utf8')
+  const saml = STATIC_PRESETS.find(r => r.slug === 'decode-saml-request')!
+  const samlGuide = readFileSync(path.join(ROOT, 'src', 'presets', saml.slug, 'guide.md'), 'utf8')
   const live = { start: '2026-01-01', end: '2026-01-31' }
   const sponsorships: Sponsorship[] = [
     { id: 'auth-jan', scope: 'auth-tokens', name: 'AuthCo', text: `Tokens ${XSS}`, url: 'https://auth.example/', logo: 'auth.svg', ...live },
@@ -397,7 +397,7 @@ describe('buildSeo sponsorships', () => {
     await buildSeo({
       outDir: dist, root: ROOT, og: false, now: NOW, log: silent, sponsorships,
       manifest: [pick('jwt_decode'), pick('trim'), pick('cron_describe')], examples: {}, guides: {},
-      recipes: [{ recipe: saml, guide: samlGuide }],
+      presets: [{ preset: saml, guide: samlGuide }],
     })
   }, 60000)
 
@@ -405,7 +405,7 @@ describe('buildSeo sponsorships', () => {
 
   it("pre-renders each page's sponsor on the build's day: topic first, then site-wide", () => {
     expect(sponsorOn('util/jwt_decode/index.html')?.getAttribute('data-sponsorship')).toBe('auth-jan')
-    expect(sponsorOn('recipes/decode-saml-request/index.html')?.getAttribute('data-sponsorship')).toBe('auth-jan')
+    expect(sponsorOn('presets/decode-saml-request/index.html')?.getAttribute('data-sponsorship')).toBe('auth-jan')
     expect(sponsorOn('util/trim/index.html')?.getAttribute('data-sponsorship')).toBe('site-jan')
     // its topic's booking ended before the build day, so the site-wide sponsor holds it
     expect(sponsorOn('util/cron_describe/index.html')?.getAttribute('data-sponsorship')).toBe('site-jan')
@@ -425,20 +425,20 @@ describe('buildSeo sponsorships', () => {
   })
 
   it('never puts a sponsor on the tool or the index and site pages', () => {
-    for (const rel of ['index.html', 'utilities/index.html', 'recipes/index.html', 'blog/index.html', 'docs/index.html',
+    for (const rel of ['index.html', 'utilities/index.html', 'presets/index.html', 'blog/index.html', 'docs/index.html',
       'about/index.html', 'advertise/index.html', 'changelog/index.html', '404.html']) {
       expect(sponsorOn(rel), rel).toBeNull()
     }
   })
 })
 
-describe('buildSeo recipes', () => {
+describe('buildSeo presets', () => {
   const GUIDE = [
     '---', 'title: Shout a List of Titles as Slugs Online', `description: Uppercase slugs from titles ${XSS}, with accents removed and punctuation collapsed into hyphens.`, '---',
     '## Why', '', `Prose ${XSS}`, '',
     '## How', '', 'Uses [change case](/util/case/).',
   ].join('\n')
-  const recipe: Recipe = {
+  const preset: Preset = {
     slug: 'shout-slugs',
     name: `Shout slugs ${XSS}`,
     summary: `Turn titles into uppercase slugs ${XSS}.`,
@@ -461,37 +461,37 @@ describe('buildSeo recipes', () => {
 
   beforeAll(async () => {
     dist = fixtureDist()
-    result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe, guide: GUIDE }] })
+    result = await buildSeo({ outDir: dist, root: ROOT, og: false, now: NOW, log: silent, presets: [{ preset, guide: GUIDE }] })
   }, 60000)
 
   it("takes the page head from the guide's frontmatter, as an article with its dates", () => {
-    const source = read(dist, 'recipes/shout-slugs/index.html')
+    const source = read(dist, 'presets/shout-slugs/index.html')
     const doc = html(source)
     expect(doc.title).toBe(pageTitle('Shout a List of Titles as Slugs Online'))
     expect(doc.querySelector('meta[name="description"]')?.getAttribute('content')).toContain(XSS)
     expect(source.match(/rel="canonical"/g)).toHaveLength(1)
-    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`${SITE}/recipes/shout-slugs/`)
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`${SITE}/presets/shout-slugs/`)
     expect(doc.querySelector('meta[property="og:type"]')?.getAttribute('content')).toBe('article')
-    expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/recipes/shout-slugs.png`)
+    expect(doc.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(`${SITE}/og/presets/shout-slugs.png`)
     expect(doc.querySelector('meta[property="article:published_time"]')?.getAttribute('content')).toBe('2026-05-01')
     expect(doc.querySelector('meta[property="article:modified_time"]')?.getAttribute('content')).toBe('2026-06-02')
   })
 
   it('marks it up as a TechArticle about the utilities it uses, with breadcrumbs', () => {
-    const source = read(dist, 'recipes/shout-slugs/index.html')
+    const source = read(dist, 'presets/shout-slugs/index.html')
     const ld = [...source.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(m => JSON.parse(m[1]))
     const article = ld.find(x => x['@type'] === 'TechArticle')
-    expect(article).toMatchObject({ headline: recipe.name, url: `${SITE}/recipes/shout-slugs/`, datePublished: '2026-05-01', dateModified: '2026-06-02' })
+    expect(article).toMatchObject({ headline: preset.name, url: `${SITE}/presets/shout-slugs/`, datePublished: '2026-05-01', dateModified: '2026-06-02' })
     expect(article.about.map((a: { url: string }) => a.url).sort()).toEqual(['case', 'diacritics', 'replace'].map(id => `${SITE}/util/${id}/`))
     const crumbs = ld.find(x => x['@type'] === 'BreadcrumbList')
-    expect(crumbs.itemListElement.map((i: { item: string }) => i.item)).toEqual([`${SITE}/`, `${SITE}/recipes/`, `${SITE}/recipes/shout-slugs/`])
+    expect(crumbs.itemListElement.map((i: { item: string }) => i.item)).toEqual([`${SITE}/`, `${SITE}/presets/`, `${SITE}/presets/shout-slugs/`])
   })
 
   it('embeds the worked example trace for the app, escaped', () => {
-    const source = read(dist, 'recipes/shout-slugs/index.html')
+    const source = read(dist, 'presets/shout-slugs/index.html')
     expect(source).not.toContain('<b>Two</b>')
     const doc = html(source)
-    const trace = JSON.parse(doc.getElementById(TRACE_ELEMENT_ID)!.textContent!) as RecipeTrace
+    const trace = JSON.parse(doc.getElementById(TRACE_ELEMENT_ID)!.textContent!) as PresetTrace
     expect(trace).toMatchObject({ slug: 'shout-slugs', sampleId: 'titles', output: 'CAFE-AU-LAIT\n-B-TWO-B-' })
     expect(trace.steps.map(s => s.output?.text)).toEqual(['Cafe au lait\n<b>Two</b>', 'Cafe-au-lait\n-b-Two-b-', 'CAFE-AU-LAIT\n-B-TWO-B-'])
     expect(trace.skip.map(s => s.id)).toEqual(['accents', 'hyphens', 'upper'])
@@ -499,13 +499,13 @@ describe('buildSeo recipes', () => {
   })
 
   it('pre-renders the page itself: heading, live example, every step with its output, the guide', () => {
-    const doc = html(read(dist, 'recipes/shout-slugs/index.html'))
+    const doc = html(read(dist, 'presets/shout-slugs/index.html'))
     const main = doc.querySelector('#root main')!
     expect(main.querySelectorAll('h1')).toHaveLength(1)
-    expect(main.querySelector('h1')?.textContent).toBe(recipe.name)
+    expect(main.querySelector('h1')?.textContent).toBe(preset.name)
     expect(main.querySelector('textarea')?.textContent).toBe('Café au lait\n<b>Two</b>')
     expect(main.querySelector('pre[role="status"]')?.textContent).toBe('CAFE-AU-LAIT\n-B-TWO-B-')
-    const steps = [...main.querySelectorAll('#recipe-steps-h ~ ol > li')]
+    const steps = [...main.querySelectorAll('#preset-steps-h ~ ol > li')]
     expect(steps.map(li => li.querySelector('h3')?.textContent)).toEqual(['1. remove diacritics', '2. replace', '3. change case'])
     expect(steps[1].textContent).toContain(XSS)
     expect(steps[2].querySelector('pre')?.textContent).toBe('CAFE-AU-LAIT\n-B-TWO-B-')
@@ -517,44 +517,44 @@ describe('buildSeo recipes', () => {
     expect(main.querySelector('section[aria-label="guide"] h2')?.textContent).toBe('Why')
   })
 
-  it("pre-renders an unbooked recipe page's slot with the promo the app shows there, and none on utility pages", () => {
-    const promo = html(read(dist, 'recipes/shout-slugs/index.html')).querySelector('#root main header aside[data-promo]')!
+  it("pre-renders an unbooked preset page's slot with the promo the app shows there, and none on utility pages", () => {
+    const promo = html(read(dist, 'presets/shout-slugs/index.html')).querySelector('#root main header aside[data-promo]')!
     expect(promo.getAttribute('data-promo')).toBe('vscode')
     expect(promo.getAttribute('aria-label')).toBe('From String Utility Belt')
     expect(promo.className).toBe('sponsor hidden sm:grid')
     expect(html(read(dist, 'util/case/index.html')).querySelector('#root aside[data-promo]')).toBeNull()
   })
 
-  it('pre-renders no extra promo on a recipe page, and the index\'s one after its first category', () => {
-    const page = html(read(dist, 'recipes/shout-slugs/index.html'))
+  it('pre-renders no extra promo on a preset page, and the index\'s one after its first category', () => {
+    const page = html(read(dist, 'presets/shout-slugs/index.html'))
     expect(page.querySelector('#root main aside[data-promo-slot]')).toBeNull()
-    const index = html(read(dist, 'recipes/index.html')).querySelector('#root main aside[data-promo-slot="inline"]')!
+    const index = html(read(dist, 'presets/index.html')).querySelector('#root main aside[data-promo-slot="inline"]')!
     expect(index.getAttribute('data-promo')).toBe(promoPlan({ kind: 'index' }).inline)
     expect(index.previousElementSibling?.tagName).toBe('SECTION')
   })
 
-  it('lists recipes on their index, links them from the utilities they use and the sitemap', () => {
-    const index = html(read(dist, 'recipes/index.html'))
-    expect(index.querySelector('#root main h1')?.textContent).toBe('Recipes')
-    expect(index.querySelector('#root main a[href="/recipes/shout-slugs/"]')?.textContent).toContain(recipe.name)
-    expect(html(read(dist, 'util/case/index.html')).querySelector('#root main a[href="/recipes/shout-slugs/"]')).toBeTruthy()
-    expect(html(read(dist, 'util/trim/index.html')).querySelector('#root main a[href^="/recipes/"]')).toBeNull()
+  it('lists presets on their index, links them from the utilities they use and the sitemap', () => {
+    const index = html(read(dist, 'presets/index.html'))
+    expect(index.querySelector('#root main h1')?.textContent).toBe('Presets')
+    expect(index.querySelector('#root main a[href="/presets/shout-slugs/"]')?.textContent).toContain(preset.name)
+    expect(html(read(dist, 'util/case/index.html')).querySelector('#root main a[href="/presets/shout-slugs/"]')).toBeTruthy()
+    expect(html(read(dist, 'util/trim/index.html')).querySelector('#root main a[href^="/presets/"]')).toBeNull()
     const doc = xml(read(dist, 'sitemap.xml'))
     const urls = [...doc.getElementsByTagName('url')].map(u => [u.getElementsByTagName('loc')[0].textContent, u.getElementsByTagName('lastmod')[0].textContent])
-    expect(urls).toContainEqual([`${SITE}/recipes/shout-slugs/`, '2026-06-02'])
-    expect(urls).toContainEqual([`${SITE}/recipes/`, '2026-06-02'])
+    expect(urls).toContainEqual([`${SITE}/presets/shout-slugs/`, '2026-06-02'])
+    expect(urls).toContainEqual([`${SITE}/presets/`, '2026-06-02'])
     expect(result.pages).toBe(MANIFEST.length + 1 + 13)
   })
 
-  it('fails the build when a recipe no longer produces its first sample', async () => {
-    const broken = { ...recipe, samples: [{ ...recipe.samples[0], output: 'SOMETHING ELSE' }, recipe.samples[1]] }
-    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe: broken, guide: GUIDE }] }))
-      .rejects.toThrow(/recipe shout-slugs: its first sample no longer produces its expected output/)
+  it('fails the build when a preset no longer produces its first sample', async () => {
+    const broken = { ...preset, samples: [{ ...preset.samples[0], output: 'SOMETHING ELSE' }, preset.samples[1]] }
+    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, presets: [{ preset: broken, guide: GUIDE }] }))
+      .rejects.toThrow(/preset shout-slugs: its first sample no longer produces its expected output/)
   })
 
-  it('refuses a recipe slug that is not a safe path segment', async () => {
-    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, recipes: [{ recipe: { ...recipe, slug: '../x' }, guide: GUIDE }] }))
-      .rejects.toThrow(/recipe slug "..\/x" is not safe/)
+  it('refuses a preset slug that is not a safe path segment', async () => {
+    await expect(buildSeo({ outDir: fixtureDist(), root: ROOT, og: false, now: NOW, log: silent, presets: [{ preset: { ...preset, slug: '../x' }, guide: GUIDE }] }))
+      .rejects.toThrow(/preset slug "..\/x" is not safe/)
   })
 })
 
@@ -601,16 +601,16 @@ describe('buildSeo edge cases', () => {
     await expect(buildSeo({ outDir: dir, root: ROOT, og: false, log: silent })).rejects.toThrow(/vite build/)
   })
 
-  it('renders an OG image per utility and recipe, plus the default card', async () => {
+  it('renders an OG image per utility and preset, plus the default card', async () => {
     const dist = fixtureDist()
     const manifest = MANIFEST.filter(m => m.id === 'trim' || m.id === 'tabs_spaces')
-    const recipe = STATIC_RECIPES[0]
-    const guide = readFileSync(path.join(ROOT, 'src', 'recipes', recipe.slug, 'guide.md'), 'utf8')
-    const result = await buildSeo({ outDir: dist, root: ROOT, now: NOW, log: silent, manifest, recipes: [{ recipe, guide }] })
-    expect(readdirSync(path.join(dist, 'og')).sort()).toEqual(['default.png', 'recipes', 'tabs_spaces.png', 'trim.png'])
-    expect(readdirSync(path.join(dist, 'og', 'recipes'))).toEqual([`${recipe.slug}.png`])
+    const preset = STATIC_PRESETS[0]
+    const guide = readFileSync(path.join(ROOT, 'src', 'presets', preset.slug, 'guide.md'), 'utf8')
+    const result = await buildSeo({ outDir: dist, root: ROOT, now: NOW, log: silent, manifest, presets: [{ preset, guide }] })
+    expect(readdirSync(path.join(dist, 'og')).sort()).toEqual(['default.png', 'presets', 'tabs_spaces.png', 'trim.png'])
+    expect(readdirSync(path.join(dist, 'og', 'presets'))).toEqual([`${preset.slug}.png`])
     const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
-    for (const file of ['default.png', 'tabs_spaces.png', 'trim.png', `recipes/${recipe.slug}.png`]) {
+    for (const file of ['default.png', 'tabs_spaces.png', 'trim.png', `presets/${preset.slug}.png`]) {
       expect([...readFileSync(path.join(dist, 'og', file)).subarray(0, 8)], file).toEqual(png)
     }
     expect(result.ogImages).toBe(4)
@@ -654,9 +654,9 @@ describe('buildRssItems', () => {
 })
 
 describe('buildSeo sitemap lastmod', () => {
-  const recipe = { ...STATIC_RECIPES[0], published: '2026-05-01', updated: '2026-06-02' }
-  const guide = readFileSync(path.join(ROOT, 'src', 'recipes', recipe.slug, 'guide.md'), 'utf8')
-  const [usedId] = metaOfRecipe(recipe).utilityIds
+  const preset = { ...STATIC_PRESETS[0], published: '2026-05-01', updated: '2026-06-02' }
+  const guide = readFileSync(path.join(ROOT, 'src', 'presets', preset.slug, 'guide.md'), 'utf8')
+  const [usedId] = metaOfPreset(preset).utilityIds
   const used = MANIFEST.find(m => m.id === usedId)!
   const trim = MANIFEST.find(m => m.id === 'trim')!
   const untracked: UtilityMeta = { ...trim, id: 'brand_new_util' }
@@ -675,12 +675,12 @@ describe('buildSeo sitemap lastmod', () => {
     const dist = fixtureDist()
     await buildSeo({
       outDir: dist, root: ROOT, og: false, now: NOW, log: silent, sourceDates,
-      manifest: [trim, used, untracked], recipes: [{ recipe, guide }],
+      manifest: [trim, used, untracked], presets: [{ preset, guide }],
     })
     lastmods = sitemapLastmods(dist)
   }, 60000)
 
-  it("dates a utility page by its own folder's last change, or a newer recipe it links to", () => {
+  it("dates a utility page by its own folder's last change, or a newer preset it links to", () => {
     expect(trim.id).not.toBe(usedId)
     expect(lastmods.get(`${SITE}/util/trim/`)).toBe('2026-03-01')
     expect(lastmods.get(`${SITE}/util/${usedId}/`)).toBe('2026-06-02')
@@ -692,16 +692,16 @@ describe('buildSeo sitemap lastmod', () => {
 
   it('dates an index by its newest entry, and the home page by the newest of what it lists', () => {
     expect(lastmods.get(`${SITE}/utilities/`)).toBe('2026-03-01')
-    expect(lastmods.get(`${SITE}/recipes/`)).toBe('2026-06-02')
+    expect(lastmods.get(`${SITE}/presets/`)).toBe('2026-06-02')
     expect(lastmods.get(`${SITE}/`)).toBe('2026-06-02')
     const posts = [...lastmods].filter(([loc]) => /\/blog\/[^/]+\/$/.test(loc)).map(([, d]) => d!)
     expect(posts.length).toBeGreaterThan(0)
     expect(lastmods.get(`${SITE}/blog/`)).toBe(posts.sort().pop())
   })
 
-  it('dates the usage guide and the site pages by the files they render, a recipe by its own dates', () => {
+  it('dates the usage guide and the site pages by the files they render, a preset by its own dates', () => {
     expect(lastmods.get(`${SITE}/docs/`)).toBe('2026-04-04')
     SITE_PAGES.forEach((slug, i) => expect(lastmods.get(`${SITE}/${slug}/`), slug).toBe(`2026-01-1${i}`))
-    expect(lastmods.get(`${SITE}/recipes/${recipe.slug}/`)).toBe('2026-06-02')
+    expect(lastmods.get(`${SITE}/presets/${preset.slug}/`)).toBe('2026-06-02')
   })
 })
