@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { installBrowserSandbox } from '@/app/sandbox/browserSandbox'
 import { registerSW } from '@/app/pwa/registerSW'
-import { initAnalytics } from '@/app/analytics/analytics'
 import { getRoute } from '@/lib/router'
 import { preloadPresetRoute } from '@/app/pages/presets/routes'
 import './index.css'
@@ -12,8 +11,6 @@ import './index.css'
 installBrowserSandbox()
 // offline support + update notifications (production only, never inside an embed iframe)
 registerSW()
-// Google Analytics: configured here, not in index.html, so page views carry sanitized URLs
-initAnalytics()
 
 /**
  * Longest wait for a page's code and data before mounting anyway. Meanwhile the

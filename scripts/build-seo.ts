@@ -50,7 +50,7 @@ async function main() {
   console.log(`[build-seo] sitemap.xml: ${result.sitemapUrls} urls; rss.xml: ${result.rssItems} items`)
   console.log(`[build-seo] outDir: ${outDir}`)
   // last, over every page including the pre-rendered ones: a page whose inline scripts the
-  // CSP blocks must never deploy (it would render, but without its theme or analytics)
+  // CSP blocks must never deploy (it would render, but without its theme script)
   const problems = checkBuiltPages(outDir, siteHeaders(outDir)['Content-Security-Policy'] ?? '')
   if (problems.length) throw new Error(`the CSP in _headers blocks scripts on built pages:\n  ${problems.join('\n  ')}`)
   console.log('[build-seo] CSP: every built page runs only allowed scripts')

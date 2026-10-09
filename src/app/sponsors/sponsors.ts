@@ -14,7 +14,7 @@ export type SponsorPage =
   | { kind: 'blog'; slug: string }
 
 export interface Sponsorship {
-  /** Stable booking id, e.g. `acme-2026-11`: the UTM campaign and the analytics `sponsorship_id`. */
+  /** Stable booking id, e.g. `acme-2026-11`: its links' UTM campaign. */
   id: string
   /** `site`: every sponsorable page no topic sponsor holds; a topic: that topic's pages only, exclusively. */
   scope: SponsorTopicId | 'site'
@@ -39,7 +39,7 @@ export const LOGO_DIR = '/sponsors/'
 /** The UTC calendar day of `date`, as `YYYY-MM-DD` (what `start` and `end` are compared with). */
 export const utcDay = (date: Date): string => date.toISOString().slice(0, 10)
 
-/** The page's path without slashes (`util/jwt_decode`): the UTM content and the analytics `sponsor_page`. */
+/** The page's path without slashes (`util/jwt_decode`): its sponsor link's UTM content. */
 export function pageKey(page: SponsorPage): string {
   if (page.kind === 'utility') return `util/${page.id}`
   if (page.kind === 'preset') return `presets/${page.slug}`

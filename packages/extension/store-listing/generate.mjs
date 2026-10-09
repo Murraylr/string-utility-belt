@@ -82,11 +82,10 @@ try {
   const extensionId = new URL(worker.url()).host
 
   // The website, built from this checkout to also talk to this unpacked extension (the live site
-  // knows only the store's id), served at its real address; nothing is reported to analytics.
+  // knows only the store's id), served at its real address.
   const build = spawnSync('npx', ['vite', 'build', '--outDir', dist, '--emptyOutDir', '--logLevel', 'error'],
     { cwd: root, stdio: 'inherit', env: { ...process.env, VITE_EXTENSION_IDS: extensionId } })
   if (build.status !== 0) throw new Error('The website build failed')
-  await context.route(/googletagmanager\.com|google-analytics\.com|doubleclick\.net|google\.com\/(ccm|pagead)/, route => route.abort())
   await context.route(`${SITE}/**`, async route => {
     const { pathname } = new URL(route.request().url())
     const wanted = path.join(dist, decodeURIComponent(pathname), pathname.endsWith('/') ? 'index.html' : '')
@@ -102,7 +101,7 @@ try {
   const site = await context.newPage()
   watch(site)
   await site.setViewportSize({ width: 1440, height: 1000 })
-  await site.goto(`${SITE}/?analytics=off`)
+  await site.goto(`${SITE}/`)
   await site.evaluate(([name, steps]) => {
     localStorage.setItem('string-utility-belt', JSON.stringify({ v: 3, name, steps, showPreviews: true }))
     localStorage.setItem('sub:pref:theme', JSON.stringify('light'))

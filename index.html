@@ -8,7 +8,7 @@
   <meta name="description" content="Free string and text tools that run in your browser: encode, decode, hash, format and convert text: Base64, URL, JSON, SHA-256 and more." />
   <meta name="robots" content="max-image-preview:large" />
   <meta name="theme-color" content="#f8f7f3" />
-  <!-- Search Console ownership of https://stringutilitybelt.com/ (linked to Google Analytics); keep it -->
+  <!-- Search Console ownership of https://stringutilitybelt.com/; keep it -->
   <meta name="google-site-verification" content="Qk-RujAWPTyGcrpnsvXuecqvd56489XSYWgKJ1YGA9Y" />
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -30,26 +30,6 @@
       } catch (e) {}
     })();
   </script>
-  <script>
-    // Google tag (gtag.js). Consent Mode v2: in the EEA, the UK and Switzerland nothing is
-    // stored (the site shows no consent message, so these stay denied and GA only gets
-    // cookieless pings; the ad_* signals also govern GA's Google signals). Google Analytics is configured by the app
-    // (src/app/analytics/analytics.ts), never here: a plain gtag('config') would report
-    // location.href, and share links carry input in the hash.
-    // Its SHA-256 is in the CSP (public/_headers): `npm test` names the new hash after an edit.
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('consent', 'default', {
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      analytics_storage: 'denied',
-      region: ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
-        'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'CH']
-    });
-    gtag('js', new Date());
-  </script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EFVMEMB86E"></script>
 </head>
 
 <body class="min-h-screen">

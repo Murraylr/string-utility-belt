@@ -8,7 +8,6 @@ import { registry } from '@/app/registry'
 import { useTool } from '@/app/ToolContext'
 import { useFavorites } from '@/app/favorites'
 import Dialog from '@/app/library/Dialog'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { sendToExtension, useExtension } from './bridge'
 
 interface DialogProps {
@@ -44,23 +43,22 @@ function SaveToExtensionDialog({ stepTypes, onClose, returnFocus }: DialogProps)
   const empty = state.steps.length === 0
   const canSave = !busy && !empty && unsupportedNames.length === 0 && tooNew.length === 0 && normalizePipelineName(name) !== ''
 
-  const send = async (request: AppRequest, onSaved: () => void) => {
+  const send = async (request: AppRequest) => {
     setBusy(true)
     setResult(null)
     const answer = await sendToExtension(request)
     setBusy(false)
     setResult(answer)
-    if (answer.ok) onSaved()
   }
 
   const savePipeline = (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSave) return
-    void send({ type: 'save-pipeline', name, steps: state.steps }, () => trackPipelineEvent('extension_pipeline_save', state.steps))
+    void send({ type: 'save-pipeline', name, steps: state.steps })
   }
 
   const addFavorites = () => {
-    void send({ type: 'add-favorites', utilityIds: runnableFavorites }, () => track('extension_favorites_add', { count: runnableFavorites.length }))
+    void send({ type: 'add-favorites', utilityIds: runnableFavorites })
   }
 
   return (

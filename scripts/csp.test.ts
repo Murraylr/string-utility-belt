@@ -24,17 +24,14 @@ describe('the site CSP (public/_headers)', () => {
     const missing = expected.filter(e => !listed.includes(e.hash)).map(e => `add ${e.hash} for ${e.what}`)
     const stale = listed.filter(h => !expected.some(e => e.hash === h)).map(h => `remove ${h}`)
     expect([...missing, ...stale], "update script-src in public/_headers").toEqual([])
-    expect(inlineScripts(indexHtml)).toHaveLength(2)
+    expect(inlineScripts(indexHtml)).toHaveLength(1)
   })
 
-  it('never allows inline script or script from anywhere but this site, Google Analytics and Cloudflare Web Analytics', () => {
+  it('never allows inline script or script from anywhere but this site and Cloudflare Web Analytics', () => {
     const scriptSrc = csp.get('script-src')!
     expect(scriptSrc).not.toContain("'unsafe-inline'")
     expect(scriptSrc).not.toContain('data:')
-    expect(scriptSrc.filter(s => /^https?:|^\*/.test(s))).toEqual([
-      'https://*.googletagmanager.com',
-      'https://static.cloudflareinsights.com'
-    ])
+    expect(scriptSrc.filter(s => /^https?:|^\*/.test(s))).toEqual(['https://static.cloudflareinsights.com'])
     expect(csp.get('default-src')).toEqual(["'self'"])
     expect(csp.get('object-src')).toEqual(["'none'"])
     expect(csp.get('base-uri')).toEqual(["'self'"])
@@ -46,9 +43,10 @@ describe('the site CSP (public/_headers)', () => {
     expect(Object.keys(siteHeaders(path.join(root, 'public')))).not.toContain('X-Frame-Options')
   })
 
-  it('stays clear of advertising hosts', () => {
-    expect(policy).not.toMatch(/googlesyndication|adservice|adsbygoogle/)
-    expect(indexHtml).not.toMatch(/googlesyndication|adsbygoogle|google-adsense/)
+  it('stays clear of Google advertising and analytics hosts', () => {
+    const google = /googlesyndication|adservice|adsbygoogle|google-adsense|googletagmanager|google-analytics|doubleclick|gtag\(/
+    expect(policy).not.toMatch(google)
+    expect(indexHtml).not.toMatch(google)
   })
 })
 

@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { registry } from '@/app/registry'
 import { formatForDisplay } from '@/core/coerce'
-import { countSteps } from '@/core/steps'
 import { isPlainLeftClick } from '@/lib/router'
 import { execute } from '@/app/engine/executor'
 import { useRunner } from '@/app/engine/useRunner'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
+import { countEvent } from '@/app/events/countEvent'
 import { PRESET_INDEX } from '@/presets/_generated/index'
 import { PRESETS_PATH, toPipelineSteps, type Preset } from '@/presets/types'
 import type { PipelineStep } from '@/types/utility'
@@ -157,12 +156,7 @@ function PresetView({ data }: { data: PresetData }) {
     return `${where} failed: ${failed.message}`
   }, [run.failure, live, result, steps])
 
-  const edited = useRef(false)
   const onInput = (value: string) => {
-    if (!edited.current) {
-      edited.current = true
-      track('preset_input_edit', { preset_id: preset.slug })
-    }
     setLive(true)
     // custom text: no example is selected any more, so clicking one brings it back
     setSampleId('')
@@ -171,7 +165,6 @@ function PresetView({ data }: { data: PresetData }) {
   const onSample = (id: string) => {
     const next = preset.samples.find(s => s.id === id)
     if (!next || id === sampleId) return
-    track('preset_sample_select', { preset_id: preset.slug, sample_id: id })
     setLive(true)
     setSampleId(id)
     setInput(next.input)
@@ -183,10 +176,9 @@ function PresetView({ data }: { data: PresetData }) {
     e.preventDefault()
     const outcome = openPipelineInEditor({ steps, input, name: preset.name })
     if (outcome === 'kept') return
+    countEvent({ name: 'preset_open', preset: preset.slug, source: 'page' })
     // without storage the editor cannot be handed the preset: its share link carries the
     // steps and the example input (never typed text), and runs without storage
-    const method = outcome === 'opened' ? 'preset' : 'preset_share_link'
-    track('pipeline_load', { method, preset_id: preset.slug, step_count: countSteps(steps) })
     if (outcome === 'failed') followLink(openHref)
   }
 
@@ -197,10 +189,9 @@ function PresetView({ data }: { data: PresetData }) {
     return () => clearTimeout(timer)
   }, [copied])
   const onCopy = () => {
-    navigator.clipboard?.writeText(output).then(() => {
-      setCopied(true)
-      trackPipelineEvent('output_copy', steps, { format: 'raw', source: 'preset', preset_id: preset.slug })
-    }, () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
+    navigator.clipboard?.writeText(output).then(
+      () => setCopied(true),
+      () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
   }
 
   return (
@@ -230,7 +221,7 @@ function PresetView({ data }: { data: PresetData }) {
           onCopy={onCopy}
           copied={copied}
           notice={notice}
-          extension={<PresetExtension steps={steps} name={preset.name} presetId={preset.slug} />}
+          extension={<PresetExtension steps={steps} name={preset.name} />}
         />
       )}
     />

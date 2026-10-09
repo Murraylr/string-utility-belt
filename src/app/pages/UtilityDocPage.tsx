@@ -8,7 +8,6 @@ import { stepId } from '@/core/steps'
 import { loadState, saveState } from '@/lib/persist'
 import { isPlainLeftClick, navigateToPath } from '@/lib/router'
 import ParamsEditor from '@/components/ParamsEditor'
-import { track, trackUtilityAdd } from '@/app/analytics/analytics'
 import type { ParamSpec, Params, UtilityEnv, UtilityExample } from '@/types/utility'
 import UtilityGuide from './UtilityGuide'
 import { useUtilityGuide } from './useUtilityGuide'
@@ -169,14 +168,12 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
     setPlayInput(ex.input)
     setPlayParams({ ...defaultParams(meta), ...ex.params })
     inputRef.current?.focus()
-    track('doc_example_try', { utility_id: id })
   }
 
   const useInPipeline = () => {
     const current = loadState()
     const step = { id: stepId(), utilityId: id, enabled: true, params: { ...playParams } }
     saveState({ ...current, steps: [...current.steps, step] })
-    trackUtilityAdd(id, 'doc_page')
     setSaved(true)
     openTool()
   }
@@ -188,10 +185,9 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
   }, [copied])
 
   const copyOutput = () => {
-    navigator.clipboard?.writeText(playOutput).then(() => {
-      setCopied(true)
-      track('doc_output_copy', { utility_id: id })
-    }, () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
+    navigator.clipboard?.writeText(playOutput).then(
+      () => setCopied(true),
+      () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
   }
 
   const paramEntries = Object.entries(meta.params)
@@ -295,17 +291,11 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
             </div>
           </section>
 
-          <RunElsewhere
-            meta={meta}
-            input={playInput}
-            params={playParams}
-            onCopy={integration => track('snippet_copy', { integration, utility_id: id, source: 'doc_page' })}
-            onDocsClick={integration => track('integration_click', { integration, utility_id: id, source: 'doc_page' })}
-          />
+          <RunElsewhere meta={meta} input={playInput} params={playParams} />
 
           <PagePromo page={{ kind: 'utility', id }} slot="inline" />
 
-          <UtilityGuide name={meta.name} state={guide} onOpen={() => track('guide_open', { utility_id: id })} />
+          <UtilityGuide name={meta.name} state={guide} />
 
           {examples.length > 0 && (
             <section className="grid gap-3.5 min-w-0" aria-labelledby={`${playgroundId}-ex`}>

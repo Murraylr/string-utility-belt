@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ToolProvider, useTool } from '@/app/ToolContext'
-import { track } from '@/app/analytics/analytics'
+import { countEvent } from '@/app/events/countEvent'
 import { PRESET_INDEX } from '@/presets/_generated/index'
 import { PRESET_CATEGORIES, presetPath, toPipelineSteps } from '@/presets/types'
 import { walkSteps } from '@/core/steps'
@@ -25,10 +25,7 @@ vi.mock('@/presets/_generated/loaders', async importOriginal => {
   }
 })
 
-vi.mock('@/app/analytics/analytics', async importOriginal => ({
-  ...await importOriginal<typeof import('@/app/analytics/analytics')>(),
-  track: vi.fn(),
-}))
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 
 function Harness({ onClose = () => {}, show = true }: { onClose?: () => void; show?: boolean }) {
   return (
@@ -71,7 +68,7 @@ beforeEach(() => {
   localStorage.clear()
   loads.fail.clear()
   loads.hold.clear()
-  vi.mocked(track).mockClear()
+  vi.mocked(countEvent).mockClear()
 })
 
 describe('PresetGallery', () => {
@@ -114,9 +111,7 @@ describe('PresetGallery', () => {
     expect(shape(loaded)).toEqual(shape(expected))
     expect(ids(loaded).filter(id => ids(expected).includes(id))).toEqual([])
     expect(JSON.stringify(loaded)).not.toContain('"why"')
-    expect(track).toHaveBeenCalledWith('pipeline_load', {
-      method: 'preset_gallery', preset_id: excelToSql.slug, step_count: shape(expected).length,
-    })
+    expect(countEvent).toHaveBeenCalledWith({ name: 'preset_open', preset: excelToSql.slug, source: 'gallery' })
   })
 
   it('while a preset loads, its button stays focused and busy and every other "Try it" is disabled', async () => {
@@ -137,7 +132,7 @@ describe('PresetGallery', () => {
     release()
     await waitFor(() => expect(loadedSteps()).not.toEqual([]))
     // the second click, made while loading, did not start a second load
-    expect(track).toHaveBeenCalledTimes(1)
+    expect(countEvent).toHaveBeenCalledTimes(1)
   })
 
   it('says so on the card when the preset cannot be loaded, keeps the pipeline, and can try again', async () => {
@@ -152,7 +147,7 @@ describe('PresetGallery', () => {
     expect(await within(card).findByRole('alert')).toHaveTextContent('could not be loaded')
     expect(loadedSteps()).toEqual([])
     expect(onClose).not.toHaveBeenCalled()
-    expect(track).not.toHaveBeenCalled()
+    expect(countEvent).not.toHaveBeenCalled()
 
     loads.fail.clear()
     await user.click(button)
@@ -173,6 +168,6 @@ describe('PresetGallery', () => {
 
     expect(loadedSteps()).toEqual([])
     expect(probe()).toHaveAttribute('data-input', '')
-    expect(track).not.toHaveBeenCalled()
+    expect(countEvent).not.toHaveBeenCalled()
   })
 })

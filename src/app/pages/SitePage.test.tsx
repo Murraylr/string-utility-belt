@@ -13,8 +13,8 @@ describe('SitePage', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Privacy Policy')
     expect(screen.getByRole('heading', { level: 2, name: 'Cookies and analytics' })).toBeTruthy()
     expect(screen.getAllByRole('listitem').length).toBeGreaterThan(5)
-    for (const link of screen.getAllByRole('link', { name: "Google's Ads Settings" })) {
-      expect(link.getAttribute('href')).toBe('https://adssettings.google.com/')
+    for (const link of screen.getAllByRole('link', { name: "Cloudflare's privacy policy" })) {
+      expect(link.getAttribute('href')).toBe('https://www.cloudflare.com/privacypolicy/')
     }
     expect(document.title).toBe('Privacy Policy | String Utility Belt')
     unmount()

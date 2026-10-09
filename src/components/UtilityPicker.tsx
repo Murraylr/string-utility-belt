@@ -8,7 +8,6 @@ import type { ValueType } from '@/types/utility'
 import { searchUtilities, type FuzzyRange } from '@/app/search/fuzzy'
 import Highlight from '@/app/search/Highlight'
 import { useFavorites, useRecents, pushRecent } from '@/app/favorites'
-import { useSearchTracking } from '@/app/analytics/analytics'
 import { signatureOf } from '@/app/tool/steps/status'
 
 export interface UtilityPickerProps {
@@ -159,7 +158,6 @@ export default function UtilityPicker({ onPick, onClose, previousProduces: produ
     const pinned = new Set(favoriteMetas.map(m => m.id))
     return results.filter(r => !pinned.has(r.meta.id) && passesFilters(r.meta))
   }, [results, favoriteMetas, passesFilters])
-  useSearchTracking('picker', query, filteredResults.length)
 
   // browsing lists every utility under its category; a search lists the ranked matches together
   const resultItems = useMemo(() => {

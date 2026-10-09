@@ -13,7 +13,7 @@ export default function SponsorBlock({ sponsorship: s, page, onFollow, className
   page: SponsorPage
   /** Layout classes for the block, e.g. spacing in the column it sits in. */
   className?: string
-  /** Called when the visitor follows the sponsor's link (the app reports it; the pre-render has none). */
+  /** Called when the visitor follows the sponsor's link (the app counts it; the pre-render has none). */
   onFollow?: () => void
 }) {
   return (

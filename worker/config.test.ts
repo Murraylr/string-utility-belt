@@ -40,6 +40,10 @@ describe('wrangler.jsonc', () => {
     expect(config.assets.run_worker_first).toEqual(expect.arrayContaining(['/api', '/api/*']))
   })
 
+  it('binds the events dataset the worker writes to (worker/events.ts)', () => {
+    expect(config.analytics_engine_datasets).toContainEqual({ binding: 'EVENTS', dataset: 'sub_events' })
+  })
+
   it('keeps the custom-domain route', () => {
     expect(config.routes).toContainEqual({ pattern: 'stringutilitybelt.com', custom_domain: true })
   })

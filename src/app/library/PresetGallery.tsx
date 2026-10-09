@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { cloneWithNewIds, countSteps } from '@/core/steps'
+import { cloneWithNewIds } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
-import { track } from '@/app/analytics/analytics'
+import { countEvent } from '@/app/events/countEvent'
 import { PRESET_INDEX } from '@/presets/_generated/index'
 import { PRESET_LOADERS } from '@/presets/_generated/loaders'
 import { PRESET_CATEGORIES, presetPath, toPipelineSteps, type PresetMeta } from '@/presets/types'
@@ -53,7 +53,7 @@ export default function PresetGallery({ onClose, returnFocus }: PresetGalleryPro
     // fresh ids so trying the same preset twice never collides with the first copy
     dispatch({ type: 'LOAD', steps: steps.map(cloneWithNewIds), name: preset.name })
     setInput(preset.samples[0]?.input ?? '')
-    track('pipeline_load', { method: 'preset_gallery', preset_id: preset.slug, step_count: countSteps(steps) })
+    countEvent({ name: 'preset_open', preset: preset.slug, source: 'gallery' })
     onClose()
   }
 

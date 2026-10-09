@@ -33,6 +33,7 @@ npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
 npm run release -- plan   # what a release from HEAD would ship, at which versions (read-only; RELEASING.md)
+npm run events            # counted clicks from Analytics Engine (-- --days N | --month YYYY-MM; needs a CF token)
 ```
 
 ## Architecture
@@ -155,7 +156,7 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   gives every git-dated page HEAD's date, so the deploy job checks out full history.
 - Site pages: `src/app/pages/content/{about,privacy,contact,integrations,advertise}.md` (frontmatter
   title/description, guide markdown syntax, own `#` heading), rendered by `SitePage` and pre-rendered by
-  `build.ts`. The privacy policy carries the Google Analytics disclosures — keep it accurate when data flows change.
+  `build.ts`. The privacy policy says what leaves the browser (Cloudflare Web Analytics, Google Fonts, the server features) — keep it accurate when data flows change.
   `advertise.md` is the sponsors' media kit: keep its promises (formats, rules) in step with what the site does.
 - Usage guide: `src/components/Docs.tsx` (`/docs/`), pre-rendered by `build.ts` with `renderToStaticMarkup` of the
   component itself — keep its render free of browser APIs (effects are fine).
@@ -167,8 +168,8 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
   link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
   name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
-  of the header of utility, preset and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
-  event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
+  of the header of utility, preset and blog pages: the app renders `PageSponsor` (today's sponsor, a `sponsor_click` count;
+  its link's UTM campaign is the booking id and its content the page), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
   Both go through `Slot` (the shared layout).
 - An unbooked slot shows one of our own tools (`HousePromo` → `PromoBlock`, `promos.ts`; one promo per
   `INTEGRATION_LINKS` entry, same links and `INTEGRATION_ICONS`): labelled "From String Utility Belt", never "Sponsor".
@@ -177,19 +178,19 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `canInstallExtension()` and it has not answered, else VS Code. Store pages open in a new tab, the CLI/MCP sections of
   /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
   browser-independent (`fixedPromo`). Preset pages, whose pre-render matches the app, pre-render that promo so they
-  never shift; clicks are `integration_click`, `source: 'promo'`.
+  never shift; a click counts as `integration_click` from `promo` and marks the integrations seen.
 - Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
   `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
   slot stays the page's one sponsor, as `/advertise/` promises. **A page shows at most one promo**: `promoPlan(page)`
   leaves every extra slot of a sponsorable page (utility, preset, blog post) empty, gives an index or reading page one
   browser-independent tool with an on-site link (the MCP server) in whichever of `inline`/`rail` its layout carries
   (none carries both), and never fills the `strip`. A slot the plan leaves empty renders nothing; `e2e/promos.e2e.ts`
-  fails on a desktop page showing two. Hidden below `sm`; clicks are `integration_click` with
-  `source: 'promo_<slot>'`. Never on `/advertise/` itself.
+  fails on a desktop page showing two. Hidden below `sm`; clicks count as `integration_click` from
+  `promo_<slot>`. Never on `/advertise/` itself.
 
 ### Content-Security-Policy (`public/_headers`)
-- Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme and Consent Mode scripts
-  and the custom-code sandbox's bootstrap (`SANDBOX_BOOTSTRAP_SCRIPT`). Editing one changes its hash:
+- Inline scripts are allowed by SHA-256 only (no `'unsafe-inline'`): `index.html`'s theme script and the
+  custom-code sandbox's bootstrap (`SANDBOX_BOOTSTRAP_SCRIPT`). Editing one changes its hash:
   `scripts/csp.test.ts` names the hash to add and the one to drop. Every `npm run build` checks all built pages
   (`scripts/csp.ts`) and fails on an unlisted inline script, an inline `on*=` handler or a `javascript:` URL.
 - The sandbox's srcdoc frame and its Blob-URL Worker inherit the site policy on top of their own, so its per-run
@@ -199,28 +200,24 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   (`e2e/csp.e2e.ts` fails on any violation report). A new third-party script needs a CSP entry, and a privacy
   policy update.
 
-### Analytics (`src/app/analytics/analytics.ts`)
-- GA4 property `G-EFVMEMB86E`. index.html only loads gtag.js and sets Consent Mode defaults; `initAnalytics()`
-  (from `main.tsx`) configures the tag. There is no consent message: in the EEA, the UK and Switzerland the Consent
-  Mode defaults stay denied, so GA gets cookieless pings there. Never add a `gtag('config')` to index.html: it would report
-  `location.href`, and share links carry the user's input in the fragment.
-- Page views are sent by the module from the router with canonical URLs (`/p/`, `/util/<id>/`, …; campaign
-  params only) — GA's own history-based page views are off in the stream settings.
-- Utility pages report `snippet_copy {integration: 'cli'|'mcp', utility_id}` and `integration_click {source: 'doc_page'}` from
-  "Run it from your terminal or AI agent" (`src/app/integrations/RunElsewhere.tsx`, commands built and CLI-tested in `snippets.ts`).
-- Preset pages report `preset_input_edit`, `preset_sample_select` and the conversion `pipeline_load {method: 'preset', preset_id}`
-  (`method: 'preset_gallery'` from the editor's Presets dialog);
-  page views carry `preset_id` (register it as a custom dimension). Presets were recipes until October 2026: data from before
-  that release has `recipe_input_edit`, `recipe_sample_select`, `recipe_id`, `method: 'recipe'…` and `/recipes/` page paths.
-- Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
-  counts and size buckets only, never input/output text. New params need a custom dimension in GA
-  (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
-- Silent off `stringutilitybelt.com` (dev, E2E, CI, previews). `?analytics=off|on|debug` switches a browser.
-  Automation (webdriver/headless/bot UA) is reported as `visitor_type: automated`, page views only.
-- Analysing the data: GA property `507388453`; key events `pipeline_load` and `integration_click`. Data before 2026-09-26
-  includes dev traffic (`localhost`, `127.0.0.1`, `*.workers.dev`): filter `hostname` or start there. BigQuery project
-  `string-utility-belt` (US) holds the Search Console bulk export (`searchconsole`, from 2026-10-08) and the GA4 daily
-  export (`analytics_507388453`, tables expire after 426 days — the 14 months the privacy policy promises). Neither backfills.
+### Analytics
+- No cookies and no tracking scripts. Cloudflare Web Analytics (cookieless; the zone injects its beacon at the edge,
+  so no build sees it) counts page views per path, with countries, devices and load timings; it drops the query and
+  fragment, so share links' input never reaches it. Google Analytics was removed on 2026-10-09.
+- The site counts three events itself (`src/lib/countedEvents.ts`, the contract): `sponsor_click {sponsorship, page}`,
+  `integration_click {integration, source}` and `preset_open {preset, source: 'page'|'gallery'}` (a preset loaded
+  into the editor from its page or from the editor's Presets dialog). The app sends them with `countEvent()`
+  (`src/app/events/countEvent.ts`: `sendBeacon`, production host only, never under webdriver) to `POST /api/event`
+  (`worker/events.ts`: same-origin only, rate-limited, strict allow-list parse), which writes one Workers Analytics
+  Engine data point (index = event name, blob1/blob2 = its ids, nothing about the request) to the `sub_events`
+  dataset (`EVENTS` binding, kept three months). A new event or field changes the contract, the report
+  (`scripts/events/report.ts`) and the privacy policy's "Clicks we count ourselves" together; ids only, never text.
+- `npm run events [-- --days N | --month YYYY-MM]` prints the counts (needs `CLOUDFLARE_ACCOUNT_ID` and a
+  `CLOUDFLARE_API_TOKEN` with Account Analytics: Read); `--month` is a sponsor's monthly click report. Counts are
+  indicative (anyone can forge a same-origin header from a script); sponsors also see clicks under their UTM campaign.
+- Search data: BigQuery project `string-utility-belt` (US) holds the Search Console bulk export (`searchconsole`, from
+  2026-10-08), plus GA4 export tables (`analytics_507388453`) that expire 426 days after collection. Presets were
+  recipes until October 2026: older GA data says `recipe_*` and `/recipes/`.
 
 ### State
 - Pipeline config persisted to localStorage under `string-utility-belt` (`src/lib/persist.ts`).
@@ -228,7 +225,7 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 
 ### Worker (`worker/`) and packages (`packages/`)
 - `worker/api.ts`: `POST /api/run`, `GET /api/utilities[/:id]` (public CORS, rate-limited, per-request
-  budget), `GET /api/fetch?url=` (same-origin fetch proxy with SSRF guards). Everything else is static assets.
+  budget), `GET /api/fetch?url=` (same-origin fetch proxy with SSRF guards), `POST /api/event` (counted events). Everything else is static assets.
 - `packages/core` is a build artifact over `src/core` + the static registry; `cli` (`subelt`), `mcp`
   (stdio server; runs jobs in killable child processes), `extension` (MV3), `vscode`. Each has a README.
 - App ↔ extension: `src/core/extensionBridge.ts` is the shared contract (messages, `BRIDGE_ORIGINS`, the store

@@ -3,7 +3,7 @@ import { Puzzle } from 'lucide-react'
 import { unknownStepTypes, type BridgeResult } from '@/core/extensionBridge'
 import type { PipelineStep } from '@/types/utility'
 import { usePref } from '@/app/prefs'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
+import { countEvent } from '@/app/events/countEvent'
 import { sendToExtension, useExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
 import { ChromeIcon } from '@/app/integrations/icons'
@@ -13,7 +13,6 @@ interface Props {
   steps: PipelineStep[]
   /** Saved under this name: the extension's right-click menu shows it. */
   name: string
-  presetId: string
 }
 
 const HEADING = 'Use this preset on any web page'
@@ -32,7 +31,7 @@ function Strip({ text, children }: { text: string; children: React.ReactNode }) 
   )
 }
 
-function SavePreset({ steps, name, presetId, stepTypes }: Props & { stepTypes: readonly string[] }) {
+function SavePreset({ steps, name, stepTypes }: Props & { stepTypes: readonly string[] }) {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<BridgeResult | null>(null)
   // an extension that predates one of the preset's step types would drop those steps while saving
@@ -44,7 +43,6 @@ function SavePreset({ steps, name, presetId, stepTypes }: Props & { stepTypes: r
     const answer = await sendToExtension({ type: 'save-pipeline', name, steps })
     setBusy(false)
     setResult(answer)
-    if (answer.ok) trackPipelineEvent('extension_pipeline_save', steps, { source: 'preset', preset_id: presetId })
   }
 
   return (
@@ -62,12 +60,12 @@ function SavePreset({ steps, name, presetId, stepTypes }: Props & { stepTypes: r
   )
 }
 
-function GetExtension({ presetId }: { presetId: string }) {
+function GetExtension() {
   const [, setIntegrationsSeen] = usePref(INTEGRATIONS_SEEN_PREF, false)
   const [followed, setFollowed] = useState(false)
 
   const onClick = () => {
-    track('integration_click', { integration: 'chrome', source: 'preset', preset_id: presetId })
+    countEvent({ name: 'integration_click', integration: 'chrome', source: 'preset' })
     setIntegrationsSeen(true)
     setFollowed(true)
   }
@@ -95,6 +93,6 @@ function GetExtension({ presetId }: { presetId: string }) {
 export default function PresetExtension(props: Props) {
   const status = useExtensionStatus()
   if (status === 'checking') return null
-  if (status === 'absent') return canInstallExtension() ? <GetExtension presetId={props.presetId} /> : null
+  if (status === 'absent') return canInstallExtension() ? <GetExtension /> : null
   return <SavePreset {...props} stepTypes={status.stepTypes} />
 }

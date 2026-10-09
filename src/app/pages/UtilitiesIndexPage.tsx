@@ -1,7 +1,6 @@
 import React, { Fragment, useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { registry } from '@/app/registry'
-import { useSearchTracking } from '@/app/analytics/analytics'
 import PagePromo from '@/app/sponsors/PagePromo'
 import { utilityPath } from './related'
 import { displayName, utilitiesDescription, utilitiesTitle } from './seo'
@@ -44,7 +43,6 @@ export default function UtilitiesIndexPage() {
   }, [q])
 
   const total = useMemo(() => groups.reduce((n, g) => n + g.items.length, 0), [groups])
-  useSearchTracking('utility_index', q, total)
 
   // buttons, not `#cat-…` links: a bare hash is a route here, so following one would leave the page
   const jumpTo = (category: string) =>

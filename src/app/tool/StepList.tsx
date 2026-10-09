@@ -17,7 +17,6 @@ import Select from '@/components/Select'
 import { registry } from '@/app/registry'
 import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useTool } from '@/app/ToolContext'
-import { trackUtilityAdd } from '@/app/analytics/analytics'
 import BranchCard from './steps/BranchCard'
 import EachCard from './steps/EachCard'
 import MacroCard from './steps/MacroCard'
@@ -250,9 +249,7 @@ function AddInto({ parentId, lane, label }: { parentId: string; lane?: number; l
     <Select className="h-7 w-full px-1.5 rounded-[5px] text-xs text-muted" value="" options={options as any}
       aria-label={`add a step to ${label}`}
       onChange={id => {
-        if (!id) return
-        dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)), target: { parentId, lane } })
-        trackUtilityAdd(id, 'nested')
+        if (id) dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)), target: { parentId, lane } })
       }} />
   )
 }

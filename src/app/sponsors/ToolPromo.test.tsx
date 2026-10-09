@@ -1,13 +1,15 @@
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { track } from '@/app/analytics/analytics'
 import { useExtensionStatus, type ExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
+import { readPref } from '@/app/prefs'
+import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
+import { countEvent } from '@/app/events/countEvent'
 import ToolPromo from './ToolPromo'
 import { PROMOS } from './promos'
 
-vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 vi.mock('@/app/extension/bridge', () => ({ useExtensionStatus: vi.fn() }))
 vi.mock('@/app/extension/installable', () => ({ canInstallExtension: vi.fn() }))
 
@@ -15,7 +17,7 @@ function browser(status: ExtensionStatus, installable: boolean) {
   vi.mocked(useExtensionStatus).mockReturnValue(status)
   vi.mocked(canInstallExtension).mockReturnValue(installable)
 }
-beforeEach(() => vi.mocked(track).mockClear())
+beforeEach(() => { localStorage.clear(); vi.mocked(countEvent).mockClear() })
 
 describe('ToolPromo', () => {
   it('offers the browser extension where it can be installed and is not', () => {
@@ -40,11 +42,12 @@ describe('ToolPromo', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('is never labelled as a sponsor, and reports a click from the tool', () => {
+  it('is never labelled as a sponsor, and counts a click from the tool', () => {
     browser('absent', false)
     render(<ToolPromo />)
     expect(screen.queryByRole('complementary', { name: 'Sponsor' })).toBeNull()
     fireEvent.click(screen.getByRole('link', { name: new RegExp(PROMOS.vscode.name) }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'vscode', source: 'promo_tool' })
+    expect(countEvent).toHaveBeenCalledWith({ name: 'integration_click', integration: 'vscode', source: 'promo_tool' })
+    expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
   })
 })

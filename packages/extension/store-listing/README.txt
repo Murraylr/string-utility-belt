@@ -30,7 +30,7 @@ The artwork follows the site's design (src/index.css): warm neutral surfaces, on
 
 VERIFICATION AND PROVENANCE
 
-• Builds the website from this checkout with the unpacked extension's id added (VITE_EXTENSION_IDS), and serves it at https://stringutilitybelt.com inside the capture browser, so the extension's "save to extension" bridge answers it exactly as it answers the live site. Analytics requests are blocked and ?analytics=off is set.
+• Builds the website from this checkout with the unpacked extension's id added (VITE_EXTENSION_IDS), and serves it at https://stringutilitybelt.com inside the capture browser, so the extension's "save to extension" bridge answers it exactly as it answers the live site.
 • Launches the real unpacked extension in isolated Chromium, with real Chrome APIs and no UI mocks.
 • On the website: loads the pipeline, enters a messy email list and asserts the result before capture.
 • Saves the pipeline through the website's own dialog and asserts the extension's answer; then finds it in the popup's "Saved pipelines", runs it on the same list and asserts the same result; and finds it on the options page.

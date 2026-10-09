@@ -7,21 +7,18 @@ import { loadState } from '@/lib/persist'
 import { tracePreset, TRACE_ELEMENT_ID, type PresetTrace } from '@/presets/trace'
 import preset from '@/presets/excel-column-to-sql-in-clause/preset'
 import { execute } from '@/app/engine/executor'
-import { track } from '@/app/analytics/analytics'
 import { toPipelineSteps } from '@/presets/types'
-import { countSteps, STEP_TYPES } from '@/core/steps'
+import { STEP_TYPES } from '@/core/steps'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension } from '@/app/extension/fakeExtension'
 import * as openInEditor from './openInEditor'
+import { countEvent } from '@/app/events/countEvent'
 import PresetPage from './PresetPage'
 
+vi.mock('@/app/events/countEvent', () => ({ countEvent: vi.fn() }))
 vi.mock('@/app/engine/executor', async importOriginal => {
   const mod = await importOriginal<typeof import('@/app/engine/executor')>()
   return { ...mod, execute: vi.fn(mod.execute) }
-})
-vi.mock('@/app/analytics/analytics', async importOriginal => {
-  const mod = await importOriginal<typeof import('@/app/analytics/analytics')>()
-  return { ...mod, track: vi.fn(), trackPipelineEvent: vi.fn() }
 })
 
 const SLUG = preset.slug
@@ -41,7 +38,7 @@ function embed(trace: unknown) {
   document.head.appendChild(script)
 }
 
-beforeEach(() => { vi.mocked(execute).mockClear(); vi.mocked(track).mockClear() })
+beforeEach(() => { vi.mocked(execute).mockClear(); vi.mocked(countEvent).mockClear() })
 afterEach(() => {
   document.getElementById(TRACE_ELEMENT_ID)?.remove()
   document.querySelector('meta[name="robots"]')?.remove()
@@ -101,7 +98,6 @@ describe('PresetPage', () => {
     fireEvent.change(input(), { target: { value: "x\nx\ny'z\n" } })
     await waitFor(() => expect(output().textContent).toBe("IN ('x', 'y''z')"))
     expect(execute).toHaveBeenCalled()
-    expect(track).toHaveBeenCalledWith('preset_input_edit', { preset_id: SLUG })
   })
 
   it('ignores an embedded trace that does not match this preset (another preset, or an older build)', async () => {
@@ -120,7 +116,6 @@ describe('PresetPage', () => {
     // a textarea reports CRLF as LF; the run itself uses the example's exact text
     expect(input().value).toBe(second.input.replace(/\r\n/g, '\n'))
     await waitFor(() => expect(output().textContent).toBe(second.output))
-    expect(track).toHaveBeenCalledWith('preset_sample_select', { preset_id: SLUG, sample_id: second.id })
   })
 
   it('holds back a very large input instead of showing an earlier result next to it, until asked to run it', async () => {
@@ -194,10 +189,10 @@ describe('PresetPage', () => {
     expect(loadState().steps.map(s => ('utilityId' in s ? s.utilityId : ''))).toEqual(preset.steps.map(s => ('utilityId' in s ? s.utilityId : '')))
     expect(loadState().name).toBe(preset.name)
     expect(sessionStorage.getItem('sub:handoff-input')).toBe('mine')
-    expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'preset', preset_id: SLUG, step_count: countSteps(toPipelineSteps(preset.steps)) })
+    expect(countEvent).toHaveBeenCalledWith({ name: 'preset_open', preset: SLUG, source: 'page' })
   })
 
-  it('follows the share link instead when storage refuses the preset, counting it as a share-link load', async () => {
+  it('follows the share link instead when storage refuses the preset', async () => {
     history.replaceState(null, '', `/presets/${SLUG}/`)
     const follow = vi.spyOn(openInEditor, 'followLink').mockImplementation(() => {})
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError') })
@@ -208,7 +203,7 @@ describe('PresetPage', () => {
       fireEvent.click(open)
       expect(follow).toHaveBeenCalledWith(open.getAttribute('href'))
       expect(location.pathname).toBe(`/presets/${SLUG}/`)
-      expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'preset_share_link', preset_id: SLUG, step_count: countSteps(toPipelineSteps(preset.steps)) })
+      expect(countEvent).toHaveBeenCalledWith({ name: 'preset_open', preset: SLUG, source: 'page' })
     } finally {
       vi.restoreAllMocks()
     }
@@ -220,7 +215,7 @@ describe('PresetPage', () => {
     await screen.findByRole('heading', { level: 1, name: preset.name })
     fireEvent.click(screen.getByRole('link', { name: 'Open in the editor' }), { ctrlKey: true })
     expect(location.pathname).toBe(`/presets/${SLUG}/`)
-    expect(track).not.toHaveBeenCalledWith('pipeline_load', expect.anything())
+    expect(countEvent).not.toHaveBeenCalled()
   })
 
   it('copies the output', async () => {

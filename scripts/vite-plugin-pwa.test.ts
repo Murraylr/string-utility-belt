@@ -269,7 +269,7 @@ describe('generated sw.js (fake ServiceWorkerGlobalScope)', () => {
 
   it('leaves cross-origin requests untouched (analytics, fonts)', async () => {
     const h = createHarness(source)
-    for (const url of ['https://www.googletagmanager.com/gtag/js', 'https://fonts.gstatic.com/s/x.woff2', 'https://evil.example/assets/x.js']) {
+    for (const url of ['https://static.cloudflareinsights.com/beacon.min.js', 'https://fonts.gstatic.com/s/x.woff2', 'https://evil.example/assets/x.js']) {
       const { intercepted } = await h.fetchEvent(url, { mode: 'no-cors' })
       expect(intercepted).toBe(false)
     }
