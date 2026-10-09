@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **One promo per page.** Utility, recipe and blog pages show only their sponsor slot (one of our own tools while it is
+  unbooked), without the extra banner and side-column card; index and reading pages show one of our tools, and the
+  strip under the header is gone.
+- The about page and the README say plainly what the site measures: Google Analytics (without cookies in the EEA, the UK
+  and Switzerland) and Cloudflare Web Analytics, neither of which ever receives what you paste.
+
 ## [1.11.1] - 2026-10-09
 
 ### Fixed

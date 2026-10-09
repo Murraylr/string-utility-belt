@@ -79,10 +79,9 @@ describe('UtilityDocPage', () => {
     expect(table.getByText('number')).toBeTruthy() // length's kind
   })
 
-  it('shows our own tools after the playground and in the side column', () => {
+  it('carries no extra promo after the playground or in the side column: its sponsor slot is its one promo', () => {
     const { container } = render(<UtilityDocPage id="trim" />)
-    expect(container.querySelector('[data-promo-slot="inline"]')).toBeTruthy()
-    expect(container.querySelector('[data-promo-slot="rail"]')).toBeTruthy()
+    expect(container.querySelector('[data-promo-slot]')).toBeNull()
   })
 
   it('copies the playground output', async () => {

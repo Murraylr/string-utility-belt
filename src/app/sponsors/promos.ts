@@ -85,21 +85,21 @@ export type ExtraSlot = 'inline' | 'rail' | 'strip'
 /** A page that can carry extra promos: a sponsorable page, or an index or reading page with no sponsor slot. */
 export type PromoPage = SponsorPage | { kind: 'index' }
 
-/** The order slots claim a promo: the ones in the content before the strip. */
-const SLOT_ORDER: readonly ExtraSlot[] = ['inline', 'rail', 'strip']
-
-/** Browser-independent tools only, so the pre-render and the app show the same ones. */
-const EXTRA_POOL: readonly PromoId[] = ['vscode', 'mcp', 'cli']
+/**
+ * The tool an index or reading page shows: one that does not depend on the browser, so the
+ * pre-render and the app show the same one, and whose link stays on this site (the usage
+ * guide's pre-render links only to crawlable paths).
+ */
+const INDEX_PROMO: PromoId = 'mcp'
 
 /**
- * Which tool each extra slot of `page` shows, each one different and none the tool the
- * sponsor slot may show (its `fixedPromo`, else the VS Code extension it falls back to).
- * A slot left out of the plan stays empty: three tools go round three slots at most.
+ * Which tool each extra slot of `page` shows. A page shows at most one of our own tools:
+ * a sponsorable page already has its sponsor slot (a sponsor, or our tool while unbooked),
+ * so its extra slots stay empty; an index or reading page, which has no sponsor slot, shows
+ * one tool in its content slot: `inline` or `rail`, whichever its layout carries (none
+ * carries both). The `strip` under the site header stays empty on every page. A slot left
+ * out of the plan renders nothing.
  */
 export function promoPlan(page: PromoPage): Partial<Record<ExtraSlot, PromoId>> {
-  const taken = page.kind === 'index' ? undefined : (fixedPromo(page) ?? 'vscode')
-  const pool = EXTRA_POOL.filter(id => id !== taken)
-  const plan: Partial<Record<ExtraSlot, PromoId>> = {}
-  SLOT_ORDER.forEach((slot, i) => { if (pool[i]) plan[slot] = pool[i] })
-  return plan
+  return page.kind === 'index' ? { inline: INDEX_PROMO, rail: INDEX_PROMO } : {}
 }
