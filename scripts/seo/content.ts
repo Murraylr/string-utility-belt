@@ -12,10 +12,10 @@ import Docs from '../../src/components/Docs'
 import { en } from '../../src/app/i18n/locales/en'
 import { INTEGRATION_LINKS } from '../../src/app/integrations/links'
 import RunElsewhere from '../../src/app/integrations/RunElsewhere'
-import { RecipeArticle, RecipesIndex, RecipeWidget } from '../../src/app/pages/recipes/RecipeArticle'
-import { openInEditorHref } from '../../src/app/pages/recipes/recipeHelpers'
-import { recipePath, toPipelineSteps, type Recipe, type RecipeMeta } from '../../src/recipes/types'
-import type { RecipeTrace } from '../../src/recipes/trace'
+import { PresetArticle, PresetsIndex, PresetWidget } from '../../src/app/pages/presets/PresetArticle'
+import { openInEditorHref } from '../../src/app/pages/presets/presetHelpers'
+import { presetPath, toPipelineSteps, type Preset, type PresetMeta } from '../../src/presets/types'
+import type { PresetTrace } from '../../src/presets/trace'
 import SponsorBlock from '../../src/app/sponsors/SponsorBlock'
 import PromoBlock from '../../src/app/sponsors/PromoBlock'
 import ExtraPromo from '../../src/app/sponsors/ExtraPromo'
@@ -37,9 +37,9 @@ const typesOf = (t: string | string[]): string => (Array.isArray(t) ? t.join(' |
 const link = ([href, label]: readonly [string, string]) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`
 
 // the app's header nav and footer (src/app/AppShell.tsx), as plain links
-const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/recipes/', 'Recipes'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
+const NAV_LINKS = [['/', 'Tool'], ['/docs/', 'Docs'], ['/utilities/', 'Utilities'], ['/presets/', 'Presets'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog']] as const
 const FOOTER_LINKS = [
-  ['/utilities/', 'All utilities'], ['/recipes/', 'Recipes'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
+  ['/utilities/', 'All utilities'], ['/presets/', 'Presets'], ['/blog/', 'Blog'], ['/changelog/', 'Changelog'], ['/integrations/', 'Extensions, CLI & MCP'],
   ['/about/', 'About'], ['/privacy/', 'Privacy policy'], ['/contact/', 'Contact'], ['/advertise/', 'Advertise'],
 ] as const
 
@@ -104,8 +104,8 @@ export interface UtilityContentExtras {
   guideHtml?: string
   /** Utilities to link to, by their crawlable `/util/<id>/` paths. */
   related?: UtilityMeta[]
-  /** Recipes that use this utility, linked by their `/recipes/<slug>/` paths. */
-  recipes?: RecipeMeta[]
+  /** Presets that use this utility, linked by their `/presets/<slug>/` paths. */
+  presets?: PresetMeta[]
   /** The page's sponsor, at the end of the header as in `UtilityDocPage`. */
   sponsor?: PageSponsorSpec
 }
@@ -157,12 +157,12 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
       </div>`).join('')}
     </section>`
 
-  const recipes = extras.recipes ?? []
-  const recipesHtml = recipes.length === 0 ? '' : `
+  const presets = extras.presets ?? []
+  const presetsHtml = presets.length === 0 ? '' : `
     <section>
-      <h2>Recipes that use ${escapeHtml(displayName(meta.name))}</h2>
+      <h2>Presets that use ${escapeHtml(displayName(meta.name))}</h2>
       <ul>
-        ${recipes.map(r => `<li><a href="${escapeHtml(recipePath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
+        ${presets.map(r => `<li><a href="${escapeHtml(presetPath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
       </ul>
     </section>`
 
@@ -188,7 +188,7 @@ export function renderUtilityContent(meta: UtilityMeta, examples: UtilityExample
     ${guideHtml}
     ${paramsHtml}
     ${examplesHtml}
-    ${recipesHtml}
+    ${presetsHtml}
     ${relatedHtml}
     <p><a href="/utilities/">Browse all utilities</a></p>
   </article>`
@@ -219,17 +219,17 @@ export function renderUtilitiesIndexContent(manifest: UtilityMeta[]): string {
  * Static snapshot of the home page: the tool's heading and the popular-tools
  * list `HomeDirectory` renders below the editor (the editor itself needs JS).
  */
-export function renderHomeContent(manifest: UtilityMeta[], recipes: RecipeMeta[] = []): string {
+export function renderHomeContent(manifest: UtilityMeta[], presets: PresetMeta[] = []): string {
   const byId = new Map(manifest.map(m => [m.id, m]))
   const popular = POPULAR_UTILITY_IDS.flatMap(id => byId.get(id) ?? [])
-  const recipesHtml = recipes.length === 0 ? '' : `
+  const presetsHtml = presets.length === 0 ? '' : `
     <section>
-      <h2>Recipes</h2>
+      <h2>Presets</h2>
       <p>Ready-made pipelines for jobs one tool can't do alone. Each shows every step with its output.</p>
       <ul>
-        ${recipes.map(r => `<li><a href="${escapeHtml(recipePath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
+        ${presets.map(r => `<li><a href="${escapeHtml(presetPath(r.slug))}">${escapeHtml(r.name)}</a> — ${escapeHtml(r.summary)}</li>`).join('')}
       </ul>
-      <p><a href="/recipes/">Browse all recipes</a></p>
+      <p><a href="/presets/">Browse all presets</a></p>
     </section>`
   return `
   <article>
@@ -237,7 +237,7 @@ export function renderHomeContent(manifest: UtilityMeta[], recipes: RecipeMeta[]
       <h1>${escapeHtml(SITE_NAME)}</h1>
       <p>Efficiently chain string utilities, preview every step, and export/share your pipeline.</p>
     </header>
-    ${recipesHtml}
+    ${presetsHtml}
     <section>
       <h2>Popular tools</h2>
       <p>Every utility also has its own page with a guide, worked examples and a playground. They all run in your browser: nothing you paste is uploaded.</p>
@@ -314,34 +314,34 @@ export function renderChangelogContent(bodyHtml: string): string {
 }
 
 /**
- * Static snapshot of a recipe page: `RecipeArticle` itself, rendered by React (so
+ * Static snapshot of a preset page: `PresetArticle` itself, rendered by React (so
  * escaped, and identical to the page the app renders), with its live widget as a
  * read-only copy showing the first sample and the build's trace of it.
  */
-export function renderRecipeContent(opts: {
-  recipe: Recipe
+export function renderPresetContent(opts: {
+  preset: Preset
   guideHtml: string
-  trace: RecipeTrace
+  trace: PresetTrace
   utility: (id: string) => UtilityMeta | undefined
-  related: RecipeMeta[]
+  related: PresetMeta[]
   sponsor?: PageSponsorSpec
 }): string {
-  const { recipe, guideHtml, trace, utility, related, sponsor } = opts
-  const steps = toPipelineSteps(recipe.steps)
-  const first = recipe.samples[0]
-  const live = createElement(RecipeWidget, {
-    samples: recipe.samples,
+  const { preset, guideHtml, trace, utility, related, sponsor } = opts
+  const steps = toPipelineSteps(preset.steps)
+  const first = preset.samples[0]
+  const live = createElement(PresetWidget, {
+    samples: preset.samples,
     sampleId: first.id,
     input: first.input,
     output: trace.output,
-    stepCount: recipe.steps.length,
-    openHref: openInEditorHref(steps, recipe.name, first.input),
+    stepCount: preset.steps.length,
+    openHref: openInEditorHref(steps, preset.name, first.input),
   })
-  return renderToStaticMarkup(createElement(RecipeArticle, {
-    recipe, utility, guideHtml, steps: trace.steps, skip: trace.skip, live, related,
+  return renderToStaticMarkup(createElement(PresetArticle, {
+    preset, utility, guideHtml, steps: trace.steps, skip: trace.skip, live, related,
     // with no sponsor, the promo the app will show whatever the browser, so the page does not shift on load
-    sponsor: sponsor ? sponsorElement(sponsor) : createElement(PromoBlock, { id: fixedPromo({ kind: 'recipe', slug: recipe.slug })! }),
-    promo: inlinePromo({ kind: 'recipe', slug: recipe.slug }),
+    sponsor: sponsor ? sponsorElement(sponsor) : createElement(PromoBlock, { id: fixedPromo({ kind: 'preset', slug: preset.slug })! }),
+    promo: inlinePromo({ kind: 'preset', slug: preset.slug }),
   }))
 }
 
@@ -351,7 +351,7 @@ function inlinePromo(page: PromoPage) {
   return id ? createElement(ExtraPromo, { id, slot: 'inline' }) : null
 }
 
-/** Static snapshot of `RecipesIndexPage`: the shared `RecipesIndex`. */
-export function renderRecipesIndexContent(recipes: RecipeMeta[]): string {
-  return renderToStaticMarkup(createElement(RecipesIndex, { recipes, promo: inlinePromo({ kind: 'index' }) }))
+/** Static snapshot of `PresetsIndexPage`: the shared `PresetsIndex`. */
+export function renderPresetsIndexContent(presets: PresetMeta[]): string {
+  return renderToStaticMarkup(createElement(PresetsIndex, { presets, promo: inlinePromo({ kind: 'index' }) }))
 }

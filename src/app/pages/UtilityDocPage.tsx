@@ -14,9 +14,9 @@ import { useUtilityGuide } from './useUtilityGuide'
 import { useDocumentMeta } from './useDocumentMeta'
 import { useNoindex } from './useNoindex'
 import { relatedUtilities, utilityPath } from './related'
-import { RECIPE_INDEX } from '@/recipes/_generated/index'
-import { recipesUsing } from './recipes/recipeHelpers'
-import { recipePath } from '@/recipes/types'
+import { PRESET_INDEX } from '@/presets/_generated/index'
+import { presetsUsing } from './presets/presetHelpers'
+import { presetPath } from '@/presets/types'
 import { SITE_NAME, displayName, pageTitle } from './seo'
 import PageSponsor from '@/app/sponsors/PageSponsor'
 import PagePromo from '@/app/sponsors/PagePromo'
@@ -162,7 +162,7 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
   }, [id, playInput, playParams])
 
   const related = useMemo(() => relatedUtilities(meta, registry.list()), [meta])
-  const recipes = useMemo(() => recipesUsing(id, RECIPE_INDEX), [id])
+  const presets = useMemo(() => presetsUsing(id, PRESET_INDEX), [id])
 
   const tryExample = (ex: UtilityExample) => {
     setPlayInput(ex.input)
@@ -377,11 +377,11 @@ function UtilityDocPageBody({ id, meta }: { id: string; meta: UtilityMeta }) {
 
         <div className="grid gap-7 content-start min-w-0 lg:sticky lg:top-[84px]">
           <PagePromo page={{ kind: 'utility', id }} slot="rail" />
-          {recipes.length > 0 && (
+          {presets.length > 0 && (
             <section className="grid" aria-labelledby={`${playgroundId}-rec`}>
-              <h2 id={`${playgroundId}-rec`} className="text-[13px] font-semibold mb-2.5">Recipes that use it</h2>
-              {recipes.map(r => (
-                <a key={r.slug} className="link-row hover:[&>:first-child]:text-acc" href={recipePath(r.slug)}>
+              <h2 id={`${playgroundId}-rec`} className="text-[13px] font-semibold mb-2.5">Presets that use it</h2>
+              {presets.map(r => (
+                <a key={r.slug} className="link-row hover:[&>:first-child]:text-acc" href={presetPath(r.slug)}>
                   <span>{r.name}</span>
                   <span>{r.category}</span>
                 </a>

@@ -23,9 +23,9 @@ describe('POST /api/event', () => {
   it('counts each allowed event as one data point: the name as index, its ids as blobs', async () => {
     const { send, writeDataPoint } = setup()
     const events = [
-      [{ name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'util/jwt_decode' }, ['acme-2026-11', 'util/jwt_decode']],
+      [{ name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'presets/decode-saml-request' }, ['acme-2026-11', 'presets/decode-saml-request']],
       [{ name: 'integration_click', integration: 'mcp', source: 'promo_rail' }, ['mcp', 'promo_rail']],
-      [{ name: 'recipe_open', recipe: 'decode-kubernetes-secret' }, ['decode-kubernetes-secret', '']],
+      [{ name: 'preset_open', preset: 'decode-kubernetes-secret', source: 'gallery' }, ['decode-kubernetes-secret', 'gallery']],
     ] as const
     for (const [event, blobs] of events) {
       const res = await send(event)
@@ -37,13 +37,15 @@ describe('POST /api/event', () => {
 
   it.each([
     ['an unknown event', { name: 'page_view', path: '/' }],
-    ['an extra field', { name: 'recipe_open', recipe: 'x', input: 'secret' }],
+    ['an extra field', { name: 'preset_open', preset: 'x', source: 'page', input: 'secret' }],
     ['a missing field', { name: 'sponsor_click', sponsorship: 'acme' }],
-    ['free text as an id', { name: 'recipe_open', recipe: 'Bearer eyJhbGciOi…' }],
+    ['free text as an id', { name: 'preset_open', preset: 'Bearer eyJhbGciOi…', source: 'page' }],
+    ['an unknown preset source', { name: 'preset_open', preset: 'x', source: 'email' }],
+    ['a recipe page, from before presets', { name: 'sponsor_click', sponsorship: 'acme', page: 'recipes/x' }],
     ['a page outside the sponsorable kinds', { name: 'sponsor_click', sponsorship: 'acme', page: 'p/N4Ig' }],
     ['an integration that does not exist', { name: 'integration_click', integration: 'firefox', source: 'header' }],
     ['an unknown source', { name: 'integration_click', integration: 'cli', source: 'email' }],
-    ['an array', [{ name: 'recipe_open', recipe: 'x' }]],
+    ['an array', [{ name: 'preset_open', preset: 'x', source: 'page' }]],
   ])('refuses %s without counting it', async (_, body) => {
     const { send, writeDataPoint } = setup()
     const res = await send(body)
@@ -54,13 +56,13 @@ describe('POST /api/event', () => {
   it('refuses a body that is not JSON, or too long to be an event', async () => {
     const { send, writeDataPoint } = setup()
     expect((await send('{nope')).status).toBe(400)
-    expect((await send({ name: 'recipe_open', recipe: 'x'.repeat(600) })).status).toBe(413)
+    expect((await send({ name: 'preset_open', preset: 'x'.repeat(600), source: 'page' })).status).toBe(413)
     expect(writeDataPoint).not.toHaveBeenCalled()
   })
 
   it('only takes events from pages on this site', async () => {
     const { send, writeDataPoint } = setup()
-    const event = { name: 'recipe_open', recipe: 'x' }
+    const event = { name: 'preset_open', preset: 'x', source: 'page' }
     expect((await send(event, { 'content-type': 'application/json' })).status).toBe(403)
     expect((await send(event, { ...SAME_SITE, 'sec-fetch-site': 'cross-site' })).status).toBe(403)
     expect((await send(event, { ...SAME_SITE, origin: 'https://evil.example' })).status).toBe(403)
@@ -76,7 +78,7 @@ describe('POST /api/event', () => {
 
   it('limits each client address', async () => {
     const { send, writeDataPoint } = setup(2)
-    const event = { name: 'recipe_open', recipe: 'x' }
+    const event = { name: 'preset_open', preset: 'x', source: 'page' }
     expect((await send(event)).status).toBe(204)
     expect((await send(event)).status).toBe(204)
     const limited = await send(event)
@@ -88,7 +90,7 @@ describe('POST /api/event', () => {
   it('accepts events without a dataset bound (local dev, tests)', async () => {
     const api = createApi()
     const res = await api.fetch(new Request(`${ORIGIN}/api/event`, {
-      method: 'POST', headers: SAME_SITE, body: JSON.stringify({ name: 'recipe_open', recipe: 'x' }),
+      method: 'POST', headers: SAME_SITE, body: JSON.stringify({ name: 'preset_open', preset: 'x', source: 'page' }),
     }), {})
     expect(res.status).toBe(204)
   })

@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest'
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { getRoute, onRouteChange } from '@/lib/router'
 import UtilityDocPage from './UtilityDocPage'
-import { RECIPE_INDEX } from '@/recipes/_generated/index'
+import { PRESET_INDEX } from '@/presets/_generated/index'
 
 const STORAGE_KEY = 'string-utility-belt'
 
@@ -53,16 +53,16 @@ describe('UtilityDocPage', () => {
     expect(document.querySelector('meta[name="robots"]')).toBeNull()
   })
 
-  it('links the recipes that use the utility by their pre-rendered paths', () => {
-    const using = RECIPE_INDEX.find(r => r.utilityIds.includes('line_dedupe'))!
+  it('links the presets that use the utility by their pre-rendered paths', () => {
+    const using = PRESET_INDEX.find(r => r.utilityIds.includes('line_dedupe'))!
     render(<UtilityDocPage id="line_dedupe" />)
-    const section = screen.getByRole('heading', { name: /^Recipes that use/ }).closest('section')!
-    expect(within(section).getAllByRole('link').map(a => a.getAttribute('href'))).toContain(`/recipes/${using.slug}/`)
+    const section = screen.getByRole('heading', { name: /^Presets that use/ }).closest('section')!
+    expect(within(section).getAllByRole('link').map(a => a.getAttribute('href'))).toContain(`/presets/${using.slug}/`)
   })
 
-  it('has no recipe section for a utility no recipe uses', () => {
+  it('has no preset section for a utility no preset uses', () => {
     render(<UtilityDocPage id="atbash" />)
-    expect(screen.queryByRole('heading', { name: /^Recipes that use/ })).toBeNull()
+    expect(screen.queryByRole('heading', { name: /^Presets that use/ })).toBeNull()
   })
 
   it('renders a params table with kind, default, bounds and a description', () => {

@@ -90,7 +90,7 @@ export function parseRows(answer: unknown): Row[] {
 const COLUMNS: Record<EventName, { title: string; first: string; second?: string; count: string }> = {
   sponsor_click: { title: 'Sponsor clicks', first: 'booking', second: 'page', count: 'clicks' },
   integration_click: { title: 'Clicks to our tools', first: 'tool', second: 'from', count: 'clicks' },
-  recipe_open: { title: 'Recipes opened in the editor', first: 'recipe', count: 'opens' },
+  preset_open: { title: 'Presets loaded into the editor', first: 'preset', second: 'from', count: 'loads' },
 }
 
 function table(headings: string[], rows: string[][]): string {

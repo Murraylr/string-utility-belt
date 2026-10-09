@@ -6,18 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Google Analytics.** The site sets no cookies and loads no tracking script: Cloudflare Web Analytics counts page views
+  without cookies or identifiers, and never sees what you paste. The site itself counts only clicks on sponsor links, links
+  to our tools and presets loaded into the editor, by id and with nothing about the visitor. The privacy policy, the about
+  page and the README say so.
+
+## [1.12.1] - 2026-10-09
+
+### Changed
+
+- **Recipes are now called presets.** The pages moved from `/recipes/` to `/presets/`, and the editor's
+  Recipes button, the header link and the command palette's "Start from a preset" follow. Old `/recipes/…` links
+  redirect permanently to the same page, and `#/recipes` links still open it.
+
+## [1.12.0] - 2026-10-09
+
+### Added
+
+- **Recipes in the editor.** The editor's Presets button is now **Recipes**: it lists every published recipe by
+  category, "Try it" loads the recipe's steps and worked example, and "How it works" opens its page. The command
+  palette's "Start from a recipe" opens the same list.
+- New recipes: **Extract unique email addresses from text** and **Clean up text pasted from Microsoft Word**.
+
+### Removed
+
+- The separate preset gallery. Single-step presets (Decode a JWT, CSV to JSON, Hex dump, JSON to YAML, …) live on as
+  their utilities' own pages, and the multi-step ones as recipes. Pipelines you saved from a preset stay in your library.
+
+## [1.11.2] - 2026-10-09
+
 ### Changed
 
 - **One promo per page.** Utility, recipe and blog pages show only their sponsor slot (one of our own tools while it is
   unbooked), without the extra banner and side-column card; index and reading pages show one of our tools, and the
   strip under the header is gone.
-
-### Removed
-
-- **Google Analytics.** The site sets no cookies and loads no tracking script: Cloudflare Web Analytics counts page views
-  without cookies or identifiers, and never sees what you paste. The site itself counts only clicks on sponsor links, links
-  to our tools and recipes opened in the editor, by id and with nothing about the visitor. The privacy policy, the about
-  page and the README say so.
+- The about page and the README say plainly what the site measures: Google Analytics (without cookies in the EEA, the UK
+  and Switzerland) and Cloudflare Web Analytics, neither of which ever receives what you paste.
 
 ## [1.11.1] - 2026-10-09
 

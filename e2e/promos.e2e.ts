@@ -6,8 +6,8 @@
 import { expect, test } from '@playwright/test'
 
 const PAGES = [
-  '/', '/utilities/', '/util/jwt_decode/', '/util/sha3/', '/util/json_pretty/', '/recipes/',
-  '/recipes/decode-kubernetes-secret/', '/blog/', '/blog/md5-insecure-but-useful/', '/docs/', '/about/',
+  '/', '/utilities/', '/util/jwt_decode/', '/util/sha3/', '/util/json_pretty/', '/presets/',
+  '/presets/decode-kubernetes-secret/', '/blog/', '/blog/md5-insecure-but-useful/', '/docs/', '/about/',
   '/integrations/', '/changelog/',
 ]
 

@@ -68,10 +68,10 @@ describe('PageSponsor', () => {
   })
 
   it("shows today's sponsor and counts a click by booking and page only", () => {
-    render(<PageSponsor page={{ kind: 'recipe', slug: 'decode-saml-request' }} sponsorships={[booking]} className="mt-3" />)
+    render(<PageSponsor page={{ kind: 'preset', slug: 'decode-saml-request' }} sponsorships={[booking]} className="mt-3" />)
     expect(screen.getByRole('complementary', { name: 'Sponsor' }).className).toBe('sponsor mt-3')
     fireEvent.click(screen.getByRole('link', { name: /Acme/ }))
-    expect(countEvent).toHaveBeenCalledWith({ name: 'sponsor_click', sponsorship: 'acme-now', page: 'recipes/decode-saml-request' })
+    expect(countEvent).toHaveBeenCalledWith({ name: 'sponsor_click', sponsorship: 'acme-now', page: 'presets/decode-saml-request' })
   })
 })
 
@@ -94,9 +94,9 @@ describe('HousePromo', () => {
     expect(promoOn(trim)).toBe('vscode')
   })
 
-  it('leaves the browser extension to recipe pages themselves, and offers VS Code on data-format pages', () => {
+  it('leaves the browser extension to preset pages themselves, and offers VS Code on data-format pages', () => {
     browser('absent', true)
-    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+    expect(promoOn({ kind: 'preset', slug: 'decode-saml-request' })).toBe('vscode')
     expect(promoOn({ kind: 'utility', id: 'json_pretty' })).toBe('vscode')
   })
 
@@ -108,7 +108,7 @@ describe('HousePromo', () => {
 
   it('shows a promo that does not depend on the browser at once, as the pre-render does', () => {
     browser('checking', true)
-    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+    expect(promoOn({ kind: 'preset', slug: 'decode-saml-request' })).toBe('vscode')
     expect(promoOn({ kind: 'utility', id: 'csv_to_json' })).toBe('vscode')
   })
 
@@ -123,10 +123,10 @@ describe('HousePromo', () => {
   it('offers each topic the tool its readers reach for, whatever the browser', () => {
     browser('checking', true)
     expect(promoOn({ kind: 'utility', id: 'cron_describe' })).toBe('cli')
-    expect(promoOn({ kind: 'recipe', slug: 'decode-kubernetes-secret' })).toBe('cli')
+    expect(promoOn({ kind: 'preset', slug: 'decode-kubernetes-secret' })).toBe('cli')
     expect(promoOn({ kind: 'utility', id: 'sha3' })).toBe('mcp')
     expect(promoOn({ kind: 'utility', id: 'json_pretty' })).toBe('vscode')
-    expect(promoOn({ kind: 'recipe', slug: 'decode-saml-request' })).toBe('vscode')
+    expect(promoOn({ kind: 'preset', slug: 'decode-saml-request' })).toBe('vscode')
   })
 
   it('opens the CLI and MCP sections of /integrations/ in place, not in a new tab', () => {

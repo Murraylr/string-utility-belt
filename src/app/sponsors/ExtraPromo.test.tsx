@@ -20,8 +20,8 @@ describe('promoPlan', () => {
     { kind: 'utility', id: 'trim' },
     { kind: 'utility', id: 'cron_describe' },
     { kind: 'utility', id: 'hash' },
-    { kind: 'recipe', slug: 'decode-kubernetes-secret' },
-    { kind: 'recipe', slug: 'decode-saml-request' },
+    { kind: 'preset', slug: 'decode-kubernetes-secret' },
+    { kind: 'preset', slug: 'decode-saml-request' },
     { kind: 'blog', slug: 'anything' },
   ]
 

@@ -22,14 +22,14 @@ describe('countEvent', () => {
     const fetchSpy = vi.fn()
     vi.stubGlobal('fetch', fetchSpy)
     Object.defineProperty(navigator, 'sendBeacon', { value: sendBeacon, configurable: true })
-    countEvent({ name: 'recipe_open', recipe: 'decode-kubernetes-secret' })
+    countEvent({ name: 'preset_open', preset: 'decode-kubernetes-secret', source: 'page' })
     expect(sendBeacon).not.toHaveBeenCalled()
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 })
 
 describe('sendEvent', () => {
-  const event = { name: 'recipe_open', recipe: 'decode-kubernetes-secret' } as const
+  const event = { name: 'preset_open', preset: 'decode-kubernetes-secret', source: 'page' } as const
 
   it('sends the event as a JSON beacon to the Worker', async () => {
     const sendBeacon = vi.fn<(url: string, data: Blob) => boolean>(() => true)
@@ -68,11 +68,12 @@ describe('the events the app sends', () => {
   it('are all ones the Worker accepts', () => {
     const sent = [
       { name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'util/jwt_decode' },
-      { name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'recipes/decode-saml-request' },
+      { name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'presets/decode-saml-request' },
       { name: 'sponsor_click', sponsorship: 'acme-2026-11', page: 'blog/md5-insecure-but-useful' },
-      ...(['header', 'promo', 'promo_inline', 'promo_rail', 'promo_strip', 'promo_tool', 'recipe'] as const)
+      ...(['header', 'promo', 'promo_inline', 'promo_rail', 'promo_strip', 'promo_tool', 'preset'] as const)
         .map(source => ({ name: 'integration_click', integration: 'chrome', source })),
-      { name: 'recipe_open', recipe: 'excel-column-to-sql-in-clause' },
+      { name: 'preset_open', preset: 'excel-column-to-sql-in-clause', source: 'page' },
+      { name: 'preset_open', preset: 'excel-column-to-sql-in-clause', source: 'gallery' },
     ]
     for (const event of sent) expect(parseCountedEvent(event), JSON.stringify(event)).toEqual(event)
   })

@@ -50,17 +50,19 @@ test.describe('library', () => {
 })
 
 test.describe('presets', () => {
-  test('"Try it" loads a preset\'s steps and sample input, and produces the expected output', async ({ page }) => {
+  test('"Try it" loads a preset\'s steps and worked example, and produces its output', async ({ page }) => {
     await page.goto('/')
     await page.getByRole('button', { name: 'Presets', exact: true }).click()
-    const gallery = page.getByRole('dialog', { name: 'Preset gallery' })
+    const gallery = page.getByRole('dialog', { name: 'Presets' })
     await expect(gallery).toBeVisible()
 
-    await gallery.getByRole('button', { name: 'Try it: Double URL-decode' }).click()
+    await gallery.getByRole('button', { name: 'Try it: Extract unique email addresses from text' }).click()
     await expect(gallery).toBeHidden()
 
-    await expect(page.locator('#pipeline-input')).toHaveValue('hello%2520world%2521')
-    await expect(page.locator('[data-step-id]')).toHaveCount(2)
-    await expect(result(page)).toHaveText('hello world!')
+    await expect(page.locator('#pipeline-input')).toHaveValue(/^From: Dana Whitfield <Dana\.Whitfield@example\.com>\n/)
+    await expect(page.locator('[data-step-id]')).toHaveCount(3)
+    await expect(result(page)).toHaveText(
+      'dana.whitfield@example.com\nleo.martins@example.org\nmarcus.oneil@example.org\npriya.raman@example.net\nsupport@example.com',
+    )
   })
 })

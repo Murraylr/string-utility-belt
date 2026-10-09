@@ -115,36 +115,53 @@ describe('router: roadmap routes', () => {
   })
 })
 
-describe('router: recipes', () => {
+describe('router: presets', () => {
   afterEach(() => { location.hash = ''; history.replaceState(null, '', '/') })
 
-  it('routes the recipe index and a recipe by path and by hash', () => {
-    history.replaceState(null, '', '/recipes/')
-    expect(getRoute()).toEqual({ name: 'recipes', params: {} })
-    history.replaceState(null, '', '/recipes/decode-saml-request/')
-    expect(getRoute()).toEqual({ name: 'recipe', params: { slug: 'decode-saml-request' } })
-    history.replaceState(null, '', '/recipes/decode-saml-request')
-    expect(getRoute()).toEqual({ name: 'recipe', params: { slug: 'decode-saml-request' } })
-    history.replaceState(null, '', '/#/recipes')
-    expect(getRoute()).toEqual({ name: 'recipes', params: {} })
-    history.replaceState(null, '', '/#/recipes/fix-pdf-line-breaks')
-    expect(getRoute()).toEqual({ name: 'recipe', params: { slug: 'fix-pdf-line-breaks' } })
+  it('routes the preset index and a preset by path and by hash', () => {
+    history.replaceState(null, '', '/presets/')
+    expect(getRoute()).toEqual({ name: 'presets', params: {} })
+    history.replaceState(null, '', '/presets/decode-saml-request/')
+    expect(getRoute()).toEqual({ name: 'preset', params: { slug: 'decode-saml-request' } })
+    history.replaceState(null, '', '/presets/decode-saml-request')
+    expect(getRoute()).toEqual({ name: 'preset', params: { slug: 'decode-saml-request' } })
+    history.replaceState(null, '', '/#/presets')
+    expect(getRoute()).toEqual({ name: 'presets', params: {} })
+    history.replaceState(null, '', '/#/presets/fix-pdf-line-breaks')
+    expect(getRoute()).toEqual({ name: 'preset', params: { slug: 'fix-pdf-line-breaks' } })
   })
 
-  it('treats a slug that cannot be a recipe, or a deeper path, as not found', () => {
-    for (const path of ['/recipes/Decode_SAML/', '/recipes/a--b/', '/recipes/a/b/', '/recipes/%E0%A4%A/', '/recipes/..%2Fx/']) {
+  it('treats a slug that cannot be a preset, or a deeper path, as not found', () => {
+    for (const path of ['/presets/Decode_SAML/', '/presets/a--b/', '/presets/a/b/', '/presets/%E0%A4%A/', '/presets/..%2Fx/']) {
       history.replaceState(null, '', path)
       expect(getRoute().name, path).toBe('notFound')
     }
+    history.replaceState(null, '', '/#/presets/Bad%20Slug')
+    expect(getRoute().name).toBe('notFound')
+  })
+
+  it('still opens presets from old #/recipes links', () => {
+    history.replaceState(null, '', '/#/recipes')
+    expect(getRoute()).toEqual({ name: 'presets', params: {} })
+    history.replaceState(null, '', '/#/recipes/fix-pdf-line-breaks')
+    expect(getRoute()).toEqual({ name: 'preset', params: { slug: 'fix-pdf-line-breaks' } })
     history.replaceState(null, '', '/#/recipes/Bad%20Slug')
     expect(getRoute().name).toBe('notFound')
   })
 
-  it('takes over links to recipe pages', () => {
-    for (const href of ['/recipes/', '/recipes', '/recipes/decode-saml-request/', '/recipes/decode-saml-request']) {
+  it('leaves old /recipes/ paths to the host, which redirects them', () => {
+    for (const path of ['/recipes/', '/recipes/decode-saml-request/']) {
+      history.replaceState(null, '', path)
+      expect(getRoute().name, path).toBe('notFound')
+      expect(isInAppPath(path), path).toBe(false)
+    }
+  })
+
+  it('takes over links to preset pages', () => {
+    for (const href of ['/presets/', '/presets', '/presets/decode-saml-request/', '/presets/decode-saml-request']) {
       expect(isInAppPath(href), href).toBe(true)
     }
-    for (const href of ['/recipes/a/b/', '/recipes/Upper/', '#/recipes']) expect(isInAppPath(href), href).toBe(false)
+    for (const href of ['/presets/a/b/', '/presets/Upper/', '#/presets']) expect(isInAppPath(href), href).toBe(false)
   })
 })
 

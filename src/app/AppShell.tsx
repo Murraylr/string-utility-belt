@@ -16,7 +16,7 @@ import { useT } from './i18n/useT'
 import { useDocumentMeta } from './pages/useDocumentMeta'
 import { useNoindex } from './pages/useNoindex'
 import { pageTitle } from './pages/seo'
-import { RecipePage, RecipesIndexPage } from './pages/recipes/routes'
+import { PresetPage, PresetsIndexPage } from './pages/presets/routes'
 import PagePromo from './sponsors/PagePromo'
 import type { PromoPage } from './sponsors/promos'
 
@@ -30,8 +30,8 @@ const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SitePage = lazy(() => import('./pages/SitePage'))
 const HomeDirectory = lazy(() => import('./pages/HomeDirectory'))
 const Docs = lazy(() => import('@/components/Docs'))
-// RecipePage / RecipesIndexPage (./pages/recipes/routes) are preloadable: main.tsx fetches
-// them before mounting, so a pre-rendered recipe page never flashes "Loading…"
+// PresetPage / PresetsIndexPage (./pages/presets/routes) are preloadable: main.tsx fetches
+// them before mounting, so a pre-rendered preset page never flashes "Loading…"
 
 const PageLoading = () => <div className="muted" role="status">Loading…</div>
 
@@ -41,14 +41,14 @@ const NAV = [
   { href: '/', key: 'nav.tool', routes: ['home', 'pipeline', 'notFound'] },
   { href: '/docs/', key: 'nav.docs', routes: ['docs'] },
   { href: '/utilities/', key: 'nav.utilities', routes: ['utilities', 'utility'] },
-  { href: '/recipes/', key: 'nav.recipes', routes: ['recipes', 'recipe'] },
+  { href: '/presets/', key: 'nav.presets', routes: ['presets', 'preset'] },
   { href: '/blog/', key: 'nav.blog', routes: ['blogIndex', 'blogPost'] },
   { href: '/changelog/', key: 'nav.changelog', routes: ['changelog'] },
 ] as const satisfies ReadonlyArray<{ href: string; key: string; routes: ReadonlyArray<Route['name']> }>
 
 const FOOTER_LINKS = [
   { href: '/utilities/', key: 'footer.utilities' },
-  { href: '/recipes/', key: 'nav.recipes' },
+  { href: '/presets/', key: 'nav.presets' },
   { href: '/blog/', key: 'nav.blog' },
   { href: '/changelog/', key: 'nav.changelog' },
   { href: '/integrations/', key: 'footer.integrations' },
@@ -180,7 +180,7 @@ function ShortcutsButton() {
 function promoPageOf(route: Route): PromoPage | undefined {
   switch (route.name) {
     case 'utility': return { kind: 'utility', id: route.params.id }
-    case 'recipe': return { kind: 'recipe', slug: route.params.slug }
+    case 'preset': return { kind: 'preset', slug: route.params.slug }
     case 'blogPost': return { kind: 'blog', slug: route.params.slug }
     case 'home': case 'pipeline': case 'notFound': case 'embed': return undefined
     default: return { kind: 'index' }
@@ -229,8 +229,8 @@ export default function AppShell() {
           {route.name === 'blogPost' && <BlogPost slug={route.params.slug} />}
           {route.name === 'utilities' && <UtilitiesIndexPage />}
           {route.name === 'utility' && <UtilityDocPage id={route.params.id} />}
-          {route.name === 'recipes' && <RecipesIndexPage />}
-          {route.name === 'recipe' && <RecipePage key={route.params.slug} slug={route.params.slug} />}
+          {route.name === 'presets' && <PresetsIndexPage />}
+          {route.name === 'preset' && <PresetPage key={route.params.slug} slug={route.params.slug} />}
           {route.name === 'changelog' && <ChangelogPage />}
           {route.name === 'page' && <SitePage slug={route.params.slug as SitePageSlug} />}
           {route.name === 'docs' && <Docs />}

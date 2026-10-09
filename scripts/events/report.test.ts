@@ -42,8 +42,8 @@ describe('formatReport', () => {
     const rows = parseRows({
       data: [
         { event: 'sponsor_click', first: 'acme-2026-10', second: 'util/jwt_decode', count: '12' },
-        { event: 'sponsor_click', first: 'acme-2026-10', second: 'recipes/decode-saml-request', count: 3 },
-        { event: 'recipe_open', first: 'decode-kubernetes-secret', second: '', count: 7 },
+        { event: 'sponsor_click', first: 'acme-2026-10', second: 'presets/decode-saml-request', count: 3 },
+        { event: 'preset_open', first: 'decode-kubernetes-secret', second: 'gallery', count: 7 },
       ],
     })
     const text = formatReport(rows, parsePeriod(['--month', '2026-10'], NOW))
@@ -51,8 +51,8 @@ describe('formatReport', () => {
     expect(text).toContain('Sponsor clicks: 15')
     expect(text).toMatch(/acme-2026-10\s+util\/jwt_decode\s+12/)
     expect(text).toContain('Clicks to our tools: 0')
-    expect(text).toContain('Recipes opened in the editor: 7')
-    expect(text).toMatch(/decode-kubernetes-secret\s+7/)
+    expect(text).toContain('Presets loaded into the editor: 7')
+    expect(text).toMatch(/decode-kubernetes-secret\s+gallery\s+7/)
     expect(text).toContain('sampling')
   })
 
