@@ -2,7 +2,6 @@ import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { track } from '@/app/analytics/analytics'
 import SponsorBlock from './SponsorBlock'
 import PageSponsor from './PageSponsor'
 import { utcDay, type Sponsorship } from './sponsors'
@@ -12,7 +11,6 @@ import { canInstallExtension } from '@/app/extension/installable'
 import { readPref } from '@/app/prefs'
 import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 
-vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
 vi.mock('@/app/extension/bridge', () => ({ useExtensionStatus: vi.fn() }))
 vi.mock('@/app/extension/installable', () => ({ canInstallExtension: vi.fn() }))
 
@@ -21,7 +19,7 @@ function browser(status: ExtensionStatus, installable: boolean) {
   vi.mocked(useExtensionStatus).mockReturnValue(status)
   vi.mocked(canInstallExtension).mockReturnValue(installable)
 }
-beforeEach(() => { vi.mocked(track).mockClear(); browser('absent', false) })
+beforeEach(() => { localStorage.clear(); browser('absent', false) })
 
 const today = utcDay(new Date())
 const booking: Sponsorship = {
@@ -47,7 +45,7 @@ describe('SponsorBlock', () => {
   })
 
   it('renders on the server with no script or inline handler', () => {
-    const markup = renderToStaticMarkup(<SponsorBlock sponsorship={booking} page={{ kind: 'blog', slug: 'x' }} onFollow={() => {}} />)
+    const markup = renderToStaticMarkup(<SponsorBlock sponsorship={booking} page={{ kind: 'blog', slug: 'x' }} />)
     expect(markup).not.toMatch(/<script|\son[a-z]+=/i)
     expect(markup).toContain('data-sponsorship="acme-now"')
   })
@@ -67,11 +65,10 @@ describe('PageSponsor', () => {
     expect(block.textContent).toContain('From String Utility BeltAdvertise here')
   })
 
-  it("shows today's sponsor and reports a click by ids only", () => {
+  it("shows today's sponsor", () => {
     render(<PageSponsor page={{ kind: 'recipe', slug: 'decode-saml-request' }} sponsorships={[booking]} className="mt-3" />)
     expect(screen.getByRole('complementary', { name: 'Sponsor' }).className).toBe('sponsor mt-3')
-    fireEvent.click(screen.getByRole('link', { name: /Acme/ }))
-    expect(track).toHaveBeenCalledWith('sponsor_click', { sponsorship_id: 'acme-now', sponsor_page: 'recipes/decode-saml-request' })
+    expect(screen.getByRole('link', { name: /Acme/ }).getAttribute('href')).toContain('utm_content=recipes%2Fdecode-saml-request')
   })
 })
 
@@ -112,11 +109,10 @@ describe('HousePromo', () => {
     expect(promoOn({ kind: 'utility', id: 'csv_to_json' })).toBe('vscode')
   })
 
-  it('reports a click as an integration click from the promo, and marks the integrations seen', () => {
+  it('marks the integrations seen when followed', () => {
     browser('absent', true)
     render(<PageSponsor page={trim} sponsorships={[]} />)
     fireEvent.click(screen.getByRole('link', { name: /String Utility Belt for Chrome/ }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'chrome', source: 'promo', sponsor_page: 'util/trim' })
     expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
   })
 
@@ -135,8 +131,6 @@ describe('HousePromo', () => {
     expect(link.getAttribute('href')).toBe('/integrations/#mcp-server-for-ai-agents')
     expect(link.hasAttribute('target')).toBe(false)
     expect(link.hasAttribute('rel')).toBe(false)
-    fireEvent.click(link)
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'mcp', source: 'promo', sponsor_page: 'util/sha3' })
   })
 
   it('gives way to a paid sponsor', () => {

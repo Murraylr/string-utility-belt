@@ -266,11 +266,10 @@ describe('buildSeo over a built dist/', () => {
       expect(ld.map(d => d['@type'])[1], slug).toBe('BreadcrumbList')
     }
     expect(html(read(dist, 'privacy/index.html')).title).toBe('Privacy Policy | String Utility Belt')
-    // the Google Analytics disclosures, with the opt-out links
+    // what leaves the browser: no cookies, Cloudflare's cookieless page counts
     const privacy = html(read(dist, 'privacy/index.html')).querySelector('#root main')!
-    expect(privacy.textContent).toContain('Google Analytics sets no cookies')
-    expect([...privacy.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual(
-      expect.arrayContaining(['https://tools.google.com/dlpage/gaoptout', 'https://adssettings.google.com/']))
+    expect(privacy.textContent).toContain('The site sets no cookies.')
+    expect([...privacy.querySelectorAll('a')].map(a => a.getAttribute('href'))).toContain('https://www.cloudflare.com/privacypolicy/')
   })
 
   it('writes a 404 page that is kept out of the index and links back into the site', () => {

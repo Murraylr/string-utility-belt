@@ -7,9 +7,8 @@ import { loadState } from '@/lib/persist'
 import { traceRecipe, TRACE_ELEMENT_ID, type RecipeTrace } from '@/recipes/trace'
 import recipe from '@/recipes/excel-column-to-sql-in-clause/recipe'
 import { execute } from '@/app/engine/executor'
-import { track } from '@/app/analytics/analytics'
 import { toPipelineSteps } from '@/recipes/types'
-import { countSteps, STEP_TYPES } from '@/core/steps'
+import { STEP_TYPES } from '@/core/steps'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension } from '@/app/extension/fakeExtension'
 import * as openInEditor from './openInEditor'
@@ -18,10 +17,6 @@ import RecipePage from './RecipePage'
 vi.mock('@/app/engine/executor', async importOriginal => {
   const mod = await importOriginal<typeof import('@/app/engine/executor')>()
   return { ...mod, execute: vi.fn(mod.execute) }
-})
-vi.mock('@/app/analytics/analytics', async importOriginal => {
-  const mod = await importOriginal<typeof import('@/app/analytics/analytics')>()
-  return { ...mod, track: vi.fn(), trackPipelineEvent: vi.fn() }
 })
 
 const SLUG = recipe.slug
@@ -41,7 +36,7 @@ function embed(trace: unknown) {
   document.head.appendChild(script)
 }
 
-beforeEach(() => { vi.mocked(execute).mockClear(); vi.mocked(track).mockClear() })
+beforeEach(() => { vi.mocked(execute).mockClear() })
 afterEach(() => {
   document.getElementById(TRACE_ELEMENT_ID)?.remove()
   document.querySelector('meta[name="robots"]')?.remove()
@@ -101,7 +96,6 @@ describe('RecipePage', () => {
     fireEvent.change(input(), { target: { value: "x\nx\ny'z\n" } })
     await waitFor(() => expect(output().textContent).toBe("IN ('x', 'y''z')"))
     expect(execute).toHaveBeenCalled()
-    expect(track).toHaveBeenCalledWith('recipe_input_edit', { recipe_id: SLUG })
   })
 
   it('ignores an embedded trace that does not match this recipe (another recipe, or an older build)', async () => {
@@ -120,7 +114,6 @@ describe('RecipePage', () => {
     // a textarea reports CRLF as LF; the run itself uses the example's exact text
     expect(input().value).toBe(second.input.replace(/\r\n/g, '\n'))
     await waitFor(() => expect(output().textContent).toBe(second.output))
-    expect(track).toHaveBeenCalledWith('recipe_sample_select', { recipe_id: SLUG, sample_id: second.id })
   })
 
   it('holds back a very large input instead of showing an earlier result next to it, until asked to run it', async () => {
@@ -194,10 +187,9 @@ describe('RecipePage', () => {
     expect(loadState().steps.map(s => ('utilityId' in s ? s.utilityId : ''))).toEqual(recipe.steps.map(s => ('utilityId' in s ? s.utilityId : '')))
     expect(loadState().name).toBe(recipe.name)
     expect(sessionStorage.getItem('sub:handoff-input')).toBe('mine')
-    expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe', recipe_id: SLUG, step_count: countSteps(toPipelineSteps(recipe.steps)) })
   })
 
-  it('follows the share link instead when storage refuses the recipe, counting it as a share-link load', async () => {
+  it('follows the share link instead when storage refuses the recipe', async () => {
     history.replaceState(null, '', `/recipes/${SLUG}/`)
     const follow = vi.spyOn(openInEditor, 'followLink').mockImplementation(() => {})
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError') })
@@ -208,7 +200,6 @@ describe('RecipePage', () => {
       fireEvent.click(open)
       expect(follow).toHaveBeenCalledWith(open.getAttribute('href'))
       expect(location.pathname).toBe(`/recipes/${SLUG}/`)
-      expect(track).toHaveBeenCalledWith('pipeline_load', { method: 'recipe_share_link', recipe_id: SLUG, step_count: countSteps(toPipelineSteps(recipe.steps)) })
     } finally {
       vi.restoreAllMocks()
     }
@@ -220,7 +211,6 @@ describe('RecipePage', () => {
     await screen.findByRole('heading', { level: 1, name: recipe.name })
     fireEvent.click(screen.getByRole('link', { name: 'Open in the editor' }), { ctrlKey: true })
     expect(location.pathname).toBe(`/recipes/${SLUG}/`)
-    expect(track).not.toHaveBeenCalledWith('pipeline_load', expect.anything())
   })
 
   it('copies the output', async () => {

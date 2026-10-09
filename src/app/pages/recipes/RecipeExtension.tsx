@@ -3,7 +3,6 @@ import { Puzzle } from 'lucide-react'
 import { unknownStepTypes, type BridgeResult } from '@/core/extensionBridge'
 import type { PipelineStep } from '@/types/utility'
 import { usePref } from '@/app/prefs'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { sendToExtension, useExtensionStatus } from '@/app/extension/bridge'
 import { canInstallExtension } from '@/app/extension/installable'
 import { ChromeIcon } from '@/app/integrations/icons'
@@ -13,7 +12,6 @@ interface Props {
   steps: PipelineStep[]
   /** Saved under this name: the extension's right-click menu shows it. */
   name: string
-  recipeId: string
 }
 
 const HEADING = 'Use this recipe on any web page'
@@ -32,7 +30,7 @@ function Strip({ text, children }: { text: string; children: React.ReactNode }) 
   )
 }
 
-function SaveRecipe({ steps, name, recipeId, stepTypes }: Props & { stepTypes: readonly string[] }) {
+function SaveRecipe({ steps, name, stepTypes }: Props & { stepTypes: readonly string[] }) {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<BridgeResult | null>(null)
   // an extension that predates one of the recipe's step types would drop those steps while saving
@@ -44,7 +42,6 @@ function SaveRecipe({ steps, name, recipeId, stepTypes }: Props & { stepTypes: r
     const answer = await sendToExtension({ type: 'save-pipeline', name, steps })
     setBusy(false)
     setResult(answer)
-    if (answer.ok) trackPipelineEvent('extension_pipeline_save', steps, { source: 'recipe', recipe_id: recipeId })
   }
 
   return (
@@ -62,12 +59,11 @@ function SaveRecipe({ steps, name, recipeId, stepTypes }: Props & { stepTypes: r
   )
 }
 
-function GetExtension({ recipeId }: { recipeId: string }) {
+function GetExtension() {
   const [, setIntegrationsSeen] = usePref(INTEGRATIONS_SEEN_PREF, false)
   const [followed, setFollowed] = useState(false)
 
   const onClick = () => {
-    track('integration_click', { integration: 'chrome', source: 'recipe', recipe_id: recipeId })
     setIntegrationsSeen(true)
     setFollowed(true)
   }
@@ -95,6 +91,6 @@ function GetExtension({ recipeId }: { recipeId: string }) {
 export default function RecipeExtension(props: Props) {
   const status = useExtensionStatus()
   if (status === 'checking') return null
-  if (status === 'absent') return canInstallExtension() ? <GetExtension recipeId={props.recipeId} /> : null
+  if (status === 'absent') return canInstallExtension() ? <GetExtension /> : null
   return <SaveRecipe {...props} stepTypes={status.stepTypes} />
 }

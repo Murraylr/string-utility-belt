@@ -3,7 +3,6 @@ import { Check, Copy, Download, Search, Pencil, Trash2, Upload, X } from 'lucide
 import { asText, isBytes } from '@/core/coerce'
 import { countSteps, stepId } from '@/core/steps'
 import { useTool } from '@/app/ToolContext'
-import { track } from '@/app/analytics/analytics'
 import { sameSteps } from './autosave'
 import Dialog from './Dialog'
 import { downloadText } from './download'
@@ -91,7 +90,6 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
     }
     dispatch({ type: 'LOAD', steps: entry.steps, name: entry.name, libraryId: entry.id })
     if (entry.input !== undefined) setInput(entry.input)
-    track('pipeline_load', { method: 'library', step_count: countSteps(entry.steps) })
     onClose()
   }
 
@@ -100,7 +98,6 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
       type: 'INSERT_STEPS',
       steps: [{ id: stepId('macro'), type: 'macro', name: entry.name, steps: entry.steps, macroId: entry.id, enabled: true }],
     })
-    track('pipeline_load', { method: 'library_macro', step_count: countSteps(entry.steps) })
     onClose()
   }
 
@@ -155,11 +152,6 @@ export default function LibraryDialog({ onClose, initialTab = 'pipeline', return
     dispatch({ type: 'SET_META', name: entry.name, libraryId: entry.id })
     setSaveName(entry.name)
     setStatus(`Saved “${entry.name}”.`)
-    track('pipeline_save', {
-      save_mode: mode === 'save' && state.libraryId ? 'update' : 'new',
-      include_input: saveInputToo && !bytesInput ? 'yes' : 'no',
-      step_count: countSteps(state.steps),
-    })
   })
 
   const exportAll = () => attempt(() => downloadText('sub-library.json', exportLibrary()))

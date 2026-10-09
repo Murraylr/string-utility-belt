@@ -37,7 +37,7 @@ Sponsorships are sold by the month, for a flat fee quoted with the current traff
 
 ## What makes it different
 
-- **No scripts, pixels or cookies.** We host your logo and render the block as part of the page. Your link is a plain link with UTM parameters, so you measure visits and sign-ups in your own analytics. Each month we report the page views of your pages and the clicks on your link.
+- **No scripts, pixels or cookies.** We host your logo and render the block as part of the page. Your link is a plain link with UTM parameters, so you measure visits and sign-ups in your own analytics. Each month we report the page views of your pages; the clicks show up in your own analytics, under your campaign.
 - **Never in the work.** Sponsors never appear inside the pipeline editor, in embedded pipelines, or in the extensions, the command-line tool or the MCP server. People paste tokens and secrets into this site, so no sponsor's code ever runs beside them.
 - **Content first.** Sponsorship never changes which utilities exist, what they do, or what a guide recommends.
 

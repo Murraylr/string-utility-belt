@@ -1,18 +1,18 @@
 ---
 title: Privacy Policy
-description: How String Utility Belt handles data: your text is processed in your browser, and Google Analytics measures visits to the site. Your choices explained.
+description: How String Utility Belt handles data: your text is processed in your browser, the site sets no cookies, and visits are counted without tracking you.
 ---
 
 # Privacy Policy
 
-*Last updated: 8 October 2026*
+*Last updated: 9 October 2026*
 
 String Utility Belt ("we", "us") runs the website at stringutilitybelt.com and publishes the String Utility Belt browser extension, VS Code extension, command-line tool (`subelt`), MCP server and code library. This policy explains what information is collected when you use the site or these tools, why, and the choices you have. Questions about it can be sent to [contact@stringutilitybelt.com](mailto:contact@stringutilitybelt.com).
 
 ## The short version
 
 - The text, files and pipelines you work with are processed **in your browser**. They are not uploaded to our servers, except as described under "Features that contact our server".
-- We use **Google Analytics** to understand how the site is used. Outside the European Economic Area, the UK and Switzerland it uses cookies; inside them it runs without cookies. Our host, Cloudflare, also counts page views and load times, without cookies.
+- The site sets **no cookies** and runs no tracking scripts. Our host, Cloudflare, counts page views and measures load times without cookies or identifiers.
 - The site loads **no advertising scripts**. A sponsor's message, where a page shows one, is part of the page itself: it runs no code, sets no cookies and never sees what you type.
 - There are no user accounts, and we do not sell your personal information.
 - The browser extension, VS Code extension, command-line tool, MCP server and library run on your own device. They contain no analytics or ads and do not send your text anywhere, except when you choose to open text in the website (see "Browser and editor extensions and developer tools").
@@ -31,7 +31,7 @@ When you create a share link, your pipeline (and your input, if you choose to in
 
 - **Fetching a web address.** When you load input from a URL, your browser first tries to fetch it directly. If the other site does not allow that, the request goes through our fetch proxy, which retrieves the address on your behalf and passes the response back to you. The proxy sees the address you requested and your IP address; it does not keep the content it fetches.
 - **The public API.** Developers can send text to our HTTP API to run a pipeline. Requests are processed in memory and are not stored.
-- **Text sent to the site in its web address.** When you share text into the installed app from your device's share menu, or use the browser extension's "Open in String Utility Belt", the text is placed in the page address (`?text=…`), so it is sent to our host along with the request for the page, and may appear in the short-lived operational logs described next. The site then processes it in your browser like any other input. Our analytics never report it: only the page path and campaign tags are sent to Google Analytics.
+- **Text sent to the site in its web address.** When you share text into the installed app from your device's share menu, or use the browser extension's "Open in String Utility Belt", the text is placed in the page address (`?text=…`), so it is sent to our host along with the request for the page, and may appear in the short-lived operational logs described next. The site then processes it in your browser like any other input. Our analytics never record it: Cloudflare Web Analytics drops everything after a `?` or `#` in the address.
 
 To protect the fetch proxy and the API from abuse, your IP address is used for rate limiting. It is held briefly in memory and is not written to storage. Requests to them, and page requests that carry text in their address, may also appear in short-lived operational logs (for example the requested address, the time and the response status), which we use only to keep the service running and secure, and which are deleted automatically.
 
@@ -58,29 +58,29 @@ These run entirely on your computer, on the text you give them, and make no netw
 
 ## Cookies and analytics
 
-### Google Analytics
-
-We use Google Analytics to count visits and see which pages and tools are used, so we know what to improve. It uses cookies (such as `_ga`) to tell visits apart and collects information such as the pages you view, how long you stay, the site that referred you, your browser and device type, and your approximate location. It also records which features you use, for example which utilities you add to a pipeline, how large your input is (as a rough size range), that you copied or downloaded a result, copied a command-line or AI agent snippet, or followed a sponsor's link, or what you typed into a utility search box. It never records the text, files or share links you work with: a shared pipeline is reported only as "a shared pipeline". To tell people from automated traffic, the site notes whether a visit showed real mouse, keyboard or touch input, and remembers that on your device. With Google signals turned on, Google also associates this data with your Google account if you are signed in and have allowed ads personalization, which gives us aggregate reports on visitors' age range, gender and interests; you can stop this in [Google's Ads Settings](https://adssettings.google.com/). We only look at this information in aggregate. Google Analytics keeps it for 14 months, after which only aggregated totals remain. We also export it daily to Google BigQuery, Google's cloud database, in our own Google Cloud project in the United States, so we can analyse it; that copy is deleted after 14 months too. You can prevent Google Analytics from recognising your visits with the [Google Analytics opt-out browser add-on](https://tools.google.com/dlpage/gaoptout).
+The site sets no cookies.
 
 ### Cloudflare Web Analytics
 
-Cloudflare, our host, also counts page views and measures how fast pages load, using a small script it adds to each page. It sets no cookies, stores nothing on your device and uses no identifier that persists between visits. For a sample of page views it records the page's address and the page that referred you, both without anything after a `?` or `#` (so never the input carried in a share link), your browser, operating system and device type, your country, and loading and responsiveness timings (including which page element they concern, but never its text). We see only aggregate reports. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
+Cloudflare, our host, counts page views and measures how fast pages load, using a small script it adds to each page. It sets no cookies, stores nothing on your device and uses no identifier that persists between visits. For a sample of page views it records the page's address and the page that referred you, both without anything after a `?` or `#` (so never the input carried in a share link), your browser, operating system and device type, your country, and loading and responsiveness timings (including which page element they concern, but never its text). We see only aggregate reports. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/).
 
 ### Google Fonts
 
 The site's typefaces are loaded from Google Fonts. To download them, your browser sends your IP address and browser details to Google. Google Fonts does not set cookies.
 
-## Your choices and consent
+### Google Analytics (until October 2026)
 
-- **In the European Economic Area, the UK and Switzerland**, Google Analytics sets no cookies. Google receives only cookieless measurements (the page, the time, your browser and device type, and an approximate location derived from your IP address), with no identifier that persists between visits. The site shows no consent message, so this does not change.
-- **Everywhere**, you can block or delete cookies in your browser settings, or use the opt-out add-on above. The tools keep working without cookies.
-- **In some US states**, you may have the right to opt out of the "sale" or "sharing" of personal information for targeted advertising. We do not sell personal information for money. To stop Google using your visits for personalised ads, use [Google's Ads Settings](https://adssettings.google.com/) as described above.
+Until 9 October 2026 the site also used Google Analytics, which counted visits and which features were used, but never the text, files or share links you worked with. We have removed it. What it collected before then is kept by Google for 14 months from collection, together with the copy we exported to Google BigQuery, and is then deleted. You can ask us to delete it sooner (see "Your rights").
+
+## Your choices
+
+The site sets no cookies, and the tools work the same whatever your browser blocks. You can delete everything the site keeps on your device by clearing this site's data in your browser settings.
 
 ## Your rights
 
-Depending on where you live (for example under the GDPR or the UK GDPR), you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data collected by Google, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
+Depending on where you live (for example under the GDPR or the UK GDPR), you may have the right to access, correct or delete personal data about you, to restrict or object to its processing, and to withdraw consent at any time. Because the site has no accounts and keeps your tool data on your own device, we usually hold no personal data that identifies you. For data Google receives when it serves the site's fonts, see [Google's privacy policy](https://policies.google.com/privacy), which also explains how to exercise your rights with Google. You can contact us with any request, and you can complain to your local data protection authority.
 
-We process data on the basis of our legitimate interest in understanding how the site is used (analytics, without cookies where the law requires consent for them) and in running a secure and reliable service (rate limiting and operational logs).
+We process data on the basis of our legitimate interest in understanding how the site is used (cookieless page counts) and in running a secure and reliable service (rate limiting and operational logs).
 
 ## Children
 

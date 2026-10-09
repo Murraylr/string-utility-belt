@@ -1,14 +1,14 @@
 import React from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { track } from '@/app/analytics/analytics'
+import { readPref } from '@/app/prefs'
+import { INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 import ExtraPromo from './ExtraPromo'
 import PagePromo from './PagePromo'
 import { PROMOS, promoPlan, type ExtraSlot, type PromoPage } from './promos'
 
-vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
-beforeEach(() => vi.mocked(track).mockClear())
+beforeEach(() => localStorage.clear())
 
 const SLOTS: ExtraSlot[] = ['inline', 'rail', 'strip']
 
@@ -65,10 +65,10 @@ describe('ExtraPromo', () => {
 })
 
 describe('PagePromo', () => {
-  it('reports a click with its slot as the source', () => {
+  it('marks the integrations seen when followed', () => {
     render(<PagePromo page={{ kind: 'index' }} slot="rail" />)
     fireEvent.click(screen.getByRole('link', { name: PROMOS.mcp.cta }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'mcp', source: 'promo_rail' })
+    expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
   })
 
   it.each([

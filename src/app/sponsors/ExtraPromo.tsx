@@ -10,7 +10,7 @@ const LABEL = 'From String Utility Belt'
  * (`strip`). Labelled as ours, never "Sponsor"; hidden on phones, where none of the tools
  * can be installed. A store page opens in a new tab, the CLI and MCP sections of
  * /integrations/ in place. Free of browser APIs, so the pre-render can show it; the app
- * passes `onFollow` to report the click.
+ * passes `onFollow` to mark the integrations seen.
  */
 export default function ExtraPromo({ id, slot, onFollow, className = '' }: {
   id: PromoId

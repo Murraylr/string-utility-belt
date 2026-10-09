@@ -1,7 +1,6 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Wand2, X } from 'lucide-react'
 import { useTool } from '@/app/ToolContext'
-import { trackUtilityAdd } from '@/app/analytics/analytics'
 import type { Suggestion } from '@/core/detect'
 import { useMagic } from './useMagic'
 import { clampedPanelLeft } from './panelPosition'
@@ -136,7 +135,6 @@ export default function MagicButton() {
 
   const pick = (s: Suggestion) => {
     dispatch({ type: 'ADD_STEP', utilityId: s.step.utilityId, params: seededParams(s.step) })
-    trackUtilityAdd(s.step.utilityId, 'magic')
     closeDialog(true)
   }
 
@@ -156,7 +154,6 @@ export default function MagicButton() {
         type: 'INSERT_STEPS',
         steps: result.steps.map(s => ({ id: '', utilityId: s.utilityId, params: seededParams(s), enabled: true })),
       })
-      for (const s of result.steps) trackUtilityAdd(s.utilityId, 'magic_decode_all')
       closeDialog(true)
     } finally {
       if (decodeCtrl.current === ctrl) decodeCtrl.current = null

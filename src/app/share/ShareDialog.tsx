@@ -7,7 +7,6 @@ import { useTool } from '@/app/ToolContext'
 import Dialog from '@/app/library/Dialog'
 import Tabs from '@/app/library/Tabs'
 import { downloadText, safeFilename } from '@/app/library/download'
-import { trackPipelineEvent } from '@/app/analytics/analytics'
 
 /** Above this many characters a share link risks being truncated by chat apps, some browsers and old proxies. */
 const WARN_LENGTH = 8000
@@ -61,24 +60,17 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
     statusTimer.current = setTimeout(() => setCopyStatus('idle'), 1500)
   }, [])
 
-  // what was shared, never the link itself (it carries the input when included)
-  const trackShare = (event: string) =>
-    trackPipelineEvent(event, state.steps, { include_input: sharedInput !== undefined ? 'yes' : 'no' })
-
-  const copy = useCallback(async (text: string, onCopied: () => void) => {
+  const copy = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
       announce('copied')
     } catch {
       announce('error')
-      return
     }
-    onCopied()
   }, [announce])
 
   const downloadJson = () => {
     downloadText(`${safeFilename(state.name || '')}.json`, JSON.stringify(doc, null, 2))
-    trackShare('share_json_download')
   }
 
   const copyLabel = (idle: string) => copyStatus === 'copied' ? 'Copied' : copyStatus === 'error' ? 'Copy failed' : idle
@@ -102,7 +94,7 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
           <label className="sr-only" htmlFor="share-url">link</label>
           <textarea id="share-url" readOnly className={textareaClass} value={shareUrl} onFocus={e => e.currentTarget.select()} />
           <div className="flex flex-wrap items-center gap-2.5">
-            <button className="btn-inv h-[30px] px-3" onClick={() => copy(shareUrl, () => trackShare('share_link_copy'))}>
+            <button className="btn-inv h-[30px] px-3" onClick={() => copy(shareUrl)}>
               <CopyIcon size={13} aria-hidden />{copyLabel('Copy link')}
             </button>
             <span className="font-mono text-[11px] text-muted">{shareUrl.length.toLocaleString()} characters</span>
@@ -119,7 +111,7 @@ export default function ShareDialog({ onClose, returnFocus }: ShareDialogProps) 
           <label className="sr-only" htmlFor="embed-snippet">embed snippet</label>
           <textarea id="embed-snippet" readOnly className={textareaClass} value={embedSnippet} onFocus={e => e.currentTarget.select()} />
           <div className="flex flex-wrap items-center gap-2.5">
-            <button className="btn-inv h-[30px] px-3" onClick={() => copy(embedSnippet, () => trackShare('embed_code_copy'))}>
+            <button className="btn-inv h-[30px] px-3" onClick={() => copy(embedSnippet)}>
               <CopyIcon size={13} aria-hidden />{copyLabel('Copy snippet')}
             </button>
             <span className="font-mono text-[11px] text-muted">{embedSnippet.length.toLocaleString()} characters</span>

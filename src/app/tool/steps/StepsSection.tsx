@@ -14,7 +14,6 @@ import { isUtilityStep } from '@/core/steps'
 import { registry } from '@/app/registry'
 import { utilityOptionGroups } from '@/app/utilityOptions'
 import { useTool } from '@/app/ToolContext'
-import { trackUtilityAdd } from '@/app/analytics/analytics'
 import EngineControls from '@/app/engine/EngineControls'
 import MagicButton from '@/app/magic/MagicButton'
 import { seededParams } from '@/app/magic/seed'
@@ -48,10 +47,8 @@ export default function StepsSection() {
     // after the picker (and its focused search box) unmounts
     requestAnimationFrame(() => opener.current?.focus())
   }
-  const addStep = (id: string, source: 'picker' | 'quick_add') => {
+  const addStep = (id: string) =>
     dispatch({ type: 'ADD_STEP', utilityId: id, params: defaultParams(registry.get(id)) })
-    trackUtilityAdd(id, source)
-  }
 
   // What a step appended at the end will receive — the pipeline's actual output type
   // when a run has finished, else the last enabled utility's declared output, else
@@ -68,10 +65,8 @@ export default function StepsSection() {
   const settled = hasSteps && liveRun && !!run.result && !run.running && !run.partial
   const { suggestions } = useDecodeSuggestions(run.result?.out ?? '', { limit: 1, enabled: settled })
   const next = settled ? suggestions?.[0] : undefined
-  const pickNext = (s: Suggestion) => {
+  const pickNext = (s: Suggestion) =>
     dispatch({ type: 'ADD_STEP', utilityId: s.step.utilityId, params: seededParams(s.step) })
-    trackUtilityAdd(s.step.utilityId, 'suggestion')
-  }
 
   return (
     <SelectionProvider>
@@ -110,11 +105,11 @@ export default function StepsSection() {
               )}
               <Select value="" aria-label="quick add a utility" options={quickOptions}
                 className="h-[30px] w-44 sm:ml-auto text-[12.5px] text-muted"
-                onChange={id => { if (id) addStep(id, 'quick_add') }} />
+                onChange={id => { if (id) addStep(id) }} />
             </div>
             {showPicker && (
               <UtilityPicker previousProduces={previousProduces} onClose={closePicker}
-                onPick={id => { addStep(id, 'picker'); closePicker() }} />
+                onPick={id => { addStep(id); closePicker() }} />
             )}
           </div>
         </div>

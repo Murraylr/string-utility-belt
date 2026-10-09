@@ -8,7 +8,6 @@ import { pickDownload, triggerDownload } from '@/app/io/download'
 import OutputView from '@/app/io/OutputView'
 import StatsBar from '@/app/io/StatsBar'
 import { useTool } from '@/app/ToolContext'
-import { sizeBucket, trackInput, trackPipelineEvent, valueSize } from '@/app/analytics/analytics'
 import { useIOLayout, useOutputDiff } from './ioLayout'
 
 const TYPE_LABEL = { string: 'text', json: 'json', bytes: 'bytes' } as const
@@ -39,16 +38,10 @@ export default function OutputPanel() {
   const download = useCallback(() => {
     const plan = pickDownload(value, state.name)
     triggerDownload(plan)
-    trackPipelineEvent('output_download', state.steps, { file_type: plan.mime, output_size: sizeBucket(valueSize(value)) })
-  }, [value, state.name, state.steps])
-
-  const onCopy = useCallback((format: string) => {
-    trackPipelineEvent('output_copy', state.steps, { format, output_size: sizeBucket(valueSize(value)) })
-  }, [value, state.steps])
+  }, [value, state.name])
 
   const useAsInput = () => {
     setInput(value)
-    trackInput('output', value)
   }
 
   const layoutLabel = beside ? 'Show the output below the steps' : 'Show the output beside the steps'
@@ -104,7 +97,7 @@ export default function OutputPanel() {
       </section>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <CopyAsMenu value={value} label="Copy" onCopy={onCopy} />
+        <CopyAsMenu value={value} label="Copy" />
         <button type="button" className="btn" onClick={download}>
           <Download size={14} aria-hidden /> Download
         </button>

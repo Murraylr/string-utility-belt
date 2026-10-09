@@ -11,7 +11,6 @@ import type { UtilityMeta } from '@/core/registry'
 import { fuzzyScore, searchUtilities, type FuzzyRange } from '@/app/search/fuzzy'
 import Highlight from '@/app/search/Highlight'
 import { pushRecent, pushRecentCommand, useRecentCommands, useRecents } from '@/app/favorites'
-import { useSearchTracking } from '@/app/analytics/analytics'
 import {
   commands, commandById, dispatchToolCommand, hasToolBridge, runInTool,
   EVENT_OPEN_PALETTE, type Command, type OpenPaletteDetail,
@@ -150,7 +149,6 @@ export default function CommandPalette() {
       .slice(0, MAX_RESULTS)
       .map(x => x.item)
   }, [mode, query, recents, recentCommands, toolAvailable])
-  useSearchTracking('command_palette', open ? query : '', items.length)
 
   const clampedIndex = Math.max(0, Math.min(activeIndex, items.length - 1))
 

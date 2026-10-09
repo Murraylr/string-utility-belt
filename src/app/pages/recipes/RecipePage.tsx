@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { registry } from '@/app/registry'
 import { formatForDisplay } from '@/core/coerce'
-import { countSteps } from '@/core/steps'
 import { isPlainLeftClick } from '@/lib/router'
 import { execute } from '@/app/engine/executor'
 import { useRunner } from '@/app/engine/useRunner'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { RECIPE_INDEX } from '@/recipes/_generated/index'
 import { RECIPES_PATH, toPipelineSteps, type Recipe } from '@/recipes/types'
 import type { PipelineStep } from '@/types/utility'
@@ -157,12 +155,7 @@ function RecipeView({ data }: { data: RecipeData }) {
     return `${where} failed: ${failed.message}`
   }, [run.failure, live, result, steps])
 
-  const edited = useRef(false)
   const onInput = (value: string) => {
-    if (!edited.current) {
-      edited.current = true
-      track('recipe_input_edit', { recipe_id: recipe.slug })
-    }
     setLive(true)
     // custom text: no example is selected any more, so clicking one brings it back
     setSampleId('')
@@ -171,7 +164,6 @@ function RecipeView({ data }: { data: RecipeData }) {
   const onSample = (id: string) => {
     const next = recipe.samples.find(s => s.id === id)
     if (!next || id === sampleId) return
-    track('recipe_sample_select', { recipe_id: recipe.slug, sample_id: id })
     setLive(true)
     setSampleId(id)
     setInput(next.input)
@@ -181,13 +173,9 @@ function RecipeView({ data }: { data: RecipeData }) {
   const onOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (!isPlainLeftClick(e, e.currentTarget)) return
     e.preventDefault()
-    const outcome = openPipelineInEditor({ steps, input, name: recipe.name })
-    if (outcome === 'kept') return
     // without storage the editor cannot be handed the recipe: its share link carries the
     // steps and the example input (never typed text), and runs without storage
-    const method = outcome === 'opened' ? 'recipe' : 'recipe_share_link'
-    track('pipeline_load', { method, recipe_id: recipe.slug, step_count: countSteps(steps) })
-    if (outcome === 'failed') followLink(openHref)
+    if (openPipelineInEditor({ steps, input, name: recipe.name }) === 'failed') followLink(openHref)
   }
 
   const [copied, setCopied] = useState(false)
@@ -197,10 +185,9 @@ function RecipeView({ data }: { data: RecipeData }) {
     return () => clearTimeout(timer)
   }, [copied])
   const onCopy = () => {
-    navigator.clipboard?.writeText(output).then(() => {
-      setCopied(true)
-      trackPipelineEvent('output_copy', steps, { format: 'raw', source: 'recipe', recipe_id: recipe.slug })
-    }, () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
+    navigator.clipboard?.writeText(output).then(
+      () => setCopied(true),
+      () => { /* clipboard refused (permissions, insecure context): nothing was copied */ })
   }
 
   return (
@@ -230,7 +217,7 @@ function RecipeView({ data }: { data: RecipeData }) {
           onCopy={onCopy}
           copied={copied}
           notice={notice}
-          extension={<RecipeExtension steps={steps} name={recipe.name} recipeId={recipe.slug} />}
+          extension={<RecipeExtension steps={steps} name={recipe.name} />}
         />
       )}
     />

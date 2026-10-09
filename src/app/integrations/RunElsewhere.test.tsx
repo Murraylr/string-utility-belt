@@ -39,38 +39,33 @@ describe('RunElsewhere', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('links to the CLI and MCP install sections, reporting which was followed', () => {
-    const onDocsClick = vi.fn()
-    render(<RunElsewhere meta={META} input="" params={{}} onDocsClick={onDocsClick} />)
+  it('links to the CLI and MCP install sections', () => {
+    render(<RunElsewhere meta={META} input="" params={{}} />)
     const cli = within(section()).getByRole('link', { name: 'subelt command-line tool' })
     const mcp = within(section()).getByRole('link', { name: 'MCP server' })
     expect(cli.getAttribute('href')).toBe('/integrations/#command-line-tool')
     expect(mcp.getAttribute('href')).toBe('/integrations/#mcp-server-for-ai-agents')
-    fireEvent.click(mcp)
-    expect(onDocsClick).toHaveBeenCalledWith('mcp')
   })
 
-  it('copies a command, confirms it briefly and reports which one', async () => {
+  it('copies a command and confirms it briefly', async () => {
     vi.useFakeTimers()
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.assign(navigator, { clipboard: { writeText } })
-    const onCopy = vi.fn()
-    render(<RunElsewhere meta={META} input="hi" params={{}} onCopy={onCopy} />)
+    render(<RunElsewhere meta={META} input="hi" params={{}} />)
     const [cliCopy] = within(section()).getAllByRole('button', { name: 'Copy' })
     await act(async () => { fireEvent.click(cliCopy) })
     expect(writeText).toHaveBeenCalledWith('npx subelt -t hi demo')
-    expect(onCopy).toHaveBeenCalledWith('cli')
     expect(cliCopy.textContent).toBe('Copied')
     act(() => { vi.advanceTimersByTime(1500) })
     expect(cliCopy.textContent).toBe('Copy')
   })
 
-  it('reports nothing when the clipboard refuses', async () => {
+  it('confirms nothing when the clipboard refuses', async () => {
     Object.assign(navigator, { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } })
-    const onCopy = vi.fn()
-    render(<RunElsewhere meta={META} input="hi" params={{}} onCopy={onCopy} />)
-    await act(async () => { fireEvent.click(within(section()).getAllByRole('button', { name: 'Copy' })[1]) })
-    expect(onCopy).not.toHaveBeenCalled()
+    render(<RunElsewhere meta={META} input="hi" params={{}} />)
+    const mcpCopy = within(section()).getAllByRole('button', { name: 'Copy' })[1]
+    await act(async () => { fireEvent.click(mcpCopy) })
+    expect(mcpCopy.textContent).toBe('Copy')
   })
 
   it('pre-renders without browser APIs, escaping what it shows', () => {

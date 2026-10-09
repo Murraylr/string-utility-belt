@@ -1,6 +1,5 @@
 import React from 'react'
 import { usePref } from '@/app/prefs'
-import { track } from '@/app/analytics/analytics'
 import { useT } from '@/app/i18n/useT'
 import { INTEGRATION_LINKS, INTEGRATIONS_SEEN_PREF, type IntegrationId } from './links'
 import { INTEGRATION_ICONS as ICONS } from './icons'
@@ -33,10 +32,7 @@ export default function IntegrationsNav() {
         return (
           <a key={link.id} href={link.href} aria-label={name} title={name}
             {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
-            onClick={() => {
-              track('integration_click', { integration: link.id })
-              setSeen(true)
-            }}
+            onClick={() => setSeen(true)}
             className="size-[30px] grid place-items-center rounded-md hover:bg-surface-2">
             <Icon size={15} className="shrink-0" />
           </a>

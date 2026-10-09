@@ -7,22 +7,16 @@ import excelToSql from '@/recipes/excel-column-to-sql-in-clause/recipe'
 import kubernetesSecret from '@/recipes/decode-kubernetes-secret/recipe'
 import { CHROME_WEB_STORE_URL, INTEGRATIONS_SEEN_PREF } from '@/app/integrations/links'
 import { readPref } from '@/app/prefs'
-import { track, trackPipelineEvent } from '@/app/analytics/analytics'
 import { __resetExtensionBridgeForTests } from '@/app/extension/bridge'
 import { installFakeExtension, type FakeExtension } from '@/app/extension/fakeExtension'
 import RecipeExtension from './RecipeExtension'
-
-vi.mock('@/app/analytics/analytics', async importOriginal => {
-  const mod = await importOriginal<typeof import('@/app/analytics/analytics')>()
-  return { ...mod, track: vi.fn(), trackPipelineEvent: vi.fn() }
-})
 
 const STEPS = toPipelineSteps(excelToSql.steps)
 const SAVE = { name: 'Save to extension' }
 const GET = { name: /get the free extension/i }
 
 function renderStrip(steps = STEPS, name = excelToSql.name) {
-  return render(<RecipeExtension steps={steps} name={name} recipeId={excelToSql.slug} />)
+  return render(<RecipeExtension steps={steps} name={name} />)
 }
 
 /** A desktop Chromium browser, which can install from the Chrome Web Store. */
@@ -34,8 +28,6 @@ const settle = () => new Promise(r => setTimeout(r, 0))
 
 beforeEach(() => {
   __resetExtensionBridgeForTests()
-  vi.mocked(track).mockClear()
-  vi.mocked(trackPipelineEvent).mockClear()
 })
 
 afterEach(() => {
@@ -57,14 +49,13 @@ describe('RecipeExtension without the extension', () => {
     expect(screen.queryByRole('button', SAVE)).toBeNull()
   })
 
-  it('reports the click, marks the integrations as seen and says how to finish', async () => {
+  it('marks the integrations as seen and says how to finish', async () => {
     desktopChromium()
     renderStrip()
     const link = screen.getByRole('link', GET)
     link.addEventListener('click', e => e.preventDefault()) // jsdom cannot open a tab
     await userEvent.setup().click(link)
 
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'chrome', source: 'recipe', recipe_id: excelToSql.slug })
     expect(readPref(INTEGRATIONS_SEEN_PREF, false)).toBe(true)
     expect(screen.getByRole('status')).toHaveTextContent('Installed it? Reload this page to save this recipe to it.')
   })
@@ -109,15 +100,13 @@ describe('RecipeExtension with the extension', () => {
     await userEvent.setup().click(save)
     expect(await screen.findByText(`Saved "${excelToSql.name}" — it's on the right-click menu.`)).toBeInTheDocument()
     expect(lastRequest()).toEqual({ type: 'save-pipeline', name: excelToSql.name, steps: STEPS })
-    expect(trackPipelineEvent).toHaveBeenCalledWith('extension_pipeline_save', STEPS, { source: 'recipe', recipe_id: excelToSql.slug })
   })
 
-  it('shows a refusal as a warning and reports nothing', async () => {
+  it('shows a refusal as a warning', async () => {
     fake.respond(() => ({ ok: false, error: 'The extension holds up to 50 pipelines.' }))
     renderStrip()
     await userEvent.setup().click(await screen.findByRole('button', SAVE))
     expect(await screen.findByText('The extension holds up to 50 pipelines.')).toHaveClass('text-warn')
-    expect(trackPipelineEvent).not.toHaveBeenCalled()
   })
 
   it('is offered even where the store is not (the extension is what counts)', async () => {

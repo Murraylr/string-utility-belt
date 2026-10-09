@@ -1,11 +1,8 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { track } from '@/app/analytics/analytics'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { readPref, writePref } from '@/app/prefs'
 import IntegrationsNav from './IntegrationsNav'
 import { CHROME_WEB_STORE_URL, INTEGRATIONS_SEEN_PREF, VSCODE_MARKETPLACE_URL } from './links'
-
-vi.mock('@/app/analytics/analytics', () => ({ track: vi.fn() }))
 
 const nav = () => screen.getByRole('navigation', { name: 'Integrations' })
 // stands in for the app's link handler (or the browser): jsdom cannot follow a link
@@ -14,7 +11,6 @@ const holdNavigation = (e: MouseEvent) => e.preventDefault()
 describe('IntegrationsNav', () => {
   beforeEach(() => {
     localStorage.clear()
-    vi.mocked(track).mockClear()
     document.addEventListener('click', holdNavigation)
   })
   afterEach(() => document.removeEventListener('click', holdNavigation))
@@ -67,11 +63,5 @@ describe('IntegrationsNav', () => {
     expect(screen.getByTestId('integrations-new')).toBeTruthy()
     act(() => writePref(INTEGRATIONS_SEEN_PREF, true))
     expect(screen.queryByTestId('integrations-new')).toBeNull()
-  })
-
-  it('reports which integration was followed, never anything else', () => {
-    render(<IntegrationsNav />)
-    fireEvent.click(within(nav()).getByRole('link', { name: /^VS Code/ }))
-    expect(track).toHaveBeenCalledWith('integration_click', { integration: 'vscode' })
   })
 })
