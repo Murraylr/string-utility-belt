@@ -1,7 +1,7 @@
 /**
  * The tool page's steps column: the steps toolbar, the step list (or the empty state),
  * and the add row (add step, branch, run on each, a suggested next step, quick add,
- * presets) with the inline utility picker under it. Mounts the top-level selection
+ * recipes) with the inline utility picker under it. Mounts the top-level selection
  * provider, so the toolbar's Select toggle and the list share one selection.
  */
 import React, { useMemo, useRef, useState } from 'react'
@@ -104,8 +104,8 @@ export default function StepsSection() {
               {next && <SuggestionPill suggestion={next} onPick={pickNext} hint />}
               {!hasSteps && (
                 <button type="button" className="h-[30px] px-1.5 text-[12.5px] text-muted underline underline-offset-[3px] hover:text-fg"
-                  onClick={() => window.dispatchEvent(new CustomEvent('sub:open-presets'))}>
-                  or start from a preset
+                  onClick={() => window.dispatchEvent(new CustomEvent('sub:open-recipes'))}>
+                  or start from a recipe
                 </button>
               )}
               <Select value="" aria-label="quick add a utility" options={quickOptions}

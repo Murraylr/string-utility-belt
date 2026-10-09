@@ -122,7 +122,7 @@ export default function Docs() {
               </li>
               <li className="md-li">
                 Add steps. <strong>Add step</strong> opens a picker where you can filter by category or search by name.
-                You can also use the <strong>quick add</strong> dropdown, start from a <strong>preset</strong>, or press{' '}
+                You can also use the <strong>quick add</strong> dropdown, start from a <strong>recipe</strong>, or press{' '}
                 <Code>Ctrl K</Code> to open the command palette.
               </li>
               <li className="md-li">New steps go to the end of the pipeline. The result updates as you type. You don't need to run anything.</li>

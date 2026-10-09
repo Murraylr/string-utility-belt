@@ -5,6 +5,7 @@ import type { Recipe } from '../types'
 export const RECIPE_LOADERS: Record<string, () => Promise<{ recipe: Recipe; guide: string }>> = {
   "bulk-utm-link-builder": () => Promise.all([import('../bulk-utm-link-builder/recipe'), import('../bulk-utm-link-builder/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "clean-chatgpt-text": () => Promise.all([import('../clean-chatgpt-text/recipe'), import('../clean-chatgpt-text/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "clean-text-pasted-from-word": () => Promise.all([import('../clean-text-pasted-from-word/recipe'), import('../clean-text-pasted-from-word/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "convert-unix-timestamps-in-json": () => Promise.all([import('../convert-unix-timestamps-in-json/recipe'), import('../convert-unix-timestamps-in-json/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "decode-cloudwatch-logs-data": () => Promise.all([import('../decode-cloudwatch-logs-data/recipe'), import('../decode-cloudwatch-logs-data/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "decode-flask-session-cookie": () => Promise.all([import('../decode-flask-session-cookie/recipe'), import('../decode-flask-session-cookie/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
@@ -15,6 +16,7 @@ export const RECIPE_LOADERS: Record<string, () => Promise<{ recipe: Recipe; guid
   "env-file-to-kubernetes-secret": () => Promise.all([import('../env-file-to-kubernetes-secret/recipe'), import('../env-file-to-kubernetes-secret/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "excel-column-to-sql-in-clause": () => Promise.all([import('../excel-column-to-sql-in-clause/recipe'), import('../excel-column-to-sql-in-clause/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "extract-domains-from-urls": () => Promise.all([import('../extract-domains-from-urls/recipe'), import('../extract-domains-from-urls/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
+  "extract-unique-emails-from-text": () => Promise.all([import('../extract-unique-emails-from-text/recipe'), import('../extract-unique-emails-from-text/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "fix-bash-bad-interpreter": () => Promise.all([import('../fix-bash-bad-interpreter/recipe'), import('../fix-bash-bad-interpreter/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "fix-pdf-line-breaks": () => Promise.all([import('../fix-pdf-line-breaks/recipe'), import('../fix-pdf-line-breaks/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
   "hash-email-list-for-customer-match": () => Promise.all([import('../hash-email-list-for-customer-match/recipe'), import('../hash-email-list-for-customer-match/guide.md?raw')]).then(([r, g]) => ({ recipe: r.default, guide: g.default })),
