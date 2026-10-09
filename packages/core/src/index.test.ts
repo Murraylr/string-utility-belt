@@ -65,6 +65,12 @@ describe('run', () => {
     expect(result.out).toBe('hi')
   })
 
+  it('reads the share link on the last line, in linear time however many #/p/ precede it', async () => {
+    const doc: PipelineDoc = { v: 2, steps: [{ id: 'a', utilityId: 'trim' }] }
+    const result = await run('  hi  ', `${'#/p/a'.repeat(100_000)}\nhttps://example.com/#/p/${encodeShare(doc)}`)
+    expect(result.out).toBe('hi')
+  })
+
   it('reads the payload after #/embed/ too', async () => {
     const doc: PipelineDoc = { v: 2, steps: [{ id: 'a', utilityId: 'trim' }] }
     const result = await run('  hi  ', `https://example.com/app/#/embed/${encodeShare(doc)}`)

@@ -121,8 +121,12 @@ export function plainParams(raw: unknown): Record<string, unknown> {
 /** A `#/p/<payload>` (or `#/embed/<payload>`) link, a full URL carrying one, or a bare payload. */
 export function shareToPayload(share: string): string {
   const s = share.trim()
-  const m = s.match(/#\/(?:p|embed)\/(.+)$/)
-  return m ? m[1] : s
+  // the payload runs to the end and never spans a line break: look on the last line only, and
+  // slice rather than capture `(.+)$`, which retries from every earlier `#/p/` (quadratic)
+  const lastLine = s.slice(Math.max(...['\n', '\r', '\u2028', '\u2029'].map(c => s.lastIndexOf(c))) + 1)
+  const m = /#\/(?:p|embed)\//.exec(lastLine)
+  const payload = m ? lastLine.slice(m.index + m[0].length) : ''
+  return payload || s
 }
 
 export const errorMessage = (e: unknown): string => (e instanceof Error ? e.message : String(e))

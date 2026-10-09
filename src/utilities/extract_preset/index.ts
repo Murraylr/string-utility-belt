@@ -53,9 +53,11 @@ const RE_DATE = new RegExp(
 const RE_TIME =
   /(?<![\d:])(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:\s*[ap]\.?m\.?)?(?:\s*(?:Z|[-+]\d{2}:?\d{2}))?(?![\d:])|\b(?:1[0-2]|0?[1-9])\s*[ap]\.?m\.?/gi
 const RE_PHONE = /(?:\+\d{1,3}[ .-]?)?(?:\(\d{1,4}\)[ .-]?)?\d{1,4}(?:[ .-]\d{2,5}){1,4}|\+\d{7,15}/g
-// attribute values are parsed properly so a `>` inside them does not end the tag early
+// attribute values are parsed properly so a `>` inside them does not end the tag early. Each
+// attribute is atomic (`(?=(…))\1`): whitespace and `=` could otherwise be split between an
+// empty value and the next attribute in exponentially many ways before a match fails
 const RE_HTMLTAG =
-  /<!--[\s\S]*?-->|<\/?[a-z][a-z0-9:._-]*(?:\s+[^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'`>]*))?)*\s*\/?>/gi
+  /<!--[\s\S]*?-->|<\/?[a-z][a-z0-9:._-]*(?:\s+(?=([^\s"'>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'`>]*))?))\1)*\s*\/?>/gi
 const RE_WORD = /[\p{L}\p{M}\p{N}]+(?:['’-][\p{L}\p{M}\p{N}]+)*/gu
 const RE_DOMAIN = /\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}\b/gi
 const RE_PATH = /(?<![:\w/])(?:[a-z]:[\\/]|~\/|\.{1,2}\/|\/)[^\s"'<>|]*/gi

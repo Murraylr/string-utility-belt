@@ -87,6 +87,10 @@ describe('looksLikeHtml / looksLikeXml — anchoring', () => {
     expect(looksLikeHtml('<!-- generated -->\n<!doctype html><p>x</p>')).toBe(true)
     expect(looksLikeHtml('# Notes\n\n```\n<html>\n```')).toBe(false)
   })
+  it('rejects a long run of unterminated comments in linear time', () => {
+    expect(looksLikeHtml(`<!--${'--><!--'.repeat(5000)}`)).toBe(false)
+    expect(looksLikeHtml('<!-- a -- b ---><!---->\n<html>')).toBe(true)
+  })
   it('accepts a self-closing root but not two sibling roots', () => {
     expect(looksLikeXml('<root/>')).toBe(true)
     expect(looksLikeXml('<root attr="1" />')).toBe(true)

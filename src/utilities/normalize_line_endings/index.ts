@@ -114,7 +114,9 @@ const util: Utility = {
     if (finalNewline === 'add') {
       if (!out.endsWith(eol)) out += eol
     } else if (finalNewline === 'remove') {
-      out = out.replace(/(?<![\r\n])(?:\r\n|\n|\r)+$/, '')
+      // a character class, not `\r\n|\n|\r`: that splits a CRLF run two ways per line and
+      // backtracks exponentially on blank lines that are not at the end
+      out = out.replace(/(?<![\r\n])[\r\n]+$/, '')
     }
 
     return out

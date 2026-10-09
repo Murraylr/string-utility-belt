@@ -32,8 +32,11 @@ export interface RunOpts {
 /** The payload of a `…#/p/<payload>` / `…#/embed/<payload>` URL, or the text itself when it is a bare payload. */
 function payloadOf(s: string): string {
   const text = s.trim()
-  const route = /#\/(?:p|embed)\/(.*)$/.exec(text)
-  if (route) return route[1]
+  // the payload runs to the end and never spans a line break: look on the last line only, and
+  // slice rather than capture `(.*)$`, which retries from every earlier `#/p/` (quadratic)
+  const lastLine = text.slice(Math.max(...['\n', '\r', '\u2028', '\u2029'].map(c => text.lastIndexOf(c))) + 1)
+  const route = /#\/(?:p|embed)\//.exec(lastLine)
+  if (route) return lastLine.slice(route.index + route[0].length)
   return text.includes('/') ? text.slice(text.lastIndexOf('/') + 1) : text
 }
 

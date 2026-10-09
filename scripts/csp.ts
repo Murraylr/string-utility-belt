@@ -34,7 +34,8 @@ export function hashSource(script: string): string {
   return `'sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}'`
 }
 
-const SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi
+// a browser ends script data at `</script` followed by whitespace, `/` or `>`, attributes and all
+const SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script(?:[\t\n\f\r /][^>]*)?>/gi
 /** `type` values a browser executes; anything else (`application/json`, `application/ld+json`) is a data block. */
 const EXECUTABLE_TYPES = new Set(['', 'module', 'text/javascript', 'application/javascript', 'text/ecmascript', 'application/ecmascript'])
 

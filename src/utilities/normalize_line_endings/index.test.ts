@@ -80,4 +80,9 @@ describe('normalize_line_endings', () => {
     expect(() => util.apply('a\nb', { mode: 'nel' } as any)).toThrow(/mode must be one of/)
     expect(() => util.apply('a\nb', { finalNewline: 'maybe' } as any)).toThrow(/finalNewline must be one of/)
   })
+
+  it('removes a final CRLF run in linear time, even after many blank lines mid-text', async () => {
+    const text = `a${'\r\n'.repeat(5000)}b\r\n\r\n`
+    expect(await util.apply(text, { mode: 'crlf', finalNewline: 'remove' })).toBe(`a${'\r\n'.repeat(5000)}b`)
+  })
 })

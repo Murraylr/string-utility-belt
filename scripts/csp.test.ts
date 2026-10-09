@@ -68,6 +68,11 @@ describe('pageViolations', () => {
     expect(pageViolations('<script>a()\r\nb()</script>', allow('a()\nb()'))).toEqual([])
   })
 
+  it('ends a script where a browser does, so a data block cannot hide the script after it', () => {
+    const page = '<script type="application/json">{}</script foo><script>a()</script\t><script>b()</script/>'
+    expect(pageViolations(page, allow('b()'))).toEqual([expect.stringMatching(/^inline script 'sha256-/)])
+  })
+
   it('reports inline event handlers and javascript: URLs, but not text inside script data blocks', () => {
     const problems = pageViolations(
       '<img src="x.png" onerror="go()"><a href="javascript:go()">x</a>' +

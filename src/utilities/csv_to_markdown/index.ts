@@ -109,9 +109,12 @@ function resolveDelimiter(raw: unknown, text: string): string {
   return delimiter === '' ? detectDelimiter(text) : delimiter
 }
 
-/** Cells cannot contain a raw pipe or a line break inside a markdown table. */
+/**
+ * Cells cannot contain a raw pipe or a line break inside a markdown table. Backslashes right
+ * before a pipe are doubled too: `a\|b` must not become `a\\|b`, where the pipe ends the cell.
+ */
 function escapeCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\r\n|\r|\n/g, '<br>')
+  return value.replace(/(\\*)\|/g, (_m, slashes: string) => `${slashes}${slashes}\\|`).replace(/\r\n|\r|\n/g, '<br>')
 }
 
 /** Width in code points, so an astral character counts as one column. */
