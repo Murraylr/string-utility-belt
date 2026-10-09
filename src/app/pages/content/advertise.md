@@ -5,7 +5,7 @@ description: Sponsor String Utility Belt and reach developers as they decode, ha
 
 # Advertise on String Utility Belt
 
-String Utility Belt is a free toolbox of more than 240 string and data utilities that people chain into pipelines and run in their browser: encoders, decoders, hashes, ciphers, JSON, YAML, CSV and SQL converters, and date, number and colour tools. Every utility has its own page with a live playground and a guide, and step-by-step [recipes](/recipes/) solve specific jobs such as decoding a SAML request, a Kubernetes secret or CloudWatch Logs data.
+String Utility Belt is a free toolbox of more than 240 string and data utilities that people chain into pipelines and run in their browser: encoders, decoders, hashes, ciphers, JSON, YAML, CSV and SQL converters, and date, number and colour tools. Every utility has its own page with a live playground and a guide, and step-by-step [presets](/presets/) solve specific jobs such as decoding a SAML request, a Kubernetes secret or CloudWatch Logs data.
 
 Sponsoring a page puts your product in front of someone who is in the middle of technical work, on a page about exactly that work.
 
@@ -27,7 +27,7 @@ Every quote comes with current figures straight from our analytics: monthly page
 | Format | Where it appears | Best for |
 | --- | --- | --- |
 | Topic sponsorship | Every page on one topic: for example auth and tokens, Kubernetes and cloud, security and hashing, or data formats | Products that solve the problem the reader is working on |
-| Site-wide sponsorship | Every utility, recipe and blog page that no topic sponsor holds | Broad developer awareness |
+| Site-wide sponsorship | Every utility, preset and blog page that no topic sponsor holds | Broad developer awareness |
 
 A sponsorship is one block on the page, labelled **Sponsor**: your logo, your name, a line of text up to 100 characters and a link that opens in a new tab. It sits at the end of the page's header, above the content, on desktop and mobile. Send the logo square, as SVG, PNG or WebP up to 50 KB. It is shown at 48 × 48 pixels. Each page shows one sponsor at a time, and a topic sponsorship is exclusive for its term.
 

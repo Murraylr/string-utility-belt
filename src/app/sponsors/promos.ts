@@ -59,8 +59,8 @@ const TOPIC_PROMOS: Partial<Record<SponsorTopicId, PromoId>> = {
 }
 
 /**
- * Which tool a page promotes: its topic's (`TOPIC_PROMOS`); on other recipe pages, which
- * offer the browser extension themselves (`RecipeExtension`), the VS Code extension;
+ * Which tool a page promotes: its topic's (`TOPIC_PROMOS`); on other preset pages, which
+ * offer the browser extension themselves (`PresetExtension`), the VS Code extension;
  * elsewhere the browser extension where this browser can install it and has not
  * (`chromeInstallable`), else the VS Code extension.
  */
@@ -71,7 +71,7 @@ export function choosePromo(page: SponsorPage, chromeInstallable: boolean): Prom
 /** The promo a page shows whatever the browser, if its choice does not depend on it (so it can be pre-rendered). */
 export function fixedPromo(page: SponsorPage): PromoId | undefined {
   const topic = topicOf(page)
-  return (topic && TOPIC_PROMOS[topic]) ?? (page.kind === 'recipe' ? 'vscode' : undefined)
+  return (topic && TOPIC_PROMOS[topic]) ?? (page.kind === 'preset' ? 'vscode' : undefined)
 }
 
 /**

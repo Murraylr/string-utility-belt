@@ -43,11 +43,11 @@ describe('canonicalPath / contentGroup', () => {
     expect(contentGroup({ name: 'utility', params: { id: 'x' } })).toBe('utility_docs')
   })
 
-  it('reports recipe pages by their pre-rendered paths, in their own content groups', () => {
-    expect(canonicalPath({ name: 'recipes', params: {} }, '/')).toBe('/recipes/')
-    expect(canonicalPath({ name: 'recipe', params: { slug: 'decode-saml-request' } }, '/')).toBe('/recipes/decode-saml-request/')
-    expect(contentGroup({ name: 'recipes', params: {} })).toBe('recipe_index')
-    expect(contentGroup({ name: 'recipe', params: { slug: 'x' } })).toBe('recipe')
+  it('reports preset pages by their pre-rendered paths, in their own content groups', () => {
+    expect(canonicalPath({ name: 'presets', params: {} }, '/')).toBe('/presets/')
+    expect(canonicalPath({ name: 'preset', params: { slug: 'decode-saml-request' } }, '/')).toBe('/presets/decode-saml-request/')
+    expect(contentGroup({ name: 'presets', params: {} })).toBe('preset_index')
+    expect(contentGroup({ name: 'preset', params: { slug: 'x' } })).toBe('preset')
   })
 
   it('reports an unknown path as-is, and an unknown hash route as /404/', () => {

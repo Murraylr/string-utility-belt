@@ -1,0 +1,7 @@
+# Redirects Workers Static Assets answers before serving a file:
+# https://developers.cloudflare.com/workers/static-assets/redirects/
+# `vite preview` applies them too (scripts/redirects.ts), so the E2E suite sees what production does.
+
+# Presets were called recipes, at /recipes/<slug>/, until October 2026: old links and search results land on the new pages.
+/recipes /presets/ 301
+/recipes/* /presets/:splat 301

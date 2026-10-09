@@ -20,7 +20,7 @@ export const TOOL_COMMAND_EVENT = 'sub:tool-command'
 export const EVENT_MAGIC = 'sub:magic'
 export const EVENT_OPEN_SHARE = 'sub:open-share'
 export const EVENT_OPEN_LIBRARY = 'sub:open-library'
-export const EVENT_OPEN_RECIPES = 'sub:open-recipes'
+export const EVENT_OPEN_PRESETS = 'sub:open-presets'
 export const EVENT_TOGGLE_THEME = 'sub:toggle-theme'
 export const EVENT_OPEN_SHORTCUTS = 'sub:open-shortcuts'
 export const EVENT_OPEN_PALETTE = 'sub:open-palette'
@@ -141,12 +141,12 @@ export const commands: Command[] = [
   { id: 'magic-decode', title: 'Magic decode', group: 'Run', keywords: ['magic', 'detect', 'decode', 'auto'], run: fireInTool(EVENT_MAGIC) },
   { id: 'share', title: 'Share', group: 'Pipeline', keywords: ['share', 'link', 'url'], run: fireInTool(EVENT_OPEN_SHARE) },
   { id: 'library', title: 'Library', group: 'Pipeline', keywords: ['library', 'save', 'load', 'pipelines'], run: fireInTool(EVENT_OPEN_LIBRARY) },
-  { id: 'recipes', title: 'Start from a recipe', group: 'Pipeline', keywords: ['recipes', 'presets', 'examples', 'templates', 'gallery'], run: fireInTool(EVENT_OPEN_RECIPES) },
+  { id: 'presets', title: 'Start from a preset', group: 'Pipeline', keywords: ['presets', 'recipes', 'examples', 'templates', 'gallery'], run: fireInTool(EVENT_OPEN_PRESETS) },
   { id: 'toggle-theme', title: 'Toggle theme', group: 'View', keywords: ['theme', 'dark', 'light', 'mode'], run: fire(EVENT_TOGGLE_THEME) },
   { id: 'shortcuts', title: 'Keyboard shortcuts', group: 'Help', keywords: ['shortcuts', 'help', 'keys'], run: fire(EVENT_OPEN_SHORTCUTS) },
   { id: 'goto-tool', title: 'Go to Tool', group: 'Navigate', keywords: ['tool', 'home', 'pipeline'], run: goToTool },
   { id: 'goto-utilities', title: 'Go to Utilities', group: 'Navigate', keywords: ['utilities', 'browse', 'index'], run: () => { location.hash = '#/utilities' } },
-  { id: 'goto-recipes', title: 'Go to Recipes', group: 'Navigate', keywords: ['recipes', 'examples', 'how to', 'pipelines'], run: () => { location.hash = '#/recipes' } },
+  { id: 'goto-presets', title: 'Go to Presets', group: 'Navigate', keywords: ['presets', 'recipes', 'examples', 'how to', 'pipelines'], run: () => { location.hash = '#/presets' } },
   { id: 'goto-blog', title: 'Go to Blog', group: 'Navigate', keywords: ['blog'], run: () => { location.hash = '#/blog' } },
   { id: 'goto-changelog', title: 'Go to Changelog', group: 'Navigate', keywords: ['changelog', 'history'], run: () => { location.hash = '#/changelog' } },
 ]

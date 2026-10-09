@@ -19,23 +19,23 @@ import { parseChangelog, summarizeMarkdown, type ChangelogRelease } from './chan
 import {
   renderUtilityContent, renderUtilitiesIndexContent, renderBlogIndexContent, renderBlogPostContent,
   renderChangelogContent, renderHomeContent, renderDocsContent, renderSitePageContent, renderNotFoundContent,
-  renderSiteChrome, renderRecipeContent, renderRecipesIndexContent, type PageSponsorSpec,
+  renderSiteChrome, renderPresetContent, renderPresetsIndexContent, type PageSponsorSpec,
 } from './content'
 import { loadOgFonts, renderOgPng, runPool } from './og'
 import { newest, readSourceDates, type SourceDates } from './lastmod'
 import { parseGuide, renderGuideHtml, renderMarkdownDocument, type Guide } from '../../src/app/pages/guide'
 import { relatedUtilities } from '../../src/app/pages/related'
-import { featuredRecipes, recipesUsing, relatedRecipes, stepCountText } from '../../src/app/pages/recipes/recipeHelpers'
-import { traceRecipe, TRACE_ELEMENT_ID, type PipelineRunner, type RecipeTrace } from '../../src/recipes/trace'
-import type { Recipe, RecipeMeta } from '../../src/recipes/types'
-import { metaOfRecipe } from '../gen-recipes'
+import { featuredPresets, presetsUsing, relatedPresets, stepCountText } from '../../src/app/pages/presets/presetHelpers'
+import { tracePreset, TRACE_ELEMENT_ID, type PipelineRunner, type PresetTrace } from '../../src/presets/trace'
+import type { Preset, PresetMeta } from '../../src/presets/types'
+import { metaOfPreset } from '../gen-presets'
 import { sponsorFor, utcDay, type SponsorPage, type Sponsorship } from '../../src/app/sponsors/sponsors'
 import { SPONSORSHIPS } from '../../src/app/sponsors/sponsorships'
 import { parseSitePage } from '../../src/app/pages/sitePages'
 import {
   SITE_NAME, SITE_URL, pageTitle, displayName, HOME_TITLE, homeDescription, utilitiesTitle, utilitiesDescription,
   BLOG_TITLE, BLOG_DESCRIPTION, CHANGELOG_TITLE, CHANGELOG_DESCRIPTION, DOCS_TITLE, DOCS_DESCRIPTION,
-  RECIPES_TITLE, recipesDescription,
+  PRESETS_TITLE, presetsDescription,
 } from '../../src/app/pages/seo'
 
 export const SITE = SITE_URL
@@ -59,8 +59,8 @@ export interface BuildSeoOptions {
   examples?: Record<string, UtilityExample[]>
   /** Guide markdown by utility id (default: each `src/utilities/<id>/guide.md` under `root`). */
   guides?: Record<string, string>
-  /** Recipes to publish, each with its guide markdown (default: every `src/recipes/<slug>/` under `root`). */
-  recipes?: Array<{ recipe: Recipe; guide: string }>
+  /** Presets to publish, each with its guide markdown (default: every `src/presets/<slug>/` under `root`). */
+  presets?: Array<{ preset: Preset; guide: string }>
   /** When each source file under `root` last changed (default: its git history, `readSourceDates`). */
   sourceDates?: SourceDates
   /** Booked sponsorships (default: `SPONSORSHIPS`); pages show those live on `now`'s UTC day. */
@@ -131,19 +131,19 @@ function webApplicationLd(meta: UtilityMeta, url: string, description: string) {
   }
 }
 
-/** A recipe page: a technical how-to whose subject is the utilities it chains. */
-function techArticleLd(recipe: Recipe, url: string, description: string, image: string, utilities: UtilityMeta[]) {
+/** A preset page: a technical how-to whose subject is the utilities it chains. */
+function techArticleLd(preset: Preset, url: string, description: string, image: string, utilities: UtilityMeta[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
-    headline: recipe.name,
+    headline: preset.name,
     description,
     url,
     mainEntityOfPage: url,
     image,
     inLanguage: 'en',
-    datePublished: recipe.published,
-    dateModified: recipe.updated ?? recipe.published,
+    datePublished: preset.published,
+    dateModified: preset.updated ?? preset.published,
     author: ORGANIZATION,
     publisher: ORGANIZATION,
     isPartOf: WEBSITE,
@@ -201,7 +201,7 @@ interface PageSpec {
   published?: string
   modified?: string
   jsonLd?: unknown[]
-  /** More trusted markup for the head block (a recipe page's embedded trace). */
+  /** More trusted markup for the head block (a preset page's embedded trace). */
   head?: string[]
   content: string
 }
@@ -227,7 +227,7 @@ function readGuide(root: string, id: string): string | undefined {
   return existsSync(file) ? readFileSync(file, 'utf8') : undefined
 }
 
-function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], recipes: RecipeMeta[], sponsor?: PageSponsorSpec): PageSpec {
+function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | undefined, related: UtilityMeta[], presets: PresetMeta[], sponsor?: PageSponsorSpec): PageSpec {
   // the guide's search-facing title/description, as `UtilityDocPage` also sets them
   const name = displayName(meta.name)
   const title = pageTitle(guide?.title ?? name)
@@ -242,7 +242,7 @@ function utilPage(meta: UtilityMeta, examples: UtilityExample[], guide: Guide | 
       webApplicationLd(meta, canonical, description),
       breadcrumbLd([HOME_CRUMB, { name: 'Utilities', url: `${SITE}/utilities/` }, { name, url: canonical }]),
     ],
-    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, recipes, sponsor }),
+    content: renderUtilityContent(meta, examples, { guideHtml: guide && renderGuideHtml(guide), related, presets, sponsor }),
   }
 }
 
@@ -313,39 +313,39 @@ export function buildRssItems(posts: PublishedPost[], releases: ChangelogRelease
   return items.sort((a, b) => time(b) - time(a))
 }
 
-/** Every recipe under `root` (`src/recipes/<slug>/`), with its guide markdown. */
-async function loadRecipes(root: string): Promise<Array<{ recipe: Recipe; guide: string }>> {
-  const { STATIC_RECIPES } = await import('../../src/recipes/_generated/static')
-  return STATIC_RECIPES.map(recipe => {
-    const file = path.join(root, 'src', 'recipes', recipe.slug, 'guide.md')
-    if (!existsSync(file)) throw new Error(`[build-seo] recipe ${recipe.slug} has no guide.md`)
-    return { recipe, guide: readFileSync(file, 'utf8') }
+/** Every preset under `root` (`src/presets/<slug>/`), with its guide markdown. */
+async function loadPresets(root: string): Promise<Array<{ preset: Preset; guide: string }>> {
+  const { STATIC_PRESETS } = await import('../../src/presets/_generated/static')
+  return STATIC_PRESETS.map(preset => {
+    const file = path.join(root, 'src', 'presets', preset.slug, 'guide.md')
+    if (!existsSync(file)) throw new Error(`[build-seo] preset ${preset.slug} has no guide.md`)
+    return { preset, guide: readFileSync(file, 'utf8') }
   })
 }
 
 /**
- * Each recipe's worked example, run in Node with the static registry: the step
+ * Each preset's worked example, run in Node with the static registry: the step
  * outputs the page shows and embeds. A first sample that no longer produces its
  * expected output fails the build: the page would show a different result than
- * the recipe promises (and than `recipes.test.ts` checks).
+ * the preset promises (and than `presets.test.ts` checks).
  */
-async function traceRecipes(recipes: Recipe[]): Promise<Map<string, RecipeTrace>> {
-  const traces = new Map<string, RecipeTrace>()
-  if (recipes.length === 0) return traces
+async function tracePresets(presets: Preset[]): Promise<Map<string, PresetTrace>> {
+  const traces = new Map<string, PresetTrace>()
+  if (presets.length === 0) return traces
   const [{ staticRegistry }, { runPipeline }] = await Promise.all([
     import('../../src/utilities/static-registry'),
     import('../../src/core/runner'),
   ])
   const run: PipelineRunner = (input, steps, previews) => runPipeline(input, steps, { load: staticRegistry.load, previews, env: 'node' })
-  for (const recipe of recipes) {
-    const trace = await traceRecipe(recipe, run)
+  for (const preset of presets) {
+    const trace = await tracePreset(preset, run)
     const failed = trace.steps.find(s => s.error)
-    const hint = `run \`npm run check:recipes -- ${recipe.slug}\``
-    if (failed) throw new Error(`[build-seo] recipe ${recipe.slug}: step ${failed.id} fails on its first sample (${failed.error}) — ${hint}`)
-    if (trace.output !== recipe.samples[0].output) {
-      throw new Error(`[build-seo] recipe ${recipe.slug}: its first sample no longer produces its expected output — ${hint}`)
+    const hint = `run \`npm run check:presets -- ${preset.slug}\``
+    if (failed) throw new Error(`[build-seo] preset ${preset.slug}: step ${failed.id} fails on its first sample (${failed.error}) — ${hint}`)
+    if (trace.output !== preset.samples[0].output) {
+      throw new Error(`[build-seo] preset ${preset.slug}: its first sample no longer produces its expected output — ${hint}`)
     }
-    traces.set(recipe.slug, trace)
+    traces.set(preset.slug, trace)
   }
   return traces
 }
@@ -383,12 +383,12 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   for (const meta of manifest) {
     if (!isSafeSlug(meta.id)) throw new Error(`[build-seo] utility id ${JSON.stringify(meta.id)} is not safe as a path segment`)
   }
-  const recipes = options.recipes ?? await loadRecipes(root)
-  for (const { recipe } of recipes) {
-    if (!isSafeSlug(recipe.slug)) throw new Error(`[build-seo] recipe slug ${JSON.stringify(recipe.slug)} is not safe as a path segment`)
+  const presets = options.presets ?? await loadPresets(root)
+  for (const { preset } of presets) {
+    if (!isSafeSlug(preset.slug)) throw new Error(`[build-seo] preset slug ${JSON.stringify(preset.slug)} is not safe as a path segment`)
   }
-  const recipeMetas = recipes.map(r => metaOfRecipe(r.recipe))
-  const traces = await traceRecipes(recipes.map(r => r.recipe))
+  const presetMetas = presets.map(r => metaOfPreset(r.preset))
+  const traces = await tracePresets(presets.map(r => r.preset))
   // a processed index.html (an earlier run's output) back to the bare `vite build` template
   const template = stripRootContent(stripSeoHead(readFileSync(indexHtmlPath, 'utf8')))
   const blogDir = path.join(outDir, 'blog')
@@ -408,7 +408,7 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const guide = source === undefined ? undefined : parseGuide(source)
     if (guide) guides++
     page(path.join('util', meta.id, 'index.html'),
-      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), recipesUsing(meta.id, recipeMetas),
+      utilPage(meta, examples[meta.id] ?? [], guide, relatedUtilities(meta, manifest), presetsUsing(meta.id, presetMetas),
         sponsorOf({ kind: 'utility', id: meta.id })))
   }
   if (guides < manifest.length) log(`[build-seo] warning: ${manifest.length - guides} of ${manifest.length} utilities have no guide.md`)
@@ -426,48 +426,48 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     content: renderUtilitiesIndexContent(manifest),
   })
 
-  const recipesUrl = `${SITE}/recipes/`
-  const recipesDesc = recipesDescription(recipes.length)
-  page(path.join('recipes', 'index.html'), {
-    title: RECIPES_TITLE,
-    description: recipesDesc,
-    canonical: recipesUrl,
+  const presetsUrl = `${SITE}/presets/`
+  const presetsDesc = presetsDescription(presets.length)
+  page(path.join('presets', 'index.html'), {
+    title: PRESETS_TITLE,
+    description: presetsDesc,
+    canonical: presetsUrl,
     ogImage: DEFAULT_OG,
     jsonLd: [
-      webPageLd('CollectionPage', 'Recipes', recipesUrl, recipesDesc),
-      breadcrumbLd([HOME_CRUMB, { name: 'Recipes', url: recipesUrl }]),
+      webPageLd('CollectionPage', 'Presets', presetsUrl, presetsDesc),
+      breadcrumbLd([HOME_CRUMB, { name: 'Presets', url: presetsUrl }]),
     ],
-    content: renderRecipesIndexContent(recipeMetas),
+    content: renderPresetsIndexContent(presetMetas),
   })
   const utilityById = new Map(manifest.map(m => [m.id, m]))
-  for (const [i, { recipe, guide }] of recipes.entries()) {
+  for (const [i, { preset, guide }] of presets.entries()) {
     const parsed = parseGuide(guide)
-    const url = `${SITE}/recipes/${recipe.slug}/`
-    const ogImage = `${SITE}/og/recipes/${recipe.slug}.png`
-    const description = parsed.description ?? recipe.summary
-    const trace = traces.get(recipe.slug)!
-    const utilities = recipeMetas[i].utilityIds.flatMap(id => utilityById.get(id) ?? [])
-    page(path.join('recipes', recipe.slug, 'index.html'), {
-      title: pageTitle(parsed.title ?? recipe.name),
+    const url = `${SITE}/presets/${preset.slug}/`
+    const ogImage = `${SITE}/og/presets/${preset.slug}.png`
+    const description = parsed.description ?? preset.summary
+    const trace = traces.get(preset.slug)!
+    const utilities = presetMetas[i].utilityIds.flatMap(id => utilityById.get(id) ?? [])
+    page(path.join('presets', preset.slug, 'index.html'), {
+      title: pageTitle(parsed.title ?? preset.name),
       description,
       canonical: url,
       ogImage,
       ogType: 'article',
-      published: recipe.published,
-      modified: recipe.updated,
+      published: preset.published,
+      modified: preset.updated,
       jsonLd: [
-        techArticleLd(recipe, url, description, ogImage, utilities),
-        breadcrumbLd([HOME_CRUMB, { name: 'Recipes', url: recipesUrl }, { name: recipe.name, url }]),
+        techArticleLd(preset, url, description, ogImage, utilities),
+        breadcrumbLd([HOME_CRUMB, { name: 'Presets', url: presetsUrl }, { name: preset.name, url }]),
       ],
       // the app fills the page from this instead of re-running the pipeline on load
       head: [jsonDataScript(TRACE_ELEMENT_ID, trace)],
-      content: renderRecipeContent({
-        recipe,
+      content: renderPresetContent({
+        preset,
         guideHtml: renderMarkdownDocument(guide),
         trace,
         utility: id => utilityById.get(id),
-        related: relatedRecipes(recipe, recipeMetas),
-        sponsor: sponsorOf({ kind: 'recipe', slug: recipe.slug }),
+        related: relatedPresets(preset, presetMetas),
+        sponsor: sponsorOf({ kind: 'preset', slug: preset.slug }),
       }),
     })
   }
@@ -553,9 +553,9 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     jsonLdScript(homeApplicationLd(homeDesc)),
   ].join('\n'))
   // removable: this file is the next run's template
-  writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest, featuredRecipes(recipeMetas)), year)))
+  writeOut(outDir, 'index.html', setRemovableRootContent(home, renderSiteChrome(renderHomeContent(manifest, featuredPresets(presetMetas)), year)))
 
-  // lastmod: when the page's content last changed — its source files' last commit, or a recipe's
+  // lastmod: when the page's content last changed — its source files' last commit, or a preset's
   // or post's own dates; an index takes its newest entry. Never the build time: the site deploys
   // several times a day, and search engines ignore a lastmod that moves without the page changing.
   // Shared templates (scripts/seo/content.ts, the site chrome) and head strings (seo.ts) don't count.
@@ -563,26 +563,26 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
   const sourceDates = options.sourceDates ?? readSourceDates(root, { fallback: buildDate, log })
   // a path with no history is uncommitted: changed now
   const changed = (...paths: string[]) => sourceDates(paths) ?? buildDate
-  const recipeLastmod = (r: { published: string; updated?: string }) => r.updated ?? r.published
+  const presetLastmod = (r: { published: string; updated?: string }) => r.updated ?? r.published
   const utilityContent = new Map(manifest.map(m => [m.id, changed(`src/utilities/${m.id}`)]))
-  // its own module and guide, and the recipes it links to
-  const utilityLastmod = (id: string) => newest([utilityContent.get(id), ...recipesUsing(id, recipeMetas).map(recipeLastmod)])!
+  // its own module and guide, and the presets it links to
+  const utilityLastmod = (id: string) => newest([utilityContent.get(id), ...presetsUsing(id, presetMetas).map(presetLastmod)])!
   const utilitiesLastmod = newest([...utilityContent.values()]) ?? changed('src/utilities')
-  const recipesLastmod = newest(recipes.map(r => recipeLastmod(r.recipe))) ?? changed('src/recipes')
+  const presetsLastmod = newest(presets.map(r => presetLastmod(r.preset))) ?? changed('src/presets')
   const postLastmods = posts.map(p => {
     const dated = p.updated ?? p.date
     return dated ? toIsoDate(dated) : changed(`public/blog/${p.meta.slug}.md`)
   })
   const changelogLastmod = releases.map(r => validDate(r.date)).find(Boolean) ?? changed('CHANGELOG.md')
   const sitemapUrls: SitemapUrl[] = [
-    // the home page lists popular utilities and featured recipes
-    { loc: `${SITE}/`, lastmod: newest([utilitiesLastmod, recipesLastmod])! },
+    // the home page lists popular utilities and featured presets
+    { loc: `${SITE}/`, lastmod: newest([utilitiesLastmod, presetsLastmod])! },
     { loc: docsUrl, lastmod: changed('src/components/Docs.tsx') },
     { loc: utilitiesUrl, lastmod: utilitiesLastmod },
     ...manifest.map(m => ({ loc: `${SITE}/util/${m.id}/`, lastmod: utilityLastmod(m.id) })),
-    // the index changes when a recipe is added or revised; a recipe when it is revised
-    { loc: recipesUrl, lastmod: recipesLastmod },
-    ...recipes.map(({ recipe }) => ({ loc: `${SITE}/recipes/${recipe.slug}/`, lastmod: recipeLastmod(recipe) })),
+    // the index changes when a preset is added or revised; a preset when it is revised
+    { loc: presetsUrl, lastmod: presetsLastmod },
+    ...presets.map(({ preset }) => ({ loc: `${SITE}/presets/${preset.slug}/`, lastmod: presetLastmod(preset) })),
     { loc: blogUrl, lastmod: newest(postLastmods) ?? changed('public/blog') },
     ...posts.map((p, i) => ({ loc: `${SITE}/blog/${p.meta.slug}/`, lastmod: postLastmods[i] })),
     { loc: `${SITE}/changelog/`, lastmod: changelogLastmod },
@@ -607,9 +607,9 @@ export async function buildSeo(options: BuildSeoOptions): Promise<BuildSeoResult
     const onMissingGlyphs = (segment: string) => { for (const ch of segment) if (ch.trim()) missing.add(ch) }
     const cards = [
       ...manifest.map(m => ({ file: `${m.id}.png`, card: { name: displayName(m.name), category: m.category, description: m.description } })),
-      ...recipeMetas.map(r => ({
-        file: path.join('recipes', `${r.slug}.png`),
-        card: { name: r.name, category: `Recipe · ${stepCountText(r.stepCount)}`, description: r.chain.join(' → ') },
+      ...presetMetas.map(r => ({
+        file: path.join('presets', `${r.slug}.png`),
+        card: { name: r.name, category: `Preset · ${stepCountText(r.stepCount)}`, description: r.chain.join(' → ') },
       })),
       {
         file: 'default.png',

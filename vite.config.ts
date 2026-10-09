@@ -6,9 +6,11 @@ import { utilityManifest } from './scripts/vite-plugin-utilities'
 import { pwaServiceWorker } from './scripts/vite-plugin-pwa'
 import { utilityGuides } from './scripts/vite-plugin-guides'
 import { siteHeaders } from './scripts/headers'
+import { previewRedirects } from './scripts/redirects'
 
 export default defineConfig(async ({ mode }) => {
-  const plugins = [react(), utilityManifest(), utilityGuides(), pwaServiceWorker()];
+  // previewRedirects: the production redirects (public/_redirects), so E2E follows the same links
+  const plugins = [react(), utilityManifest(), utilityGuides(), pwaServiceWorker(), previewRedirects(path.resolve(__dirname, 'public'))];
 
   // Enable CF plugin only when not testing, and only when you actually want Workers
   const enableCloudflare =

@@ -1,10 +1,10 @@
 import React from 'react'
 import { registry, type UtilityMeta } from '@/app/registry'
-import { recipePath } from '@/recipes/types'
+import { presetPath } from '@/presets/types'
 import { utilityPath } from './related'
 import { POPULAR_UTILITY_IDS, displayName } from './seo'
-import { RECIPE_INDEX } from '@/recipes/_generated/index'
-import { featuredRecipes } from './recipes/recipeHelpers'
+import { PRESET_INDEX } from '@/presets/_generated/index'
+import { featuredPresets } from './presets/presetHelpers'
 
 interface Entry { href: string; name: string; description: string }
 
@@ -42,25 +42,25 @@ function Block({ id, title, intro, more, entries, minWidth }: {
 }
 
 /**
- * Below the pipeline editor on the home page: featured recipes and the popular
+ * Below the pipeline editor on the home page: featured presets and the popular
  * utilities as crawlable links, so the site's most-visited page leads people (and
- * search engines) to the recipe and per-utility pages. The pre-render writes the
+ * search engines) to the preset and per-utility pages. The pre-render writes the
  * same lists (`renderHomeContent`).
  */
 export default function HomeDirectory() {
   const popular = POPULAR_UTILITY_IDS.map(id => registry.get(id)).filter((m): m is UtilityMeta => !!m)
   const total = registry.list().length
-  const recipes = featuredRecipes(RECIPE_INDEX)
+  const presets = featuredPresets(PRESET_INDEX)
 
   return (
     <div className="grid gap-10 pt-10 pb-6 border-t">
-      {recipes.length > 0 && (
+      {presets.length > 0 && (
         <Block
-          id="home-recipes-h"
-          title="Recipes"
+          id="home-presets-h"
+          title="Presets"
           intro="Ready-made pipelines for jobs one tool can't do alone. Each one shows every step with its output."
-          more={{ href: '/recipes/', label: `Browse all ${RECIPE_INDEX.length} recipes` }}
-          entries={recipes.map(r => ({ href: recipePath(r.slug), name: r.name, description: r.summary }))}
+          more={{ href: '/presets/', label: `Browse all ${PRESET_INDEX.length} presets` }}
+          entries={presets.map(r => ({ href: presetPath(r.slug), name: r.name, description: r.summary }))}
           minWidth="wide"
         />
       )}

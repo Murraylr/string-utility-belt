@@ -7,7 +7,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
 const ROUTES = [
-  '/utilities/', '/util/base64_encode/', '/util/aes_decrypt/', '/recipes/', '/recipes/excel-column-to-sql-in-clause/', '/recipes/decode-jwts-in-log-file/',
+  '/utilities/', '/util/base64_encode/', '/util/aes_decrypt/', '/presets/', '/presets/excel-column-to-sql-in-clause/', '/presets/decode-jwts-in-log-file/',
   '/docs/', '/blog/', '/blog/base64-encode-decode-online/', '/changelog/', '/about/', '/privacy/', '/integrations/',
   '/advertise/', '/',
 ]

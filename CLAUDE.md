@@ -28,7 +28,7 @@ npm run build        # production build, then (postbuild) build:seo — OG image
                      # npm run check:bundle enforces bundle-budget.json
 npm run build:seo    # pre-rendered pages (/util/<id>/, /docs/, site pages, 404.html), sitemap, RSS, OG images (build:seo:fast skips OG)
 npm run check:guides -- <id…>  # check utility guides quickly (loads only those utilities; no ids = all)
-npm run check:recipes -- <slug…>  # check recipes with the build's engine (no slugs = all, plus cross-recipe rules)
+npm run check:presets -- <slug…>  # check presets with the build's engine (no slugs = all, plus cross-preset rules)
 npm run build:tools  # packages/{core,cli,mcp,extension,vscode}
 npm run test:e2e     # Playwright against a production build
 npm run deploy       # build:site (build + build:seo) + wrangler deploy (manual; releases deploy from CI)
@@ -90,34 +90,34 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   `file`, `color`, `date`, `multiselect`, `range`. Numbers/ranges that multiply output size or work
   (counts, widths, iterations) must declare `max` — the runner rejects out-of-range values.
 
-### Recipes (`src/recipes/`) — pre-rendered pipeline pages
-- A recipe is a hand-picked multi-step pipeline for one real task, published at `/recipes/<slug>/` (index: `/recipes/`).
-  Folder per recipe: `recipe.ts` (default export `Recipe`: top-level steps built with `step()`/`branch()`/`each()` from
+### Presets (`src/presets/`) — pre-rendered pipeline pages
+- A preset is a hand-picked multi-step pipeline for one real task, published at `/presets/<slug>/` (index: `/presets/`).
+  Folder per preset: `preset.ts` (default export `Preset`: top-level steps built with `step()`/`branch()`/`each()` from
   `define.ts`, each with a `why`; nested steps with `laneStep()`/`laneBranch()`/`laneEach()`, which carry no `why` and
   spell out regex condition flags as `sanitizeSteps` stores them (never raw literals); `each()` runs its steps on every
   line or JSON value; 2+ `samples` with golden outputs, the first is the page's worked example) and `guide.md` (frontmatter `title`/`description` for the page head, then prose `##` sections — no
-  example blocks). `npm run gen` also writes `src/recipes/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
-  per recipe with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.
-- Rules (`check.ts`, run by `recipes.test.ts` and `check:recipes`): real utilities/params, no `dom`/`main`/`eval`
-  steps (the build runs recipes in Node, the page in a worker), every sample reproduces its output on every run and
+  example blocks). `npm run gen` also writes `src/presets/_generated/` (`index.ts` metadata, `loaders.ts` one chunk
+  per preset with its guide via `?raw`, `static.ts` for Node); `generated.test.ts` fails when stale.
+- Rules (`check.ts`, run by `presets.test.ts` and `check:presets`): real utilities/params, no `dom`/`main`/`eval`
+  steps (the build runs presets in Node, the page in a worker), every sample reproduces its output on every run and
   at any date, **every top-level step changes some sample's output when left out** (no padding), 2+ real utility steps
-  counting nested ones (one utility wrapped in `each` is still one), title/description/primaryQuery unique across recipes
+  counting nested ones (one utility wrapped in `each` is still one), title/description/primaryQuery unique across presets
   and utility guides, `primaryQuery` neither inside a utility guide title nor containing its head term (the title before
   " — ", minus "Online": "bulk slug generator" competes with `/util/slug/`), ≥300 words of guide prose, no near-copied prose.
 - `trace.ts` turns a run into what the page shows (each step's output, what leaving each step out does).
-  `RecipeArticle` renders nested steps recursively (params, conditions, failure policy, split and merge modes):
+  `PresetArticle` renders nested steps recursively (params, conditions, failure policy, split and merge modes):
   the pre-rendered page is all a crawler sees, so a setting inside a lane must show there.
-  `scripts/seo/build.ts` traces every recipe with the static registry, **fails the build** if the first sample's
-  output drifted, renders `RecipeArticle` with `renderToStaticMarkup` and embeds the trace as
-  `<script type="application/json" id="recipe-trace">`. `RecipePage` reads that trace, so nothing runs on load; the
-  first edit runs live (worker). `main.tsx` preloads a recipe route's chunk and data before mounting
+  `scripts/seo/build.ts` traces every preset with the static registry, **fails the build** if the first sample's
+  output drifted, renders `PresetArticle` with `renderToStaticMarkup` and embeds the trace as
+  `<script type="application/json" id="preset-trace">`. `PresetPage` reads that trace, so nothing runs on load; the
+  first edit runs live (worker). `main.tsx` preloads a preset route's chunk and data before mounting
   (`preloadable`, capped at 2.5s) so React replaces the static HTML with the same page, not "Loading…".
-- The editor's Recipes button (`src/app/library/RecipesButton.tsx` → `RecipeGallery.tsx`, lazy: the index stays out of the
-  entry chunk) lists `RECIPE_INDEX` by category; "Try it" loads one recipe chunk and replaces the pipeline (undoable).
-  There are no separate presets: a shipped example pipeline is a recipe, and a one-utility example belongs on its utility.
-- "Open in the editor" (`openInEditor.ts`) autosaves the visitor's pipeline to the library, saves the recipe as the
+- The editor's Presets button (`src/app/library/PresetsButton.tsx` → `PresetGallery.tsx`, lazy: the index stays out of the
+  entry chunk) lists `PRESET_INDEX` by category; "Try it" loads one preset chunk and replaces the pipeline (undoable).
+  A shipped example pipeline is a preset, and a one-utility example belongs on its utility.
+- "Open in the editor" (`openInEditor.ts`) autosaves the visitor's pipeline to the library, saves the preset as the
   working pipeline and hands off the input; its href is a `#/p/` share link carrying only the example input.
-- A `<textarea>` turns CRLF into LF: pasted Windows line endings never reach a recipe, only the samples' own text.
+- A `<textarea>` turns CRLF into LF: pasted Windows line endings never reach a preset, only the samples' own text.
 
 ### App (`src/app/`)
 - `AppShell.tsx` — header/nav, lazy route pages, command palette, shortcuts help, theme, PWA install/update, frame-busting.
@@ -125,29 +125,32 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
 - `tool/` (tool page, IO panels, step list), `engine/` (Web Worker execution, chunked mode, cancellation,
   adaptive debounce), `io/` (file/fetch input, history, diff/hex/output views, stats, download),
   `share/` (share links, `trust.ts` quarantines `custom_js` from links), `sandbox/` (custom JS runs in a
-  sandboxed iframe + worker), `library/` (named pipelines, the editor's recipe gallery), `magic/` (auto-detect),
+  sandboxed iframe + worker), `library/` (named pipelines, the editor's preset gallery), `magic/` (auto-detect),
   `search/`, `commands/`, `pages/` (utility index/doc pages, embed, changelog), `pwa/`, `i18n/`, `theme/`.
 - Components in `src/components/` (`StepCard`, `UtilityPicker`, `ParamsEditor` + `params/*` per kind, `CopyAsMenu`, …).
 
 ### Routing (`src/lib/router.ts`)
 - Hash routes: `#/` home, `#/p/<payload>` shared pipeline, `#/embed/<payload>`, `#/utilities`,
-  `#/util/:id`, `#/recipes`, `#/recipes/:slug`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
+  `#/util/:id`, `#/presets`, `#/presets/:slug`, `#/blog`, `#/blog/:slug`, `#/changelog`, `#/docs` (usage guide),
   `#/about` | `#/privacy` | `#/contact` | `#/integrations` | `#/advertise` (`SITE_PAGES`).
-- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/recipes/<slug>/`, `/docs/`, `/blog/…`, `/about/`…);
+- A page with no hash routes by its pathname (pre-rendered `/util/<id>/`, `/utilities/`, `/presets/<slug>/`, `/docs/`, `/blog/…`, `/about/`…);
   any other non-root path is `notFound`: the tool with a "page not found" notice that sets `noindex`. The host answers
   it with `dist/404.html` and a 404 status (`not_found_handling: "404-page"`), so a new path-routed page must also be
-  pre-rendered by `scripts/seo/build.ts`, or it 404s on a direct load.
+  pre-rendered by `scripts/seo/build.ts`, or it 404s on a direct load. A page that moves keeps its old path working with a
+  301 in `public/_redirects` (presets were `/recipes/` until October 2026), which `vite preview` also applies
+  (`scripts/redirects.ts`, a deliberately small subset of the format that throws on anything else).
 - **Links use real paths, never `#/` routes** (search engines drop fragments): `href="/utilities/"`,
   `utilityPath(id)`, `/blog/<slug>/`. `AppShell`'s `useInAppLinks` turns plain clicks on any `isInAppPath`
   href into `navigateToPath` (pushState, no reload). It listens on `document`, so a link's click must bubble:
-  a React `stopPropagation()` on it (or an ancestor) means a full page load. Hash routes still resolve for old links and commands.
+  a React `stopPropagation()` on it (or an ancestor) means a full page load. Hash routes still resolve for old links and commands
+  (`#/recipes…` included).
 
 ### SEO & sponsorship
 - `src/app/pages/seo.ts` holds the search-facing strings both the app (`useDocumentMeta`) and the
   pre-render use — titles go through `pageTitle()` (site name only when it fits 60 chars). Change a
   title/description there, never in only one place: Google indexes the rendered page.
 - Sitemap `lastmod` is when the page's content last changed, never the build time: a utility page's folder's last
-  commit on the first-parent history (or a newer recipe it links to), the file a docs/site page renders, a recipe's or
+  commit on the first-parent history (or a newer preset it links to), the file a docs/site page renders, a preset's or
   post's own dates; an index takes its newest entry (`scripts/seo/lastmod.ts`, one `git log` pass). A shallow clone
   gives every git-dated page HEAD's date, so the deploy job checks out full history.
 - Site pages: `src/app/pages/content/{about,privacy,contact,integrations,advertise}.md` (frontmatter
@@ -164,21 +167,21 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   UTC `start`/`end` days, logo in `public/sponsors/`); `sponsors.test.ts` enforces `check.ts` (100-char text, https
   link, ≤50 KB logo, no script/handler/external reference in an SVG, one booking per scope per day) and that topics
   name real, non-overlapping pages. A topic booking beats a site-wide one. `SponsorBlock` is the one markup, at the end
-  of the header of utility, recipe and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
+  of the header of utility, preset and blog pages: the app renders `PageSponsor` (today's sponsor, `sponsor_click`
   event with `sponsorship_id`/`sponsor_page`), `scripts/seo/build.ts` pre-renders the sponsor live on the build day.
   Both go through `Slot` (the shared layout).
 - An unbooked slot shows one of our own tools (`HousePromo` → `PromoBlock`, `promos.ts`; one promo per
   `INTEGRATION_LINKS` entry, same links and `INTEGRATION_ICONS`): labelled "From String Utility Belt", never "Sponsor".
   A topic's own tool first (`TOPIC_PROMOS`: Kubernetes/cloud → CLI, security/hashing → MCP, data formats → VS Code),
-  then VS Code on other recipe pages (`RecipeExtension` offers the browser extension), else the browser extension where
+  then VS Code on other preset pages (`PresetExtension` offers the browser extension), else the browser extension where
   `canInstallExtension()` and it has not answered, else VS Code. Store pages open in a new tab, the CLI/MCP sections of
   /integrations/ in place. Hidden below `sm`; nothing while the extension is still answering, unless the page's promo is
-  browser-independent (`fixedPromo`). Recipe pages, whose pre-render matches the app, pre-render that promo so they
+  browser-independent (`fixedPromo`). Preset pages, whose pre-render matches the app, pre-render that promo so they
   never shift; clicks are `integration_click`, `source: 'promo'`.
 - Extra house slots (`PagePromo` → `ExtraPromo`): `inline` (banner in the content), `rail` (side-column card) and
   `strip` (under the header, rendered by `AppShell`) on content pages only. They are **never sold** — the sponsor
   slot stays the page's one sponsor, as `/advertise/` promises. **A page shows at most one promo**: `promoPlan(page)`
-  leaves every extra slot of a sponsorable page (utility, recipe, blog post) empty, gives an index or reading page one
+  leaves every extra slot of a sponsorable page (utility, preset, blog post) empty, gives an index or reading page one
   browser-independent tool with an on-site link (the MCP server) in whichever of `inline`/`rail` its layout carries
   (none carries both), and never fills the `strip`. A slot the plan leaves empty renders nothing; `e2e/promos.e2e.ts`
   fails on a desktop page showing two. Hidden below `sm`; clicks are `integration_click` with
@@ -205,9 +208,10 @@ npm run release -- plan   # what a release from HEAD would ship, at which versio
   params only) — GA's own history-based page views are off in the stream settings.
 - Utility pages report `snippet_copy {integration: 'cli'|'mcp', utility_id}` and `integration_click {source: 'doc_page'}` from
   "Run it from your terminal or AI agent" (`src/app/integrations/RunElsewhere.tsx`, commands built and CLI-tested in `snippets.ts`).
-- Recipe pages report `recipe_input_edit`, `recipe_sample_select` and the conversion `pipeline_load {method: 'recipe', recipe_id}`
-  (`method: 'recipe_gallery'` from the editor's Recipes dialog);
-  page views carry `recipe_id` (register it as a custom dimension).
+- Preset pages report `preset_input_edit`, `preset_sample_select` and the conversion `pipeline_load {method: 'preset', preset_id}`
+  (`method: 'preset_gallery'` from the editor's Presets dialog);
+  page views carry `preset_id` (register it as a custom dimension). Presets were recipes until October 2026: data from before
+  that release has `recipe_input_edit`, `recipe_sample_select`, `recipe_id`, `method: 'recipe'…` and `/recipes/` page paths.
 - Report features with `track()` / `trackUtilityAdd()` / `trackPipelineEvent()` / `trackInput()`: ids, formats,
   counts and size buckets only, never input/output text. New params need a custom dimension in GA
   (Admin → Custom definitions) to show in reports; keep the privacy policy's GA paragraph accurate.
@@ -279,16 +283,16 @@ const util: Utility = {
 export default util
 ```
 
-## Adding a recipe
+## Adding a preset
 
 1. Pick a task people search for that needs 2+ utilities, and check no utility page already owns the search:
    `grep -ih "^title:" src/utilities/*/guide.md | grep -i "<query>"` must print nothing
-2. Create `src/recipes/<slug>/recipe.ts` (see `src/recipes/excel-column-to-sql-in-clause/` and `types.ts`): steps
+2. Create `src/presets/<slug>/preset.ts` (see `src/presets/excel-column-to-sql-in-clause/` and `types.ts`): steps
    with a true `why` each (verify against the utility source), 2–4 realistic samples (example.com, RFC 5737 IPs,
    vendor test vectors — never real data or secrets); generate encoded/compressed sample data with a script
 3. Write `guide.md`: why single tools fail at this, what each step does and why the order matters, honest limits,
    how to do it elsewhere; link utilities as `[name](/util/<id>/)`
-4. `npm run check:recipes -- <slug>` until it passes, then `npm run gen`
+4. `npm run check:presets -- <slug>` until it passes, then `npm run gen`
 
 ## CI
 

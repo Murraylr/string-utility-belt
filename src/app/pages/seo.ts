@@ -57,17 +57,17 @@ export const POPULAR_UTILITY_IDS = [
   'lorem_ipsum', 'line_sort', 'line_dedupe', 'text_stats', 'slug', 'sql_format',
 ] as const
 
-/** The recipe index (`/recipes/`): prebuilt multi-step pipelines for real tasks. */
-export const RECIPES_TITLE = pageTitle('Text Pipeline Recipes for Real Tasks')
+/** The preset index (`/presets/`): prebuilt multi-step pipelines for real tasks. */
+export const PRESETS_TITLE = pageTitle('Text Pipeline Presets for Real Tasks')
 
-export const recipesDescription = (count: number): string =>
+export const presetsDescription = (count: number): string =>
   `${count} ready-made pipelines for real tasks, each step shown with its actual output. Edit any of them in your browser: nothing you paste is uploaded.`
 
 /**
- * Recipes linked from the home page and the tool's directory, in order. Slugs that
+ * Presets linked from the home page and the tool's directory, in order. Slugs that
  * no longer exist are skipped.
  */
-export const FEATURED_RECIPE_SLUGS = [
+export const FEATURED_PRESET_SLUGS = [
   'decode-saml-request', 'excel-column-to-sql-in-clause', 'fix-pdf-line-breaks',
   'decode-helm-release-secret', 'unescape-stringified-json', 'nested-json-to-csv',
 ] as const

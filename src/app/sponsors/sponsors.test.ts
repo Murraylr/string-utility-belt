@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { MANIFEST } from '@/utilities/_generated/manifest'
-import { RECIPE_INDEX } from '@/recipes/_generated/index'
+import { PRESET_INDEX } from '@/presets/_generated/index'
 import { sponsorshipProblems } from './check'
 import { MAX_SPONSOR_NAME, MAX_SPONSOR_TEXT, pageKey, sponsorFor, sponsoredHref, topicOf, utcDay, type Sponsorship } from './sponsors'
 import { SPONSORSHIPS } from './sponsorships'
@@ -17,9 +17,9 @@ const booking = (over: Partial<Sponsorship> = {}): Sponsorship => ({
 const site = booking({ id: 'wide-2026-11', scope: 'site', name: 'Wide' })
 
 describe('topics', () => {
-  it('name only real utilities and recipes, each in at most one topic', () => {
+  it('name only real utilities and presets, each in at most one topic', () => {
     const utilities = new Set(MANIFEST.map(m => m.id))
-    const recipes = new Set(RECIPE_INDEX.map(r => r.slug))
+    const presets = new Set(PRESET_INDEX.map(r => r.slug))
     const seen = new Map<string, string>()
     for (const [topic, t] of Object.entries(SPONSOR_TOPICS)) {
       for (const id of t.utilities) {
@@ -27,8 +27,8 @@ describe('topics', () => {
         expect(seen.get(`u:${id}`), `${id} is in two topics`).toBeUndefined()
         seen.set(`u:${id}`, topic)
       }
-      for (const slug of t.recipes) {
-        expect(recipes.has(slug), `${topic}: ${slug}`).toBe(true)
+      for (const slug of t.presets) {
+        expect(presets.has(slug), `${topic}: ${slug}`).toBe(true)
         expect(seen.get(`r:${slug}`), `${slug} is in two topics`).toBeUndefined()
         seen.set(`r:${slug}`, topic)
       }
@@ -37,7 +37,7 @@ describe('topics', () => {
 
   it('places a page in its topic; blog posts and other pages in none', () => {
     expect(topicOf({ kind: 'utility', id: 'jwt_decode' })).toBe('auth-tokens')
-    expect(topicOf({ kind: 'recipe', slug: 'decode-kubernetes-secret' })).toBe('kubernetes-cloud')
+    expect(topicOf({ kind: 'preset', slug: 'decode-kubernetes-secret' })).toBe('kubernetes-cloud')
     expect(topicOf({ kind: 'utility', id: 'trim' })).toBeUndefined()
     expect(topicOf({ kind: 'blog', slug: 'md5-insecure-but-useful' })).toBeUndefined()
   })
@@ -69,10 +69,10 @@ describe('sponsorFor', () => {
 
 describe('sponsoredHref', () => {
   it('adds our UTM parameters, keeps the sponsor’s own, and replaces any UTM of the same name', () => {
-    const href = new URL(sponsoredHref(booking({ url: 'https://acme.example/sso?ref=x&utm_source=old' }), { kind: 'recipe', slug: 'decode-saml-request' }))
+    const href = new URL(sponsoredHref(booking({ url: 'https://acme.example/sso?ref=x&utm_source=old' }), { kind: 'preset', slug: 'decode-saml-request' }))
     expect(href.origin + href.pathname).toBe('https://acme.example/sso')
     expect(Object.fromEntries(href.searchParams)).toEqual({
-      ref: 'x', utm_source: 'stringutilitybelt', utm_medium: 'sponsorship', utm_campaign: 'acme-2026-11', utm_content: 'recipes/decode-saml-request',
+      ref: 'x', utm_source: 'stringutilitybelt', utm_medium: 'sponsorship', utm_campaign: 'acme-2026-11', utm_content: 'presets/decode-saml-request',
     })
   })
 
