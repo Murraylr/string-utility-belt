@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`csv to markdown table`** kept a backslash right before a pipe as an escape, so `a\|b` ended its cell early; the
   backslash now stays literal and the pipe inside the cell.
 
+## [1.12.2] - 2026-10-09
+
 ### Removed
 
 - **Google Analytics.** The site sets no cookies and loads no tracking script: Cloudflare Web Analytics counts page views
