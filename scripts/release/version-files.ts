@@ -140,7 +140,7 @@ export function promoteUnreleased(markdown: string, version: string, date: strin
   const body = lines.slice(start + 1, end)
   const firstEntry = body.findIndex(l => l.trim() !== '')
   if (firstEntry < 0) return null
-  const escaped = version.replace(/\./g, '\\.')
+  const escaped = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   if (lines.some(l => new RegExp(`^##\\s*\\[${escaped}\\]`).test(l.trim()))) {
     throw new Error(`the changelog already has a section for ${version}, and [Unreleased] is not empty`)
   }

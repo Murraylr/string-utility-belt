@@ -86,4 +86,12 @@ describe('csv_to_markdown', () => {
       /unterminated quoted field/
     )
   })
+
+  it('keeps a backslash before a pipe literal, so the pipe stays inside its cell', async () => {
+    const md = String(await util.apply('a,b\n"x\\|y",z\n"C:\\",w', {}))
+    expect(md).toBe(['| a      | b   |', '| :----- | :-- |', '| x\\\\\\|y | z   |', '| C:\\    | w   |'].join('\n'))
+    const { marked } = await import('marked')
+    const cells = [...String(await marked.parse(md)).matchAll(/<td[^>]*>([^<]*)<\/td>/g)].map(m => m[1])
+    expect(cells).toEqual(['x\\|y', 'z', 'C:\\', 'w'])
+  })
 })

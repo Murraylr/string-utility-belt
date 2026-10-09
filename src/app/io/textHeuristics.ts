@@ -19,7 +19,8 @@ export function looksLikeXmlDeclaration(text: string): boolean {
 
 export function looksLikeHtml(text: string): boolean {
   // anchored at the start (after comments): markdown that merely mentions <html> is not html
-  return /^\s*(<!--[\s\S]*?-->\s*)*<(!DOCTYPE\s+html|html[\s>])/i.test(text)
+  // a comment's body never spans a `-->`, or a run of comments backtracks exponentially
+  return /^\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*<(!DOCTYPE\s+html|html[\s>])/i.test(text)
 }
 
 export function looksLikeXml(text: string): boolean {

@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Inputs that froze a run.** `normalize line endings` with CRLF output and "remove final newline" hung on text with a
+  few dozen blank lines in a row, `extract` (HTML tags) on an unclosed tag full of `=` signs, and output-type detection
+  on a long run of unclosed HTML comments (which a shared link's input could trigger on opening). Each now runs in
+  linear time. Reading a share link in the CLI, MCP server and `@string-utility-belt/core` no longer slows to seconds
+  on text holding many `#/p/` fragments.
+- **`csv to markdown table`** kept a backslash right before a pipe as an escape, so `a\|b` ended its cell early; the
+  backslash now stays literal and the pipe inside the cell.
+
 ## [1.12.2] - 2026-10-09
 
 ### Removed

@@ -144,4 +144,8 @@ describe('extract_preset', () => {
   it('rejects an unknown type inside a multiselect', async () => {
     await expect(async () => run('x', { type: ['urls', 'bogus'] })).rejects.toThrow(/unknown extract type/)
   })
+
+  it('scans html tags in linear time when a tag never closes', async () => {
+    expect(await run(`<a${'\t\t!='.repeat(5000)}" <b x= y>`, { type: 'html-tags' })).toBe('<b x= y>')
+  })
 })

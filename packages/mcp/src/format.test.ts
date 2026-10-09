@@ -103,6 +103,8 @@ describe('shareToPayload', () => {
   it('extracts the payload from a #/p/ or #/embed/ link, and passes a bare payload through', () => {
     expect(shareToPayload('#/p/abc123')).toBe('abc123')
     expect(shareToPayload('https://example.com/#/embed/xyz')).toBe('xyz')
+    expect(shareToPayload('#/p/old\nhttps://example.com/#/p/new')).toBe('new')
+    expect(shareToPayload(`${'#/p/a'.repeat(100_000)}\nbare`)).toBe(`${'#/p/a'.repeat(100_000)}\nbare`)
     expect(shareToPayload('  bare-payload \n')).toBe('bare-payload')
   })
 })
